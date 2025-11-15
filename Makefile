@@ -48,7 +48,11 @@ cover:
 ## Checks
 
 check-formatted:
-	@rebar3 fmt --check
+	@if rebar3 plugins list | grep '^erlfmt\>' >/dev/null; then \
+		rebar3 fmt --check; \
+	else \
+		echo >&2 "WARN: skipping rebar3 erlfmt check"; \
+	fi
 .PHONY: check-formatted
 
 dialyzer:
@@ -60,11 +64,19 @@ xref:
 .PHONY: xref
 
 lint:
-	@rebar3 as test lint
+	@if rebar3 plugins list | grep '^rebar3_lint\>' >/dev/null; then \
+		rebar3 lint; \
+	else \
+		echo >&2 "WARN: skipping rebar3_lint check"; \
+	fi
 .PHONY: lint
 
 find-unused-code:
-	@rebar3 as test hank
+	@if rebar3 plugins list | grep '^rebar3_hank\>' >/dev/null; then \
+		rebar3 hank; \
+	else \
+		echo >&2 "WARN: skipping rebar3_hank check"; \
+	fi
 .PHONY: lint
 
 ## Shell, docs and publication
