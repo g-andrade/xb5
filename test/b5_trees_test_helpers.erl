@@ -87,13 +87,15 @@ generate_kvs_impl(N, [{PrevK, _} | _] = ExistentAcc, NonExistentAcc) when N > 0 
     NonExistentKey = new_key_after(PrevK),
     ExistentKey = new_key_after(NonExistentKey),
     NewValue = random_number(),
-    generate_kvs_impl(N - 1, 
-                     [{ExistentKey, NewValue} | ExistentAcc], 
-                     [NonExistentKey | NonExistentAcc]);
+    generate_kvs_impl(
+        N - 1,
+        [{ExistentKey, NewValue} | ExistentAcc],
+        [NonExistentKey | NonExistentAcc]
+    );
 generate_kvs_impl(0, [{PrevK, _} | _] = ExistentAcc, NonExistentAcc) ->
     NonExistentKey = new_key_after(PrevK),
     NonExistentAcc2 = [NonExistentKey | NonExistentAcc],
-    
+
     ExistentMap = maps:from_list(ExistentAcc),
     NonExistentKeys = shuffle(NonExistentAcc2),
     {ExistentMap, NonExistentKeys}.
@@ -114,4 +116,5 @@ for_each_tree(TreeSizes, TestFun) ->
             end,
             TestFun(Tree, ExistentMap, NonExistentKeys)
         end,
-        TreeSizes).
+        TreeSizes
+    ).

@@ -19,13 +19,17 @@ clean:
 	@rebar3 clean -a
 .PHONY: clean
 
-check: xref find-unused-code lint dialyzer
+check: check-formatted xref find-unused-code lint dialyzer
 .NOTPARALLEL: check
 .PHONY: check
 
 test: eunit ct cover
 .NOTPARALLEL: test
 .PHONY: test
+
+format:
+	@rebar3 fmt
+.PHONY: format
 
 ## Tests
 
@@ -42,6 +46,10 @@ cover:
 .PHONY: cover
 
 ## Checks
+
+check-formatted:
+	@rebar3 fmt --check
+.PHONY: check-formatted
 
 dialyzer:
 	@rebar3 as test dialyzer
