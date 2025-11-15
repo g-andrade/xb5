@@ -429,6 +429,7 @@ next(#b5_trees_reverse_iter{steps = Steps} = Iter) ->
 %% @doc Maps a function over all key-value pairs in the tree node.
 %% Returns a new tree node with the same keys and transformed values.
 -spec map(fun((Key, Value) -> MappedValue), t(Key, Value)) -> t(Key, MappedValue).
+%% erlfmt:ignore A bug in test coverage will show the LEAF1 case wrong
 map(Fun, ?INTERNAL1(K1, V1, C1, C2)) ->
     ?INTERNAL1(
         K1,
@@ -437,10 +438,7 @@ map(Fun, ?INTERNAL1(K1, V1, C1, C2)) ->
         map_recur(Fun, C2)
     );
 map(Fun, ?LEAF1(K1, V1)) ->
-    ?LEAF1(
-        K1,
-        Fun(K1, V1)
-    );
+    ?LEAF1(K1, Fun(K1, V1));
 map(_, ?LEAF0) ->
     ?LEAF0;
 map(Fun, Node) ->
