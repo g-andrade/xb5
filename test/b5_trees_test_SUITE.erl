@@ -1,6 +1,6 @@
 %% @doc B5 Trees test suite ported from Elixir test suite
 %% This suite follows the Elixir test approach for better coverage
--module(b5_trees_elixir_port_SUITE).
+-module(b5_trees_test_SUITE).
 
 -ifndef(NO_CT_SUITE_BEHAVIOUR).
 -behaviour(ct_suite).
@@ -78,7 +78,8 @@ groups() ->
             test_empty_function,
             test_constituent_parts
         ]},
-        {tree_operations, [], [  % Sequential for better debugging
+        {tree_operations, [parallel], [
+        %{tree_operations, [], [  % Sequential for better debugging
             test_insert_operations,
             test_insert_with_operations,
             test_update_operations,
