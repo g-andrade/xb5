@@ -1,0 +1,20 @@
+{application, b5_trees, [
+    {description, "FIXME"},
+    {vsn, git},
+    {registered, []},
+    {applications, [
+        % stdlib deps
+        kernel,
+        stdlib
+        % external deps
+    ]},
+    {modules, []},
+
+    {env, []},
+
+    {licenses, ["MIT"]},
+    {links, [
+        {"GitHub", "https://github.com/g-andrade/b5_trees"},
+        {"GitLab", "https://gitlab.com/g-andrade/b5_trees"}
+    ]}
+]}.
