@@ -81,13 +81,13 @@
 ]).
 
 -export([
-    '__from_constituent_parts__'/1,
-    '__to_constituent_parts__'/1
+    from_constituent_parts/1,
+    to_constituent_parts/1
 ]).
 
 -ignore_xref([
-    '__from_constituent_parts__'/1,
-    '__to_constituent_parts__'/1
+    from_constituent_parts/1,
+    to_constituent_parts/1
 ]).
 
 %% ------------------------------------------------------------------
@@ -577,17 +577,38 @@ Duplicates are not removed.
 values(#b5_trees{root = Root}) ->
     b5_trees_node:values(Root).
 
-%% @private
--spec '__from_constituent_parts__'(#{
+-if(?OTP_RELEASE >= 27).
+-doc """
+Constructs a tree from its constituent parts.
+
+This function is intended for use by alternative implementations that
+want to reuse `b5_trees_node` functionality while wrapping the tree
+structure differently (e.g., in an Elixir struct).
+
+The input map must contain `root` and `size` fields.
+""".
+-endif.
+-spec from_constituent_parts(#{
     root := b5_trees_node:node(Key, Value), size := non_neg_integer()
 }) -> tree(Key, Value).
-'__from_constituent_parts__'(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
+from_constituent_parts(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
     #b5_trees{root = Root, size = Size}.
 
-%% @private
--spec '__to_constituent_parts__'(tree(Key, Value)) ->
-    #{root := b5_trees_node:node(Key, Value), size := non_neg_integer()} | error.
-'__to_constituent_parts__'(#b5_trees{root = Root, size = Size}) when is_integer(Size), Size >= 0 ->
+-if(?OTP_RELEASE >= 27).
+-doc """
+Extracts the constituent parts of a tree.
+
+Returns `{ok, Map}` where the map contains the `root` node and `size`.
+This function is intended for use by alternative implementations that
+want to reuse `b5_trees_node` functionality while wrapping the tree
+structure differently.
+
+Returns `error` if the input is not a valid tree.
+""".
+-endif.
+-spec to_constituent_parts(tree(Key, Value)) ->
+    {ok, #{root := b5_trees_node:node(Key, Value), size := non_neg_integer()}} | error.
+to_constituent_parts(#b5_trees{root = Root, size = Size}) when is_integer(Size), Size >= 0 ->
     {ok, #{root => Root, size => Size}};
-'__to_constituent_parts__'(_) ->
+to_constituent_parts(_) ->
     error.
