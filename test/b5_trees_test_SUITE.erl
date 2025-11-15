@@ -1,5 +1,4 @@
 %% @doc B5 Trees test suite ported from Elixir test suite
-%% This suite follows the Elixir test approach for better coverage
 -module(b5_trees_test_SUITE).
 
 -ifndef(NO_CT_SUITE_BEHAVIOUR).
