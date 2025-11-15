@@ -4,3 +4,4 @@ erl_crash.dump
 log
 rebar3.crashdump
 .claude/settings.local.json
+data.csv

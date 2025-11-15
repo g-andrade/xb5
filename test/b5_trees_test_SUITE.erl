@@ -7,11 +7,15 @@
 
 -include_lib("stdlib/include/assert.hrl").
 
+-define(IMPROPER_LIST(V1, V2), [(V1) | b5_trees_util:dialyzer_opaque_term(V2)]).
+
 %% CT exports
 -export([all/0, groups/0, init_per_suite/1, end_per_suite/1]).
 
 %% Test exports - Direct node validation tests
 -export([
+    test_node_validate_leaf1_deep_in_the_tree/1,
+    test_node_validate_internal1_deep_in_the_tree/1,
     test_node_validate_inconsistent_heights/1,
     test_node_validate_inconsistent_keys/1
 ]).
@@ -100,6 +104,8 @@ all() ->
 groups() ->
     [
         {node_validation, [parallel], [
+            test_node_validate_leaf1_deep_in_the_tree,
+            test_node_validate_internal1_deep_in_the_tree,
             test_node_validate_inconsistent_heights,
             test_node_validate_inconsistent_keys
         ]},
@@ -149,24 +155,55 @@ end_per_suite(_Config) ->
 %% Direct Node Validation Tests (from Elixir suite)
 %% ------------------------------------------------------------------
 
+test_node_validate_leaf1_deep_in_the_tree(_Config) ->
+    %% Build tree with inconsistent heights manually
+    Root = b5_trees_util:dialyzer_opaque_term(
+        {internal1, k3, v3, {k1, k2, v1, v2}, ?IMPROPER_LIST(k4, v4)}
+    ),
+
+    ?assertEqual(
+        {error, {root_only_nodes_deep_in_the_tree, #{{leaf1, 2} => 1}}},
+        b5_trees_node:validate(4, Root)
+    ).
+
+test_node_validate_internal1_deep_in_the_tree(_Config) ->
+    %% Build tree with inconsistent heights manually
+    Root = b5_trees_util:dialyzer_opaque_term(
+        {internal1, k3, v3, {k1, k2, v1, v2},
+            {internal1, k5, v5, ?IMPROPER_LIST(k4, v4), ?IMPROPER_LIST(k6, v6)}}
+    ),
+
+    ?assertEqual(
+        {error,
+            {root_only_nodes_deep_in_the_tree, #{
+                {internal1, 2} => 1,
+                {leaf1, 3} => 2
+            }}},
+        b5_trees_node:validate(4, Root)
+    ).
+
 test_node_validate_inconsistent_heights(_Config) ->
     %% Build tree with inconsistent heights manually
-    Root = {internal, k, v, [k | v], {internal, k, v, [k | v], [k | v]}},
+    Root = b5_trees_util:dialyzer_opaque_term(
+        {internal1, k3, v3, {k1, k2, v1, v2},
+            {k6, k9, ?IMPROPER_LIST(v6, v9), {k4, k5, v4, v5}, {k7, k8, v7, v8},
+                {k10, k11, v10, v11}}}
+    ),
 
     ?assertMatch(
         {error, {inconsistent_heights, #{min_height := 2, max_height := 3}}},
-        b5_trees_node:validate(5, Root)
+        b5_trees_node:validate(9, Root)
     ).
 
 test_node_validate_inconsistent_keys(_Config) ->
     %% Build tree with inconsistent number of keys
-    Root =
-        {internal, k, v, {k, k, [v | v], [k | v], {k, v, k, v}, [k | v]},
-            {internal, k, v, [k | v], [k | v]}},
+    Root = b5_trees_util:dialyzer_opaque_term(
+        {internal1, k3, v3, {k1, k2, v1, v2}, {k4, k5, v4, v5}}
+    ),
 
     ?assertMatch(
-        {error, {inconsistent_nr_of_keys, {expected, 11}, _}},
-        b5_trees_node:validate(11, Root)
+        {error, {inconsistent_nr_of_keys, {expected, 6}, _}},
+        b5_trees_node:validate(6, Root)
     ).
 
 %% ------------------------------------------------------------------
@@ -253,7 +290,7 @@ test_constituent_parts(_Config) ->
     %% Test that constituent parts have the expected structure
     #{root := Root, size := Size} = Parts2,
     ?assertEqual(3, Size),
-    ?assert(Root =/= undefined),
+    ?assert(Root =/= b5_trees_node:new()),
 
     %% Test error case for invalid input
     ?assertEqual(error, b5_trees:to_constituent_parts(invalid_tree)),
@@ -384,7 +421,7 @@ test_inserts_with(Tree, ExistentKvs, [NonExistentKey | Rest]) ->
     lists:foreach(
         fun({Key, _V}) ->
             Key2 = b5_trees_test_helpers:randomly_switch_key_type(Key),
-            ValueFun = fun() -> error(not_to_be_called) end,
+            ValueFun = fun b5_trees_test_helpers:error_not_to_be_called/0,
             ?assertError(
                 {key_exists, Key2},
                 b5_trees:insert_with(Key2, ValueFun, Tree)
@@ -484,7 +521,7 @@ test_updates_with4(Tree, ExistentAttempts, ExistentKvs, NonExistentKeys) ->
                 % Test non-existent key (gets default)
                 1 ->
                     UpdateKey = b5_trees_test_helpers:randomly_switch_key_type(NonExistentKey),
-                    UpdateFun = fun(_TreeV) -> error(not_to_be_called) end,
+                    UpdateFun = fun b5_trees_test_helpers:error_not_to_be_called/1,
                     Tree2 = b5_trees:update_with(UpdateKey, UpdateFun, NewValue, Tree),
                     ?assertEqual(SizeBefore + 1, b5_trees:size(Tree2)),
                     ?assertNot(b5_trees:is_empty(Tree2)),
@@ -777,7 +814,7 @@ test_foldl_foldr_operations(_Config) ->
 
 test_map_operations(_Config) ->
     EmptyTree = b5_trees:new(),
-    MappedEmptyTree = b5_trees:map(fun(_K, _V) -> error(not_to_be_called) end, EmptyTree),
+    MappedEmptyTree = b5_trees:map(fun b5_trees_test_helpers:error_not_to_be_called/2, EmptyTree),
     ?assertEqual(0, b5_trees:size(MappedEmptyTree)),
     ?assert(b5_trees:is_empty(MappedEmptyTree)),
     ?assertEqual([], b5_trees:to_list(MappedEmptyTree)),

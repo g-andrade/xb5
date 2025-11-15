@@ -49,25 +49,62 @@
 %% Macro Definitions
 %% ------------------------------------------------------------------
 
+% Nodes are tuples (for the most part), with different node types
+% having different sizes. Size alone is not enough to differentiate
+% between some node types, so we need to add tags. The following
+% is the rationale for which node types get tags.
+%
+% After a few hundred keys, the approx average distribution of node types
+% stabilises as follows:
+% * INTERNAL2: 13%
+% * INTERNAL3: 8%
+% * INTERNAL4: 5%
+% * LEAF2: 36%
+% * LEAF3: 22%
+% * LEAF4: 14%
+%
+%
+% INTERNAL1 vs LEAF2 (4 elements):
+%   Prioritise LEAF2. INTERNAL1 can only show at the root, whereas LEAF2 is the
+%   most common type of node. Cheaper and smaller leaves at the expense of a
+%   more expensive root node.
+%
+-define(INTERNAL1(K1, V1, C1, C2), {[], K1, V1, C1, C2}).
+-define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
+%
+%
+% INTERNAL2 vs LEAF3 (6 elements):
+%   Prioritise INTERNAL2. Although LEAF3 is much more common than INTERNAL2,
+%   most operations take place over internal nodes.
+%
+-define(INTERNAL2(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
+-define(LEAF3(K1, K2, K3, V1, V2, V3), {[], K1, K2, K3, V1, V2, V3}).
+%
+%
+% INTERNAL3 vs LEAF4 (8 elements):
+%   Prioritise INTERNAL3. Same rationale as in previous case.
+%
+-define(INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4), {K1, K2, K3, Values, C1, C2, C3, C4}).
+-define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {[], K1, K2, K3, K4, V1, V2, V3, V4}).
+%
+%
+% Conflict-free:
+%
 -define(INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5),
     {K1, K2, K3, K4, Values, C1, C2, C3, C4, C5}
 ).
--define(INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4), {K1, K2, K3, Values, C1, C2, C3, C4}).
--define(INTERNAL2(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
--define(INTERNAL1(K1, V1, C1, C2), {internal, K1, V1, C1, C2}).
-
--define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {leaf, K1, K2, K3, K4, V1, V2, V3, V4}).
--define(LEAF3(K1, K2, K3, V1, V2, V3), {leaf, K1, K2, K3, V1, V2, V3}).
--define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
 -define(LEAF1(K1, V1), [K1 | V1]).
 -define(LEAF0, leaf0).
 
-%-define(ASSERT_NODE_IS_DEEP(Node), (
-%    begin
-%        ?assertNotMatch(?INTERNAL1(_, _, _, _), Node),
-%        ?assertNotMatch(?LEAF1(_, _), Node),
-%        ?assertNotMatch(?LEAF0, Node)
-%    end)).
+%%
+%% Regarding `Values' in internal nodes:
+%% * INTERNAL4 stores tuples
+%% * INTERNAL3 stores tuples
+%% * INTERNAL2 stores an improper list
+%%
+%% INTERNAL2 being the most common internal node type, that gives us a slight
+%% edge in some operations.
+%%
 
 %% ------------------------------------------------------------------
 %% Type Definitions
@@ -78,6 +115,14 @@
 -export_type([t/2]).
 
 -type empty_node() :: ?LEAF0.
+
+%
+% The fact that some node types are root-only allows us to optimize the
+% recursive case - less potential patterns to match.
+%
+% Therefore, most of the exported API functions here match on the root-only
+% nodes in their entry clauses, but only on deep node types after that.
+%
 
 -type root_only_node(Key, Value) ::
     (node_internal1(Key, Value)
@@ -171,7 +216,7 @@
 %%%%%%%%%%%
 
 % Dialyzer got too smart when it reasoned this, but it is indeed true.
--type tree_node_after_deletion(Key, Value) ::
+-type node_after_deletion(Key, Value) ::
     node_internal3(Key, Value)
     | node_internal2(Key, Value)
     | node_internal1(Key, Value)
@@ -179,12 +224,12 @@
     | node_leaf1(Key, Value).
 
 -type deep_node_after_insertion(Key, Value) ::
-    node_internal3(Key, Value)
-    | node_internal2(Key, Value)
-    | node_internal1(Key, Value)
-    | node_leaf3(Key, Value)
-    | node_leaf2(Key, Value).
+    node_internal4(Key, Value)
+    | node_internal3(Key, Value)
+    | node_leaf4(Key, Value)
+    | node_leaf3(Key, Value).
 
+% Temporary situation before rebalance
 -type unbalanced_node(Key, Value) :: node_internal1(Key, Value).
 
 %%%%%%%%%%%
@@ -230,13 +275,6 @@
 
 %%%%%%%%%%%
 
--type raw_stats() :: #{
-    min_height := non_neg_integer(),
-    max_height := non_neg_integer(),
-    node_counts := stats_node_counts()
-}.
--export_type([raw_stats/0]).
-
 -type valid_stats() :: #{
     height := non_neg_integer(),
     node_counts := stats_node_counts()
@@ -244,9 +282,11 @@
 -export_type([valid_stats/0]).
 
 -type stats_node_counts() :: #{
+    internal4 => pos_integer(),
     internal3 => pos_integer(),
     internal2 => pos_integer(),
     internal1 => pos_integer(),
+    leaf4 => pos_integer(),
     leaf3 => pos_integer(),
     leaf2 => pos_integer(),
     leaf1 => pos_integer()
@@ -254,7 +294,7 @@
 -export_type([stats_node_counts/0]).
 
 %% ------------------------------------------------------------------
-%% Lib-internal API
+%% API Function Definitions
 %% ------------------------------------------------------------------
 
 %% @doc Removes the node with the specified key from the tree node.
@@ -381,7 +421,6 @@ larger(Key, Node) ->
 %% @doc Returns the largest key-value pair in the tree node.
 %% Fails with an `empty_tree' exception if the node is empty.
 -spec largest(t(Key, Value)) -> {Key, Value}.
--dialyzer({no_underspecs, largest/1}).
 largest(?INTERNAL1(_, _, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1(K1, V1)) ->
@@ -394,7 +433,9 @@ largest(Node) ->
 %% @doc Creates a new empty tree node.
 -spec new() -> t(_, _).
 new() ->
-    ?LEAF0.
+    % Without this wrapper, Dialyzer gets too clever. `t/2' being an opaque
+    % type, it shouldn't...
+    b5_trees_util:dialyzer_opaque_term(?LEAF0).
 
 %% @doc Returns the next key-value pair from an iterator.
 %% Returns `{Key, Value, NewIter}' or `none' if no more entries remain.
@@ -472,7 +513,6 @@ smaller(Key, Node) ->
 %% @doc Returns the smallest key-value pair in the tree node.
 %% Fails with an `empty_tree' exception if the node is empty.
 -spec smallest(t(Key, Value)) -> {Key, Value}.
--dialyzer({no_underspecs, smallest/1}).
 smallest(?INTERNAL1(_, _, C1, _)) ->
     smallest_recur(C1);
 smallest(?LEAF1(K1, V1)) ->
@@ -545,19 +585,20 @@ update(Key, ValueEval, ValueWrap, Node) ->
 %% Takes the expected number of keys and returns validation statistics
 %% or an error if the tree structure is inconsistent.
 -spec validate(non_neg_integer(), t(_, _)) ->
-    {ok, valid_stats()}
-    | {error, {inconsistent_heights, raw_stats()}}
-    | {error, {inconsistent_nr_of_keys, {expected, non_neg_integer()}, raw_stats()}}.
+    {ok, valid_stats()} | {error, term()}.
 validate(ExpectedNrOfKeys, Root) ->
     #{
         min_height := MinHeight,
         max_height := MaxHeight,
-        node_counts := NodeCounts
+        node_counts := NodeCounts,
+        wrong_depth_counts := WrongDepthCounts
     } = Stats = stats(Root),
 
     NrOfKeys = count_keys_from_stats(NodeCounts),
 
     if
+        WrongDepthCounts =/= #{} ->
+            {error, {root_only_nodes_deep_in_the_tree, WrongDepthCounts}};
         MinHeight =/= MaxHeight ->
             {error, {inconsistent_heights, Stats}};
         NrOfKeys =/= ExpectedNrOfKeys ->
@@ -1836,7 +1877,7 @@ eval_update_value(lazy, Fun, PrevValue) -> Fun(PrevValue).
 %% Internal Function Definitions: Node Deletion
 %% ------------------------------------------------------------------
 
--spec delete(Key, non_empty_node(Key, Value)) -> tree_node_after_deletion(Key, Value).
+-spec delete(Key, non_empty_node(Key, Value)) -> node_after_deletion(Key, Value).
 delete(K, ?INTERNAL1(K1, V1, C1, C2)) ->
     delete_internal1(K, K1, V1, C1, C2);
 delete(K, ?LEAF1(K1, _)) ->
@@ -1847,7 +1888,7 @@ delete(K, Root) ->
     delete_recur(K, Root).
 
 -spec delete_recur(Key, deep_node(Key, Value)) ->
-    tree_node_after_deletion(Key, Value) | unbalanced_node(Key, Value).
+    node_after_deletion(Key, Value) | unbalanced_node(Key, Value).
 delete_recur(K, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
     delete_internal4(K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
 delete_recur(K, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
@@ -2085,24 +2126,10 @@ delete_internal4_key4(K1, K2, K3, {V1, V2, V3, _}, C1, C2, C3, C4, C5) ->
 delete_internal4_rebalance_child1(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5) ->
     case maybe_rebalance_left(C1, K1, V1, C2) of
         no ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
         {UpK, UpVal, UpdatedC1, UpdatedC2} ->
-            % ?ASSERT_NODE_IS_DEEP(UpdatedC1),
-            % ?ASSERT_NODE_IS_DEEP(UpdatedC2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedC1, UpdatedC2, C3, C4, C5);
         {merged, MergedC1C2} ->
-            % ?ASSERT_NODE_IS_DEEP(MergedC1C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, MergedC1C2, C3, C4, C5)
     end.
 
@@ -2110,31 +2137,12 @@ delete_internal4_rebalance_child1(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4
 delete_internal4_rebalance_child2(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5) ->
     case maybe_rebalance_mid(C1, K1, V1, C2, K2, V2, C3) of
         no ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
         {from_left, {UpK, UpVal, UpdatedC1, RebalancedC2}} ->
-            % ?ASSERT_NODE_IS_DEEP(UpdatedC1),
-            % ?ASSERT_NODE_IS_DEEP(RebalancedC2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedC1, RebalancedC2, C3, C4, C5);
         {from_right, {UpK, UpVal, RebalancedC2, UpdatedC3}} ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(RebalancedC2),
-            % ?ASSERT_NODE_IS_DEEP(UpdatedC3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, C1, RebalancedC2, UpdatedC3, C4, C5);
         {from_left, {merged, MergedC1C2}} ->
-            % ?ASSERT_NODE_IS_DEEP(MergedC1C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, MergedC1C2, C3, C4, C5)
     end.
 
@@ -2142,31 +2150,12 @@ delete_internal4_rebalance_child2(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4
 delete_internal4_rebalance_child3(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5) ->
     case maybe_rebalance_mid(C2, K2, V2, C3, K3, V3, C4) of
         no ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
         {from_left, {UpK, UpVal, UpdatedC2, RebalancedC3}} ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(UpdatedC2),
-            % ?ASSERT_NODE_IS_DEEP(RebalancedC3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, C1, UpdatedC2, RebalancedC3, C4, C5);
         {from_right, {UpK, UpVal, RebalancedC3, UpdatedC4}} ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(RebalancedC3),
-            % ?ASSERT_NODE_IS_DEEP(UpdatedC4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, C1, C2, RebalancedC3, UpdatedC4, C5);
         {from_left, {merged, MergedC2C3}} ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(MergedC2C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL3(K1, K3, K4, {V1, V3, V4}, C1, MergedC2C3, C4, C5)
     end.
 
@@ -2174,31 +2163,12 @@ delete_internal4_rebalance_child3(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4
 delete_internal4_rebalance_child4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5) ->
     case maybe_rebalance_mid(C3, K3, V3, C4, K4, V4, C5) of
         no ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
         {from_left, {UpK, UpVal, UpdatedC3, RebalancedC4}} ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(UpdatedC3),
-            % ?ASSERT_NODE_IS_DEEP(RebalancedC4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, C1, C2, UpdatedC3, RebalancedC4, C5);
         {from_right, {UpK, UpVal, RebalancedC4, UpdatedC5}} ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(RebalancedC4),
-            % ?ASSERT_NODE_IS_DEEP(UpdatedC5),
             ?INTERNAL4(K1, K2, K3, UpK, {V1, V2, V3, UpVal}, C1, C2, C3, RebalancedC4, UpdatedC5);
         {from_left, {merged, MergedC3C4}} ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(MergedC3C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL3(K1, K2, K4, {V1, V2, V4}, C1, C2, MergedC3C4, C5)
     end.
 
@@ -2206,24 +2176,10 @@ delete_internal4_rebalance_child4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4
 delete_internal4_rebalance_child5(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5) ->
     case maybe_rebalance_right(C4, K4, V4, C5) of
         no ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(C4),
-            % ?ASSERT_NODE_IS_DEEP(C5),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
         {UpK, UpVal, UpdatedC4, RebalancedC5} ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(UpdatedC4),
-            % ?ASSERT_NODE_IS_DEEP(RebalancedC5),
             ?INTERNAL4(K1, K2, K3, UpK, {V1, V2, V3, UpVal}, C1, C2, C3, UpdatedC4, RebalancedC5);
         {merged, MergedC4C5} ->
-            % ?ASSERT_NODE_IS_DEEP(C1),
-            % ?ASSERT_NODE_IS_DEEP(C2),
-            % ?ASSERT_NODE_IS_DEEP(C3),
-            % ?ASSERT_NODE_IS_DEEP(MergedC4C5),
             ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, MergedC4C5)
     end.
 
@@ -2716,7 +2672,7 @@ delete_leaf1(K, K1) ->
 %% ------------------------------------------------------------------
 
 -spec take(take_type(), Key | nil, non_empty_node(Key, Value)) ->
-    {{Key, Value}, tree_node_after_deletion(Key, Value)}.
+    {{Key, Value}, node_after_deletion(Key, Value)}.
 take(Type, K, ?INTERNAL1(K1, V1, C1, C2)) ->
     take_internal1(Type, K, K1, V1, C1, C2);
 take(Type, K, ?LEAF1(K1, V1)) ->
@@ -2734,7 +2690,7 @@ take(Type, K, Root) ->
     take_recur(Type, K, Root).
 
 -spec take_recur(take_type(), Key | nil, deep_node(Key, Value)) ->
-    {{Key, Value}, tree_node_after_deletion(Key, Value) | unbalanced_node(Key, Value)}.
+    {{Key, Value}, node_after_deletion(Key, Value) | unbalanced_node(Key, Value)}.
 take_recur(Type, K, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
     take_internal4(Type, K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
 take_recur(Type, K, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
@@ -3705,16 +3661,8 @@ stats(Root) ->
     Acc0 = #{
         min_height => 0,
         max_height => 0,
-        node_counts => #{
-            internal4 => 0,
-            internal3 => 0,
-            internal2 => 0,
-            internal1 => 0,
-            leaf4 => 0,
-            leaf3 => 0,
-            leaf2 => 0,
-            leaf1 => 0
-        }
+        node_counts => #{},
+        wrong_depth_counts => #{}
     },
 
     case Root of
@@ -3748,10 +3696,15 @@ stats_recur(?INTERNAL2(_, _, _, C1, C2, C3), Depth, Acc) ->
     Acc5 = stats_recur(C3, Depth + 1, Acc4),
     Acc5;
 stats_recur(?INTERNAL1(_, _, C1, C2), Depth, Acc) ->
-    Acc2 = stats_inc_node_count(Acc, internal1),
-    Acc3 = stats_recur(C1, Depth + 1, Acc2),
-    Acc4 = stats_recur(C2, Depth + 1, Acc3),
-    Acc4;
+    Acc2 =
+        case Depth of
+            1 -> Acc;
+            _ -> stats_inc_wrong_depth_count(Acc, {internal1, Depth})
+        end,
+    Acc3 = stats_inc_node_count(Acc2, internal1),
+    Acc4 = stats_recur(C1, Depth + 1, Acc3),
+    Acc5 = stats_recur(C2, Depth + 1, Acc4),
+    Acc5;
 stats_recur(?LEAF4(_, _, _, _, _, _, _, _), Depth, Acc) ->
     Acc2 = stats_inc_node_count(Acc, leaf4),
     Acc3 = stats_register_leaf_height(Acc2, Depth),
@@ -3765,13 +3718,25 @@ stats_recur(?LEAF2(_, _, _, _), Depth, Acc) ->
     Acc3 = stats_register_leaf_height(Acc2, Depth),
     Acc3;
 stats_recur(?LEAF1(_, _), Depth, Acc) ->
-    Acc2 = stats_inc_node_count(Acc, leaf1),
-    Acc3 = stats_register_leaf_height(Acc2, Depth),
-    Acc3.
+    Acc2 =
+        case Depth of
+            1 -> Acc;
+            _ -> stats_inc_wrong_depth_count(Acc, {leaf1, Depth})
+        end,
+    Acc3 = stats_inc_node_count(Acc2, leaf1),
+    Acc4 = stats_register_leaf_height(Acc3, Depth),
+    Acc4.
 
-stats_inc_node_count(#{node_counts := NodeCounts} = Acc, NodeType) ->
-    UpdatedCounts = maps:update_with(NodeType, fun(Prev) -> Prev + 1 end, NodeCounts),
+stats_inc_wrong_depth_count(#{wrong_depth_counts := Counts} = Acc, Pair) ->
+    UpdatedCounts = map_inc_counter(Pair, Counts),
+    Acc#{wrong_depth_counts := UpdatedCounts}.
+
+stats_inc_node_count(#{node_counts := Counts} = Acc, NodeType) ->
+    UpdatedCounts = map_inc_counter(NodeType, Counts),
     Acc#{node_counts := UpdatedCounts}.
+
+map_inc_counter(Key, Map) ->
+    maps:update_with(Key, fun(Prev) -> Prev + 1 end, 1, Map).
 
 stats_register_leaf_height(#{min_height := Min, max_height := Max} = Acc, Depth) ->
     Acc#{

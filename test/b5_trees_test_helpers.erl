@@ -10,7 +10,22 @@
     randomly_switch_key_type/1,
     new_key_after/1,
     generate_kvs/2,
-    for_each_tree/2
+    for_each_tree/2,
+    error_not_to_be_called/0,
+    error_not_to_be_called/1,
+    error_not_to_be_called/2
+]).
+
+%% ------------------------------------------------------------------
+%% Tweaks
+%% ------------------------------------------------------------------
+
+-hank([
+    {unnecessary_function_arguments, [
+        {error_not_to_be_called, 1, 1},
+        {error_not_to_be_called, 2, 1},
+        {error_not_to_be_called, 2, 2}
+    ]}
 ]).
 
 %% ------------------------------------------------------------------
@@ -118,3 +133,15 @@ for_each_tree(TreeSizes, TestFun) ->
         end,
         TreeSizes
     ).
+
+-spec error_not_to_be_called() -> no_return().
+error_not_to_be_called() ->
+    error(not_to_be_called).
+
+-spec error_not_to_be_called(_) -> no_return().
+error_not_to_be_called(_) ->
+    error(not_to_be_called).
+
+-spec error_not_to_be_called(term(), term()) -> no_return().
+error_not_to_be_called(_, _) ->
+    error(not_to_be_called).

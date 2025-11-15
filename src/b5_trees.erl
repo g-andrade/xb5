@@ -94,10 +94,7 @@
 %% API Type Definitions
 %% ------------------------------------------------------------------
 
--record(b5_trees, {
-    size :: non_neg_integer(),
-    root :: b5_trees_node:t(term(), term())
-}).
+-record(b5_trees, {size, root}).
 
 -opaque tree(Key, Value) :: #b5_trees{
     size :: non_neg_integer(),
@@ -107,7 +104,7 @@
 
 %%%%%%%
 
--opaque iter(Key, Value) :: b5_trees_node:iter(Key, Value).
+-type iter(Key, Value) :: b5_trees_node:iter(Key, Value).
 -export_type([iter/2]).
 
 %% ------------------------------------------------------------------
@@ -133,7 +130,7 @@ delete(Key, #b5_trees{root = Root, size = Size} = Tree) ->
 -if(?OTP_RELEASE >= 27).
 -doc "Returns a new empty tree.".
 -endif.
--spec empty() -> tree(term(), term()).
+-spec empty() -> tree(_, _).
 empty() -> new().
 
 -if(?OTP_RELEASE >= 27).
@@ -560,10 +557,8 @@ Validates the internal structure of the tree.
 Returns information about the tree structure for debugging purposes.
 """.
 -endif.
--spec validate(tree(term(), term())) ->
-    {ok, b5_trees_node:valid_stats()}
-    | {error, {inconstistent_heights, b5_trees_node:raw_stats()}}
-    | {error, {inconstistent_nr_of_keys, {expected, non_neg_integer()}, b5_trees_node:raw_stats()}}.
+-spec validate(tree(_, _)) ->
+    {ok, b5_trees_node:valid_stats()} | {error, term()}.
 validate(#b5_trees{size = Size, root = Root}) ->
     b5_trees_node:validate(Size, Root).
 
@@ -589,7 +584,7 @@ The input map must contain `root` and `size` fields.
 """.
 -endif.
 -spec from_constituent_parts(#{
-    root := b5_trees_node:node(Key, Value), size := non_neg_integer()
+    root := b5_trees_node:t(Key, Value), size := non_neg_integer()
 }) -> tree(Key, Value).
 from_constituent_parts(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
     #b5_trees{root = Root, size = Size}.
@@ -606,8 +601,8 @@ structure differently.
 Returns `error` if the input is not a valid tree.
 """.
 -endif.
--spec to_constituent_parts(tree(Key, Value)) ->
-    {ok, #{root := b5_trees_node:node(Key, Value), size := non_neg_integer()}} | error.
+-spec to_constituent_parts(tree(Key, Value) | term()) ->
+    {ok, #{root := b5_trees_node:t(Key, Value), size := non_neg_integer()}} | error.
 to_constituent_parts(#b5_trees{root = Root, size = Size}) when is_integer(Size), Size >= 0 ->
     {ok, #{root => Root, size => Size}};
 to_constituent_parts(_) ->
