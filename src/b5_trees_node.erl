@@ -1917,11 +1917,7 @@ delete_recur(Type, K, ?LEAF2(K1, K2, V1, V2)) ->
 %%% Delete - INTERNAL4
 
 -compile({inline, delete_internal4/12}).
-delete_internal4(smallest, _, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-    delete_internal4_child1(smallest, nil, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-delete_internal4(largest, _, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-    delete_internal4_child5(largest, nil, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-delete_internal4(_, K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+delete_internal4(key, K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     if
         K > K2 ->
             if
@@ -1950,7 +1946,11 @@ delete_internal4(_, K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
             end;
         true ->
             delete_internal4_key2(K1, K3, K4, Values, C1, C2, C3, C4, C5)
-    end.
+    end;
+delete_internal4(smallest, _, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    delete_internal4_child1(smallest, nil, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
+delete_internal4(largest, _, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    delete_internal4_child5(largest, nil, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5).
 
 -compile({inline, [delete_internal4_child1/12]}).
 delete_internal4_child1(Type, K, K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5) ->
@@ -2202,11 +2202,7 @@ delete_internal4_rebalance_child5(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4
 %%% Delete - INTERNAL3
 
 -compile({inline, delete_internal3/10}).
-delete_internal3(smallest, _, K1, K2, K3, Values, C1, C2, C3, C4) ->
-    delete_internal3_child1(smallest, nil, K1, K2, K3, Values, C1, C2, C3, C4);
-delete_internal3(largest, _, K1, K2, K3, Values, C1, C2, C3, C4) ->
-    delete_internal3_child4(largest, nil, K1, K2, K3, Values, C1, C2, C3, C4);
-delete_internal3(_, K, K1, K2, K3, Values, C1, C2, C3, C4) ->
+delete_internal3(key, K, K1, K2, K3, Values, C1, C2, C3, C4) ->
     if
         K > K2 ->
             if
@@ -2228,7 +2224,11 @@ delete_internal3(_, K, K1, K2, K3, Values, C1, C2, C3, C4) ->
             end;
         true ->
             delete_internal3_key2(K1, K3, Values, C1, C2, C3, C4)
-    end.
+    end;
+delete_internal3(smallest, _, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    delete_internal3_child1(smallest, nil, K1, K2, K3, Values, C1, C2, C3, C4);
+delete_internal3(largest, _, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    delete_internal3_child4(largest, nil, K1, K2, K3, Values, C1, C2, C3, C4).
 
 -compile({inline, [delete_internal3_child1/10]}).
 delete_internal3_child1(Type, K, K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4) ->
@@ -2406,11 +2406,7 @@ delete_internal3_rebalance_child4(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4) ->
 %%% Delete - INTERNAL2
 
 -compile({inline, delete_internal2/8}).
-delete_internal2(smallest, _, K1, K2, Values, C1, C2, C3) ->
-    delete_internal2_child1(smallest, nil, K1, K2, Values, C1, C2, C3);
-delete_internal2(largest, _, K1, K2, Values, C1, C2, C3) ->
-    delete_internal2_child3(largest, nil, K1, K2, Values, C1, C2, C3);
-delete_internal2(_, K, K1, K2, Values, C1, C2, C3) ->
+delete_internal2(key, K, K1, K2, Values, C1, C2, C3) ->
     if
         K > K1 ->
             if
@@ -2425,7 +2421,11 @@ delete_internal2(_, K, K1, K2, Values, C1, C2, C3) ->
             delete_internal2_child1(key, K, K1, K2, Values, C1, C2, C3);
         true ->
             delete_internal2_key1(K2, Values, C1, C2, C3)
-    end.
+    end;
+delete_internal2(smallest, _, K1, K2, Values, C1, C2, C3) ->
+    delete_internal2_child1(smallest, nil, K1, K2, Values, C1, C2, C3);
+delete_internal2(largest, _, K1, K2, Values, C1, C2, C3) ->
+    delete_internal2_child3(largest, nil, K1, K2, Values, C1, C2, C3).
 
 -compile({inline, [delete_internal2_child1/8]}).
 delete_internal2_child1(Type, K, K1, K2, [V1 | V2], C1, C2, C3) ->
@@ -2541,11 +2541,7 @@ delete_internal2_rebalance_child3(K1, K2, V1, V2, C1, C2, C3) ->
 %%% Delete - INTERNAL1
 
 -compile({inline, delete_internal1/6}).
-delete_internal1(smallest, _, K1, V1, C1, C2) ->
-    delete_internal1_child1(smallest, nil, K1, V1, C1, C2);
-delete_internal1(largest, _, K1, V1, C1, C2) ->
-    delete_internal1_child2(largest, nil, K1, V1, C1, C2);
-delete_internal1(_, K, K1, V1, C1, C2) ->
+delete_internal1(key, K, K1, V1, C1, C2) ->
     if
         K > K1 ->
             delete_internal1_child2(key, K, K1, V1, C1, C2);
@@ -2553,7 +2549,11 @@ delete_internal1(_, K, K1, V1, C1, C2) ->
             delete_internal1_child1(key, K, K1, V1, C1, C2);
         true ->
             delete_internal1_key1(C1, C2)
-    end.
+    end;
+delete_internal1(smallest, _, K1, V1, C1, C2) ->
+    delete_internal1_child1(smallest, nil, K1, V1, C1, C2);
+delete_internal1(largest, _, K1, V1, C1, C2) ->
+    delete_internal1_child2(largest, nil, K1, V1, C1, C2).
 
 -compile({inline, [delete_internal1_child1/6]}).
 delete_internal1_child1(Type, K, K1, V1, C1, C2) ->
@@ -2621,11 +2621,7 @@ delete_internal1_rebalance_child2(K1, V1, C1, C2) ->
 %%% Delete - LEAF4
 
 -compile({inline, delete_leaf4/10}).
-delete_leaf4(smallest, _, _, K2, K3, K4, _, V2, V3, V4) ->
-    ?LEAF3(K2, K3, K4, V2, V3, V4);
-delete_leaf4(largest, _, K1, K2, K3, _, V1, V2, V3, _) ->
-    ?LEAF3(K1, K2, K3, V1, V2, V3);
-delete_leaf4(_, K, K1, K2, K3, K4, V1, V2, V3, V4) ->
+delete_leaf4(key, K, K1, K2, K3, K4, V1, V2, V3, V4) ->
     if
         K > K2 ->
             if
@@ -2642,18 +2638,18 @@ delete_leaf4(_, K, K1, K2, K3, K4, V1, V2, V3, V4) ->
             ?LEAF3(K2, K3, K4, V2, V3, V4);
         true ->
             error_badkey(K)
-    end.
+    end;
+delete_leaf4(smallest, _, _, K2, K3, K4, _, V2, V3, V4) ->
+    ?LEAF3(K2, K3, K4, V2, V3, V4);
+delete_leaf4(largest, _, K1, K2, K3, _, V1, V2, V3, _) ->
+    ?LEAF3(K1, K2, K3, V1, V2, V3).
 
 %%%%%%%%%
 %%%%%%%%%
 %%% Delete - LEAF3
 
 -compile({inline, delete_leaf3/8}).
-delete_leaf3(smallest, _, _, K2, K3, _, V2, V3) ->
-    ?LEAF2(K2, K3, V2, V3);
-delete_leaf3(largest, _, K1, K2, _, V1, V2, _) ->
-    ?LEAF2(K1, K2, V1, V2);
-delete_leaf3(_, K, K1, K2, K3, V1, V2, V3) ->
+delete_leaf3(key, K, K1, K2, K3, V1, V2, V3) ->
     if
         K < K2 ->
             if
@@ -2671,18 +2667,18 @@ delete_leaf3(_, K, K1, K2, K3, V1, V2, V3) ->
             end;
         true ->
             ?LEAF2(K1, K3, V1, V3)
-    end.
+    end;
+delete_leaf3(smallest, _, _, K2, K3, _, V2, V3) ->
+    ?LEAF2(K2, K3, V2, V3);
+delete_leaf3(largest, _, K1, K2, _, V1, V2, _) ->
+    ?LEAF2(K1, K2, V1, V2).
 
 %%%%%%%%%
 %%%%%%%%%
 %%% Delete - LEAF2
 
 -compile({inline, delete_leaf2/6}).
-delete_leaf2(smallest, _, _, K2, _, V2) ->
-    ?LEAF1(K2, V2);
-delete_leaf2(largest, _, K1, _, V1, _) ->
-    ?LEAF1(K1, V1);
-delete_leaf2(_, K, K1, K2, V1, V2) ->
+delete_leaf2(key, K, K1, K2, V1, V2) ->
     if
         K == K1 ->
             ?LEAF1(K2, V2);
@@ -2690,7 +2686,11 @@ delete_leaf2(_, K, K1, K2, V1, V2) ->
             ?LEAF1(K1, V1);
         true ->
             error_badkey(K)
-    end.
+    end;
+delete_leaf2(smallest, _, _, K2, _, V2) ->
+    ?LEAF1(K2, V2);
+delete_leaf2(largest, _, K1, _, V1, _) ->
+    ?LEAF1(K1, V1).
 
 %%%%%%%%%
 %%%%%%%%%
