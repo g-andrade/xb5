@@ -69,7 +69,7 @@
 %   most common type of node. Cheaper and smaller leaves at the expense of a
 %   more expensive root node.
 %
--define(INTERNAL1(K1, V1, C1, C2), {[], K1, V1, C1, C2}).
+-define(INTERNAL1(K1, V1, C1, C2), {internal1, K1, V1, C1, C2}).
 -define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
 %
 %
@@ -78,14 +78,14 @@
 %   most operations take place over internal nodes.
 %
 -define(INTERNAL2(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
--define(LEAF3(K1, K2, K3, V1, V2, V3), {[], K1, K2, K3, V1, V2, V3}).
+-define(LEAF3(K1, K2, K3, V1, V2, V3), {leaf3, K1, K2, K3, V1, V2, V3}).
 %
 %
 % INTERNAL3 vs LEAF4 (8 elements):
 %   Prioritise INTERNAL3. Same rationale as in previous case.
 %
 -define(INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4), {K1, K2, K3, Values, C1, C2, C3, C4}).
--define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {[], K1, K2, K3, K4, V1, V2, V3, V4}).
+-define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {leaf4, K1, K2, K3, K4, V1, V2, V3, V4}).
 %
 %
 % Conflict-free:
