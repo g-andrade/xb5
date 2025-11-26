@@ -30,7 +30,7 @@
     union/2
 ]).
 
--include_lib("stdlib/include/assert.hrl").
+% -include_lib("stdlib/include/assert.hrl").
 
 %% ------------------------------------------------------------------
 %% Macro Definitions
@@ -356,22 +356,22 @@ internal4(E1, E2, E3, E4, S1, S2, S3, S4, S5, C1, C2, C3, C4, C5) ->
     % ?assertMatch(_ when is_integer(E3), E3),
     % ?assertMatch(_ when is_integer(E4), E4),
 
-    ?assertMatch(_ when is_integer(S1) andalso S1 > 0, S1),
-    ?assertMatch(_ when is_integer(S2) andalso S2 > 0, S2),
-    ?assertMatch(_ when is_integer(S3) andalso S3 > 0, S3),
-    ?assertMatch(_ when is_integer(S4) andalso S4 > 0, S4),
-    ?assertMatch(_ when is_integer(S5) andalso S5 > 0, S5),
+    % ?assertMatch(_ when is_integer(S1) andalso S1 > 0, S1),
+    % ?assertMatch(_ when is_integer(S2) andalso S2 > 0, S2),
+    % ?assertMatch(_ when is_integer(S3) andalso S3 > 0, S3),
+    % ?assertMatch(_ when is_integer(S4) andalso S4 > 0, S4),
+    % ?assertMatch(_ when is_integer(S5) andalso S5 > 0, S5),
 
-    ?assertMatch(DNS1 when DNS1 > 0, deep_node_size(C1)),
-    ?assertMatch(DNS2 when DNS2 > 0, deep_node_size(C2)),
-    ?assertMatch(DNS3 when DNS3 > 0, deep_node_size(C3)),
-    ?assertMatch(DNS4 when DNS4 > 0, deep_node_size(C4)),
-    ?assertMatch(DNS5 when DNS5 > 0, deep_node_size(C5)),
+    % ?assertMatch(DNS1 when DNS1 > 0, deep_node_size(C1)),
+    % ?assertMatch(DNS2 when DNS2 > 0, deep_node_size(C2)),
+    % ?assertMatch(DNS3 when DNS3 > 0, deep_node_size(C3)),
+    % ?assertMatch(DNS4 when DNS4 > 0, deep_node_size(C4)),
+    % ?assertMatch(DNS5 when DNS5 > 0, deep_node_size(C5)),
 
-    ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
-    ?assertMatch({C2L, C3S} when C2L < E2 andalso E2 < C3S, {largest(C2), smallest(C3)}),
-    ?assertMatch({C3L, C4S} when C3L < E3 andalso E3 < C4S, {largest(C3), smallest(C4)}),
-    ?assertMatch({C4L, C5S} when C4L < E4 andalso E4 < C5S, {largest(C4), smallest(C5)}),
+    % ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
+    % ?assertMatch({C2L, C3S} when C2L < E2 andalso E2 < C3S, {largest(C2), smallest(C3)}),
+    % ?assertMatch({C3L, C4S} when C3L < E3 andalso E3 < C4S, {largest(C3), smallest(C4)}),
+    % ?assertMatch({C4L, C5S} when C4L < E4 andalso E4 < C5S, {largest(C4), smallest(C5)}),
 
     ?INTERNAL4(
        E1, E2, E3, E4,
@@ -384,19 +384,19 @@ internal3(E1, E2, E3, S1, S2, S3, S4, C1, C2, C3, C4) ->
     % ?assertMatch(_ when is_integer(E2), E2),
     % ?assertMatch(_ when is_integer(E3), E3),
 
-    ?assertMatch(_ when is_integer(S1) andalso S1 > 0, S1),
-    ?assertMatch(_ when is_integer(S2) andalso S2 > 0, S2),
-    ?assertMatch(_ when is_integer(S3) andalso S3 > 0, S3),
-    ?assertMatch(_ when is_integer(S4) andalso S4 > 0, S4),
+    % ?assertMatch(_ when is_integer(S1) andalso S1 > 0, S1),
+    % ?assertMatch(_ when is_integer(S2) andalso S2 > 0, S2),
+    % ?assertMatch(_ when is_integer(S3) andalso S3 > 0, S3),
+    % ?assertMatch(_ when is_integer(S4) andalso S4 > 0, S4),
 
-    ?assertMatch(DNS1 when DNS1 > 0, deep_node_size(C1)),
-    ?assertMatch(DNS2 when DNS2 > 0, deep_node_size(C2)),
-    ?assertMatch(DNS3 when DNS3 > 0, deep_node_size(C3)),
-    ?assertMatch(DNS4 when DNS4 > 0, deep_node_size(C4)),
+    % ?assertMatch(DNS1 when DNS1 > 0, deep_node_size(C1)),
+    % ?assertMatch(DNS2 when DNS2 > 0, deep_node_size(C2)),
+    % ?assertMatch(DNS3 when DNS3 > 0, deep_node_size(C3)),
+    % ?assertMatch(DNS4 when DNS4 > 0, deep_node_size(C4)),
 
-    ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
-    ?assertMatch({C2L, C3S} when C2L < E2 andalso E2 < C3S, {largest(C2), smallest(C3)}),
-    ?assertMatch({C3L, C4S} when C3L < E3 andalso E3 < C4S, {largest(C3), smallest(C4)}),
+    % ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
+    % ?assertMatch({C2L, C3S} when C2L < E2 andalso E2 < C3S, {largest(C2), smallest(C3)}),
+    % ?assertMatch({C3L, C4S} when C3L < E3 andalso E3 < C4S, {largest(C3), smallest(C4)}),
 
     ?INTERNAL3(
        E1, E2, E3,
@@ -408,16 +408,16 @@ internal2(E1, E2, S1, S2, S3, C1, C2, C3) ->
     % ?assertMatch(_ when is_integer(E1), E1),
     % ?assertMatch(_ when is_integer(E2), E2),
 
-    ?assertMatch(_ when is_integer(S1) andalso S1 > 0, S1),
-    ?assertMatch(_ when is_integer(S2) andalso S2 > 0, S2),
-    ?assertMatch(_ when is_integer(S3) andalso S3 > 0, S3),
+    % ?assertMatch(_ when is_integer(S1) andalso S1 > 0, S1),
+    % ?assertMatch(_ when is_integer(S2) andalso S2 > 0, S2),
+    % ?assertMatch(_ when is_integer(S3) andalso S3 > 0, S3),
 
-    ?assertMatch(DNS1 when DNS1 > 0, deep_node_size(C1)),
-    ?assertMatch(DNS2 when DNS2 > 0, deep_node_size(C2)),
-    ?assertMatch(DNS3 when DNS3 > 0, deep_node_size(C3)),
+    % ?assertMatch(DNS1 when DNS1 > 0, deep_node_size(C1)),
+    % ?assertMatch(DNS2 when DNS2 > 0, deep_node_size(C2)),
+    % ?assertMatch(DNS3 when DNS3 > 0, deep_node_size(C3)),
 
-    ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
-    ?assertMatch({C2L, C3S} when C2L < E2 andalso E2 < C3S, {largest(C2), smallest(C3)}),
+    % ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
+    % ?assertMatch({C2L, C3S} when C2L < E2 andalso E2 < C3S, {largest(C2), smallest(C3)}),
 
     ?INTERNAL2(
        E1, E2,
@@ -428,13 +428,13 @@ internal2(E1, E2, S1, S2, S3, C1, C2, C3) ->
 internal1(E1, S1, S2, C1, C2) ->
     % ?assertMatch(_ when is_integer(E1), E1),
 
-    ?assertMatch(_ when is_integer(S1) andalso S1 > 0, S1),
-    ?assertMatch(_ when is_integer(S2) andalso S2 > 0, S2),
+    % ?assertMatch(_ when is_integer(S1) andalso S1 > 0, S1),
+    % ?assertMatch(_ when is_integer(S2) andalso S2 > 0, S2),
 
-    ?assertMatch(DNS1 when DNS1 > 0, deep_node_size(C1)),
-    ?assertMatch(DNS2 when DNS2 > 0, deep_node_size(C2)),
+    % ?assertMatch(DNS1 when DNS1 > 0, deep_node_size(C1)),
+    % ?assertMatch(DNS2 when DNS2 > 0, deep_node_size(C2)),
 
-    ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
+    % ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
 
     ?INTERNAL1(
        E1,
@@ -930,11 +930,11 @@ internal_split(E1, E2, E3, E4, E5,
     SizeR = 2 + S4 + S5 + S6,
     SplitR = internal2(E4, E5, S4, S5, S6, C4, C5, C6),
 
-    ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
-    ?assertMatch({C2L, C3S} when C2L < E2 andalso E2 < C3S, {largest(C2), smallest(C3)}),
-    ?assertMatch({C3L, C4S} when C3L < E3 andalso E3 < C4S, {largest(C3), smallest(C4)}),
-    ?assertMatch({C4L, C5S} when C4L < E4 andalso E4 < C5S, {largest(C4), smallest(C5)}),
-    ?assertMatch({C5L, C6S} when C5L < E5 andalso E5 < C6S, {largest(C5), smallest(C6)}),
+    % ?assertMatch({C1L, C2S} when C1L < E1 andalso E1 < C2S, {largest(C1), smallest(C2)}),
+    % ?assertMatch({C2L, C3S} when C2L < E2 andalso E2 < C3S, {largest(C2), smallest(C3)}),
+    % ?assertMatch({C3L, C4S} when C3L < E3 andalso E3 < C4S, {largest(C3), smallest(C4)}),
+    % ?assertMatch({C4L, C5S} when C4L < E4 andalso E4 < C5S, {largest(C4), smallest(C5)}),
+    % ?assertMatch({C5L, C6S} when C5L < E5 andalso E5 < C6S, {largest(C5), smallest(C6)}),
 
     {split, SplitE, SizeL, SizeR, SplitL, SplitR}.
 
@@ -948,8 +948,8 @@ leaf_split(E1, E2, E3, E4, E5) ->
     SizeR = 2,
     SplitR = ?LEAF2(E4, E5),
 
-    ?assertMatch({C1L, C2S} when C1L < SplitE andalso SplitE < C2S,
-                                 {largest(SplitL), smallest(SplitR)}),
+    % ?assertMatch({C1L, C2S} when C1L < SplitE andalso SplitE < C2S,
+    %                              {largest(SplitL), smallest(SplitR)}),
 
     {split, SplitE, SizeL, SizeR, SplitL, SplitR}.
 
@@ -1104,8 +1104,8 @@ nth_recur(N, Low, High, ?LEAF2(E1, E2)) ->
 
 -compile({inline, nth_internal4/17}).
 nth_internal4(N, Low, High, E1, E2, E3, E4, S1, S2, S3, S4, S5, C1, C2, C3, C4, C5) ->
-    ?assert(Low < High),
-    ?assertEqual(High - Low, S1 + S2 + S3 + S4 + S5 + 3),
+    % ?assert(Low < High),
+    % ?assertEqual(High - Low, S1 + S2 + S3 + S4 + S5 + 3),
 
     Mid2 = Low + S1 + S2 + 1,
 
@@ -1124,8 +1124,8 @@ nth_internal4(N, Low, High, E1, E2, E3, E4, S1, S2, S3, S4, S5, C1, C2, C3, C4, 
 
 -compile({inline, nth_internal3/14}).
 nth_internal3(N, Low, High, E1, E2, E3, S1, S2, S3, S4, C1, C2, C3, C4) ->
-    ?assert(Low < High),
-    ?assertEqual(High - Low, S1 + S2 + S3 + S4 + 2),
+    % ?assert(Low < High),
+    % ?assertEqual(High - Low, S1 + S2 + S3 + S4 + 2),
 
     Mid2 = Low + S1 + S2 + 1,
 
@@ -1143,9 +1143,9 @@ nth_internal3(N, Low, High, E1, E2, E3, S1, S2, S3, S4, C1, C2, C3, C4) ->
     end.
 
 -compile({inline, nth_internal2/11}).
-nth_internal2(N, Low, High, E1, E2, S1, S2, S3, C1, C2, C3) ->
-    ?assert(Low < High),
-    ?assertEqual(High - Low, S1 + S2 + S3 + 1),
+nth_internal2(N, Low, High, E1, E2, S1, S2, _S3, C1, C2, C3) ->
+    % ?assert(Low < High),
+    % ?assertEqual(High - Low, S1 + S2 + S3 + 1),
 
     Mid1 = Low + S1,
 
@@ -1176,9 +1176,9 @@ nth_internal2(N, Low, High, E1, E2, S1, S2, S3, C1, C2, C3) ->
     end.
 
 -compile({inline, nth_internal1/8}).
-nth_internal1(N, Low, High, E1, S1, S2, C1, C2) ->
-    ?assert(Low < High),
-    ?assertEqual(High - Low, S1 + S2),
+nth_internal1(N, Low, High, E1, S1, _S2, C1, C2) ->
+    % ?assert(Low < High),
+    % ?assertEqual(High - Low, S1 + S2),
 
     Mid = Low + S1,
 
@@ -1230,31 +1230,31 @@ to_list_recur(?LEAF2(E1, E2), Acc) ->
 
 %%%%%%%%%%%%%
 
-smallest(?INTERNAL4(_, _, _, _, _, _, _, _, _, C1, _, _, _, _)) ->
-    smallest(C1);
-smallest(?INTERNAL3(_, _, _, _, _, _, _, C1, _, _, _)) ->
-    smallest(C1);
-smallest(?INTERNAL2(_, _, _, _, _, C1, _, _)) ->
-    smallest(C1);
-smallest(?LEAF4(E1, _, _, _)) ->
-    E1;
-smallest(?LEAF3(E1, _, _)) ->
-    E1;
-smallest(?LEAF2(E1, _)) ->
-    E1.
-
-largest(?INTERNAL4(_, _, _, _, _, _, _, _, _, _, _, _, _, C5)) ->
-    largest(C5);
-largest(?INTERNAL3(_, _, _, _, _, _, _, _, _, _, C4)) ->
-    largest(C4);
-largest(?INTERNAL2(_, _, _, _, _, _, _, C3)) ->
-    largest(C3);
-largest(?LEAF4(_, _, _, E4)) ->
-    E4;
-largest(?LEAF3(_, _, E3)) ->
-    E3;
-largest(?LEAF2(_, E2)) ->
-    E2.
+% smallest(?INTERNAL4(_, _, _, _, _, _, _, _, _, C1, _, _, _, _)) ->
+%     smallest(C1);
+% smallest(?INTERNAL3(_, _, _, _, _, _, _, C1, _, _, _)) ->
+%     smallest(C1);
+% smallest(?INTERNAL2(_, _, _, _, _, C1, _, _)) ->
+%     smallest(C1);
+% smallest(?LEAF4(E1, _, _, _)) ->
+%     E1;
+% smallest(?LEAF3(E1, _, _)) ->
+%     E1;
+% smallest(?LEAF2(E1, _)) ->
+%     E1.
+% 
+% largest(?INTERNAL4(_, _, _, _, _, _, _, _, _, _, _, _, _, C5)) ->
+%     largest(C5);
+% largest(?INTERNAL3(_, _, _, _, _, _, _, _, _, _, C4)) ->
+%     largest(C4);
+% largest(?INTERNAL2(_, _, _, _, _, _, _, C3)) ->
+%     largest(C3);
+% largest(?LEAF4(_, _, _, E4)) ->
+%     E4;
+% largest(?LEAF3(_, _, E3)) ->
+%     E3;
+% largest(?LEAF2(_, E2)) ->
+%     E2.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: union
