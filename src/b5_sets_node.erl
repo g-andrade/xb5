@@ -22,7 +22,7 @@
     test_fun/1,
     enter/2,
     insert/2,
-    is_member/2,
+    is_element/2,
     new/0,
     nth/2,
     size/1,
@@ -295,15 +295,15 @@ insert(Element, Node) ->
             UpdatedNode
     end.
 
--spec is_member(Element, t(Element)) -> boolean().
-is_member(Element, ?INTERNAL1(E1, _, _, C1, C2)) ->
-    is_member_internal1(Element, E1, C1, C2);
-is_member(Element, ?LEAF1(E1)) ->
+-spec is_element(Element, t(Element)) -> boolean().
+is_element(Element, ?INTERNAL1(E1, _, _, C1, C2)) ->
+    is_element_internal1(Element, E1, C1, C2);
+is_element(Element, ?LEAF1(E1)) ->
     Element == E1;
-is_member(_, ?LEAF0) ->
+is_element(_, ?LEAF0) ->
     false;
-is_member(Element, Node) ->
-    is_member_recur(Element, Node).
+is_element(Element, Node) ->
+    is_element_recur(Element, Node).
 
 new() ->
     ?LEAF0.
@@ -973,34 +973,34 @@ deep_node_size(?LEAF3(_, _, _)) -> 3;
 deep_node_size(?LEAF2(_, _)) -> 2.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: is_member
+%% Internal Function Definitions: is_element
 %% ------------------------------------------------------------------
 
-is_member_recur(Element, ?INTERNAL4(E1, E2, E3, E4, _, _, _, _, _, C1, C2, C3, C4, C5)) ->
+is_element_recur(Element, ?INTERNAL4(E1, E2, E3, E4, _, _, _, _, _, C1, C2, C3, C4, C5)) ->
     if
         Element > E2 ->
-            is_member_internal2(Element, E3, E4, C3, C4, C5);
+            is_element_internal2(Element, E3, E4, C3, C4, C5);
 
         Element < E2 ->
-            is_member_internal1(Element, E1, C1, C2);
+            is_element_internal1(Element, E1, C1, C2);
 
         true ->
             true
     end;
-is_member_recur(Element, ?INTERNAL3(E1, E2, E3, _, _, _, _, C1, C2, C3, C4)) ->
+is_element_recur(Element, ?INTERNAL3(E1, E2, E3, _, _, _, _, C1, C2, C3, C4)) ->
     if
         Element > E2 ->
-            is_member_internal1(Element, E3, C3, C4);
+            is_element_internal1(Element, E3, C3, C4);
 
         Element < E2 ->
-            is_member_internal1(Element, E1, C1, C2);
+            is_element_internal1(Element, E1, C1, C2);
 
         true ->
             true
     end;
-is_member_recur(Element, ?INTERNAL2(E1, E2, _, _, _, C1, C2, C3)) ->
-    is_member_internal2(Element, E1, E2, C1, C2, C3);
-is_member_recur(Element, ?LEAF4(E1, E2, E3, E4)) ->
+is_element_recur(Element, ?INTERNAL2(E1, E2, _, _, _, C1, C2, C3)) ->
+    is_element_internal2(Element, E1, E2, C1, C2, C3);
+is_element_recur(Element, ?LEAF4(E1, E2, E3, E4)) ->
     if
         Element > E2 ->
             Element == E3 orelse Element == E4;
@@ -1011,7 +1011,7 @@ is_member_recur(Element, ?LEAF4(E1, E2, E3, E4)) ->
         true ->
             true
     end;
-is_member_recur(Element, ?LEAF3(E1, E2, E3)) ->
+is_element_recur(Element, ?LEAF3(E1, E2, E3)) ->
     if
         Element > E2 ->
             Element == E3;
@@ -1022,30 +1022,30 @@ is_member_recur(Element, ?LEAF3(E1, E2, E3)) ->
         true ->
             true
     end;
-is_member_recur(Element, ?LEAF2(E1, E2)) ->
+is_element_recur(Element, ?LEAF2(E1, E2)) ->
     Element == E1 orelse Element == E2.
 
--compile({inline, [is_member_internal2/6]}).
-is_member_internal2(Element, E1, E2, C1, C2, C3) ->
+-compile({inline, [is_element_internal2/6]}).
+is_element_internal2(Element, E1, E2, C1, C2, C3) ->
     if
         Element > E1 ->
-            is_member_internal1(Element, E2, C2, C3);
+            is_element_internal1(Element, E2, C2, C3);
 
         Element < E1 ->
-            is_member_recur(Element, C1);
+            is_element_recur(Element, C1);
 
         true ->
             true
     end.
 
--compile({inline, [is_member_internal1/4]}).
-is_member_internal1(Element, E1, C1, C2) ->
+-compile({inline, [is_element_internal1/4]}).
+is_element_internal1(Element, E1, C1, C2) ->
     if
         Element < E1 ->
-            is_member_recur(Element, C1);
+            is_element_recur(Element, C1);
 
         Element > E1 ->
-            is_member_recur(Element, C2);
+            is_element_recur(Element, C2);
 
         true ->
             true

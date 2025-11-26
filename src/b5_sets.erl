@@ -8,6 +8,7 @@
     empty/0,
     from_list/1,
     insert/2,
+    is_element/2,
     new/0,
     to_list/1,
     union/2
@@ -40,6 +41,9 @@ from_list(List) ->
 
 insert(Key, Set) ->
     b5_sets_node:insert(Key, Set).
+
+is_element(Key, Set) ->
+    b5_sets_node:is_element(Key, Set).
 
 new() ->
     b5_sets_node:new().
