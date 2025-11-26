@@ -1070,35 +1070,38 @@ nth_recur(N, Low, High, ?INTERNAL2(E1, E2, S1, S2, S3, C1, C2, C3)) ->
     nth_internal2(N, Low, High, E1, E2, S1, S2, S3, C1, C2, C3);
 nth_recur(N, Low, High, ?LEAF4(E1, E2, E3, E4)) ->
     if
-        N == Low ->
+        N =:= Low ->
             E1;
 
-        N == High ->
+        N =:= High ->
             E4;
 
-        N == High - 1 ->
+        N =:= High - 1 ->
             E3;
 
-        N == Low + 1 ->
+        % N == Low + 1 ->
+        true ->
             E2
     end;
 nth_recur(N, Low, High, ?LEAF3(E1, E2, E3)) ->
     if
-        N == Low ->
+        N =:= Low ->
             E1;
 
-        N == High ->
+        N =:= High ->
             E3;
 
-        N == Low + 1 ->
+        % N == Low + 1 ->
+        true ->
             E2
     end;
-nth_recur(N, Low, High, ?LEAF2(E1, E2)) ->
+nth_recur(N, Low, _, ?LEAF2(E1, E2)) ->
     if
-        N == Low ->
+        N =:= Low ->
             E1;
 
-        N == High ->
+        % N == High ->
+        true ->
             E2
     end.
 
@@ -1143,7 +1146,7 @@ nth_internal3(N, Low, High, E1, E2, E3, S1, S2, S3, S4, C1, C2, C3, C4) ->
     end.
 
 -compile({inline, nth_internal2/11}).
-nth_internal2(N, Low, High, E1, E2, S1, S2, _S3, C1, C2, C3) ->
+nth_internal2(N, Low, High, E1, E2, S1, S2, _, C1, C2, C3) ->
     % ?assert(Low < High),
     % ?assertEqual(High - Low, S1 + S2 + S3 + 1),
 
@@ -1176,7 +1179,7 @@ nth_internal2(N, Low, High, E1, E2, S1, S2, _S3, C1, C2, C3) ->
     end.
 
 -compile({inline, nth_internal1/8}).
-nth_internal1(N, Low, High, E1, S1, _S2, C1, C2) ->
+nth_internal1(N, Low, High, E1, S1, _, C1, C2) ->
     % ?assert(Low < High),
     % ?assertEqual(High - Low, S1 + S2),
 
