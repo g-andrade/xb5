@@ -10,6 +10,7 @@
     insert/2,
     is_element/2,
     new/0,
+    nth/2,
     to_list/1,
     union/2
 ]).
@@ -47,6 +48,9 @@ is_element(Key, Set) ->
 
 new() ->
     b5_sets_node:new().
+
+nth(N, Set) ->
+    b5_sets_node:nth(N, Set).
 
 to_list(Set) ->
     b5_sets_node:to_list(Set).
