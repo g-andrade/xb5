@@ -261,6 +261,7 @@
 -opaque iter(Key, Value) :: forward_iter(Key, Value) | reverse_iter(Key, Value).
 -export_type([iter/2]).
 
+% FIXME remove default value, it messes up with Dialyzer
 -record(b5_trees_forward_iter, {steps :: [iterator_step(_, _)]}).
 -type forward_iter(Key, Value) :: #b5_trees_forward_iter{steps :: [iterator_step(Key, Value)]}.
 
