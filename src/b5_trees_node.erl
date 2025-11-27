@@ -831,6 +831,8 @@ insert_recur(Key, ValueEval, ValueWrap, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
 insert_recur(Key, ValueEval, ValueWrap, ?LEAF2(K1, K2, V1, V2)) ->
     insert_leaf2(Key, ValueEval, ValueWrap, K1, K2, V1, V2).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 -compile({inline, [insert_internal4/13]}).
 insert_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     if
@@ -839,104 +841,10 @@ insert_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, 
                 Key < K4 ->
                     if
                         Key > K3 ->
-                            case insert_recur(Key, ValueEval, ValueWrap, C4) of
-                                {split, SplitK, SplitV, SplitL, SplitR} ->
-                                    {V1, V2, V3, V4} = Values,
-                                    internal_split(
-                                        K1,
-                                        K2,
-                                        K3,
-                                        SplitK,
-                                        K4,
-                                        V1,
-                                        V2,
-                                        V3,
-                                        SplitV,
-                                        V4,
-                                        C1,
-                                        C2,
-                                        C3,
-                                        SplitL,
-                                        SplitR,
-                                        C5
-                                    );
-                                UpdatedC4 ->
-                                    ?INTERNAL4(
-                                        K1,
-                                        K2,
-                                        K3,
-                                        K4,
-                                        Values,
-                                        C1,
-                                        C2,
-                                        C3,
-                                        UpdatedC4,
-                                        C5
-                                    )
-                            end;
-                        Key < K3 ->
-                            case insert_recur(Key, ValueEval, ValueWrap, C3) of
-                                {split, SplitK, SplitV, SplitL, SplitR} ->
-                                    {V1, V2, V3, V4} = Values,
-                                    internal_split(
-                                        K1,
-                                        K2,
-                                        SplitK,
-                                        K3,
-                                        K4,
-                                        V1,
-                                        V2,
-                                        SplitV,
-                                        V3,
-                                        V4,
-                                        C1,
-                                        C2,
-                                        SplitL,
-                                        SplitR,
-                                        C4,
-                                        C5
-                                    );
-                                UpdatedC3 ->
-                                    ?INTERNAL4(
-                                        K1,
-                                        K2,
-                                        K3,
-                                        K4,
-                                        Values,
-                                        C1,
-                                        C2,
-                                        UpdatedC3,
-                                        C4,
-                                        C5
-                                    )
-                            end;
-                        true ->
-                            error_key_exists(Key)
-                    end;
-                Key > K4 ->
-                    case insert_recur(Key, ValueEval, ValueWrap, C5) of
-                        {split, SplitK, SplitV, SplitL, SplitR} ->
-                            {V1, V2, V3, V4} = Values,
-                            internal_split(
-                                K1,
-                                K2,
-                                K3,
-                                K4,
-                                SplitK,
-                                V1,
-                                V2,
-                                V3,
-                                V4,
-                                SplitV,
-                                C1,
-                                C2,
-                                C3,
-                                C4,
-                                SplitL,
-                                SplitR
-                            );
-                        UpdatedC5 ->
-                            ?INTERNAL4(
+                            insert_internal4_child4(
+                                Key,
+                                ValueEval,
+                                ValueWrap,
                                 K1,
                                 K2,
                                 K3,
@@ -946,92 +854,242 @@ insert_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, 
                                 C2,
                                 C3,
                                 C4,
-                                UpdatedC5
-                            )
+                                C5
+                            );
+                        Key < K3 ->
+                            insert_internal4_child3(
+                                Key,
+                                ValueEval,
+                                ValueWrap,
+                                K1,
+                                K2,
+                                K3,
+                                K4,
+                                Values,
+                                C1,
+                                C2,
+                                C3,
+                                C4,
+                                C5
+                            );
+                        true ->
+                            error_key_exists(Key)
                     end;
+                Key > K4 ->
+                    insert_internal4_child5(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
+                    );
                 true ->
                     error_key_exists(Key)
             end;
         Key < K2 ->
             if
                 Key > K1 ->
-                    case insert_recur(Key, ValueEval, ValueWrap, C2) of
-                        {split, SplitK, SplitV, SplitL, SplitR} ->
-                            {V1, V2, V3, V4} = Values,
-                            internal_split(
-                                K1,
-                                SplitK,
-                                K2,
-                                K3,
-                                K4,
-                                V1,
-                                SplitV,
-                                V2,
-                                V3,
-                                V4,
-                                C1,
-                                SplitL,
-                                SplitR,
-                                C3,
-                                C4,
-                                C5
-                            );
-                        UpdatedC2 ->
-                            ?INTERNAL4(
-                                K1,
-                                K2,
-                                K3,
-                                K4,
-                                Values,
-                                C1,
-                                UpdatedC2,
-                                C3,
-                                C4,
-                                C5
-                            )
-                    end;
+                    insert_internal4_child2(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
+                    );
                 Key < K1 ->
-                    case insert_recur(Key, ValueEval, ValueWrap, C1) of
-                        {split, SplitK, SplitV, SplitL, SplitR} ->
-                            {V1, V2, V3, V4} = Values,
-                            internal_split(
-                                SplitK,
-                                K1,
-                                K2,
-                                K3,
-                                K4,
-                                SplitV,
-                                V1,
-                                V2,
-                                V3,
-                                V4,
-                                SplitL,
-                                SplitR,
-                                C2,
-                                C3,
-                                C4,
-                                C5
-                            );
-                        UpdatedC1 ->
-                            ?INTERNAL4(
-                                K1,
-                                K2,
-                                K3,
-                                K4,
-                                Values,
-                                UpdatedC1,
-                                C2,
-                                C3,
-                                C4,
-                                C5
-                            )
-                    end;
+                    insert_internal4_child1(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
+                    );
                 true ->
                     error_key_exists(Key)
             end;
         true ->
             error_key_exists(Key)
     end.
+
+-compile({inline, [insert_internal4_child1/13]}).
+insert_internal4_child1(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C1) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            {V1, V2, V3, V4} = Values,
+            internal_split(
+                SplitK,
+                K1,
+                K2,
+                K3,
+                K4,
+                SplitV,
+                V1,
+                V2,
+                V3,
+                V4,
+                SplitL,
+                SplitR,
+                C2,
+                C3,
+                C4,
+                C5
+            );
+        UpdatedC1 ->
+            ?INTERNAL4(
+                K1,
+                K2,
+                K3,
+                K4,
+                Values,
+                UpdatedC1,
+                C2,
+                C3,
+                C4,
+                C5
+            )
+    end.
+
+-compile({inline, [insert_internal4_child2/13]}).
+insert_internal4_child2(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C2) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            {V1, V2, V3, V4} = Values,
+            internal_split(
+                K1,
+                SplitK,
+                K2,
+                K3,
+                K4,
+                V1,
+                SplitV,
+                V2,
+                V3,
+                V4,
+                C1,
+                SplitL,
+                SplitR,
+                C3,
+                C4,
+                C5
+            );
+        UpdatedC2 ->
+            ?INTERNAL4(
+                K1,
+                K2,
+                K3,
+                K4,
+                Values,
+                C1,
+                UpdatedC2,
+                C3,
+                C4,
+                C5
+            )
+    end.
+
+-compile({inline, [insert_internal4_child3/13]}).
+insert_internal4_child3(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C3) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            {V1, V2, V3, V4} = Values,
+            internal_split(
+                K1,
+                K2,
+                SplitK,
+                K3,
+                K4,
+                V1,
+                V2,
+                SplitV,
+                V3,
+                V4,
+                C1,
+                C2,
+                SplitL,
+                SplitR,
+                C4,
+                C5
+            );
+        UpdatedC3 ->
+            ?INTERNAL4(
+                K1,
+                K2,
+                K3,
+                K4,
+                Values,
+                C1,
+                C2,
+                UpdatedC3,
+                C4,
+                C5
+            )
+    end.
+
+-compile({inline, [insert_internal4_child4/13]}).
+insert_internal4_child4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C4) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            {V1, V2, V3, V4} = Values,
+            internal_split(
+                K1,
+                K2,
+                K3,
+                SplitK,
+                K4,
+                V1,
+                V2,
+                V3,
+                SplitV,
+                V4,
+                C1,
+                C2,
+                C3,
+                SplitL,
+                SplitR,
+                C5
+            );
+        UpdatedC4 ->
+            ?INTERNAL4(
+                K1,
+                K2,
+                K3,
+                K4,
+                Values,
+                C1,
+                C2,
+                C3,
+                UpdatedC4,
+                C5
+            )
+    end.
+
+-compile({inline, [insert_internal4_child5/13]}).
+insert_internal4_child5(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C5) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            {V1, V2, V3, V4} = Values,
+            internal_split(
+                K1,
+                K2,
+                K3,
+                K4,
+                SplitK,
+                V1,
+                V2,
+                V3,
+                V4,
+                SplitV,
+                C1,
+                C2,
+                C3,
+                C4,
+                SplitL,
+                SplitR
+            );
+        UpdatedC5 ->
+            ?INTERNAL4(
+                K1,
+                K2,
+                K3,
+                K4,
+                Values,
+                C1,
+                C2,
+                C3,
+                C4,
+                UpdatedC5
+            )
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [insert_internal3/11]}).
 insert_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
@@ -1039,92 +1097,118 @@ insert_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) 
         Key > K2 ->
             if
                 Key < K3 ->
-                    case insert_recur(Key, ValueEval, ValueWrap, C3) of
-                        {split, SplitK, SplitV, SplitL, SplitR} ->
-                            {V1, V2, V3} = Values,
-                            ?INTERNAL4(
-                                K1,
-                                K2,
-                                SplitK,
-                                K3,
-                                {V1, V2, SplitV, V3},
-                                C1,
-                                C2,
-                                SplitL,
-                                SplitR,
-                                C4
-                            );
-                        UpdatedC3 ->
-                            ?INTERNAL3(K1, K2, K3, Values, C1, C2, UpdatedC3, C4)
-                    end;
+                    insert_internal3_child3(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
+                    );
                 Key > K3 ->
-                    case insert_recur(Key, ValueEval, ValueWrap, C4) of
-                        {split, SplitK, SplitV, SplitL, SplitR} ->
-                            {V1, V2, V3} = Values,
-                            ?INTERNAL4(
-                                K1,
-                                K2,
-                                K3,
-                                SplitK,
-                                {V1, V2, V3, SplitV},
-                                C1,
-                                C2,
-                                C3,
-                                SplitL,
-                                SplitR
-                            );
-                        UpdatedC4 ->
-                            ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, UpdatedC4)
-                    end;
+                    insert_internal3_child4(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
+                    );
                 true ->
                     error_key_exists(Key)
             end;
         Key < K2 ->
             if
                 Key > K1 ->
-                    case insert_recur(Key, ValueEval, ValueWrap, C2) of
-                        {split, SplitK, SplitV, SplitL, SplitR} ->
-                            {V1, V2, V3} = Values,
-                            ?INTERNAL4(
-                                K1,
-                                SplitK,
-                                K2,
-                                K3,
-                                {V1, SplitV, V2, V3},
-                                C1,
-                                SplitL,
-                                SplitR,
-                                C3,
-                                C4
-                            );
-                        UpdatedC2 ->
-                            ?INTERNAL3(K1, K2, K3, Values, C1, UpdatedC2, C3, C4)
-                    end;
+                    insert_internal3_child2(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
+                    );
                 Key < K1 ->
-                    case insert_recur(Key, ValueEval, ValueWrap, C1) of
-                        {split, SplitK, SplitV, SplitL, SplitR} ->
-                            {V1, V2, V3} = Values,
-                            ?INTERNAL4(
-                                SplitK,
-                                K1,
-                                K2,
-                                K3,
-                                {SplitV, V1, V2, V3},
-                                SplitL,
-                                SplitR,
-                                C2,
-                                C3,
-                                C4
-                            );
-                        UpdatedC1 ->
-                            ?INTERNAL3(K1, K2, K3, Values, UpdatedC1, C2, C3, C4)
-                    end;
+                    insert_internal3_child1(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
+                    );
                 true ->
                     error_key_exists(Key)
             end;
         true ->
             error_key_exists(Key)
     end.
+
+-compile({inline, [insert_internal3_child1/11]}).
+insert_internal3_child1(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C1) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            {V1, V2, V3} = Values,
+            ?INTERNAL4(
+                SplitK,
+                K1,
+                K2,
+                K3,
+                {SplitV, V1, V2, V3},
+                SplitL,
+                SplitR,
+                C2,
+                C3,
+                C4
+            );
+        UpdatedC1 ->
+            ?INTERNAL3(K1, K2, K3, Values, UpdatedC1, C2, C3, C4)
+    end.
+
+-compile({inline, [insert_internal3_child2/11]}).
+insert_internal3_child2(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C2) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            {V1, V2, V3} = Values,
+            ?INTERNAL4(
+                K1,
+                SplitK,
+                K2,
+                K3,
+                {V1, SplitV, V2, V3},
+                C1,
+                SplitL,
+                SplitR,
+                C3,
+                C4
+            );
+        UpdatedC2 ->
+            ?INTERNAL3(K1, K2, K3, Values, C1, UpdatedC2, C3, C4)
+    end.
+
+-compile({inline, [insert_internal3_child3/11]}).
+insert_internal3_child3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C3) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            {V1, V2, V3} = Values,
+            ?INTERNAL4(
+                K1,
+                K2,
+                SplitK,
+                K3,
+                {V1, V2, SplitV, V3},
+                C1,
+                C2,
+                SplitL,
+                SplitR,
+                C4
+            );
+        UpdatedC3 ->
+            ?INTERNAL3(K1, K2, K3, Values, C1, C2, UpdatedC3, C4)
+    end.
+
+-compile({inline, [insert_internal3_child4/11]}).
+insert_internal3_child4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C4) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            {V1, V2, V3} = Values,
+            ?INTERNAL4(
+                K1,
+                K2,
+                K3,
+                SplitK,
+                {V1, V2, V3, SplitV},
+                C1,
+                C2,
+                C3,
+                SplitL,
+                SplitR
+            );
+        UpdatedC4 ->
+            ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, UpdatedC4)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [insert_internal2/9]}).
 insert_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
@@ -1132,107 +1216,131 @@ insert_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
         Key > K1 ->
             if
                 Key < K2 ->
-                    case insert_recur(Key, ValueEval, ValueWrap, C2) of
-                        {split, SplitK, SplitV, SplitL, SplitR} ->
-                            [V1 | V2] = Values,
-                            ?INTERNAL3(
-                                K1,
-                                SplitK,
-                                K2,
-                                {V1, SplitV, V2},
-                                C1,
-                                SplitL,
-                                SplitR,
-                                C3
-                            );
-                        UpdatedC2 ->
-                            ?INTERNAL2(K1, K2, Values, C1, UpdatedC2, C3)
-                    end;
+                    insert_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
                 Key > K2 ->
-                    case insert_recur(Key, ValueEval, ValueWrap, C3) of
-                        {split, SplitK, SplitV, SplitL, SplitR} ->
-                            [V1 | V2] = Values,
-                            ?INTERNAL3(
-                                K1,
-                                K2,
-                                SplitK,
-                                {V1, V2, SplitV},
-                                C1,
-                                C2,
-                                SplitL,
-                                SplitR
-                            );
-                        UpdatedC3 ->
-                            ?INTERNAL2(K1, K2, Values, C1, C2, UpdatedC3)
-                    end;
+                    insert_internal2_child3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
                 true ->
                     error_key_exists(Key)
             end;
         Key < K1 ->
-            case insert_recur(Key, ValueEval, ValueWrap, C1) of
-                {split, SplitK, SplitV, SplitL, SplitR} ->
-                    [V1 | V2] = Values,
-                    ?INTERNAL3(
-                        SplitK,
-                        K1,
-                        K2,
-                        {SplitV, V1, V2},
-                        SplitL,
-                        SplitR,
-                        C2,
-                        C3
-                    );
-                UpdatedC1 ->
-                    ?INTERNAL2(K1, K2, Values, UpdatedC1, C2, C3)
-            end;
+            insert_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
         true ->
             error_key_exists(Key)
     end.
+
+-compile({inline, [insert_internal2_child1/9]}).
+insert_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C1) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            [V1 | V2] = Values,
+            ?INTERNAL3(
+                SplitK,
+                K1,
+                K2,
+                {SplitV, V1, V2},
+                SplitL,
+                SplitR,
+                C2,
+                C3
+            );
+        UpdatedC1 ->
+            ?INTERNAL2(K1, K2, Values, UpdatedC1, C2, C3)
+    end.
+
+-compile({inline, [insert_internal2_child2/9]}).
+insert_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C2) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            [V1 | V2] = Values,
+            ?INTERNAL3(
+                K1,
+                SplitK,
+                K2,
+                {V1, SplitV, V2},
+                C1,
+                SplitL,
+                SplitR,
+                C3
+            );
+        UpdatedC2 ->
+            ?INTERNAL2(K1, K2, Values, C1, UpdatedC2, C3)
+    end.
+
+-compile({inline, [insert_internal2_child3/9]}).
+insert_internal2_child3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C3) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            [V1 | V2] = Values,
+            ?INTERNAL3(
+                K1,
+                K2,
+                SplitK,
+                {V1, V2, SplitV},
+                C1,
+                C2,
+                SplitL,
+                SplitR
+            );
+        UpdatedC3 ->
+            ?INTERNAL2(K1, K2, Values, C1, C2, UpdatedC3)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [insert_internal1/7]}).
 insert_internal1(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
     if
         Key < K1 ->
-            case insert_recur(Key, ValueEval, ValueWrap, C1) of
-                {split, SplitK, SplitV, SplitL, SplitR} ->
-                    ?INTERNAL2(
-                        SplitK,
-                        K1,
-                        [SplitV | V1],
-                        SplitL,
-                        SplitR,
-                        C2
-                    );
-                UpdatedC1 ->
-                    ?INTERNAL1(
-                        K1,
-                        V1,
-                        UpdatedC1,
-                        C2
-                    )
-            end;
+            insert_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2);
         Key > K1 ->
-            case insert_recur(Key, ValueEval, ValueWrap, C2) of
-                {split, SplitK, SplitV, SplitL, SplitR} ->
-                    ?INTERNAL2(
-                        K1,
-                        SplitK,
-                        [V1 | SplitV],
-                        C1,
-                        SplitL,
-                        SplitR
-                    );
-                UpdatedC2 ->
-                    ?INTERNAL1(
-                        K1,
-                        V1,
-                        C1,
-                        UpdatedC2
-                    )
-            end;
+            insert_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, C1, C2);
         true ->
             error_key_exists(Key)
     end.
+
+-compile({inline, [insert_internal1_child1/7]}).
+insert_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C1) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            ?INTERNAL2(
+                SplitK,
+                K1,
+                [SplitV | V1],
+                SplitL,
+                SplitR,
+                C2
+            );
+        UpdatedC1 ->
+            ?INTERNAL1(
+                K1,
+                V1,
+                UpdatedC1,
+                C2
+            )
+    end.
+
+-compile({inline, [insert_internal1_child2/7]}).
+insert_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
+    case insert_recur(Key, ValueEval, ValueWrap, C2) of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            ?INTERNAL2(
+                K1,
+                SplitK,
+                [V1 | SplitV],
+                C1,
+                SplitL,
+                SplitR
+            );
+        UpdatedC2 ->
+            ?INTERNAL1(
+                K1,
+                V1,
+                C1,
+                UpdatedC2
+            )
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [insert_leaf4/11]}).
 insert_leaf4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4) ->
@@ -1242,89 +1350,115 @@ insert_leaf4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4) ->
                 Key < K4 ->
                     if
                         Key > K3 ->
-                            Value = eval_insert_value(ValueEval, ValueWrap),
-                            leaf_split(
-                                K1,
-                                K2,
-                                K3,
-                                Key,
-                                K4,
-                                V1,
-                                V2,
-                                V3,
-                                Value,
-                                V4
+                            insert_leaf4_key4(
+                                Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4
                             );
                         Key < K3 ->
-                            Value = eval_insert_value(ValueEval, ValueWrap),
-                            leaf_split(
-                                K1,
-                                K2,
-                                Key,
-                                K3,
-                                K4,
-                                V1,
-                                V2,
-                                Value,
-                                V3,
-                                V4
+                            insert_leaf4_key3(
+                                Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4
                             );
                         true ->
                             error_key_exists(Key)
                     end;
                 Key > K4 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    leaf_split(
-                        K1,
-                        K2,
-                        K3,
-                        K4,
-                        Key,
-                        V1,
-                        V2,
-                        V3,
-                        V4,
-                        Value
-                    );
+                    insert_leaf4_key5(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4);
                 true ->
                     error_key_exists(Key)
             end;
         Key < K2 ->
             if
                 Key > K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    leaf_split(
-                        K1,
-                        Key,
-                        K2,
-                        K3,
-                        K4,
-                        V1,
-                        Value,
-                        V2,
-                        V3,
-                        V4
-                    );
+                    insert_leaf4_key2(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4);
                 Key < K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    leaf_split(
-                        Key,
-                        K1,
-                        K2,
-                        K3,
-                        K4,
-                        Value,
-                        V1,
-                        V2,
-                        V3,
-                        V4
-                    );
+                    insert_leaf4_key1(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4);
                 true ->
                     error_key_exists(Key)
             end;
         true ->
             error_key_exists(Key)
     end.
+
+-compile({inline, [insert_leaf4_key1/11]}).
+insert_leaf4_key1(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    leaf_split(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
+        Value,
+        V1,
+        V2,
+        V3,
+        V4
+    ).
+
+-compile({inline, [insert_leaf4_key2/11]}).
+insert_leaf4_key2(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    leaf_split(
+        K1,
+        Key,
+        K2,
+        K3,
+        K4,
+        V1,
+        Value,
+        V2,
+        V3,
+        V4
+    ).
+
+-compile({inline, [insert_leaf4_key3/11]}).
+insert_leaf4_key3(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    leaf_split(
+        K1,
+        K2,
+        Key,
+        K3,
+        K4,
+        V1,
+        V2,
+        Value,
+        V3,
+        V4
+    ).
+
+-compile({inline, [insert_leaf4_key4/11]}).
+insert_leaf4_key4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    leaf_split(
+        K1,
+        K2,
+        K3,
+        Key,
+        K4,
+        V1,
+        V2,
+        V3,
+        Value,
+        V4
+    ).
+
+-compile({inline, [insert_leaf4_key5/11]}).
+insert_leaf4_key5(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    leaf_split(
+        K1,
+        K2,
+        K3,
+        K4,
+        Key,
+        V1,
+        V2,
+        V3,
+        V4,
+        Value
+    ).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [insert_leaf3/9]}).
 insert_leaf3(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3) ->
@@ -1332,64 +1466,46 @@ insert_leaf3(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3) ->
         Key < K2 ->
             if
                 Key < K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?LEAF4(
-                        Key,
-                        K1,
-                        K2,
-                        K3,
-                        Value,
-                        V1,
-                        V2,
-                        V3
-                    );
+                    insert_leaf3_key1(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3);
                 Key > K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?LEAF4(
-                        K1,
-                        Key,
-                        K2,
-                        K3,
-                        V1,
-                        Value,
-                        V2,
-                        V3
-                    );
+                    insert_leaf3_key2(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3);
                 true ->
                     error_key_exists(Key)
             end;
         Key > K2 ->
             if
                 Key < K3 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?LEAF4(
-                        K1,
-                        K2,
-                        Key,
-                        K3,
-                        V1,
-                        V2,
-                        Value,
-                        V3
-                    );
+                    insert_leaf3_key3(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3);
                 Key > K3 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?LEAF4(
-                        K1,
-                        K2,
-                        K3,
-                        Key,
-                        V1,
-                        V2,
-                        V3,
-                        Value
-                    );
+                    insert_leaf3_key4(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3);
                 true ->
                     error_key_exists(Key)
             end;
         true ->
             error_key_exists(Key)
     end.
+
+-compile({inline, [insert_leaf3_key1/9]}).
+insert_leaf3_key1(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?LEAF4(Key, K1, K2, K3, Value, V1, V2, V3).
+
+-compile({inline, [insert_leaf3_key2/9]}).
+insert_leaf3_key2(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?LEAF4(K1, Key, K2, K3, V1, Value, V2, V3).
+
+-compile({inline, [insert_leaf3_key3/9]}).
+insert_leaf3_key3(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?LEAF4(K1, K2, Key, K3, V1, V2, Value, V3).
+
+-compile({inline, [insert_leaf3_key4/9]}).
+insert_leaf3_key4(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?LEAF4(K1, K2, K3, Key, V1, V2, V3, Value).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [insert_leaf2/7]}).
 insert_leaf2(Key, ValueEval, ValueWrap, K1, K2, V1, V2) ->
@@ -1397,64 +1513,57 @@ insert_leaf2(Key, ValueEval, ValueWrap, K1, K2, V1, V2) ->
         Key < K2 ->
             if
                 Key > K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?LEAF3(
-                        K1,
-                        Key,
-                        K2,
-                        V1,
-                        Value,
-                        V2
-                    );
+                    insert_leaf2_key2(Key, ValueEval, ValueWrap, K1, K2, V1, V2);
                 Key < K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?LEAF3(
-                        Key,
-                        K1,
-                        K2,
-                        Value,
-                        V1,
-                        V2
-                    );
+                    insert_leaf2_key1(Key, ValueEval, ValueWrap, K1, K2, V1, V2);
                 true ->
                     error_key_exists(Key)
             end;
         Key > K2 ->
-            Value = eval_insert_value(ValueEval, ValueWrap),
-            ?LEAF3(
-                K1,
-                K2,
-                Key,
-                V1,
-                V2,
-                Value
-            );
+            insert_leaf2_key3(Key, ValueEval, ValueWrap, K1, K2, V1, V2);
         true ->
             error_key_exists(Key)
     end.
+
+-compile({inline, [insert_leaf2_key1/7]}).
+insert_leaf2_key1(Key, ValueEval, ValueWrap, K1, K2, V1, V2) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?LEAF3(Key, K1, K2, Value, V1, V2).
+
+-compile({inline, [insert_leaf2_key2/7]}).
+insert_leaf2_key2(Key, ValueEval, ValueWrap, K1, K2, V1, V2) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?LEAF3(K1, Key, K2, V1, Value, V2).
+
+-compile({inline, [insert_leaf2_key3/7]}).
+insert_leaf2_key3(Key, ValueEval, ValueWrap, K1, K2, V1, V2) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?LEAF3(K1, K2, Key, V1, V2, Value).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [insert_leaf1/5]}).
 insert_leaf1(Key, ValueEval, ValueWrap, K1, V1) ->
     if
         Key < K1 ->
-            Value = eval_insert_value(ValueEval, ValueWrap),
-            ?LEAF2(
-                Key,
-                K1,
-                Value,
-                V1
-            );
+            insert_leaf1_key1(Key, ValueEval, ValueWrap, K1, V1);
         Key > K1 ->
-            Value = eval_insert_value(ValueEval, ValueWrap),
-            ?LEAF2(
-                K1,
-                Key,
-                V1,
-                Value
-            );
+            insert_leaf1_key2(Key, ValueEval, ValueWrap, K1, V1);
         true ->
             error_key_exists(Key)
     end.
+
+-compile({inline, [insert_leaf1_key1/5]}).
+insert_leaf1_key1(Key, ValueEval, ValueWrap, K1, V1) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?LEAF2(Key, K1, Value, V1).
+
+-compile({inline, [insert_leaf1_key2/5]}).
+insert_leaf1_key2(Key, ValueEval, ValueWrap, K1, V1) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?LEAF2(K1, Key, V1, Value).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -spec eval_insert_value(insertion_value_eval(), insertion_value_wrap(Value)) -> Value.
 eval_insert_value(eager, Value) -> Value;
