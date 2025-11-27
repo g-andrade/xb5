@@ -1569,6 +1569,7 @@ insert_leaf1_key2(Key, ValueEval, ValueWrap, K1, V1) ->
 eval_insert_value(eager, Value) -> Value;
 eval_insert_value(lazy, Fun) -> Fun().
 
+-compile({inline, internal_split/16}).
 -spec internal_split(
     K,
     K,
@@ -1594,6 +1595,7 @@ internal_split(K1, K2, K3, K4, K5, V1, V2, V3, V4, V5, C1, C2, C3, C4, C5, C6) -
     SplitR = ?INTERNAL2(K4, K5, [V4 | V5], C4, C5, C6),
     {split, SplitK, SplitV, SplitL, SplitR}.
 
+-compile({inline, leaf_split/10}).
 -spec leaf_split(
     K,
     K,
