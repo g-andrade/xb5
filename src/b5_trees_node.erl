@@ -1638,6 +1638,8 @@ update_recur(Key, ValueEval, ValueWrap, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
 update_recur(Key, ValueEval, ValueWrap, ?LEAF2(K1, K2, V1, V2)) ->
     update_leaf2(Key, ValueEval, ValueWrap, K1, K2, V1, V2).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 -compile({inline, [update_internal4/13]}).
 update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     if
@@ -1646,7 +1648,10 @@ update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, 
                 Key < K4 ->
                     if
                         Key > K3 ->
-                            ?INTERNAL4(
+                            update_internal4_child4(
+                                Key,
+                                ValueEval,
+                                ValueWrap,
                                 K1,
                                 K2,
                                 K3,
@@ -1655,11 +1660,14 @@ update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, 
                                 C1,
                                 C2,
                                 C3,
-                                update_recur(Key, ValueEval, ValueWrap, C4),
+                                C4,
                                 C5
                             );
                         Key < K3 ->
-                            ?INTERNAL4(
+                            update_internal4_child3(
+                                Key,
+                                ValueEval,
+                                ValueWrap,
                                 K1,
                                 K2,
                                 K3,
@@ -1667,115 +1675,189 @@ update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, 
                                 Values,
                                 C1,
                                 C2,
-                                update_recur(Key, ValueEval, ValueWrap, C3),
+                                C3,
                                 C4,
                                 C5
                             );
                         true ->
-                            {V1, V2, V3, V4} = Values,
-                            Value = eval_update_value(ValueEval, ValueWrap, V3),
-                            ?INTERNAL4(
-                                K1,
-                                K2,
-                                Key,
-                                K4,
-                                {V1, V2, Value, V4},
-                                C1,
-                                C2,
-                                C3,
-                                C4,
-                                C5
+                            update_internal4_key3(
+                                Key, ValueEval, ValueWrap, K1, K2, K4, Values, C1, C2, C3, C4, C5
                             )
                     end;
                 Key > K4 ->
-                    ?INTERNAL4(
-                        K1,
-                        K2,
-                        K3,
-                        K4,
-                        Values,
-                        C1,
-                        C2,
-                        C3,
-                        C4,
-                        update_recur(Key, ValueEval, ValueWrap, C5)
+                    update_internal4_child5(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
                     );
                 true ->
-                    {V1, V2, V3, V4} = Values,
-                    Value = eval_update_value(ValueEval, ValueWrap, V4),
-                    ?INTERNAL4(
-                        K1,
-                        K2,
-                        K3,
-                        Key,
-                        {V1, V2, V3, Value},
-                        C1,
-                        C2,
-                        C3,
-                        C4,
-                        C5
+                    update_internal4_key4(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, C5
                     )
             end;
         Key < K2 ->
             if
                 Key > K1 ->
-                    ?INTERNAL4(
-                        K1,
-                        K2,
-                        K3,
-                        K4,
-                        Values,
-                        C1,
-                        update_recur(Key, ValueEval, ValueWrap, C2),
-                        C3,
-                        C4,
-                        C5
+                    update_internal4_child2(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
                     );
                 Key < K1 ->
-                    ?INTERNAL4(
-                        K1,
-                        K2,
-                        K3,
-                        K4,
-                        Values,
-                        update_recur(Key, ValueEval, ValueWrap, C1),
-                        C2,
-                        C3,
-                        C4,
-                        C5
+                    update_internal4_child1(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
                     );
                 true ->
-                    {V1, V2, V3, V4} = Values,
-                    Value = eval_update_value(ValueEval, ValueWrap, V1),
-                    ?INTERNAL4(
-                        Key,
-                        K2,
-                        K3,
-                        K4,
-                        {Value, V2, V3, V4},
-                        C1,
-                        C2,
-                        C3,
-                        C4,
-                        C5
+                    update_internal4_key1(
+                        Key, ValueEval, ValueWrap, K2, K3, K4, Values, C1, C2, C3, C4, C5
                     )
             end;
         true ->
-            {V1, V2, V3, V4} = Values,
-            Value = eval_update_value(ValueEval, ValueWrap, V2),
-            ?INTERNAL4(
-                K1,
-                Key,
-                K3,
-                K4,
-                {V1, Value, V3, V4},
-                C1,
-                C2,
-                C3,
-                C4,
-                C5
-            )
+            update_internal4_key2(Key, ValueEval, ValueWrap, K1, K3, K4, Values, C1, C2, C3, C4, C5)
     end.
+
+-compile({inline, [update_internal4_child1/13]}).
+update_internal4_child1(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    ?INTERNAL4(
+        K1,
+        K2,
+        K3,
+        K4,
+        Values,
+        update_recur(Key, ValueEval, ValueWrap, C1),
+        C2,
+        C3,
+        C4,
+        C5
+    ).
+
+-compile({inline, [update_internal4_child2/13]}).
+update_internal4_child2(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    ?INTERNAL4(
+        K1,
+        K2,
+        K3,
+        K4,
+        Values,
+        C1,
+        update_recur(Key, ValueEval, ValueWrap, C2),
+        C3,
+        C4,
+        C5
+    ).
+
+-compile({inline, [update_internal4_child3/13]}).
+update_internal4_child3(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    ?INTERNAL4(
+        K1,
+        K2,
+        K3,
+        K4,
+        Values,
+        C1,
+        C2,
+        update_recur(Key, ValueEval, ValueWrap, C3),
+        C4,
+        C5
+    ).
+
+-compile({inline, [update_internal4_child4/13]}).
+update_internal4_child4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    ?INTERNAL4(
+        K1,
+        K2,
+        K3,
+        K4,
+        Values,
+        C1,
+        C2,
+        C3,
+        update_recur(Key, ValueEval, ValueWrap, C4),
+        C5
+    ).
+
+-compile({inline, [update_internal4_child5/13]}).
+update_internal4_child5(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    ?INTERNAL4(
+        K1,
+        K2,
+        K3,
+        K4,
+        Values,
+        C1,
+        C2,
+        C3,
+        C4,
+        update_recur(Key, ValueEval, ValueWrap, C5)
+    ).
+
+%%%
+
+-compile({inline, [update_internal4_key1/12]}).
+update_internal4_key1(Key, ValueEval, ValueWrap, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    {V1, V2, V3, V4} = Values,
+    Value = eval_update_value(ValueEval, ValueWrap, V1),
+    ?INTERNAL4(
+        Key,
+        K2,
+        K3,
+        K4,
+        {Value, V2, V3, V4},
+        C1,
+        C2,
+        C3,
+        C4,
+        C5
+    ).
+
+-compile({inline, [update_internal4_key2/12]}).
+update_internal4_key2(Key, ValueEval, ValueWrap, K1, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    {V1, V2, V3, V4} = Values,
+    Value = eval_update_value(ValueEval, ValueWrap, V2),
+    ?INTERNAL4(
+        K1,
+        Key,
+        K3,
+        K4,
+        {V1, Value, V3, V4},
+        C1,
+        C2,
+        C3,
+        C4,
+        C5
+    ).
+
+-compile({inline, [update_internal4_key3/12]}).
+update_internal4_key3(Key, ValueEval, ValueWrap, K1, K2, K4, Values, C1, C2, C3, C4, C5) ->
+    {V1, V2, V3, V4} = Values,
+    Value = eval_update_value(ValueEval, ValueWrap, V3),
+    ?INTERNAL4(
+        K1,
+        K2,
+        Key,
+        K4,
+        {V1, V2, Value, V4},
+        C1,
+        C2,
+        C3,
+        C4,
+        C5
+    ).
+
+-compile({inline, [update_internal4_key4/12]}).
+update_internal4_key4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, C5) ->
+    {V1, V2, V3, V4} = Values,
+    Value = eval_update_value(ValueEval, ValueWrap, V4),
+    ?INTERNAL4(
+        K1,
+        K2,
+        K3,
+        Key,
+        {V1, V2, V3, Value},
+        C1,
+        C2,
+        C3,
+        C4,
+        C5
+    ).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [update_internal3/11]}).
 update_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
@@ -1783,93 +1865,133 @@ update_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) 
         Key > K2 ->
             if
                 Key < K3 ->
-                    ?INTERNAL3(
-                        K1,
-                        K2,
-                        K3,
-                        Values,
-                        C1,
-                        C2,
-                        update_recur(Key, ValueEval, ValueWrap, C3),
-                        C4
+                    update_internal3_child3(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
                     );
                 Key > K3 ->
-                    ?INTERNAL3(
-                        K1,
-                        K2,
-                        K3,
-                        Values,
-                        C1,
-                        C2,
-                        C3,
-                        update_recur(Key, ValueEval, ValueWrap, C4)
+                    update_internal3_child4(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
                     );
                 true ->
-                    {V1, V2, V3} = Values,
-                    Value = eval_update_value(ValueEval, ValueWrap, V3),
-                    ?INTERNAL3(
-                        K1,
-                        K2,
-                        Key,
-                        {V1, V2, Value},
-                        C1,
-                        C2,
-                        C3,
-                        C4
-                    )
+                    update_internal3_key3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, C4)
             end;
         Key < K2 ->
             if
                 Key > K1 ->
-                    ?INTERNAL3(
-                        K1,
-                        K2,
-                        K3,
-                        Values,
-                        C1,
-                        update_recur(Key, ValueEval, ValueWrap, C2),
-                        C3,
-                        C4
+                    update_internal3_child2(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
                     );
                 Key < K1 ->
-                    ?INTERNAL3(
-                        K1,
-                        K2,
-                        K3,
-                        Values,
-                        update_recur(Key, ValueEval, ValueWrap, C1),
-                        C2,
-                        C3,
-                        C4
+                    update_internal3_child1(
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
                     );
                 true ->
-                    {V1, V2, V3} = Values,
-                    Value = eval_update_value(ValueEval, ValueWrap, V1),
-                    ?INTERNAL3(
-                        Key,
-                        K2,
-                        K3,
-                        {Value, V2, V3},
-                        C1,
-                        C2,
-                        C3,
-                        C4
-                    )
+                    update_internal3_key1(Key, ValueEval, ValueWrap, K2, K3, Values, C1, C2, C3, C4)
             end;
         true ->
-            {V1, V2, V3} = Values,
-            Value = eval_update_value(ValueEval, ValueWrap, V2),
-            ?INTERNAL3(
-                K1,
-                Key,
-                K3,
-                {V1, Value, V3},
-                C1,
-                C2,
-                C3,
-                C4
-            )
+            update_internal3_key2(Key, ValueEval, ValueWrap, K1, K3, Values, C1, C2, C3, C4)
     end.
+
+-compile({inline, [update_internal3_child1/11]}).
+update_internal3_child1(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    ?INTERNAL3(
+        K1,
+        K2,
+        K3,
+        Values,
+        update_recur(Key, ValueEval, ValueWrap, C1),
+        C2,
+        C3,
+        C4
+    ).
+
+-compile({inline, [update_internal3_child2/11]}).
+update_internal3_child2(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    ?INTERNAL3(
+        K1,
+        K2,
+        K3,
+        Values,
+        C1,
+        update_recur(Key, ValueEval, ValueWrap, C2),
+        C3,
+        C4
+    ).
+
+-compile({inline, [update_internal3_child3/11]}).
+update_internal3_child3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    ?INTERNAL3(
+        K1,
+        K2,
+        K3,
+        Values,
+        C1,
+        C2,
+        update_recur(Key, ValueEval, ValueWrap, C3),
+        C4
+    ).
+
+-compile({inline, [update_internal3_child4/11]}).
+update_internal3_child4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    ?INTERNAL3(
+        K1,
+        K2,
+        K3,
+        Values,
+        C1,
+        C2,
+        C3,
+        update_recur(Key, ValueEval, ValueWrap, C4)
+    ).
+
+%%%
+
+-compile({inline, [update_internal3_key1/10]}).
+update_internal3_key1(Key, ValueEval, ValueWrap, K2, K3, Values, C1, C2, C3, C4) ->
+    {V1, V2, V3} = Values,
+    Value = eval_update_value(ValueEval, ValueWrap, V1),
+    ?INTERNAL3(
+        Key,
+        K2,
+        K3,
+        {Value, V2, V3},
+        C1,
+        C2,
+        C3,
+        C4
+    ).
+
+-compile({inline, [update_internal3_key2/10]}).
+update_internal3_key2(Key, ValueEval, ValueWrap, K1, K3, Values, C1, C2, C3, C4) ->
+    {V1, V2, V3} = Values,
+    Value = eval_update_value(ValueEval, ValueWrap, V2),
+    ?INTERNAL3(
+        K1,
+        Key,
+        K3,
+        {V1, Value, V3},
+        C1,
+        C2,
+        C3,
+        C4
+    ).
+
+-compile({inline, [update_internal3_key3/10]}).
+update_internal3_key3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, C4) ->
+    {V1, V2, V3} = Values,
+    Value = eval_update_value(ValueEval, ValueWrap, V3),
+    ?INTERNAL3(
+        K1,
+        K2,
+        Key,
+        {V1, V2, Value},
+        C1,
+        C2,
+        C3,
+        C4
+    ).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [update_internal2/9]}).
 update_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
@@ -1877,33 +1999,71 @@ update_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
         Key > K1 ->
             if
                 Key < K2 ->
-                    ?INTERNAL2(K1, K2, Values, C1, update_recur(Key, ValueEval, ValueWrap, C2), C3);
+                    update_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
                 Key > K2 ->
-                    ?INTERNAL2(K1, K2, Values, C1, C2, update_recur(Key, ValueEval, ValueWrap, C3));
+                    update_internal2_child3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
                 true ->
-                    [V1 | V2] = Values,
-                    Value = eval_update_value(ValueEval, ValueWrap, V2),
-                    ?INTERNAL2(K1, Key, [V1 | Value], C1, C2, C3)
+                    update_internal2_key2(Key, ValueEval, ValueWrap, K1, Values, C1, C2, C3)
             end;
         Key < K1 ->
-            ?INTERNAL2(K1, K2, Values, update_recur(Key, ValueEval, ValueWrap, C1), C2, C3);
+            update_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
         true ->
-            [V1 | V2] = Values,
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?INTERNAL2(Key, K2, [Value | V2], C1, C2, C3)
+            update_internal2_key1(Key, ValueEval, ValueWrap, K2, Values, C1, C2, C3)
     end.
+
+-compile({inline, [update_internal2_child1/9]}).
+update_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
+    ?INTERNAL2(K1, K2, Values, update_recur(Key, ValueEval, ValueWrap, C1), C2, C3).
+
+-compile({inline, [update_internal2_child2/9]}).
+update_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
+    ?INTERNAL2(K1, K2, Values, C1, update_recur(Key, ValueEval, ValueWrap, C2), C3).
+
+-compile({inline, [update_internal2_child3/9]}).
+update_internal2_child3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
+    ?INTERNAL2(K1, K2, Values, C1, C2, update_recur(Key, ValueEval, ValueWrap, C3)).
+
+%%%
+
+-compile({inline, [update_internal2_key1/8]}).
+update_internal2_key1(Key, ValueEval, ValueWrap, K2, Values, C1, C2, C3) ->
+    [V1 | V2] = Values,
+    Value = eval_update_value(ValueEval, ValueWrap, V1),
+    ?INTERNAL2(Key, K2, [Value | V2], C1, C2, C3).
+
+-compile({inline, [update_internal2_key1/8]}).
+update_internal2_key2(Key, ValueEval, ValueWrap, K1, Values, C1, C2, C3) ->
+    [V1 | V2] = Values,
+    Value = eval_update_value(ValueEval, ValueWrap, V2),
+    ?INTERNAL2(K1, Key, [V1 | Value], C1, C2, C3).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [update_internal1/7]}).
 update_internal1(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
     if
         Key < K1 ->
-            ?INTERNAL1(K1, V1, update_recur(Key, ValueEval, ValueWrap, C1), C2);
+            update_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2);
         Key > K1 ->
-            ?INTERNAL1(K1, V1, C1, update_recur(Key, ValueEval, ValueWrap, C2));
+            update_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, C1, C2);
         true ->
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?INTERNAL1(Key, Value, C1, C2)
+            update_internal1_key1(Key, ValueEval, ValueWrap, V1, C1, C2)
     end.
+
+-compile({inline, [update_internal1_child1/7]}).
+update_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
+    ?INTERNAL1(K1, V1, update_recur(Key, ValueEval, ValueWrap, C1), C2).
+
+-compile({inline, [update_internal1_child2/7]}).
+update_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
+    ?INTERNAL1(K1, V1, C1, update_recur(Key, ValueEval, ValueWrap, C2)).
+
+-compile({inline, [update_internal1_key1/6]}).
+update_internal1_key1(Key, ValueEval, ValueWrap, V1, C1, C2) ->
+    Value = eval_update_value(ValueEval, ValueWrap, V1),
+    ?INTERNAL1(Key, Value, C1, C2).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -compile({inline, [update_leaf4/11]}).
 update_leaf4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4) ->
@@ -1929,6 +2089,8 @@ update_leaf4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4) ->
             error_badkey(Key)
     end.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 -compile({inline, [update_leaf3/9]}).
 update_leaf3(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3) ->
     if
@@ -1953,6 +2115,8 @@ update_leaf3(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3) ->
             ?LEAF3(K1, Key, K3, V1, Value, V3)
     end.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 -compile({inline, [update_leaf2/7]}).
 update_leaf2(Key, ValueEval, ValueWrap, K1, K2, V1, V2) ->
     if
@@ -1966,6 +2130,8 @@ update_leaf2(Key, ValueEval, ValueWrap, K1, K2, V1, V2) ->
             error_badkey(Key)
     end.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 -compile({inline, [update_leaf1/5]}).
 update_leaf1(Key, ValueEval, ValueWrap, K1, V1) ->
     if
@@ -1975,6 +2141,8 @@ update_leaf1(Key, ValueEval, ValueWrap, K1, V1) ->
         true ->
             error_badkey(Key)
     end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -spec eval_update_value(update_value_eval(), update_value_wrap(PrevValue, Value), PrevValue) ->
     Value.
