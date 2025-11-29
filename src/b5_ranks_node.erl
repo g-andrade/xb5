@@ -32,10 +32,12 @@
     map/2,
     new/0,
     next/1,
+    nth/2,
     smaller/2,
     smallest/1,
     take_key/2,
     take_largest/1,
+    take_nth/2,
     take_smallest/1,
     to_list/1,
     update/4,
@@ -354,6 +356,27 @@ insert(Key, ValueEval, ValueWrap, Root) ->
             UpdatedRoot
     end.
 
+nth(N, ?INTERNAL1(K1, V1, Sizes, C1, C2)) ->
+    [S1 | _] = internal1_sizes_unpack(Sizes),
+
+    Pos1 = S1 + 1,
+
+    if
+        N < Pos1 ->
+            nth(N, C1);
+        N > Pos1 ->
+            nth(N - Pos1, C2);
+        true ->
+            {K1, V1}
+    end;
+nth(N, ?LEAF1(K1, V1)) ->
+    case N of
+        1 ->
+            {K1, V1}
+    end;
+nth(N, Node) ->
+    nth_recur(N, Node).
+
 %% @doc Creates an iterator for traversing the tree node entries.
 %% Can iterate in `ordered' (ascending) or `reversed' (descending) direction.
 -spec iterator(t(Key, Value), ordered | reversed) -> iter(Key, Value).
@@ -518,7 +541,7 @@ smallest(Node) ->
 %% Returns `{Value, UpdatedNode}'.
 -spec take_key(Key, t(Key, Value)) -> {Value, t(Key, Value)}.
 take_key(Key, Node) ->
-    {{_, Value}, UpdatedNode} = root_take(Key, Node),
+    {{_, Value}, UpdatedNode} = root_take(key, Key, Node),
     {Value, UpdatedNode}.
 
 %% @doc Removes and returns the largest key-value pair from the tree node.
@@ -530,6 +553,10 @@ take_key(Key, Node) ->
 take_largest(Node) ->
     {{K, V}, UpdatedNode} = root_take_largest(Node),
     {K, V, UpdatedNode}.
+
+take_nth(N, Node) ->
+    {{Key, Value}, UpdatedNode} = root_take(nth, N, Node),
+    {Key, Value, UpdatedNode}.
 
 %% @doc Removes and returns the smallest key-value pair from the tree node.
 %% Fails with an `empty_tree' exception if the node is empty.
@@ -3493,38 +3520,38 @@ take_largest_recur(?LEAF2(K1, K2, V1, V2)) ->
 %% Internal Function Definitions: Node Taking - Key
 %% ------------------------------------------------------------------
 
--spec root_take(Key, non_empty_node(Key, Value)) ->
+-spec root_take(todo, Key, non_empty_node(Key, Value)) ->
     {{Key, Value}, node_after_deletion(Key, Value)}.
-root_take(K, ?INTERNAL1(K1, V1, Sizes, C1, C2)) ->
-    take_internal1(K, K1, V1, Sizes, C1, C2);
-root_take(K, ?LEAF1(K1, V1)) ->
-    take_leaf1(K, K1, V1);
-root_take(K, ?LEAF0) ->
+root_take(Type, K, ?INTERNAL1(K1, V1, Sizes, C1, C2)) ->
+    take_internal1(Type, K, K1, V1, Sizes, C1, C2);
+root_take(Type, K, ?LEAF1(K1, V1)) ->
+    take_leaf1(Type, K, K1, V1);
+root_take(key, K, ?LEAF0) ->
     error_badkey(K);
-root_take(K, Root) ->
-    take_recur(K, Root).
+root_take(Type, K, Root) ->
+    take_recur(Type, K, Root).
 
--spec take_recur(Key | nil, deep_node(Key, Value)) ->
+-spec take_recur(todo, Key | nil, deep_node(Key, Value)) ->
     {{Key, Value}, node_after_deletion(Key, Value) | unbalanced_node(Key, Value)}.
-take_recur(K, ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)) ->
-    take_internal4(K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5);
-take_recur(K, ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)) ->
-    take_internal3(K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
-take_recur(K, ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3)) ->
-    take_internal2(K, K1, K2, Values, Sizes, C1, C2, C3);
-take_recur(K, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
-    take_leaf4(K, K1, K2, K3, K4, V1, V2, V3, V4);
-take_recur(K, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
-    take_leaf3(K, K1, K2, K3, V1, V2, V3);
-take_recur(K, ?LEAF2(K1, K2, V1, V2)) ->
-    take_leaf2(K, K1, K2, V1, V2).
+take_recur(Type, K, ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)) ->
+    take_internal4(Type, K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5);
+take_recur(Type, K, ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)) ->
+    take_internal3(Type, K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+take_recur(Type, K, ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3)) ->
+    take_internal2(Type, K, K1, K2, Values, Sizes, C1, C2, C3);
+take_recur(Type, K, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
+    take_leaf4(Type, K, K1, K2, K3, K4, V1, V2, V3, V4);
+take_recur(Type, K, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
+    take_leaf3(Type, K, K1, K2, K3, V1, V2, V3);
+take_recur(Type, K, ?LEAF2(K1, K2, V1, V2)) ->
+    take_leaf2(Type, K, K1, K2, V1, V2).
 
 %%%%%%%%%
 %%%%%%%%%
 %%% Take - INTERNAL4
 
--compile({inline, take_internal4/12}).
-take_internal4(K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
+-compile({inline, take_internal4/13}).
+take_internal4(key, K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     if
         K > K2 ->
             if
@@ -3532,36 +3559,94 @@ take_internal4(K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
                     if
                         K > K3 ->
                             take_internal4_child4(
-                                K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                                key, K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
                             );
                         K < K3 ->
                             take_internal4_child3(
-                                K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                                key, K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
                             );
                         true ->
                             take_internal4_key3(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)
                     end;
                 K > K4 ->
-                    take_internal4_child5(K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5);
+                    take_internal4_child5(
+                        key, K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                    );
                 true ->
                     take_internal4_key4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)
             end;
         K < K2 ->
             if
                 K > K1 ->
-                    take_internal4_child2(K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5);
+                    take_internal4_child2(
+                        key, K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                    );
                 K < K1 ->
-                    take_internal4_child1(K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5);
+                    take_internal4_child1(
+                        key, K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                    );
                 true ->
                     take_internal4_key1(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)
             end;
         true ->
             take_internal4_key2(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)
+    end;
+take_internal4(nth, N, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
+    {S1, S2, S3, S4, _} = internal4_sizes_unpack(Sizes),
+
+    Pos3 = S1 + S2 + S3 + 3,
+
+    if
+        N < Pos3 ->
+            Pos1 = S1 + 1,
+
+            if
+                N > Pos1 ->
+                    Pos2 = Pos1 + S2 + 1,
+
+                    if
+                        N < Pos2 ->
+                            take_internal4_child2(
+                                nth, N - Pos1, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                            );
+                        N > Pos2 ->
+                            take_internal4_child3(
+                                nth, N - Pos2, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                            );
+                        true ->
+                            take_internal4_key2(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)
+                    end;
+                N < Pos1 ->
+                    take_internal4_child1(
+                        nth, N, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                    );
+                true ->
+                    take_internal4_key3(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)
+            end;
+        N > Pos3 ->
+            Pos4 = Pos3 + S4 + 1,
+
+            if
+                N < Pos4 ->
+                    take_internal4_child4(
+                        nth, N - Pos3, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                    );
+                N > Pos4 ->
+                    take_internal4_child5(
+                        nth, N - Pos4, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
+                    );
+                true ->
+                    take_internal4_key4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)
+            end;
+        true ->
+            take_internal4_key3(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)
     end.
 
--compile({inline, [take_internal4_child1/12]}).
-take_internal4_child1(K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
-    {TakenPair, UpdatedC1} = take_recur(K, C1),
+%%
+
+-compile({inline, [take_internal4_child1/13]}).
+take_internal4_child1(Type, K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
+    {TakenPair, UpdatedC1} = take_recur(Type, K, C1),
 
     {TakenPair,
         delete_internal4_rebalance_child1(
@@ -3581,9 +3666,9 @@ take_internal4_child1(K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4
             C5
         )}.
 
--compile({inline, [take_internal4_child2/12]}).
-take_internal4_child2(K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
-    {TakenPair, UpdatedC2} = take_recur(K, C2),
+-compile({inline, [take_internal4_child2/13]}).
+take_internal4_child2(Type, K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
+    {TakenPair, UpdatedC2} = take_recur(Type, K, C2),
 
     {TakenPair,
         delete_internal4_rebalance_child2(
@@ -3603,9 +3688,9 @@ take_internal4_child2(K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4
             C5
         )}.
 
--compile({inline, [take_internal4_child3/12]}).
-take_internal4_child3(K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
-    {TakenPair, UpdatedC3} = take_recur(K, C3),
+-compile({inline, [take_internal4_child3/13]}).
+take_internal4_child3(Type, K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
+    {TakenPair, UpdatedC3} = take_recur(Type, K, C3),
 
     {TakenPair,
         delete_internal4_rebalance_child3(
@@ -3625,9 +3710,9 @@ take_internal4_child3(K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4
             C5
         )}.
 
--compile({inline, [take_internal4_child4/12]}).
-take_internal4_child4(K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
-    {TakenPair, UpdatedC4} = take_recur(K, C4),
+-compile({inline, [take_internal4_child4/13]}).
+take_internal4_child4(Type, K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
+    {TakenPair, UpdatedC4} = take_recur(Type, K, C4),
 
     {TakenPair,
         delete_internal4_rebalance_child4(
@@ -3647,9 +3732,9 @@ take_internal4_child4(K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4
             C5
         )}.
 
--compile({inline, [take_internal4_child5/12]}).
-take_internal4_child5(K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
-    {TakenPair, UpdatedC5} = take_recur(K, C5),
+-compile({inline, [take_internal4_child5/13]}).
+take_internal4_child5(Type, K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5) ->
+    {TakenPair, UpdatedC5} = take_recur(Type, K, C5),
 
     {TakenPair,
         delete_internal4_rebalance_child5(
@@ -3767,34 +3852,67 @@ take_internal4_key4(K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5)
 %%%%%%%%%
 %%% Take - INTERNAL3
 
--compile({inline, take_internal3/10}).
-take_internal3(K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
+-compile({inline, take_internal3/11}).
+take_internal3(key, K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
     if
         K > K2 ->
             if
                 K > K3 ->
-                    take_internal3_child4(K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+                    take_internal3_child4(key, K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
                 K < K3 ->
-                    take_internal3_child3(K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+                    take_internal3_child3(key, K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
                 true ->
                     take_internal3_key3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)
             end;
         K < K2 ->
             if
                 K > K1 ->
-                    take_internal3_child2(K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+                    take_internal3_child2(key, K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
                 K < K1 ->
-                    take_internal3_child1(K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+                    take_internal3_child1(key, K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
                 true ->
                     take_internal3_key1(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)
             end;
         true ->
             take_internal3_key2(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)
+    end;
+take_internal3(nth, N, K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
+    {S1, S2, S3, _} = internal3_sizes_unpack(Sizes),
+
+    Pos2 = S1 + S2 + 2,
+
+    if
+        N < Pos2 ->
+            Pos1 = S1 + 1,
+
+            if
+                N < Pos1 ->
+                    take_internal3_child1(nth, N, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+                N > Pos1 ->
+                    take_internal3_child2(nth, N - Pos1, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+                true ->
+                    take_internal3_key1(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)
+            end;
+        N > Pos2 ->
+            Pos3 = Pos2 + S3 + 1,
+
+            if
+                N < Pos3 ->
+                    take_internal3_child3(nth, N - Pos2, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+                N > Pos3 ->
+                    take_internal3_child4(nth, N - Pos3, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+                true ->
+                    take_internal3_key3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)
+            end;
+        true ->
+            take_internal3_key2(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)
     end.
 
--compile({inline, [take_internal3_child1/10]}).
-take_internal3_child1(K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
-    {TakenPair, UpdatedC1} = take_recur(K, C1),
+%%
+
+-compile({inline, [take_internal3_child1/11]}).
+take_internal3_child1(Type, K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
+    {TakenPair, UpdatedC1} = take_recur(Type, K, C1),
 
     {TakenPair,
         delete_internal3_rebalance_child1(
@@ -3811,9 +3929,9 @@ take_internal3_child1(K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
             C4
         )}.
 
--compile({inline, [take_internal3_child2/10]}).
-take_internal3_child2(K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
-    {TakenPair, UpdatedC2} = take_recur(K, C2),
+-compile({inline, [take_internal3_child2/11]}).
+take_internal3_child2(Type, K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
+    {TakenPair, UpdatedC2} = take_recur(Type, K, C2),
 
     {TakenPair,
         delete_internal3_rebalance_child2(
@@ -3830,9 +3948,9 @@ take_internal3_child2(K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
             C4
         )}.
 
--compile({inline, [take_internal3_child3/10]}).
-take_internal3_child3(K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
-    {TakenPair, UpdatedC3} = take_recur(K, C3),
+-compile({inline, [take_internal3_child3/11]}).
+take_internal3_child3(Type, K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
+    {TakenPair, UpdatedC3} = take_recur(Type, K, C3),
 
     {TakenPair,
         delete_internal3_rebalance_child3(
@@ -3849,9 +3967,9 @@ take_internal3_child3(K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
             C4
         )}.
 
--compile({inline, [take_internal3_child4/10]}).
-take_internal3_child4(K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
-    {TakenPair, UpdatedC4} = take_recur(K, C4),
+-compile({inline, [take_internal3_child4/11]}).
+take_internal3_child4(Type, K, K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
+    {TakenPair, UpdatedC4} = take_recur(Type, K, C4),
 
     {TakenPair,
         delete_internal3_rebalance_child4(
@@ -3934,27 +4052,49 @@ take_internal3_key3(K1, K2, K3, {V1, V2, V3}, Sizes, C1, C2, C3, C4) ->
 %%%%%%%%%
 %%% Take - INTERNAL2
 
--compile({inline, take_internal2/8}).
-take_internal2(K, K1, K2, Values, Sizes, C1, C2, C3) ->
+-compile({inline, take_internal2/9}).
+take_internal2(key, K, K1, K2, Values, Sizes, C1, C2, C3) ->
     if
         K > K1 ->
             if
                 K > K2 ->
-                    take_internal2_child3(K, K1, K2, Values, Sizes, C1, C2, C3);
+                    take_internal2_child3(key, K, K1, K2, Values, Sizes, C1, C2, C3);
                 K < K2 ->
-                    take_internal2_child2(K, K1, K2, Values, Sizes, C1, C2, C3);
+                    take_internal2_child2(key, K, K1, K2, Values, Sizes, C1, C2, C3);
                 true ->
                     take_internal2_key2(K1, K2, Values, Sizes, C1, C2, C3)
             end;
         K < K1 ->
-            take_internal2_child1(K, K1, K2, Values, Sizes, C1, C2, C3);
+            take_internal2_child1(key, K, K1, K2, Values, Sizes, C1, C2, C3);
+        true ->
+            take_internal2_key1(K1, K2, Values, Sizes, C1, C2, C3)
+    end;
+take_internal2(nth, N, K1, K2, Values, Sizes, C1, C2, C3) ->
+    {S1, S2, _} = internal2_sizes_unpack(Sizes),
+
+    Pos1 = S1 + 1,
+
+    if
+        N > Pos1 ->
+            Pos2 = Pos1 + S2 + 1,
+
+            if
+                N < Pos2 ->
+                    take_internal2_child2(nth, N - Pos1, K1, K2, Values, Sizes, C1, C2, C3);
+                N > Pos2 ->
+                    take_internal2_child3(nth, N - Pos2, K1, K2, Values, Sizes, C1, C2, C3);
+                true ->
+                    take_internal2_key2(K1, K2, Values, Sizes, C1, C2, C3)
+            end;
+        N < Pos1 ->
+            take_internal2_child1(nth, N, K1, K2, Values, Sizes, C1, C2, C3);
         true ->
             take_internal2_key1(K1, K2, Values, Sizes, C1, C2, C3)
     end.
 
--compile({inline, [take_internal2_child1/8]}).
-take_internal2_child1(K, K1, K2, [V1 | V2], Sizes, C1, C2, C3) ->
-    {TakenPair, UpdatedC1} = take_recur(K, C1),
+-compile({inline, [take_internal2_child1/9]}).
+take_internal2_child1(Type, K, K1, K2, [V1 | V2], Sizes, C1, C2, C3) ->
+    {TakenPair, UpdatedC1} = take_recur(Type, K, C1),
 
     {TakenPair,
         delete_internal2_rebalance_child1(
@@ -3968,9 +4108,9 @@ take_internal2_child1(K, K1, K2, [V1 | V2], Sizes, C1, C2, C3) ->
             C3
         )}.
 
--compile({inline, [take_internal2_child2/8]}).
-take_internal2_child2(K, K1, K2, [V1 | V2], Sizes, C1, C2, C3) ->
-    {TakenPair, UpdatedC2} = take_recur(K, C2),
+-compile({inline, [take_internal2_child2/9]}).
+take_internal2_child2(Type, K, K1, K2, [V1 | V2], Sizes, C1, C2, C3) ->
+    {TakenPair, UpdatedC2} = take_recur(Type, K, C2),
 
     {TakenPair,
         delete_internal2_rebalance_child2(
@@ -3984,9 +4124,9 @@ take_internal2_child2(K, K1, K2, [V1 | V2], Sizes, C1, C2, C3) ->
             C3
         )}.
 
--compile({inline, [take_internal2_child3/8]}).
-take_internal2_child3(K, K1, K2, [V1 | V2], Sizes, C1, C2, C3) ->
-    {TakenPair, UpdatedC3} = take_recur(K, C3),
+-compile({inline, [take_internal2_child3/9]}).
+take_internal2_child3(Type, K, K1, K2, [V1 | V2], Sizes, C1, C2, C3) ->
+    {TakenPair, UpdatedC3} = take_recur(Type, K, C3),
 
     {TakenPair,
         delete_internal2_rebalance_child3(
@@ -4040,20 +4180,33 @@ take_internal2_key2(K1, K2, [V1 | V2], Sizes, C1, C2, C3) ->
 %%%%%%%%%
 %%% Take - INTERNAL1
 
--compile({inline, take_internal1/6}).
-take_internal1(K, K1, V1, Sizes, C1, C2) ->
+-compile({inline, take_internal1/7}).
+take_internal1(key, K, K1, V1, Sizes, C1, C2) ->
     if
         K > K1 ->
-            take_internal1_child2(K, K1, V1, Sizes, C1, C2);
+            take_internal1_child2(key, K, K1, V1, Sizes, C1, C2);
         K < K1 ->
-            take_internal1_child1(K, K1, V1, Sizes, C1, C2);
+            take_internal1_child1(key, K, K1, V1, Sizes, C1, C2);
+        true ->
+            take_internal1_key1(K1, V1, Sizes, C1, C2)
+    end;
+take_internal1(nth, N, K1, V1, Sizes, C1, C2) ->
+    [S1 | _] = internal1_sizes_unpack(Sizes),
+
+    Pos1 = S1 + 1,
+
+    if
+        N < Pos1 ->
+            take_internal1_child1(nth, N, K1, V1, Sizes, C1, C2);
+        N > Pos1 ->
+            take_internal1_child2(nth, N - Pos1, K1, V1, Sizes, C1, C2);
         true ->
             take_internal1_key1(K1, V1, Sizes, C1, C2)
     end.
 
--compile({inline, [take_internal1_child1/6]}).
-take_internal1_child1(K, K1, V1, Sizes, C1, C2) ->
-    {TakenPair, UpdatedC1} = take_recur(K, C1),
+-compile({inline, [take_internal1_child1/7]}).
+take_internal1_child1(Type, K, K1, V1, Sizes, C1, C2) ->
+    {TakenPair, UpdatedC1} = take_recur(Type, K, C1),
 
     {TakenPair,
         delete_internal1_rebalance_child1(
@@ -4064,9 +4217,9 @@ take_internal1_child1(K, K1, V1, Sizes, C1, C2) ->
             C2
         )}.
 
--compile({inline, [take_internal1_child2/6]}).
-take_internal1_child2(K, K1, V1, Sizes, C1, C2) ->
-    {TakenPair, UpdatedC2} = take_recur(K, C2),
+-compile({inline, [take_internal1_child2/7]}).
+take_internal1_child2(Type, K, K1, V1, Sizes, C1, C2) ->
+    {TakenPair, UpdatedC2} = take_recur(Type, K, C2),
 
     {TakenPair,
         delete_internal1_rebalance_child2(
@@ -4092,12 +4245,13 @@ take_internal1_key1(K1, V1, Sizes, C1, C2) ->
             C1,
             UpdatedC2
         )}.
+
 %%%%%%%%%
 %%%%%%%%%
 %%% Take - LEAF4
 
--compile({inline, take_leaf4/9}).
-take_leaf4(K, K1, K2, K3, K4, V1, V2, V3, V4) ->
+-compile({inline, take_leaf4/10}).
+take_leaf4(key, K, K1, K2, K3, K4, V1, V2, V3, V4) ->
     if
         K > K2 ->
             if
@@ -4114,14 +4268,21 @@ take_leaf4(K, K1, K2, K3, K4, V1, V2, V3, V4) ->
             {{K1, V1}, ?LEAF3(K2, K3, K4, V2, V3, V4)};
         true ->
             error_badkey(K)
+    end;
+take_leaf4(nth, N, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    case N of
+        1 -> {{K1, V1}, ?LEAF3(K2, K3, K4, V2, V3, V4)};
+        2 -> {{K2, V2}, ?LEAF3(K1, K3, K4, V1, V3, V4)};
+        3 -> {{K3, V3}, ?LEAF3(K1, K2, K4, V1, V2, V4)};
+        4 -> {{K4, V4}, ?LEAF3(K1, K2, K3, V1, V2, V3)}
     end.
 
 %%%%%%%%%
 %%%%%%%%%
 %%% Take - LEAF3
 
--compile({inline, take_leaf3/7}).
-take_leaf3(K, K1, K2, K3, V1, V2, V3) ->
+-compile({inline, take_leaf3/8}).
+take_leaf3(key, K, K1, K2, K3, V1, V2, V3) ->
     if
         K < K2 ->
             if
@@ -4139,14 +4300,20 @@ take_leaf3(K, K1, K2, K3, V1, V2, V3) ->
             end;
         true ->
             {{K2, V2}, ?LEAF2(K1, K3, V1, V3)}
+    end;
+take_leaf3(nth, N, K1, K2, K3, V1, V2, V3) ->
+    case N of
+        1 -> {{K1, V1}, ?LEAF2(K2, K3, V2, V3)};
+        2 -> {{K2, V2}, ?LEAF2(K1, K3, V1, V3)};
+        3 -> {{K3, V3}, ?LEAF2(K1, K2, V1, V2)}
     end.
 
 %%%%%%%%%
 %%%%%%%%%
 %%% Take - LEAF2
 
--compile({inline, take_leaf2/5}).
-take_leaf2(K, K1, K2, V1, V2) ->
+-compile({inline, take_leaf2/6}).
+take_leaf2(key, K, K1, K2, V1, V2) ->
     if
         K == K1 ->
             {{K1, V1}, ?LEAF1(K2, V2)};
@@ -4154,21 +4321,31 @@ take_leaf2(K, K1, K2, V1, V2) ->
             {{K2, V2}, ?LEAF1(K1, V1)};
         true ->
             error_badkey(K)
+    end;
+take_leaf2(nth, N, K1, K2, V1, V2) ->
+    case N of
+        1 ->
+            {{K1, V1}, ?LEAF1(K2, V2)};
+        2 ->
+            {{K2, V2}, ?LEAF1(K1, V1)}
     end.
 
 %%%%%%%%%
 %%%%%%%%%
 %%% Take - LEAF1
 
--compile({inline, take_leaf1/3}).
-take_leaf1(K, K1, V1) ->
+-compile({inline, take_leaf1/4}).
+take_leaf1(key, K, K1, V1) ->
     if
         K == K1 ->
             TakenPair = {K1, V1},
             {TakenPair, ?LEAF0};
         true ->
             error_badkey(K)
-    end.
+    end;
+take_leaf1(nth, 1, K1, V1) ->
+    TakenPair = {K1, V1},
+    {TakenPair, ?LEAF0}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Node Rebalance
@@ -5783,34 +5960,158 @@ map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
     ).
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: nth/4
+%% ------------------------------------------------------------------
+
+nth_recur(N, ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)) ->
+    {S1, S2, S3, S4, _} = internal4_sizes_unpack(Sizes),
+
+    Pos3 = S1 + S2 + S3 + 3,
+
+    if
+        N < Pos3 ->
+            Pos1 = S1 + 1,
+
+            if
+                N > Pos1 ->
+                    Pos2 = Pos1 + S2 + 1,
+
+                    if
+                        N < Pos2 ->
+                            nth_recur(N - Pos1, C2);
+                        N > Pos2 ->
+                            nth_recur(N - Pos2, C3);
+                        true ->
+                            {K2, element(2, Values)}
+                    end;
+                N < Pos1 ->
+                    nth_recur(N, C1);
+                true ->
+                    {K1, element(1, Values)}
+            end;
+        N > Pos3 ->
+            Pos4 = Pos3 + S4 + 1,
+
+            if
+                N < Pos4 ->
+                    nth_recur(N - Pos3, C4);
+                N > Pos4 ->
+                    nth_recur(N - Pos4, C5);
+                true ->
+                    {K4, element(4, Values)}
+            end;
+        true ->
+            {K3, element(3, Values)}
+    end;
+nth_recur(N, ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)) ->
+    {S1, S2, S3, _} = internal3_sizes_unpack(Sizes),
+
+    Pos2 = S1 + S2 + 2,
+
+    if
+        N < Pos2 ->
+            Pos1 = S1 + 1,
+
+            if
+                N < Pos1 ->
+                    nth_recur(N, C1);
+                N > Pos1 ->
+                    nth_recur(N - Pos1, C2);
+                true ->
+                    {K1, element(1, Values)}
+            end;
+        N > Pos2 ->
+            Pos3 = Pos2 + S3 + 1,
+
+            if
+                N < Pos3 ->
+                    nth_recur(N - Pos2, C3);
+                N > Pos3 ->
+                    nth_recur(N - Pos3, C4);
+                true ->
+                    {K3, element(3, Values)}
+            end;
+        true ->
+            {K2, element(2, Values)}
+    end;
+nth_recur(N, ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3)) ->
+    {S1, S2, _} = internal2_sizes_unpack(Sizes),
+
+    Pos1 = S1 + 1,
+
+    if
+        N > Pos1 ->
+            Pos2 = Pos1 + S2 + 1,
+
+            if
+                N < Pos2 ->
+                    nth_recur(N - Pos1, C2);
+                N > Pos2 ->
+                    nth_recur(N - Pos2, C3);
+                true ->
+                    {K2, tl(Values)}
+            end;
+        N < Pos1 ->
+            nth_recur(N, C1);
+        true ->
+            {K1, hd(Values)}
+    end;
+nth_recur(N, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
+    case N of
+        1 -> {K1, V1};
+        2 -> {K2, V2};
+        3 -> {K3, V3};
+        4 -> {K4, V4}
+    end;
+nth_recur(N, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
+    case N of
+        1 -> {K1, V1};
+        2 -> {K2, V2};
+        3 -> {K3, V3}
+    end;
+nth_recur(N, ?LEAF2(K1, K2, V1, V2)) ->
+    case N of
+        1 -> {K1, V1};
+        2 -> {K2, V2}
+    end.
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: Size Packing for INTERNAL4
 %% ------------------------------------------------------------------
 
+-compile({inline, internal4_sizes_pack/5}).
 internal4_sizes_pack(S1, S2, S3, S4, S5) ->
     {S1, S2, S3, S4, S5}.
 
+-compile({inline, internal4_sizes_unpack/1}).
 internal4_sizes_unpack(Sizes) ->
     Sizes.
 
 %%%
 
+-compile({inline, internal4_sizes_update1/2}).
 internal4_sizes_update1({S1, S2, S3, S4, S5}, Inc) ->
     {S1 + Inc, S2, S3, S4, S5}.
 
+-compile({inline, internal4_sizes_update2/2}).
 internal4_sizes_update2({S1, S2, S3, S4, S5}, Inc) ->
     {S1, S2 + Inc, S3, S4, S5}.
 
+-compile({inline, internal4_sizes_update3/2}).
 internal4_sizes_update3({S1, S2, S3, S4, S5}, Inc) ->
     {S1, S2, S3 + Inc, S4, S5}.
 
+-compile({inline, internal4_sizes_update4/2}).
 internal4_sizes_update4({S1, S2, S3, S4, S5}, Inc) ->
     {S1, S2, S3, S4 + Inc, S5}.
 
+-compile({inline, internal4_sizes_update5/2}).
 internal4_sizes_update5({S1, S2, S3, S4, S5}, Inc) ->
     {S1, S2, S3, S4, S5 + Inc}.
 
 %%%
 
+-compile({inline, internal4_sizes_move_left12/2}).
 internal4_sizes_move_left12({S1, S2, S3, S4, S5}, MovedSize) ->
     {
         S1 + MovedSize,
@@ -5820,6 +6121,7 @@ internal4_sizes_move_left12({S1, S2, S3, S4, S5}, MovedSize) ->
         S5
     }.
 
+-compile({inline, internal4_sizes_move_left23/2}).
 internal4_sizes_move_left23({S1, S2, S3, S4, S5}, MovedSize) ->
     {
         S1,
@@ -5829,6 +6131,7 @@ internal4_sizes_move_left23({S1, S2, S3, S4, S5}, MovedSize) ->
         S5
     }.
 
+-compile({inline, internal4_sizes_move_left34/2}).
 internal4_sizes_move_left34({S1, S2, S3, S4, S5}, MovedSize) ->
     {
         S1,
@@ -5838,6 +6141,7 @@ internal4_sizes_move_left34({S1, S2, S3, S4, S5}, MovedSize) ->
         S5
     }.
 
+-compile({inline, internal4_sizes_move_left45/2}).
 internal4_sizes_move_left45({S1, S2, S3, S4, S5}, MovedSize) ->
     {
         S1,
@@ -5849,6 +6153,7 @@ internal4_sizes_move_left45({S1, S2, S3, S4, S5}, MovedSize) ->
 
 %%%
 
+-compile({inline, internal4_sizes_move_right12/2}).
 internal4_sizes_move_right12({S1, S2, S3, S4, S5}, MovedSize) ->
     {
         S1 - MovedSize - 1,
@@ -5858,6 +6163,7 @@ internal4_sizes_move_right12({S1, S2, S3, S4, S5}, MovedSize) ->
         S5
     }.
 
+-compile({inline, internal4_sizes_move_right23/2}).
 internal4_sizes_move_right23({S1, S2, S3, S4, S5}, MovedSize) ->
     {
         S1,
@@ -5867,6 +6173,7 @@ internal4_sizes_move_right23({S1, S2, S3, S4, S5}, MovedSize) ->
         S5
     }.
 
+-compile({inline, internal4_sizes_move_right34/2}).
 internal4_sizes_move_right34({S1, S2, S3, S4, S5}, MovedSize) ->
     {
         S1,
@@ -5876,6 +6183,7 @@ internal4_sizes_move_right34({S1, S2, S3, S4, S5}, MovedSize) ->
         S5
     }.
 
+-compile({inline, internal4_sizes_move_right45/2}).
 internal4_sizes_move_right45({S1, S2, S3, S4, S5}, MovedSize) ->
     {
         S1,
@@ -5887,6 +6195,7 @@ internal4_sizes_move_right45({S1, S2, S3, S4, S5}, MovedSize) ->
 
 %%%
 
+-compile({inline, internal4_sizes_merge12/1}).
 internal4_sizes_merge12({S1, S2, S3, S4, S5}) ->
     internal3_sizes_pack(
         S1 + S2,
@@ -5895,6 +6204,7 @@ internal4_sizes_merge12({S1, S2, S3, S4, S5}) ->
         S5
     ).
 
+-compile({inline, internal4_sizes_merge23/1}).
 internal4_sizes_merge23({S1, S2, S3, S4, S5}) ->
     internal3_sizes_pack(
         S1,
@@ -5903,6 +6213,7 @@ internal4_sizes_merge23({S1, S2, S3, S4, S5}) ->
         S5
     ).
 
+-compile({inline, internal4_sizes_merge34/1}).
 internal4_sizes_merge34({S1, S2, S3, S4, S5}) ->
     internal3_sizes_pack(
         S1,
@@ -5911,6 +6222,7 @@ internal4_sizes_merge34({S1, S2, S3, S4, S5}) ->
         S5
     ).
 
+-compile({inline, internal4_sizes_merge45/1}).
 internal4_sizes_merge45({S1, S2, S3, S4, S5}) ->
     internal3_sizes_pack(
         S1,
@@ -5923,42 +6235,53 @@ internal4_sizes_merge45({S1, S2, S3, S4, S5}) ->
 %% Internal Function Definitions: Size Packing for INTERNAL3
 %% ------------------------------------------------------------------
 
+-compile({inline, internal3_sizes_pack/4}).
 internal3_sizes_pack(S1, S2, S3, S4) ->
     {S1, S2, S3, S4}.
 
+-compile({inline, internal3_sizes_unpack/1}).
 internal3_sizes_unpack(Sizes) ->
     Sizes.
 
 %%%
 
+-compile({inline, internal3_sizes_split1/3}).
 internal3_sizes_split1({_, S2, S3, S4}, LSize, RSize) ->
     internal4_sizes_pack(LSize, RSize, S2, S3, S4).
 
+-compile({inline, internal3_sizes_split2/3}).
 internal3_sizes_split2({S1, _, S3, S4}, LSize, RSize) ->
     internal4_sizes_pack(S1, LSize, RSize, S3, S4).
 
+-compile({inline, internal3_sizes_split3/3}).
 internal3_sizes_split3({S1, S2, _, S4}, LSize, RSize) ->
     internal4_sizes_pack(S1, S2, LSize, RSize, S4).
 
+-compile({inline, internal3_sizes_split4/3}).
 internal3_sizes_split4({S1, S2, S3, _}, LSize, RSize) ->
     internal4_sizes_pack(S1, S2, S3, LSize, RSize).
 
 %%%
 
+-compile({inline, internal3_sizes_update1/2}).
 internal3_sizes_update1({S1, S2, S3, S4}, Inc) ->
     {S1 + Inc, S2, S3, S4}.
 
+-compile({inline, internal3_sizes_update2/2}).
 internal3_sizes_update2({S1, S2, S3, S4}, Inc) ->
     {S1, S2 + Inc, S3, S4}.
 
+-compile({inline, internal3_sizes_update3/2}).
 internal3_sizes_update3({S1, S2, S3, S4}, Inc) ->
     {S1, S2, S3 + Inc, S4}.
 
+-compile({inline, internal3_sizes_update4/2}).
 internal3_sizes_update4({S1, S2, S3, S4}, Inc) ->
     {S1, S2, S3, S4 + Inc}.
 
 %%%
 
+-compile({inline, internal3_sizes_move_left12/2}).
 internal3_sizes_move_left12({S1, S2, S3, S4}, MovedSize) ->
     {
         S1 + MovedSize,
@@ -5967,6 +6290,7 @@ internal3_sizes_move_left12({S1, S2, S3, S4}, MovedSize) ->
         S4
     }.
 
+-compile({inline, internal3_sizes_move_left23/2}).
 internal3_sizes_move_left23({S1, S2, S3, S4}, MovedSize) ->
     {
         S1,
@@ -5975,6 +6299,7 @@ internal3_sizes_move_left23({S1, S2, S3, S4}, MovedSize) ->
         S4
     }.
 
+-compile({inline, internal3_sizes_move_left34/2}).
 internal3_sizes_move_left34({S1, S2, S3, S4}, MovedSize) ->
     {
         S1,
@@ -5985,6 +6310,7 @@ internal3_sizes_move_left34({S1, S2, S3, S4}, MovedSize) ->
 
 %%%
 
+-compile({inline, internal3_sizes_move_right12/2}).
 internal3_sizes_move_right12({S1, S2, S3, S4}, MovedSize) ->
     {
         S1 - MovedSize - 1,
@@ -5993,6 +6319,7 @@ internal3_sizes_move_right12({S1, S2, S3, S4}, MovedSize) ->
         S4
     }.
 
+-compile({inline, internal3_sizes_move_right23/2}).
 internal3_sizes_move_right23({S1, S2, S3, S4}, MovedSize) ->
     {
         S1,
@@ -6001,6 +6328,7 @@ internal3_sizes_move_right23({S1, S2, S3, S4}, MovedSize) ->
         S4
     }.
 
+-compile({inline, internal3_sizes_move_right34/2}).
 internal3_sizes_move_right34({S1, S2, S3, S4}, MovedSize) ->
     {
         S1,
@@ -6011,6 +6339,7 @@ internal3_sizes_move_right34({S1, S2, S3, S4}, MovedSize) ->
 
 %%%
 
+-compile({inline, internal3_sizes_merge12/1}).
 internal3_sizes_merge12({S1, S2, S3, S4}) ->
     internal2_sizes_pack(
         S1 + S2,
@@ -6018,6 +6347,7 @@ internal3_sizes_merge12({S1, S2, S3, S4}) ->
         S4
     ).
 
+-compile({inline, internal3_sizes_merge23/1}).
 internal3_sizes_merge23({S1, S2, S3, S4}) ->
     internal2_sizes_pack(
         S1,
@@ -6025,6 +6355,7 @@ internal3_sizes_merge23({S1, S2, S3, S4}) ->
         S4
     ).
 
+-compile({inline, internal3_sizes_merge34/1}).
 internal3_sizes_merge34({S1, S2, S3, S4}) ->
     internal2_sizes_pack(
         S1,
@@ -6036,36 +6367,45 @@ internal3_sizes_merge34({S1, S2, S3, S4}) ->
 %% Internal Function Definitions: Size Packing for INTERNAL2
 %% ------------------------------------------------------------------
 
+-compile({inline, internal2_sizes_pack/3}).
 internal2_sizes_pack(S1, S2, S3) ->
     {S1, S2, S3}.
 
+-compile({inline, internal2_sizes_unpack/1}).
 internal2_sizes_unpack(Sizes) ->
     Sizes.
 
 %%%
 
+-compile({inline, internal2_sizes_split1/3}).
 internal2_sizes_split1({_, S2, S3}, LSize, RSize) ->
     internal3_sizes_pack(LSize, RSize, S2, S3).
 
+-compile({inline, internal2_sizes_split2/3}).
 internal2_sizes_split2({S1, _, S3}, LSize, RSize) ->
     internal3_sizes_pack(S1, LSize, RSize, S3).
 
+-compile({inline, internal2_sizes_split3/3}).
 internal2_sizes_split3({S1, S2, _}, LSize, RSize) ->
     internal3_sizes_pack(S1, S2, LSize, RSize).
 
 %%%
 
+-compile({inline, internal2_sizes_update1/2}).
 internal2_sizes_update1({S1, S2, S3}, Inc) ->
     {S1 + Inc, S2, S3}.
 
+-compile({inline, internal2_sizes_update2/2}).
 internal2_sizes_update2({S1, S2, S3}, Inc) ->
     {S1, S2 + Inc, S3}.
 
+-compile({inline, internal2_sizes_update3/2}).
 internal2_sizes_update3({S1, S2, S3}, Inc) ->
     {S1, S2, S3 + Inc}.
 
 %%%
 
+-compile({inline, internal2_sizes_move_left12/2}).
 internal2_sizes_move_left12({S1, S2, S3}, MovedSize) ->
     {
         S1 + MovedSize,
@@ -6073,6 +6413,7 @@ internal2_sizes_move_left12({S1, S2, S3}, MovedSize) ->
         S3
     }.
 
+-compile({inline, internal2_sizes_move_left23/2}).
 internal2_sizes_move_left23({S1, S2, S3}, MovedSize) ->
     {
         S1,
@@ -6082,6 +6423,7 @@ internal2_sizes_move_left23({S1, S2, S3}, MovedSize) ->
 
 %%%
 
+-compile({inline, internal2_sizes_move_right12/2}).
 internal2_sizes_move_right12({S1, S2, S3}, MovedSize) ->
     {
         S1 - MovedSize - 1,
@@ -6089,6 +6431,7 @@ internal2_sizes_move_right12({S1, S2, S3}, MovedSize) ->
         S3
     }.
 
+-compile({inline, internal2_sizes_move_right23/2}).
 internal2_sizes_move_right23({S1, S2, S3}, MovedSize) ->
     {
         S1,
@@ -6098,12 +6441,14 @@ internal2_sizes_move_right23({S1, S2, S3}, MovedSize) ->
 
 %%%
 
+-compile({inline, internal2_sizes_merge12/1}).
 internal2_sizes_merge12({S1, S2, S3}) ->
     internal1_sizes_pack(
         S1 + S2,
         S3
     ).
 
+-compile({inline, internal2_sizes_merge23/1}).
 internal2_sizes_merge23({S1, S2, S3}) ->
     internal1_sizes_pack(
         S1,
@@ -6114,30 +6459,37 @@ internal2_sizes_merge23({S1, S2, S3}) ->
 %% Internal Function Definitions: Size Packing for INTERNAL1
 %% ------------------------------------------------------------------
 
+-compile({inline, internal1_sizes_pack/2}).
 internal1_sizes_pack(S1, S2) ->
     [S1 | S2].
 
+-compile({inline, internal1_sizes_unpack/1}).
 internal1_sizes_unpack(Sizes) ->
     Sizes.
 
 %%%
 
+-compile({inline, internal1_sizes_split1/3}).
 internal1_sizes_split1([_ | S2], LSize, RSize) ->
     internal2_sizes_pack(LSize, RSize, S2).
 
+-compile({inline, internal1_sizes_split2/3}).
 internal1_sizes_split2([S1 | _], LSize, RSize) ->
     internal2_sizes_pack(S1, LSize, RSize).
 
 %%%
 
+-compile({inline, internal1_sizes_update1/2}).
 internal1_sizes_update1([S1 | S2], Inc) ->
     [S1 + Inc | S2].
 
+-compile({inline, internal1_sizes_update2/2}).
 internal1_sizes_update2([S1 | S2], Inc) ->
     [S1 | S2 + Inc].
 
 %%%
 
+-compile({inline, internal1_sizes_move_left12/2}).
 internal1_sizes_move_left12([S1 | S2], MovedSize) ->
     [
         (S1 + MovedSize)
@@ -6146,6 +6498,7 @@ internal1_sizes_move_left12([S1 | S2], MovedSize) ->
 
 %%%
 
+-compile({inline, internal1_sizes_move_right12/2}).
 internal1_sizes_move_right12([S1 | S2], MovedSize) ->
     [
         (S1 - MovedSize - 1)

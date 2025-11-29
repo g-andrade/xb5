@@ -27,12 +27,14 @@
     map/2,
     new/0,
     next/1,
+    nth/2,
     size/1,
     smaller/2,
     smallest/1,
     take/2,
     take_any/2,
     take_largest/1,
+    take_nth/2,
     take_smallest/1,
     to_list/1,
     update/3,
@@ -71,6 +73,7 @@
     take/2,
     take_any/2,
     take_largest/1,
+    take_nth/2,
     take_smallest/1,
     to_list/1,
     update/3,
@@ -391,6 +394,16 @@ Returns `{Key, Value, NewIter}` or `none` if no more entries remain.
 next(Iter) ->
     b5_ranks_node:next(Iter).
 
+%% TODO document
+nth(N, #b5_ranks{size = Size, root = Root}) ->
+    % Should we optimize for first and last? (Call smallest and largest)
+    case N < 1 orelse N > Size of
+        false ->
+            b5_ranks_node:nth(N, Root);
+        _ ->
+            error({badarg, N})
+    end.
+
 -if(?OTP_RELEASE >= 27).
 -doc "Returns the number of nodes in the tree.".
 -endif.
@@ -468,6 +481,18 @@ take_largest(#b5_ranks{size = Size, root = Root} = Tree) ->
     {Key, Value, UpdatedRoot} = b5_ranks_node:take_largest(Root),
     UpdatedTree = Tree#b5_ranks{size = Size - 1, root = UpdatedRoot},
     {Key, Value, UpdatedTree}.
+
+%% TODO document
+take_nth(N, #b5_ranks{size = Size, root = Root} = Tree) ->
+    % Optimize for first and last?
+    case N < 0 orelse N > Size of
+        false ->
+            {Key, Value, UpdatedRoot} = b5_ranks_node:take_nth(N, Root),
+            UpdatedTree = Tree#b5_ranks{size = Size - 1, root = UpdatedRoot},
+            {Key, Value, UpdatedTree};
+        _ ->
+            error({badarg, N})
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
