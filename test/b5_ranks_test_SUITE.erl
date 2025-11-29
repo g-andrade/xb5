@@ -275,14 +275,14 @@ test_constituent_parts(_Config) ->
 
     %% Test empty tree round-trip
     {ok, Parts1} = b5_ranks:to_constituent_parts(EmptyTree),
-    ?assertMatch(#{root_wrap := _, size := 0}, Parts1),
+    ?assertMatch(#{root := _, size := 0}, Parts1),
     ReconstructedEmpty = b5_ranks:from_constituent_parts(Parts1),
     ?assertEqual(EmptyTree, ReconstructedEmpty),
 
     %% Test with non-empty tree
     Tree = b5_ranks:from_list([{1, a}, {2, b}, {3, c}]),
     {ok, Parts2} = b5_ranks:to_constituent_parts(Tree),
-    ?assertMatch(#{root_wrap := _, size := 3}, Parts2),
+    ?assertMatch(#{root := _, size := 3}, Parts2),
     ReconstructedTree = b5_ranks:from_constituent_parts(Parts2),
     ?assertEqual(Tree, ReconstructedTree),
     ?assertEqual(b5_ranks:to_list(Tree), b5_ranks:to_list(ReconstructedTree)),
@@ -290,7 +290,7 @@ test_constituent_parts(_Config) ->
     ?assertMatch({ok, _}, b5_ranks:validate(ReconstructedTree)),
 
     %% Test that constituent parts have the expected structure
-    #{root_wrap := RootWrap, size := Size} = Parts2,
+    #{root := RootWrap, size := Size} = Parts2,
     ?assertEqual(3, Size),
     ?assert(RootWrap =/= b5_ranks_node:new()),
 
