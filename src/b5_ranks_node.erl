@@ -49,71 +49,26 @@
 %% Macro Definitions
 %% ------------------------------------------------------------------
 
-% Nodes are tuples (for the most part), with different node types
-% having different sizes. Size alone is not enough to differentiate
-% between some node types, so we need to add tags. The following
-% is the rationale for which node types get tags.
-%
-% After a few hundred keys, the approx average distribution of node types
-% stabilises as follows:
-% * INTERNAL2: 13%
-% * INTERNAL3: 8%
-% * INTERNAL4: 5%
-% * LEAF2: 36%
-% * LEAF3: 22%
-% * LEAF4: 14%
-%
-%
-% INTERNAL1 vs LEAF2 (4 elements):
-%   Prioritise LEAF2. INTERNAL1 can only show at the root, whereas LEAF2 is the
-%   most common type of node. Cheaper and smaller leaves at the expense of a
-%   more expensive root node.
-%
-%
-%
-% INTERNAL2 vs LEAF3 (6 elements):
-%   Prioritise INTERNAL2. Although LEAF3 is much more common than INTERNAL2,
-%   most operations take place over internal nodes.
-%
-%
-%
-% INTERNAL3 vs LEAF4 (8 elements):
-%   Prioritise INTERNAL3. Same rationale as in previous case.
-%
-%
-%
-% Conflict-free:
-%
-
-%%
-%% Regarding `Values' in internal nodes:
-%% * INTERNAL4 stores tuples
-%% * INTERNAL3 stores tuples
-%% * INTERNAL2 stores an improper list
-%%
-%% INTERNAL2 being the most common internal node type, that gives us a slight
-%% edge in some operations.
-%%
-
-% 10 elements
--define(INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5),
-    {K1, K2, K3, K4, Values, C1, C2, C3, C4, C5}
+% 11 elements
+-define(INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5),
+    {K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5}
 ).
 
-% 8 elements
--define(INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4), {K1, K2, K3, Values, C1, C2, C3, C4}).
-
-% 6 elements
--define(INTERNAL2(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
-
-% 5 elements
--define(INTERNAL1(K1, V1, C1, C2), {internal1, K1, V1, C1, C2}).
-
 % 9 elements
--define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {leaf4, K1, K2, K3, K4, V1, V2, V3, V4}).
+-define(INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4),
+        {K1, K2, K3, Values, Sizes, C1, C2, C3, C4}).
 
 % 7 elements
--define(LEAF3(K1, K2, K3, V1, V2, V3), {leaf3, K1, K2, K3, V1, V2, V3}).
+-define(INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3), {K1, K2, Values, Sizes, C1, C2, C3}).
+
+% 5 elements
+-define(INTERNAL1(K1, V1, Sizes, C1, C2), {K1, V1, Sizes, C1, C2}).
+
+% 8 elements
+-define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {K1, K2, K3, K4, V1, V2, V3, V4}).
+
+% 6 elements
+-define(LEAF3(K1, K2, K3, V1, V2, V3), {K1, K2, K3, V1, V2, V3}).
 
 % 4 elements
 -define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
@@ -123,6 +78,11 @@
 -define(LEAF0, leaf0).
 
 -define(ROOT_WRAP(Bitsizes, Root), [Bitsizes | Root]).
+
+% 3 elements
+-define(SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR), (
+{split, {SplitK, SplitV}, {LeftSize, RightSize, SplitL, SplitR}}
+                                                            )).
 
 %% ------------------------------------------------------------------
 %% Type Definitions
@@ -169,6 +129,7 @@
         Key,
         Key,
         {Value, Value, Value, Value},
+        internal4_sizes(),
         deep_node(Key, Value),
         deep_node(Key, Value),
         deep_node(Key, Value),
@@ -182,6 +143,7 @@
         Key,
         Key,
         {Value, Value, Value},
+        internal3_sizes(),
         deep_node(Key, Value),
         deep_node(Key, Value),
         deep_node(Key, Value),
@@ -193,6 +155,7 @@
         Key,
         Key,
         nonempty_improper_list(Value, Value),
+        internal2_sizes(),
         deep_node(Key, Value),
         deep_node(Key, Value),
         deep_node(Key, Value)
@@ -202,6 +165,7 @@
     (?INTERNAL1(
         Key,
         Value,
+        internal1_sizes(),
         deep_node(Key, Value),
         deep_node(Key, Value)
     )).
@@ -232,6 +196,13 @@
 
 %-type node_leaf1(Key, Value) :: ?LEAF1(Key, Value).
 -type node_leaf1(Key, Value) :: nonempty_improper_list(Key, Value).
+
+%%%%%%%%%%%
+
+-type internal4_sizes() :: pos_integer().
+-type internal3_sizes() :: pos_integer().
+-type internal2_sizes() :: pos_integer().
+-type internal1_sizes() :: pos_integer().
 
 %%%%%%%%%%%
 
@@ -266,15 +237,13 @@
 
 % -type split_result(Key, Value) :: internal_split_result(Key, Value) | leaf_split_result(Key, Value).
 
--type internal_split_result(Key, Value) :: split_result(
-    Key, Value, node_internal2(Key, Value), node_internal2(Key, Value)
+-type internal_split_result(Key, Value) :: ?SPLIT(
+    Key, Value,
+    pos_integer(), pos_integer(),
+    node_internal2(Key, Value), node_internal2(Key, Value)
 ).
 
--type leaf_split_result(Key, Value) :: split_result(
-    Key, Value, node_leaf2(Key, Value), node_leaf2(Key, Value)
-).
-
--type split_result(Key, Value, SplitL, SplitR) :: {split, Key, Value, SplitL, SplitR}.
+-type leaf_split_result(Key, Value) :: ?SPLIT(Key, Value, 2, 2, node_leaf2(Key, Value), node_leaf2(Key, Value)).
 
 %%%%%%%%%%%
 
@@ -326,7 +295,7 @@ delete_key(Key, RootWrap) ->
     AccN :: Acc2, Acc2 :: Acc1, Acc1 :: Acc0.
 foldl(Fun, Acc, ?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(K1, V1, C1, C2) ->
+        ?INTERNAL1(K1, V1, _, C1, C2) ->
             Acc2 = Fun(K1, V1, foldl_recur(Fun, Acc, C1)),
             foldl_recur(Fun, Acc2, C2);
         ?LEAF1(K1, V1) ->
@@ -343,7 +312,7 @@ foldl(Fun, Acc, ?ROOT_WRAP(_, Root)) ->
     AccN :: Acc2, Acc2 :: Acc1, Acc1 :: Acc0.
 foldr(Fun, Acc, ?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(K1, V1, C1, C2) ->
+        ?INTERNAL1(K1, V1, _, C1, C2) ->
             Acc2 = Fun(K1, V1, foldr_recur(Fun, Acc, C2)),
             foldr_recur(Fun, Acc2, C1);
         ?LEAF1(K1, V1) ->
@@ -359,7 +328,7 @@ foldr(Fun, Acc, ?ROOT_WRAP(_, Root)) ->
 -spec get(Key, t(Key, Value)) -> Value.
 get(Key, ?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(K1, V1, C1, C2) ->
+        ?INTERNAL1(K1, V1, _, C1, C2) ->
             get_internal1(Key, K1, V1, C1, C2);
         ?LEAF1(K1, V1) ->
             get_leaf1(Key, K1, V1);
@@ -377,14 +346,14 @@ get(Key, ?ROOT_WRAP(_, Root)) ->
 -dialyzer({no_underspecs, insert/4}).
 insert(Key, ValueEval, ValueWrap, ?ROOT_WRAP([Bitsize | NextBitsizes] = Bitsizes, Node)) ->
     case Node of
-        ?INTERNAL1(K1, V1, C1, C2) ->
+        ?INTERNAL1(K1, V1, Sizes, C1, C2) ->
             ?ROOT_WRAP(
                 Bitsizes,
-                insert_internal1(Key, ValueEval, ValueWrap, K1, V1, C1, C2, Bitsize, NextBitsizes)
+                insert_internal1(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2, Bitsize, NextBitsizes)
             );
         _ ->
             case insert_recur_internal(Key, ValueEval, ValueWrap, Node, Bitsize, NextBitsizes) of
-                {split, SplitK, SplitV, SplitL, SplitR} ->
+                ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
                     UpdatedBitsizes = b5_ranks_bitsizes:increase_height(Bitsizes),
                     NewRoot = ?INTERNAL1(SplitK, SplitV, SplitL, SplitR),
                     ?ROOT_WRAP(UpdatedBitsizes, NewRoot);
@@ -401,7 +370,7 @@ insert(Key, ValueEval, ValueWrap, ?ROOT_WRAP([], Node)) ->
             ?ROOT_WRAP([], insert_leaf1(Key, ValueEval, ValueWrap, K1, V1));
         Leaf ->
             case insert_recur_leaf(Key, ValueEval, ValueWrap, Leaf) of
-                {split, SplitK, SplitV, SplitL, SplitR} ->
+                ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
                     Bitsizes = b5_ranks_bitsizes:increase_height([]),
                     NewRoot = ?INTERNAL1(SplitK, SplitV, SplitL, SplitR),
                     ?ROOT_WRAP(Bitsizes, NewRoot);
@@ -431,7 +400,7 @@ iterator_from(Key, ?ROOT_WRAP(_, Node), reversed) ->
 -dialyzer({no_underspecs, keys/1}).
 keys(?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(K1, _, C1, C2) ->
+        ?INTERNAL1(K1, _, _, C1, C2) ->
             Acc2 = [K1 | keys_recur(C2, [])],
             keys_recur(C1, Acc2);
         ?LEAF1(K1, _) ->
@@ -447,7 +416,7 @@ keys(?ROOT_WRAP(_, Root)) ->
 -spec larger(Key, root_wrap(Key, Value)) -> {Key, Value} | none.
 larger(Key, ?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(K1, V1, C1, C2) ->
+        ?INTERNAL1(K1, V1, _, C1, C2) ->
             case Key < K1 of
                 true ->
                     case larger_recur(Key, C1) of
@@ -475,7 +444,7 @@ larger(Key, ?ROOT_WRAP(_, Root)) ->
 -spec largest(root_wrap(Key, Value)) -> {Key, Value}.
 largest(?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(_, _, _, C2) ->
+        ?INTERNAL1(_, _, _, _, C2) ->
             largest_recur(C2);
         ?LEAF1(K1, V1) ->
             {K1, V1};
@@ -527,10 +496,11 @@ next(#b5_ranks_reverse_iter{steps = Steps} = Iter) ->
 map(Fun, ?ROOT_WRAP(Bitsizes, Root)) ->
     MappedRoot =
         case Root of
-            ?INTERNAL1(K1, V1, C1, C2) ->
+            ?INTERNAL1(K1, V1, Sizes, C1, C2) ->
                 ?INTERNAL1(
                    K1,
                    Fun(K1, V1),
+                   Sizes,
                    map_recur(Fun, C1),
                    map_recur(Fun, C2)
                   );
@@ -549,7 +519,7 @@ map(Fun, ?ROOT_WRAP(Bitsizes, Root)) ->
 -spec smaller(Key, root_wrap(Key, Value)) -> {Key, Value} | none.
 smaller(Key, ?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(K1, V1, C1, C2) ->
+        ?INTERNAL1(K1, V1, _, C1, C2) ->
             case Key > K1 andalso smaller_recur(Key, C2) of
                 false ->
                     smaller_recur(Key, C1);
@@ -576,7 +546,7 @@ smaller(Key, ?ROOT_WRAP(_, Root)) ->
 -spec smallest(root_wrap(Key, Value)) -> {Key, Value}.
 smallest(?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(_, _, C1, _) ->
+        ?INTERNAL1(_, _, _, C1, _) ->
             smallest_recur(C1);
         ?LEAF1(K1, V1) ->
             {K1, V1};
@@ -616,7 +586,7 @@ take_smallest(RootWrap) ->
 -dialyzer({no_underspecs, to_list/1}).
 to_list(?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(K1, V1, C1, C2) ->
+        ?INTERNAL1(K1, V1, _, C1, C2) ->
             Acc2 = [{K1, V1} | to_list_recur(C2, [])],
             to_list_recur(C1, Acc2);
         ?LEAF1(K1, V1) ->
@@ -638,8 +608,8 @@ to_list(?ROOT_WRAP(_, Root)) ->
 ) -> root_wrap(Key, Value | UpdatedValue).
 update(Key, ValueEval, ValueWrap, ?ROOT_WRAP(Bitsizes, Root)) ->
     case Root of
-        ?INTERNAL1(K1, V1, C1, C2) ->
-            ?ROOT_WRAP(Bitsizes, update_internal1(Key, ValueEval, ValueWrap, K1, V1, C1, C2));
+        ?INTERNAL1(K1, V1, Sizes, C1, C2) ->
+            ?ROOT_WRAP(Bitsizes, update_internal1(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2));
         ?LEAF1(K1, V1) ->
             ?ROOT_WRAP(Bitsizes, update_leaf1(Key, ValueEval, ValueWrap, K1, V1));
         ?LEAF0 ->
@@ -688,7 +658,7 @@ validate(ExpectedNrOfKeys, ?ROOT_WRAP(Bitsizes, Root)) ->
 -dialyzer({no_underspecs, values/1}).
 values(?ROOT_WRAP(_, Root)) ->
     case Root of
-        ?INTERNAL1(_, V1, C1, C2) ->
+        ?INTERNAL1(_, V1, _, C1, C2) ->
             Acc2 = [V1 | values_recur(C2, [])],
             values_recur(C1, Acc2);
         ?LEAF1(_, V1) ->
@@ -723,11 +693,11 @@ error_key_exists(Key) ->
 %% ------------------------------------------------------------------
 
 -spec get_recur(Key, deep_node(Key, Value)) -> Value.
-get_recur(Key, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
+get_recur(Key, ?INTERNAL4(K1, K2, K3, K4, Values, _, C1, C2, C3, C4, C5)) ->
     get_internal4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-get_recur(Key, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
+get_recur(Key, ?INTERNAL3(K1, K2, K3, Values, _, C1, C2, C3, C4)) ->
     get_internal3(Key, K1, K2, K3, Values, C1, C2, C3, C4);
-get_recur(Key, ?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
+get_recur(Key, ?INTERNAL2(K1, K2, Values, _, C1, C2, C3)) ->
     get_internal2(Key, K1, K2, Values, C1, C2, C3);
 get_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
     get_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4);
@@ -890,25 +860,6 @@ get_leaf1(Key, K1, V1) ->
 %% Internal Function Definitions: Node Insertion
 %% ------------------------------------------------------------------
 
-%-spec insert_recur(
-%    Key,
-%    insertion_value_wrap(Value),
-%    insertion_value_eval(),
-%    deep_node(Key, Value)
-%) -> deep_node_after_insertion(Key, Value) | split_result(Key, Value).
-%insert_recur(Key, ValueEval, ValueWrap, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
-%    insert_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%insert_recur(Key, ValueEval, ValueWrap, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
-%    insert_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4);
-%insert_recur(Key, ValueEval, ValueWrap, ?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
-%    insert_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
-%insert_recur(Key, ValueEval, ValueWrap, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
-%    insert_leaf4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4);
-%insert_recur(Key, ValueEval, ValueWrap, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
-%    insert_leaf3(Key, ValueEval, ValueWrap, K1, K2, K3, V1, V2, V3);
-%insert_recur(Key, ValueEval, ValueWrap, ?LEAF2(K1, K2, V1, V2)) ->
-%    insert_leaf2(Key, ValueEval, ValueWrap, K1, K2, V1, V2).
-
 insert_recur(Key, ValueEval, ValueWrap, Node, [Bitsize | NextBitsizes]) ->
     insert_recur_internal(Key, ValueEval, ValueWrap, Node, Bitsize, NextBitsizes);
 insert_recur(Key, ValueEval, ValueWrap, Node, []) ->
@@ -916,7 +867,7 @@ insert_recur(Key, ValueEval, ValueWrap, Node, []) ->
 
 insert_recur_internal(Key, ValueEval, ValueWrap, Node, Bitsize, NextBitsizes) ->
     case Node of
-        ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+        ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
             insert_internal4(
                 Key,
                 ValueEval,
@@ -926,6 +877,7 @@ insert_recur_internal(Key, ValueEval, ValueWrap, Node, Bitsize, NextBitsizes) ->
                 K3,
                 K4,
                 Values,
+                Sizes,
                 C1,
                 C2,
                 C3,
@@ -934,13 +886,13 @@ insert_recur_internal(Key, ValueEval, ValueWrap, Node, Bitsize, NextBitsizes) ->
                 Bitsize,
                 NextBitsizes
             );
-        ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4) ->
+        ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
             insert_internal3(
-                Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, Bitsize, NextBitsizes
+                Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4, Bitsize, NextBitsizes
             );
-        ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
+        ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3) ->
             insert_internal2(
-                Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, Bitsize, NextBitsizes
+                Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, Bitsize, NextBitsizes
             )
     end.
 
@@ -956,9 +908,9 @@ insert_recur_leaf(Key, ValueEval, ValueWrap, Node) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--compile({inline, [insert_internal4/15]}).
+-compile({inline, [insert_internal4/16]}).
 insert_internal4(
-    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     if
         Key > K2 ->
@@ -975,6 +927,7 @@ insert_internal4(
                                 K3,
                                 K4,
                                 Values,
+                                Sizes,
                                 C1,
                                 C2,
                                 C3,
@@ -993,6 +946,7 @@ insert_internal4(
                                 K3,
                                 K4,
                                 Values,
+                                Sizes,
                                 C1,
                                 C2,
                                 C3,
@@ -1014,6 +968,7 @@ insert_internal4(
                         K3,
                         K4,
                         Values,
+                        Sizes,
                         C1,
                         C2,
                         C3,
@@ -1037,6 +992,7 @@ insert_internal4(
                         K3,
                         K4,
                         Values,
+                        Sizes,
                         C1,
                         C2,
                         C3,
@@ -1055,6 +1011,7 @@ insert_internal4(
                         K3,
                         K4,
                         Values,
+                        Sizes,
                         C1,
                         C2,
                         C3,
@@ -1070,13 +1027,14 @@ insert_internal4(
             error_key_exists(Key)
     end.
 
--compile({inline, [insert_internal4_child1/15]}).
+-compile({inline, [insert_internal4_child1/16]}).
 insert_internal4_child1(
-    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
+            {_, S2, S3, S4, S5} = internal4_sizes_unpack(Sizes, Bitsize),
             internal_split(
                 SplitK,
                 K1,
@@ -1088,6 +1046,12 @@ insert_internal4_child1(
                 V2,
                 V3,
                 V4,
+                LeftSize,
+                RightSize,
+                S2,
+                S3,
+                S4,
+                S5,
                 SplitL,
                 SplitR,
                 C2,
@@ -1103,6 +1067,7 @@ insert_internal4_child1(
                 K3,
                 K4,
                 Values,
+                internal4_sizes_inc1(Sizes, Bitsize),
                 UpdatedC1,
                 C2,
                 C3,
@@ -1111,13 +1076,14 @@ insert_internal4_child1(
             )
     end.
 
--compile({inline, [insert_internal4_child2/15]}).
+-compile({inline, [insert_internal4_child2/16]}).
 insert_internal4_child2(
-    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
+            {S1, _, S3, S4, S5} = internal4_sizes_unpack(Sizes, Bitsize),
             internal_split(
                 K1,
                 SplitK,
@@ -1129,6 +1095,12 @@ insert_internal4_child2(
                 V2,
                 V3,
                 V4,
+                S1,
+                LeftSize,
+                RightSize,
+                S3,
+                S4,
+                S5,
                 C1,
                 SplitL,
                 SplitR,
@@ -1144,6 +1116,7 @@ insert_internal4_child2(
                 K3,
                 K4,
                 Values,
+                internal4_sizes_inc2(Sizes, Bitsize),
                 C1,
                 UpdatedC2,
                 C3,
@@ -1152,13 +1125,14 @@ insert_internal4_child2(
             )
     end.
 
--compile({inline, [insert_internal4_child3/15]}).
+-compile({inline, [insert_internal4_child3/16]}).
 insert_internal4_child3(
-    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
+            {S1, S2, _, S4, S5} = internal4_sizes_unpack(Sizes, Bitsize),
             internal_split(
                 K1,
                 K2,
@@ -1170,6 +1144,12 @@ insert_internal4_child3(
                 SplitV,
                 V3,
                 V4,
+                S1,
+                S2,
+                LeftSize,
+                RightSize,
+                S4,
+                S5,
                 C1,
                 C2,
                 SplitL,
@@ -1185,6 +1165,7 @@ insert_internal4_child3(
                 K3,
                 K4,
                 Values,
+                internal4_sizes_inc3(Sizes, Bitsize),
                 C1,
                 C2,
                 UpdatedC3,
@@ -1193,13 +1174,14 @@ insert_internal4_child3(
             )
     end.
 
--compile({inline, [insert_internal4_child4/15]}).
+-compile({inline, [insert_internal4_child4/16]}).
 insert_internal4_child4(
-    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C4, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
+            {S1, S2, S3, _, S5} = internal4_sizes_unpack(Sizes, Bitsize),
             internal_split(
                 K1,
                 K2,
@@ -1211,6 +1193,12 @@ insert_internal4_child4(
                 V3,
                 SplitV,
                 V4,
+                S1,
+                S2,
+                S3,
+                LeftSize,
+                RightSize,
+                S5,
                 C1,
                 C2,
                 C3,
@@ -1226,6 +1214,7 @@ insert_internal4_child4(
                 K3,
                 K4,
                 Values,
+                internal4_sizes_inc4(Sizes, Bitsize),
                 C1,
                 C2,
                 C3,
@@ -1234,13 +1223,14 @@ insert_internal4_child4(
             )
     end.
 
--compile({inline, [insert_internal4_child5/15]}).
+-compile({inline, [insert_internal4_child5/16]}).
 insert_internal4_child5(
-    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C5, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
+            {S1, S2, S3, S4, _} = internal4_sizes_unpack(Sizes, Bitsize),
             internal_split(
                 K1,
                 K2,
@@ -1252,6 +1242,12 @@ insert_internal4_child5(
                 V3,
                 V4,
                 SplitV,
+                S1,
+                S2,
+                S3,
+                S4,
+                LeftSize,
+                RightSize,
                 C1,
                 C2,
                 C3,
@@ -1267,6 +1263,7 @@ insert_internal4_child5(
                 K3,
                 K4,
                 Values,
+                internal4_sizes_inc5(Sizes),
                 C1,
                 C2,
                 C3,
@@ -1277,9 +1274,9 @@ insert_internal4_child5(
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--compile({inline, [insert_internal3/13]}).
+-compile({inline, [insert_internal3/14]}).
 insert_internal3(
-    Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4, Bitsize, NextBitsizes
 ) ->
     if
         Key > K2 ->
@@ -1293,6 +1290,7 @@ insert_internal3(
                         K2,
                         K3,
                         Values,
+                        Sizes,
                         C1,
                         C2,
                         C3,
@@ -1309,6 +1307,7 @@ insert_internal3(
                         K2,
                         K3,
                         Values,
+                        Sizes,
                         C1,
                         C2,
                         C3,
@@ -1330,6 +1329,7 @@ insert_internal3(
                         K2,
                         K3,
                         Values,
+                        Sizes,
                         C1,
                         C2,
                         C3,
@@ -1346,6 +1346,7 @@ insert_internal3(
                         K2,
                         K3,
                         Values,
+                        Sizes,
                         C1,
                         C2,
                         C3,
@@ -1360,12 +1361,12 @@ insert_internal3(
             error_key_exists(Key)
     end.
 
--compile({inline, [insert_internal3_child1/13]}).
+-compile({inline, [insert_internal3_child1/14]}).
 insert_internal3_child1(
-    Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, _Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             {V1, V2, V3} = Values,
             ?INTERNAL4(
                 SplitK,
@@ -1373,6 +1374,7 @@ insert_internal3_child1(
                 K2,
                 K3,
                 {SplitV, V1, V2, V3},
+                internal3_sizes_enlarge1(Sizes, Bitsize, LeftSize, RightSize),
                 SplitL,
                 SplitR,
                 C2,
@@ -1380,15 +1382,17 @@ insert_internal3_child1(
                 C4
             );
         UpdatedC1 ->
-            ?INTERNAL3(K1, K2, K3, Values, UpdatedC1, C2, C3, C4)
+            ?INTERNAL3(K1, K2, K3, Values,
+                       internal3_sizes_inc1(Sizes, Bitsize),
+                       UpdatedC1, C2, C3, C4)
     end.
 
--compile({inline, [insert_internal3_child2/13]}).
+-compile({inline, [insert_internal3_child2/14]}).
 insert_internal3_child2(
-    Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, _Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             {V1, V2, V3} = Values,
             ?INTERNAL4(
                 K1,
@@ -1396,6 +1400,7 @@ insert_internal3_child2(
                 K2,
                 K3,
                 {V1, SplitV, V2, V3},
+                internal3_sizes_enlarge2(Sizes, Bitsize, LeftSize, RightSize),
                 C1,
                 SplitL,
                 SplitR,
@@ -1403,15 +1408,17 @@ insert_internal3_child2(
                 C4
             );
         UpdatedC2 ->
-            ?INTERNAL3(K1, K2, K3, Values, C1, UpdatedC2, C3, C4)
+            ?INTERNAL3(K1, K2, K3, Values,
+                       internal3_sizes_inc2(Sizes, Bitsize),
+                       C1, UpdatedC2, C3, C4)
     end.
 
--compile({inline, [insert_internal3_child3/13]}).
+-compile({inline, [insert_internal3_child3/14]}).
 insert_internal3_child3(
-    Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, _Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             {V1, V2, V3} = Values,
             ?INTERNAL4(
                 K1,
@@ -1419,6 +1426,7 @@ insert_internal3_child3(
                 SplitK,
                 K3,
                 {V1, V2, SplitV, V3},
+                internal3_sizes_enlarge3(Sizes, Bitsize, LeftSize, RightSize),
                 C1,
                 C2,
                 SplitL,
@@ -1426,15 +1434,17 @@ insert_internal3_child3(
                 C4
             );
         UpdatedC3 ->
-            ?INTERNAL3(K1, K2, K3, Values, C1, C2, UpdatedC3, C4)
+            ?INTERNAL3(K1, K2, K3, Values,
+                       internal3_sizes_inc3(Sizes, Bitsize),
+                       C1, C2, UpdatedC3, C4)
     end.
 
--compile({inline, [insert_internal3_child4/13]}).
+-compile({inline, [insert_internal3_child4/14]}).
 insert_internal3_child4(
-    Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, _Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C4, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             {V1, V2, V3} = Values,
             ?INTERNAL4(
                 K1,
@@ -1442,6 +1452,7 @@ insert_internal3_child4(
                 K3,
                 SplitK,
                 {V1, V2, V3, SplitV},
+                internal3_sizes_enlarge4(Sizes, Bitsize, LeftSize, RightSize),
                 C1,
                 C2,
                 C3,
@@ -1449,123 +1460,135 @@ insert_internal3_child4(
                 SplitR
             );
         UpdatedC4 ->
-            ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, UpdatedC4)
+            ?INTERNAL3(K1, K2, K3, Values,
+                       internal3_sizes_inc4(Sizes),
+                       C1, C2, C3, UpdatedC4)
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--compile({inline, [insert_internal2/11]}).
-insert_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, Bitsize, NextBitsizes) ->
+-compile({inline, [insert_internal2/12]}).
+insert_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, Bitsize, NextBitsizes) ->
     if
         Key > K1 ->
             if
                 Key < K2 ->
                     insert_internal2_child2(
-                        Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, Bitsize, NextBitsizes
+                        Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, Bitsize, NextBitsizes
                     );
                 Key > K2 ->
                     insert_internal2_child3(
-                        Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, Bitsize, NextBitsizes
+                        Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, Bitsize, NextBitsizes
                     );
                 true ->
                     error_key_exists(Key)
             end;
         Key < K1 ->
             insert_internal2_child1(
-                Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, Bitsize, NextBitsizes
+                Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, Bitsize, NextBitsizes
             );
         true ->
             error_key_exists(Key)
     end.
 
--compile({inline, [insert_internal2_child1/11]}).
+-compile({inline, [insert_internal2_child1/12]}).
 insert_internal2_child1(
-    Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, _Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             [V1 | V2] = Values,
             ?INTERNAL3(
                 SplitK,
                 K1,
                 K2,
                 {SplitV, V1, V2},
+                internal2_sizes_enlarge1(Sizes, Bitsize, LeftSize, RightSize),
                 SplitL,
                 SplitR,
                 C2,
                 C3
             );
         UpdatedC1 ->
-            ?INTERNAL2(K1, K2, Values, UpdatedC1, C2, C3)
+            ?INTERNAL2(K1, K2, Values,
+                       internal2_sizes_inc1(Sizes, Bitsize),
+                       UpdatedC1, C2, C3)
     end.
 
--compile({inline, [insert_internal2_child2/11]}).
+-compile({inline, [insert_internal2_child2/12]}).
 insert_internal2_child2(
-    Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, _Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             [V1 | V2] = Values,
             ?INTERNAL3(
                 K1,
                 SplitK,
                 K2,
                 {V1, SplitV, V2},
+                internal2_sizes_enlarge2(Sizes, Bitsize, LeftSize, RightSize),
                 C1,
                 SplitL,
                 SplitR,
                 C3
             );
         UpdatedC2 ->
-            ?INTERNAL2(K1, K2, Values, C1, UpdatedC2, C3)
+            ?INTERNAL2(K1, K2, Values,
+                       internal2_sizes_inc2(Sizes, Bitsize),
+                       C1, UpdatedC2, C3)
     end.
 
--compile({inline, [insert_internal2_child3/11]}).
+-compile({inline, [insert_internal2_child3/12]}).
 insert_internal2_child3(
-    Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, _Bitsize, NextBitsizes
+    Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, Bitsize, NextBitsizes
 ) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             [V1 | V2] = Values,
             ?INTERNAL3(
                 K1,
                 K2,
                 SplitK,
                 {V1, V2, SplitV},
+                internal2_sizes_enlarge3(Sizes, Bitsize, LeftSize, RightSize),
                 C1,
                 C2,
                 SplitL,
                 SplitR
             );
         UpdatedC3 ->
-            ?INTERNAL2(K1, K2, Values, C1, C2, UpdatedC3)
+            ?INTERNAL2(K1, K2, Values,
+                       internal2_sizes_inc3(Sizes),
+                       C1, C2, UpdatedC3)
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--compile({inline, [insert_internal1/9]}).
-insert_internal1(Key, ValueEval, ValueWrap, K1, V1, C1, C2, Bitsize, NextBitsizes) ->
+-compile({inline, [insert_internal1/10]}).
+insert_internal1(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2, Bitsize, NextBitsizes) ->
     if
         Key < K1 ->
             insert_internal1_child1(
-                Key, ValueEval, ValueWrap, K1, V1, C1, C2, Bitsize, NextBitsizes
+                Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2, Bitsize, NextBitsizes
             );
         Key > K1 ->
             insert_internal1_child2(
-                Key, ValueEval, ValueWrap, K1, V1, C1, C2, Bitsize, NextBitsizes
+                Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2, Bitsize, NextBitsizes
             );
         true ->
             error_key_exists(Key)
     end.
 
--compile({inline, [insert_internal1_child1/9]}).
-insert_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2, _Bitsize, NextBitsizes) ->
+-compile({inline, [insert_internal1_child1/10]}).
+insert_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2, Bitsize, NextBitsizes) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             ?INTERNAL2(
                 SplitK,
                 K1,
                 [SplitV | V1],
+                internal1_sizes_enlarge1(Sizes, Bitsize, LeftSize, RightSize),
                 SplitL,
                 SplitR,
                 C2
@@ -1574,19 +1597,21 @@ insert_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2, _Bitsize, Nex
             ?INTERNAL1(
                 K1,
                 V1,
+                internal1_sizes_inc1(Sizes, Bitsize),
                 UpdatedC1,
                 C2
             )
     end.
 
--compile({inline, [insert_internal1_child2/9]}).
-insert_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, C1, C2, _Bitsize, NextBitsizes) ->
+-compile({inline, [insert_internal1_child2/10]}).
+insert_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2, Bitsize, NextBitsizes) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2, NextBitsizes) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR) ->
             ?INTERNAL2(
                 K1,
                 SplitK,
                 [V1 | SplitV],
+                internal1_sizes_enlarge2(Sizes, Bitsize, LeftSize, RightSize),
                 C1,
                 SplitL,
                 SplitR
@@ -1595,6 +1620,7 @@ insert_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, C1, C2, _Bitsize, Nex
             ?INTERNAL1(
                 K1,
                 V1,
+                internal1_sizes_inc2(Sizes),
                 C1,
                 UpdatedC2
             )
@@ -1829,7 +1855,7 @@ insert_leaf1_key2(Key, ValueEval, ValueWrap, K1, V1) ->
 eval_insert_value(eager, Value) -> Value;
 eval_insert_value(lazy, Fun) -> Fun().
 
--compile({inline, internal_split/17}).
+-compile({inline, internal_split/23}).
 -spec internal_split(
     K,
     K,
@@ -1841,6 +1867,12 @@ eval_insert_value(lazy, Fun) -> Fun().
     V,
     V,
     V,
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
     C,
     C,
     C,
@@ -1849,12 +1881,26 @@ eval_insert_value(lazy, Fun) -> Fun().
     C,
     pos_integer()
 ) -> internal_split_result(K, V) when C :: deep_node(K, V).
-internal_split(K1, K2, K3, K4, K5, V1, V2, V3, V4, V5, C1, C2, C3, C4, C5, C6, _Bitsize) ->
+internal_split(
+  K1, K2, K3, K4, K5,
+  V1, V2, V3, V4, V5,
+  S1, S2, S3, S4, S5, S6,
+  C1, C2, C3, C4, C5, C6,
+  Bitsize
+) ->
     SplitK = K3,
     SplitV = V3,
-    SplitL = ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3),
-    SplitR = ?INTERNAL2(K4, K5, [V4 | V5], C4, C5, C6),
-    {split, SplitK, SplitV, SplitL, SplitR}.
+
+    LeftSize = S1 + S2 + S3,
+    RightSize = S4 + S5 + S6,
+
+    SizesL = internal2_sizes_pack(S1, S2, S3, Bitsize),
+    SplitL = ?INTERNAL2(K1, K2, [V1 | V2], SizesL, C1, C2, C3),
+
+    SizesR = internal2_sizes_pack(S4, S5, S6, Bitsize),
+    SplitR = ?INTERNAL2(K4, K5, [V4 | V5], SizesR, C4, C5, C6),
+
+    ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR).
 
 -compile({inline, leaf_split/10}).
 -spec leaf_split(
@@ -1872,9 +1918,14 @@ internal_split(K1, K2, K3, K4, K5, V1, V2, V3, V4, V5, C1, C2, C3, C4, C5, C6, _
 leaf_split(K1, K2, K3, K4, K5, V1, V2, V3, V4, V5) ->
     SplitK = K3,
     SplitV = V3,
+
+    LeftSize = 2,
+    RightSize = 2,
+
     SplitL = ?LEAF2(K1, K2, V1, V2),
     SplitR = ?LEAF2(K4, K5, V4, V5),
-    {split, SplitK, SplitV, SplitL, SplitR}.
+
+    ?SPLIT(SplitK, SplitV, LeftSize, RightSize, SplitL, SplitR).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Node Update
@@ -1886,12 +1937,12 @@ leaf_split(K1, K2, K3, K4, K5, V1, V2, V3, V4, V5) ->
     update_value_eval(),
     deep_node(Key, Value)
 ) -> deep_node(Key, Value | UpdatedValue).
-update_recur(Key, ValueEval, ValueWrap, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
-    update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-update_recur(Key, ValueEval, ValueWrap, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
-    update_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4);
-update_recur(Key, ValueEval, ValueWrap, ?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
-    update_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
+update_recur(Key, ValueEval, ValueWrap, ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)) ->
+    update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5);
+update_recur(Key, ValueEval, ValueWrap, ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)) ->
+    update_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+update_recur(Key, ValueEval, ValueWrap, ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3)) ->
+    update_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3);
 update_recur(Key, ValueEval, ValueWrap, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
     update_leaf4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, V1, V2, V3, V4);
 update_recur(Key, ValueEval, ValueWrap, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
@@ -1901,8 +1952,8 @@ update_recur(Key, ValueEval, ValueWrap, ?LEAF2(K1, K2, V1, V2)) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--compile({inline, [update_internal4/13]}).
-update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4/14]}).
+update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     if
         Key > K2 ->
             if
@@ -1918,6 +1969,7 @@ update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, 
                                 K3,
                                 K4,
                                 Values,
+                                Sizes,
                                 C1,
                                 C2,
                                 C3,
@@ -1934,6 +1986,7 @@ update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, 
                                 K3,
                                 K4,
                                 Values,
+                                Sizes,
                                 C1,
                                 C2,
                                 C3,
@@ -1942,45 +1995,46 @@ update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, 
                             );
                         true ->
                             update_internal4_key3(
-                                Key, ValueEval, ValueWrap, K1, K2, K4, Values, C1, C2, C3, C4, C5
+                                Key, ValueEval, ValueWrap, K1, K2, K4, Values, Sizes, C1, C2, C3, C4, C5
                             )
                     end;
                 Key > K4 ->
                     update_internal4_child5(
-                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
+                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
                     );
                 true ->
                     update_internal4_key4(
-                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, C5
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4, C5
                     )
             end;
         Key < K2 ->
             if
                 Key > K1 ->
                     update_internal4_child2(
-                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
+                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
                     );
                 Key < K1 ->
                     update_internal4_child1(
-                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
+                        Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
                     );
                 true ->
                     update_internal4_key1(
-                        Key, ValueEval, ValueWrap, K2, K3, K4, Values, C1, C2, C3, C4, C5
+                        Key, ValueEval, ValueWrap, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5
                     )
             end;
         true ->
-            update_internal4_key2(Key, ValueEval, ValueWrap, K1, K3, K4, Values, C1, C2, C3, C4, C5)
+            update_internal4_key2(Key, ValueEval, ValueWrap, K1, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)
     end.
 
--compile({inline, [update_internal4_child1/13]}).
-update_internal4_child1(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4_child1/14]}).
+update_internal4_child1(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     ?INTERNAL4(
         K1,
         K2,
         K3,
         K4,
         Values,
+        Sizes,
         update_recur(Key, ValueEval, ValueWrap, C1),
         C2,
         C3,
@@ -1988,14 +2042,15 @@ update_internal4_child1(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C
         C5
     ).
 
--compile({inline, [update_internal4_child2/13]}).
-update_internal4_child2(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4_child2/14]}).
+update_internal4_child2(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     ?INTERNAL4(
         K1,
         K2,
         K3,
         K4,
         Values,
+        Sizes,
         C1,
         update_recur(Key, ValueEval, ValueWrap, C2),
         C3,
@@ -2003,14 +2058,15 @@ update_internal4_child2(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C
         C5
     ).
 
--compile({inline, [update_internal4_child3/13]}).
-update_internal4_child3(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4_child3/14]}).
+update_internal4_child3(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     ?INTERNAL4(
         K1,
         K2,
         K3,
         K4,
         Values,
+        Sizes,
         C1,
         C2,
         update_recur(Key, ValueEval, ValueWrap, C3),
@@ -2018,14 +2074,15 @@ update_internal4_child3(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C
         C5
     ).
 
--compile({inline, [update_internal4_child4/13]}).
-update_internal4_child4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4_child4/14]}).
+update_internal4_child4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     ?INTERNAL4(
         K1,
         K2,
         K3,
         K4,
         Values,
+        Sizes,
         C1,
         C2,
         C3,
@@ -2033,14 +2090,15 @@ update_internal4_child4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C
         C5
     ).
 
--compile({inline, [update_internal4_child5/13]}).
-update_internal4_child5(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4_child5/14]}).
+update_internal4_child5(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     ?INTERNAL4(
         K1,
         K2,
         K3,
         K4,
         Values,
+        Sizes,
         C1,
         C2,
         C3,
@@ -2050,8 +2108,8 @@ update_internal4_child5(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C
 
 %%%
 
--compile({inline, [update_internal4_key1/12]}).
-update_internal4_key1(Key, ValueEval, ValueWrap, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4_key1/13]}).
+update_internal4_key1(Key, ValueEval, ValueWrap, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     {V1, V2, V3, V4} = Values,
     Value = eval_update_value(ValueEval, ValueWrap, V1),
     ?INTERNAL4(
@@ -2060,6 +2118,7 @@ update_internal4_key1(Key, ValueEval, ValueWrap, K2, K3, K4, Values, C1, C2, C3,
         K3,
         K4,
         {Value, V2, V3, V4},
+        Sizes,
         C1,
         C2,
         C3,
@@ -2067,8 +2126,8 @@ update_internal4_key1(Key, ValueEval, ValueWrap, K2, K3, K4, Values, C1, C2, C3,
         C5
     ).
 
--compile({inline, [update_internal4_key2/12]}).
-update_internal4_key2(Key, ValueEval, ValueWrap, K1, K3, K4, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4_key2/13]}).
+update_internal4_key2(Key, ValueEval, ValueWrap, K1, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     {V1, V2, V3, V4} = Values,
     Value = eval_update_value(ValueEval, ValueWrap, V2),
     ?INTERNAL4(
@@ -2077,6 +2136,7 @@ update_internal4_key2(Key, ValueEval, ValueWrap, K1, K3, K4, Values, C1, C2, C3,
         K3,
         K4,
         {V1, Value, V3, V4},
+        Sizes,
         C1,
         C2,
         C3,
@@ -2084,8 +2144,8 @@ update_internal4_key2(Key, ValueEval, ValueWrap, K1, K3, K4, Values, C1, C2, C3,
         C5
     ).
 
--compile({inline, [update_internal4_key3/12]}).
-update_internal4_key3(Key, ValueEval, ValueWrap, K1, K2, K4, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4_key3/13]}).
+update_internal4_key3(Key, ValueEval, ValueWrap, K1, K2, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     {V1, V2, V3, V4} = Values,
     Value = eval_update_value(ValueEval, ValueWrap, V3),
     ?INTERNAL4(
@@ -2094,6 +2154,7 @@ update_internal4_key3(Key, ValueEval, ValueWrap, K1, K2, K4, Values, C1, C2, C3,
         Key,
         K4,
         {V1, V2, Value, V4},
+        Sizes,
         C1,
         C2,
         C3,
@@ -2101,8 +2162,8 @@ update_internal4_key3(Key, ValueEval, ValueWrap, K1, K2, K4, Values, C1, C2, C3,
         C5
     ).
 
--compile({inline, [update_internal4_key4/12]}).
-update_internal4_key4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4, C5) ->
+-compile({inline, [update_internal4_key4/13]}).
+update_internal4_key4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4, C5) ->
     {V1, V2, V3, V4} = Values,
     Value = eval_update_value(ValueEval, ValueWrap, V4),
     ?INTERNAL4(
@@ -2111,6 +2172,7 @@ update_internal4_key4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3,
         K3,
         Key,
         {V1, V2, V3, Value},
+        Sizes,
         C1,
         C2,
         C3,
@@ -2120,85 +2182,89 @@ update_internal4_key4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3,
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--compile({inline, [update_internal3/11]}).
-update_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+-compile({inline, [update_internal3/12]}).
+update_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
     if
         Key > K2 ->
             if
                 Key < K3 ->
                     update_internal3_child3(
-                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4
                     );
                 Key > K3 ->
                     update_internal3_child4(
-                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4
                     );
                 true ->
-                    update_internal3_key3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, C4)
+                    update_internal3_key3(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, C4)
             end;
         Key < K2 ->
             if
                 Key > K1 ->
                     update_internal3_child2(
-                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4
                     );
                 Key < K1 ->
                     update_internal3_child1(
-                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4
+                        Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4
                     );
                 true ->
-                    update_internal3_key1(Key, ValueEval, ValueWrap, K2, K3, Values, C1, C2, C3, C4)
+                    update_internal3_key1(Key, ValueEval, ValueWrap, K2, K3, Values, Sizes, C1, C2, C3, C4)
             end;
         true ->
-            update_internal3_key2(Key, ValueEval, ValueWrap, K1, K3, Values, C1, C2, C3, C4)
+            update_internal3_key2(Key, ValueEval, ValueWrap, K1, K3, Values, Sizes, C1, C2, C3, C4)
     end.
 
--compile({inline, [update_internal3_child1/11]}).
-update_internal3_child1(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+-compile({inline, [update_internal3_child1/12]}).
+update_internal3_child1(Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
     ?INTERNAL3(
         K1,
         K2,
         K3,
         Values,
+        Sizes,
         update_recur(Key, ValueEval, ValueWrap, C1),
         C2,
         C3,
         C4
     ).
 
--compile({inline, [update_internal3_child2/11]}).
-update_internal3_child2(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+-compile({inline, [update_internal3_child2/12]}).
+update_internal3_child2(Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
     ?INTERNAL3(
         K1,
         K2,
         K3,
         Values,
+        Sizes,
         C1,
         update_recur(Key, ValueEval, ValueWrap, C2),
         C3,
         C4
     ).
 
--compile({inline, [update_internal3_child3/11]}).
-update_internal3_child3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+-compile({inline, [update_internal3_child3/12]}).
+update_internal3_child3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
     ?INTERNAL3(
         K1,
         K2,
         K3,
         Values,
+        Sizes,
         C1,
         C2,
         update_recur(Key, ValueEval, ValueWrap, C3),
         C4
     ).
 
--compile({inline, [update_internal3_child4/11]}).
-update_internal3_child4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
+-compile({inline, [update_internal3_child4/12]}).
+update_internal3_child4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
     ?INTERNAL3(
         K1,
         K2,
         K3,
         Values,
+        Sizes,
         C1,
         C2,
         C3,
@@ -2207,8 +2273,8 @@ update_internal3_child4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C
 
 %%%
 
--compile({inline, [update_internal3_key1/10]}).
-update_internal3_key1(Key, ValueEval, ValueWrap, K2, K3, Values, C1, C2, C3, C4) ->
+-compile({inline, [update_internal3_key1/11]}).
+update_internal3_key1(Key, ValueEval, ValueWrap, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
     {V1, V2, V3} = Values,
     Value = eval_update_value(ValueEval, ValueWrap, V1),
     ?INTERNAL3(
@@ -2216,14 +2282,15 @@ update_internal3_key1(Key, ValueEval, ValueWrap, K2, K3, Values, C1, C2, C3, C4)
         K2,
         K3,
         {Value, V2, V3},
+        Sizes,
         C1,
         C2,
         C3,
         C4
     ).
 
--compile({inline, [update_internal3_key2/10]}).
-update_internal3_key2(Key, ValueEval, ValueWrap, K1, K3, Values, C1, C2, C3, C4) ->
+-compile({inline, [update_internal3_key2/11]}).
+update_internal3_key2(Key, ValueEval, ValueWrap, K1, K3, Values, Sizes, C1, C2, C3, C4) ->
     {V1, V2, V3} = Values,
     Value = eval_update_value(ValueEval, ValueWrap, V2),
     ?INTERNAL3(
@@ -2231,14 +2298,15 @@ update_internal3_key2(Key, ValueEval, ValueWrap, K1, K3, Values, C1, C2, C3, C4)
         Key,
         K3,
         {V1, Value, V3},
+        Sizes,
         C1,
         C2,
         C3,
         C4
     ).
 
--compile({inline, [update_internal3_key3/10]}).
-update_internal3_key3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, C4) ->
+-compile({inline, [update_internal3_key3/11]}).
+update_internal3_key3(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3, C4) ->
     {V1, V2, V3} = Values,
     Value = eval_update_value(ValueEval, ValueWrap, V3),
     ?INTERNAL3(
@@ -2246,6 +2314,7 @@ update_internal3_key3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, C4)
         K2,
         Key,
         {V1, V2, Value},
+        Sizes,
         C1,
         C2,
         C3,
@@ -2254,75 +2323,75 @@ update_internal3_key3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3, C4)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--compile({inline, [update_internal2/9]}).
-update_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
+-compile({inline, [update_internal2/10]}).
+update_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3) ->
     if
         Key > K1 ->
             if
                 Key < K2 ->
-                    update_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
+                    update_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3);
                 Key > K2 ->
-                    update_internal2_child3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
+                    update_internal2_child3(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3);
                 true ->
-                    update_internal2_key2(Key, ValueEval, ValueWrap, K1, Values, C1, C2, C3)
+                    update_internal2_key2(Key, ValueEval, ValueWrap, K1, Values, Sizes, C1, C2, C3)
             end;
         Key < K1 ->
-            update_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
+            update_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3);
         true ->
-            update_internal2_key1(Key, ValueEval, ValueWrap, K2, Values, C1, C2, C3)
+            update_internal2_key1(Key, ValueEval, ValueWrap, K2, Values, Sizes, C1, C2, C3)
     end.
 
--compile({inline, [update_internal2_child1/9]}).
-update_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
-    ?INTERNAL2(K1, K2, Values, update_recur(Key, ValueEval, ValueWrap, C1), C2, C3).
+-compile({inline, [update_internal2_child1/10]}).
+update_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3) ->
+    ?INTERNAL2(K1, K2, Values, Sizes, update_recur(Key, ValueEval, ValueWrap, C1), C2, C3).
 
--compile({inline, [update_internal2_child2/9]}).
-update_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
-    ?INTERNAL2(K1, K2, Values, C1, update_recur(Key, ValueEval, ValueWrap, C2), C3).
+-compile({inline, [update_internal2_child2/10]}).
+update_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3) ->
+    ?INTERNAL2(K1, K2, Values, Sizes, C1, update_recur(Key, ValueEval, ValueWrap, C2), C3).
 
--compile({inline, [update_internal2_child3/9]}).
-update_internal2_child3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
-    ?INTERNAL2(K1, K2, Values, C1, C2, update_recur(Key, ValueEval, ValueWrap, C3)).
+-compile({inline, [update_internal2_child3/10]}).
+update_internal2_child3(Key, ValueEval, ValueWrap, K1, K2, Values, Sizes, C1, C2, C3) ->
+    ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, update_recur(Key, ValueEval, ValueWrap, C3)).
 
 %%%
 
--compile({inline, [update_internal2_key1/8]}).
-update_internal2_key1(Key, ValueEval, ValueWrap, K2, Values, C1, C2, C3) ->
+-compile({inline, [update_internal2_key1/9]}).
+update_internal2_key1(Key, ValueEval, ValueWrap, K2, Values, Sizes, C1, C2, C3) ->
     [V1 | V2] = Values,
     Value = eval_update_value(ValueEval, ValueWrap, V1),
-    ?INTERNAL2(Key, K2, [Value | V2], C1, C2, C3).
+    ?INTERNAL2(Key, K2, [Value | V2], Sizes, C1, C2, C3).
 
--compile({inline, [update_internal2_key1/8]}).
-update_internal2_key2(Key, ValueEval, ValueWrap, K1, Values, C1, C2, C3) ->
+-compile({inline, [update_internal2_key1/9]}).
+update_internal2_key2(Key, ValueEval, ValueWrap, K1, Values, Sizes, C1, C2, C3) ->
     [V1 | V2] = Values,
     Value = eval_update_value(ValueEval, ValueWrap, V2),
-    ?INTERNAL2(K1, Key, [V1 | Value], C1, C2, C3).
+    ?INTERNAL2(K1, Key, [V1 | Value], Sizes, C1, C2, C3).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--compile({inline, [update_internal1/7]}).
-update_internal1(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
+-compile({inline, [update_internal1/8]}).
+update_internal1(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2) ->
     if
         Key < K1 ->
-            update_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2);
+            update_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2);
         Key > K1 ->
-            update_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, C1, C2);
+            update_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2);
         true ->
-            update_internal1_key1(Key, ValueEval, ValueWrap, V1, C1, C2)
+            update_internal1_key1(Key, ValueEval, ValueWrap, V1, Sizes, C1, C2)
     end.
 
--compile({inline, [update_internal1_child1/7]}).
-update_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
-    ?INTERNAL1(K1, V1, update_recur(Key, ValueEval, ValueWrap, C1), C2).
+-compile({inline, [update_internal1_child1/8]}).
+update_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2) ->
+    ?INTERNAL1(K1, V1, Sizes, update_recur(Key, ValueEval, ValueWrap, C1), C2).
 
--compile({inline, [update_internal1_child2/7]}).
-update_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
-    ?INTERNAL1(K1, V1, C1, update_recur(Key, ValueEval, ValueWrap, C2)).
+-compile({inline, [update_internal1_child2/8]}).
+update_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, Sizes, C1, C2) ->
+    ?INTERNAL1(K1, V1, Sizes, C1, update_recur(Key, ValueEval, ValueWrap, C2)).
 
--compile({inline, [update_internal1_key1/6]}).
-update_internal1_key1(Key, ValueEval, ValueWrap, V1, C1, C2) ->
+-compile({inline, [update_internal1_key1/7]}).
+update_internal1_key1(Key, ValueEval, ValueWrap, V1, Sizes, C1, C2) ->
     Value = eval_update_value(ValueEval, ValueWrap, V1),
-    ?INTERNAL1(Key, Value, C1, C2).
+    ?INTERNAL1(Key, Value, Sizes, C1, C2).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2417,8 +2486,8 @@ eval_update_value(lazy, Fun, PrevValue) -> Fun(PrevValue).
 %-spec delete(Key, nonempty_node(Key, Value)) -> node_after_deletion(Key, Value).
 delete(K, ?ROOT_WRAP([Bitsize | NextBitsizes] = Bitsizes, Node)) ->
     case Node of
-        ?INTERNAL1(K1, V1, C1, C2) ->
-            case delete_internal1(K, K1, V1, C1, C2, Bitsize, NextBitsizes) of
+        ?INTERNAL1(K1, V1, Sizes, C1, C2) ->
+            case delete_internal1(K, K1, V1, Sizes, C1, C2, Bitsize, NextBitsizes) of
                 {height_decreased, UpdatedNode} ->
                     ?ROOT_WRAP(NextBitsizes, UpdatedNode);
                 UpdatedNode ->
@@ -2449,12 +2518,12 @@ delete_recur(K, Node, []) ->
 
 delete_recur_internal(K, Node, Bitsize, NextBitsizes) ->
     case Node of
-        ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-            delete_internal4(K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes);
-        ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4) ->
-            delete_internal3(K, K1, K2, K3, Values, C1, C2, C3, C4, Bitsize, NextBitsizes);
-        ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
-            delete_internal2(K, K1, K2, Values, C1, C2, C3, Bitsize, NextBitsizes)
+        ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
+            delete_internal4(K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes);
+        ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
+            delete_internal3(K, K1, K2, K3, Values, Sizes, C1, C2, C3, C4, Bitsize, NextBitsizes);
+        ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3) ->
+            delete_internal2(K, K1, K2, Values, Sizes, C1, C2, C3, Bitsize, NextBitsizes)
     end.
 
 delete_recur_leaf(K, Node) ->
@@ -2467,35 +2536,11 @@ delete_recur_leaf(K, Node) ->
             delete_leaf2(K, K1, K2, V1, V2)
     end.
 
-%delete(K, ?INTERNAL1(K1, V1, C1, C2)) ->
-%    delete_internal1(K, K1, V1, C1, C2);
-%delete(K, ?LEAF1(K1, _)) ->
-%    delete_leaf1(K, K1);
-%delete(K, ?LEAF0) ->
-%    error_badkey(K);
-%delete(K, Root) ->
-%    delete_recur(K, Root).
-
-%-spec delete_recur(Key, deep_node(Key, Value)) ->
-%    node_after_deletion(Key, Value) | unbalanced_node(Key, Value).
-%delete_recur(K, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
-%    delete_internal4(K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%delete_recur(K, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
-%    delete_internal3(K, K1, K2, K3, Values, C1, C2, C3, C4);
-%delete_recur(K, ?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
-%    delete_internal2(K, K1, K2, Values, C1, C2, C3);
-%delete_recur(K, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
-%    delete_leaf4(K, K1, K2, K3, K4, V1, V2, V3, V4);
-%delete_recur(K, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
-%    delete_leaf3(K, K1, K2, K3, V1, V2, V3);
-%delete_recur(K, ?LEAF2(K1, K2, V1, V2)) ->
-%    delete_leaf2(K, K1, K2, V1, V2).
-
 %%%%%%%%%
 %%%%%%%%%
 %%% Delete - INTERNAL4
 
--compile({inline, delete_internal4/13}).
+-compile({inline, delete_internal4/14}).
 delete_internal4(K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes) ->
     if
         K > K2 ->
@@ -2504,48 +2549,48 @@ delete_internal4(K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBit
                     if
                         K > K3 ->
                             delete_internal4_child4(
-                                K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+                                K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
                             );
                         K < K3 ->
                             delete_internal4_child3(
-                                K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+                                K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
                             );
                         true ->
                             delete_internal4_key3(
-                                K1, K2, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+                                K1, K2, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
                             )
                     end;
                 K > K4 ->
                     delete_internal4_child5(
-                        K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+                        K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
                     );
                 true ->
                     delete_internal4_key4(
-                        K1, K2, K3, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+                        K1, K2, K3, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
                     )
             end;
         K < K2 ->
             if
                 K > K1 ->
                     delete_internal4_child2(
-                        K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+                        K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
                     );
                 K < K1 ->
                     delete_internal4_child1(
-                        K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+                        K, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
                     );
                 true ->
                     delete_internal4_key1(
-                        K2, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+                        K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
                     )
             end;
         true ->
-            delete_internal4_key2(K1, K3, K4, Values, C1, C2, C3, C4, C5, Bitsize, NextBitsizes)
+            delete_internal4_key2(K1, K3, K4, Values, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes)
     end.
 
--compile({inline, [delete_internal4_child1/13]}).
+-compile({inline, [delete_internal4_child1/14]}).
 delete_internal4_child1(
-    K, K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     UpdatedC1 = delete_recur(K, C1, NextBitsizes),
 
@@ -2558,6 +2603,7 @@ delete_internal4_child1(
         V2,
         V3,
         V4,
+        Sizes,
         UpdatedC1,
         C2,
         C3,
@@ -2566,9 +2612,9 @@ delete_internal4_child1(
         Bitsize
     ).
 
--compile({inline, [delete_internal4_child2/13]}).
+-compile({inline, [delete_internal4_child2/14]}).
 delete_internal4_child2(
-    K, K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     UpdatedC2 = delete_recur(K, C2, NextBitsizes),
 
@@ -2581,6 +2627,7 @@ delete_internal4_child2(
         V2,
         V3,
         V4,
+        Sizes,
         C1,
         UpdatedC2,
         C3,
@@ -2589,9 +2636,9 @@ delete_internal4_child2(
         Bitsize
     ).
 
--compile({inline, [delete_internal4_child3/13]}).
+-compile({inline, [delete_internal4_child3/14]}).
 delete_internal4_child3(
-    K, K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     UpdatedC3 = delete_recur(K, C3, NextBitsizes),
 
@@ -2604,6 +2651,7 @@ delete_internal4_child3(
         V2,
         V3,
         V4,
+        Sizes,
         C1,
         C2,
         UpdatedC3,
@@ -2612,9 +2660,9 @@ delete_internal4_child3(
         Bitsize
     ).
 
--compile({inline, [delete_internal4_child4/13]}).
+-compile({inline, [delete_internal4_child4/14]}).
 delete_internal4_child4(
-    K, K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     UpdatedC4 = delete_recur(K, C4, NextBitsizes),
 
@@ -2627,6 +2675,7 @@ delete_internal4_child4(
         V2,
         V3,
         V4,
+        Sizes,
         C1,
         C2,
         C3,
@@ -2635,9 +2684,9 @@ delete_internal4_child4(
         Bitsize
     ).
 
--compile({inline, [delete_internal4_child5/13]}).
+-compile({inline, [delete_internal4_child5/14]}).
 delete_internal4_child5(
-    K, K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
+    K, K1, K2, K3, K4, {V1, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes
 ) ->
     UpdatedC5 = delete_recur(K, C5, NextBitsizes),
 
@@ -2650,6 +2699,7 @@ delete_internal4_child5(
         V2,
         V3,
         V4,
+        Sizes,
         C1,
         C2,
         C3,
@@ -2660,8 +2710,8 @@ delete_internal4_child5(
 
 %%% Delete - INTERNAL4 - keys in node
 
--compile({inline, [delete_internal4_key1/11]}).
-delete_internal4_key1(K2, K3, K4, {_, V2, V3, V4}, C1, C2, C3, C4, C5, Bitsize, NextBitsizes) ->
+-compile({inline, [delete_internal4_key1/12]}).
+delete_internal4_key1(K2, K3, K4, {_, V2, V3, V4}, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes) ->
     {{ReplacementK, ReplacementV}, UpdatedC2} = take_smallest_recur(C2, NextBitsizes),
 
     delete_internal4_rebalance_child2(
@@ -2673,6 +2723,7 @@ delete_internal4_key1(K2, K3, K4, {_, V2, V3, V4}, C1, C2, C3, C4, C5, Bitsize, 
         V2,
         V3,
         V4,
+        Sizes,
         C1,
         UpdatedC2,
         C3,
@@ -2681,8 +2732,8 @@ delete_internal4_key1(K2, K3, K4, {_, V2, V3, V4}, C1, C2, C3, C4, C5, Bitsize, 
         Bitsize
     ).
 
--compile({inline, [delete_internal4_key2/11]}).
-delete_internal4_key2(K1, K3, K4, {V1, _, V3, V4}, C1, C2, C3, C4, C5, Bitsize, NextBitsizes) ->
+-compile({inline, [delete_internal4_key2/12]}).
+delete_internal4_key2(K1, K3, K4, {V1, _, V3, V4}, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes) ->
     {{ReplacementK, ReplacementV}, UpdatedC3} = take_smallest_recur(C3, NextBitsizes),
 
     delete_internal4_rebalance_child3(
@@ -2694,6 +2745,7 @@ delete_internal4_key2(K1, K3, K4, {V1, _, V3, V4}, C1, C2, C3, C4, C5, Bitsize, 
         ReplacementV,
         V3,
         V4,
+        Sizes,
         C1,
         C2,
         UpdatedC3,
@@ -2702,8 +2754,8 @@ delete_internal4_key2(K1, K3, K4, {V1, _, V3, V4}, C1, C2, C3, C4, C5, Bitsize, 
         Bitsize
     ).
 
--compile({inline, [delete_internal4_key3/11]}).
-delete_internal4_key3(K1, K2, K4, {V1, V2, _, V4}, C1, C2, C3, C4, C5, Bitsize, NextBitsizes) ->
+-compile({inline, [delete_internal4_key3/12]}).
+delete_internal4_key3(K1, K2, K4, {V1, V2, _, V4}, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes) ->
     {{ReplacementK, ReplacementV}, UpdatedC4} = take_smallest_recur(C4, NextBitsizes),
 
     delete_internal4_rebalance_child4(
@@ -2715,6 +2767,7 @@ delete_internal4_key3(K1, K2, K4, {V1, V2, _, V4}, C1, C2, C3, C4, C5, Bitsize, 
         V2,
         ReplacementV,
         V4,
+        Sizes,
         C1,
         C2,
         C3,
@@ -2723,8 +2776,8 @@ delete_internal4_key3(K1, K2, K4, {V1, V2, _, V4}, C1, C2, C3, C4, C5, Bitsize, 
         Bitsize
     ).
 
--compile({inline, [delete_internal4_key4/11]}).
-delete_internal4_key4(K1, K2, K3, {V1, V2, V3, _}, C1, C2, C3, C4, C5, Bitsize, NextBitsizes) ->
+-compile({inline, [delete_internal4_key4/12]}).
+delete_internal4_key4(K1, K2, K3, {V1, V2, V3, _}, Sizes, C1, C2, C3, C4, C5, Bitsize, NextBitsizes) ->
     {{ReplacementK, ReplacementV}, UpdatedC5} = take_smallest_recur(C5, NextBitsizes),
 
     delete_internal4_rebalance_child5(
@@ -2736,6 +2789,7 @@ delete_internal4_key4(K1, K2, K3, {V1, V2, V3, _}, C1, C2, C3, C4, C5, Bitsize, 
         V2,
         V3,
         ReplacementV,
+        Sizes,
         C1,
         C2,
         C3,
@@ -2746,65 +2800,91 @@ delete_internal4_key4(K1, K2, K3, {V1, V2, V3, _}, C1, C2, C3, C4, C5, Bitsize, 
 
 %%% Delete - INTERNAL4 - rebalance
 
--compile({inline, [delete_internal4_rebalance_child1/14]}).
-delete_internal4_rebalance_child1(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5, Bitsize) ->
+-compile({inline, [delete_internal4_rebalance_child1/15]}).
+delete_internal4_rebalance_child1(K1, K2, K3, K4, V1, V2, V3, V4, Sizes, C1, C2, C3, C4, C5, Bitsize) ->
     case maybe_rebalance_left(C1, K1, V1, C2, Bitsize) of
         no ->
-            ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
+            UpdatedSizes = internal4_sizes_dec1(Sizes, Bitsize),
+            ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, UpdatedSizes, C1, C2, C3, C4, C5);
         {UpK, UpVal, UpdatedC1, UpdatedC2} ->
-            ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedC1, UpdatedC2, C3, C4, C5);
+            % C1 keeps same number of keys, C2 lost one key
+            UpdatedSizes = internal4_sizes_dec2(Sizes, Bitsize),
+            ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedSizes, UpdatedC1, UpdatedC2, C3, C4, C5);
         {merged, MergedC1C2} ->
-            ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, MergedC1C2, C3, C4, C5)
+            UpdatedSizes = internal4_sizes_merge12(Sizes, Bitsize),
+            ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, UpdatedSizes, MergedC1C2, C3, C4, C5)
     end.
 
--compile({inline, [delete_internal4_rebalance_child2/14]}).
-delete_internal4_rebalance_child2(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5, Bitsize) ->
+-compile({inline, [delete_internal4_rebalance_child2/15]}).
+delete_internal4_rebalance_child2(K1, K2, K3, K4, V1, V2, V3, V4, Sizes, C1, C2, C3, C4, C5, Bitsize) ->
     case maybe_rebalance_mid(C1, K1, V1, C2, K2, V2, C3, Bitsize) of
         no ->
-            ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
+            UpdatedSizes = internal4_sizes_dec2(Sizes, Bitsize),
+            ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, UpdatedSizes, C1, C2, C3, C4, C5);
         {from_left, {UpK, UpVal, UpdatedC1, RebalancedC2}} ->
-            ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedC1, RebalancedC2, C3, C4, C5);
+            % C2 keeps same number of keys, C1 lost one key
+            UpdatedSizes = internal4_sizes_dec1(Sizes, Bitsize),
+            ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedSizes, UpdatedC1, RebalancedC2, C3, C4, C5);
         {from_right, {UpK, UpVal, RebalancedC2, UpdatedC3}} ->
-            ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, C1, RebalancedC2, UpdatedC3, C4, C5);
+            % C2 keeps same number of keys, C3 lost one key
+            UpdatedSizes = internal4_sizes_dec3(Sizes, Bitsize),
+            ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, UpdatedSizes, C1, RebalancedC2, UpdatedC3, C4, C5);
         {from_left, {merged, MergedC1C2}} ->
-            ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, MergedC1C2, C3, C4, C5)
+            UpdatedSizes = internal4_sizes_merge12(Sizes, Bitsize),
+            ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, UpdatedSizes, MergedC1C2, C3, C4, C5)
     end.
 
--compile({inline, [delete_internal4_rebalance_child3/14]}).
-delete_internal4_rebalance_child3(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5, Bitsize) ->
+-compile({inline, [delete_internal4_rebalance_child3/15]}).
+delete_internal4_rebalance_child3(K1, K2, K3, K4, V1, V2, V3, V4, Sizes, C1, C2, C3, C4, C5, Bitsize) ->
     case maybe_rebalance_mid(C2, K2, V2, C3, K3, V3, C4, Bitsize) of
         no ->
+            UpdatedSizes = internal4_sizes_dec3(Sizes, Bitsize),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
         {from_left, {UpK, UpVal, UpdatedC2, RebalancedC3}} ->
-            ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, C1, UpdatedC2, RebalancedC3, C4, C5);
+            % C3 keeps same number of keys, C2 lost one key
+            UpdatedSizes = internal4_sizes_dec2(Sizes, Bitsize),
+            ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, UpdatedSizes, C1, UpdatedC2, RebalancedC3, C4, C5);
         {from_right, {UpK, UpVal, RebalancedC3, UpdatedC4}} ->
-            ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, C1, C2, RebalancedC3, UpdatedC4, C5);
+            % C3 keeps same number of keys, C4 lost one key
+            UpdatedSizes = internal4_sizes_dec4(Sizes, Bitsize),
+            ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, UpdatedSizes, C1, C2, RebalancedC3, UpdatedC4, C5);
         {from_left, {merged, MergedC2C3}} ->
-            ?INTERNAL3(K1, K3, K4, {V1, V3, V4}, C1, MergedC2C3, C4, C5)
+            UpdatedSizes = internal4_sizes_merge23(Sizes, Bitsize),
+            ?INTERNAL3(K1, K3, K4, {V1, V3, V4}, UpdatedSizes, C1, MergedC2C3, C4, C5)
     end.
 
--compile({inline, [delete_internal4_rebalance_child4/14]}).
-delete_internal4_rebalance_child4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5, Bitsize) ->
+-compile({inline, [delete_internal4_rebalance_child4/15]}).
+delete_internal4_rebalance_child4(K1, K2, K3, K4, V1, V2, V3, V4, Sizes, C1, C2, C3, C4, C5, Bitsize) ->
     case maybe_rebalance_mid(C3, K3, V3, C4, K4, V4, C5, Bitsize) of
         no ->
-            ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
+            UpdatedSizes = internal4_sizes_dec4(Sizes, Bitsize),
+            ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, UpdatedSizes, C1, C2, C3, C4, C5);
         {from_left, {UpK, UpVal, UpdatedC3, RebalancedC4}} ->
-            ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, C1, C2, UpdatedC3, RebalancedC4, C5);
+            % C4 keeps same number of keys, C3 lost one key
+            UpdatedSizes = internal4_sizes_dec3(Sizes, Bitsize),
+            ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, UpdatedSizes, C1, C2, UpdatedC3, RebalancedC4, C5);
         {from_right, {UpK, UpVal, RebalancedC4, UpdatedC5}} ->
-            ?INTERNAL4(K1, K2, K3, UpK, {V1, V2, V3, UpVal}, C1, C2, C3, RebalancedC4, UpdatedC5);
+            % C4 keeps same number of keys, C5 lost one key
+            UpdatedSizes = internal4_sizes_dec5(Sizes),
+            ?INTERNAL4(K1, K2, K3, UpK, {V1, V2, V3, UpVal}, UpdatedSizes, C1, C2, C3, RebalancedC4, UpdatedC5);
         {from_left, {merged, MergedC3C4}} ->
-            ?INTERNAL3(K1, K2, K4, {V1, V2, V4}, C1, C2, MergedC3C4, C5)
+            UpdatedSizes = internal4_sizes_merge34(Sizes, Bitsize),
+            ?INTERNAL3(K1, K2, K4, {V1, V2, V4}, UpdatedSizes, C1, C2, MergedC3C4, C5)
     end.
 
--compile({inline, [delete_internal4_rebalance_child5/14]}).
-delete_internal4_rebalance_child5(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5, Bitsize) ->
+-compile({inline, [delete_internal4_rebalance_child5/15]}).
+delete_internal4_rebalance_child5(K1, K2, K3, K4, V1, V2, V3, V4, Sizes, C1, C2, C3, C4, C5, Bitsize) ->
     case maybe_rebalance_right(C4, K4, V4, C5, Bitsize) of
         no ->
-            ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5);
+            UpdatedSizes = internal4_sizes_dec5(Sizes),
+            ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, UpdatedSizes, C1, C2, C3, C4, C5);
         {UpK, UpVal, UpdatedC4, RebalancedC5} ->
-            ?INTERNAL4(K1, K2, K3, UpK, {V1, V2, V3, UpVal}, C1, C2, C3, UpdatedC4, RebalancedC5);
+            % C5 keeps same number of keys, C4 lost one key
+            UpdatedSizes = internal4_sizes_dec4(Sizes, Bitsize),
+            ?INTERNAL4(K1, K2, K3, UpK, {V1, V2, V3, UpVal}, UpdatedSizes, C1, C2, C3, UpdatedC4, RebalancedC5);
         {merged, MergedC4C5} ->
-            ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, MergedC4C5)
+            UpdatedSizes = internal4_sizes_merge45(Sizes, Bitsize),
+            ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, UpdatedSizes, C1, C2, C3, MergedC4C5)
     end.
 
 %%%%%%%%%
@@ -4437,9 +4517,9 @@ rebalance_left_leaf1(LeftK1, LeftV1, ParentK, ParentV, Right, _Bitsize, Merge) -
 -compile({inline, maybe_rebalance_right/5}).
 maybe_rebalance_right(Left, ParentK, ParentV, Right, Bitsize) ->
     case Right of
-        ?INTERNAL1(RightK1, RightV1, RightC1, RightC2) ->
+        ?INTERNAL1(RightK1, RightV1, RightSizes, RightC1, RightC2) ->
             rebalance_right_internal1(
-                RightK1, RightV1, RightC1, RightC2, ParentK, ParentV, Left, Bitsize
+                RightK1, RightV1, RightSizes, RightC1, RightC2, ParentK, ParentV, Left, Bitsize
             );
         ?LEAF1(RightK1, RightV1) ->
             rebalance_right_leaf1(RightK1, RightV1, ParentK, ParentV, Left, Bitsize);
@@ -4447,8 +4527,8 @@ maybe_rebalance_right(Left, ParentK, ParentV, Right, Bitsize) ->
             no
     end.
 
--compile({inline, [rebalance_right_internal1/8]}).
-rebalance_right_internal1(RightK1, RightV1, RightC1, RightC2, ParentK, ParentV, Left, _Bitsize) ->
+-compile({inline, [rebalance_right_internal1/9]}).
+rebalance_right_internal1(RightK1, RightV1, RightSizes, RightC1, RightC2, ParentK, ParentV, Left, Bitsize) ->
     case Left of
         ?INTERNAL4(
             LeftK1,
@@ -4456,6 +4536,7 @@ rebalance_right_internal1(RightK1, RightV1, RightC1, RightC2, ParentK, ParentV, 
             LeftK3,
             LeftK4,
             {LeftV1, LeftV2, LeftV3, LeftV4},
+            LeftSizes,
             LeftC1,
             LeftC2,
             LeftC3,
@@ -4466,11 +4547,14 @@ rebalance_right_internal1(RightK1, RightV1, RightC1, RightC2, ParentK, ParentV, 
             UpVal = LeftV4,
             MovedChild = LeftC5,
 
+            {LeftS5, RemainingLeftSizes} = internal4_sizes_take_largest(LeftSizes, Bitsize),
+
             UpdatedLeft = ?INTERNAL3(
                 LeftK1,
                 LeftK2,
                 LeftK3,
                 {LeftV1, LeftV2, LeftV3},
+                RemainingLeftSizes,
                 LeftC1,
                 LeftC2,
                 LeftC3,
@@ -4482,6 +4566,7 @@ rebalance_right_internal1(RightK1, RightV1, RightC1, RightC2, ParentK, ParentV, 
                     ParentK,
                     RightK1,
                     [ParentV | RightV1],
+                    internal1_sizes_prepend(RightSizes, LeftS5, Bitsize),
                     MovedChild,
                     RightC1,
                     RightC2
@@ -5561,3 +5646,336 @@ map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
         Fun(K1, V1),
         Fun(K2, V2)
     ).
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: size packing
+%% ------------------------------------------------------------------
+
+-compile({inline, internal4_sizes_unpack/2}).
+internal4_sizes_unpack(Sizes, Bitsize) ->
+    Mask = (1 bsl Bitsize) - 1,
+
+    {
+     (Sizes bsr (Bitsize bsl 2)),
+     (Sizes bsr (Bitsize * 3)) band Mask,
+     (Sizes bsr (Bitsize bsl 1)) band Mask,
+     (Sizes bsr Bitsize) band Mask,
+     Sizes band Mask
+    }.
+
+-compile({inline, internal4_sizes_inc1/2}).
+internal4_sizes_inc1(Sizes, Bitsize) ->
+    Sizes + (1 bsl (Bitsize bsl 2)).
+
+-compile({inline, internal4_sizes_dec1/2}).
+internal4_sizes_dec1(Sizes, Bitsize) ->
+    Sizes - (1 bsl (Bitsize bsl 2)).
+
+%%
+
+-compile({inline, internal4_sizes_inc2/2}).
+internal4_sizes_inc2(Sizes, Bitsize) ->
+    Sizes + (1 bsl (Bitsize * 3)).
+
+-compile({inline, internal4_sizes_inc2/2}).
+internal4_sizes_dec2(Sizes, Bitsize) ->
+    Sizes - (1 bsl (Bitsize * 3)).
+
+%%
+
+-compile({inline, internal4_sizes_inc3/2}).
+internal4_sizes_inc3(Sizes, Bitsize) ->
+    Sizes + (1 bsl (Bitsize bsl 1)).
+
+-compile({inline, internal4_sizes_dec3/2}).
+internal4_sizes_dec3(Sizes, Bitsize) ->
+    Sizes - (1 bsl (Bitsize bsl 1)).
+
+%%
+
+-compile({inline, internal4_sizes_inc4/2}).
+internal4_sizes_inc4(Sizes, Bitsize) ->
+    Sizes + (1 bsl Bitsize).
+
+-compile({inline, internal4_sizes_dec4/2}).
+internal4_sizes_dec4(Sizes, Bitsize) ->
+    Sizes - (1 bsl Bitsize).
+
+%%
+
+-compile({inline, internal4_sizes_inc5/1}).
+internal4_sizes_inc5(Sizes) ->
+    Sizes + 1.
+
+-compile({inline, internal4_sizes_dec5/1}).
+internal4_sizes_dec5(Sizes) ->
+    Sizes - 1.
+
+%%%
+
+-compile({inline, internal4_sizes_merge12/2}).
+internal4_sizes_merge12(Sizes, Bitsize) ->
+    % Extract cell 1, minus 1 for deleted key
+    S1 = (Sizes bsr (Bitsize bsl 2)) - 1,
+
+    % Reset cell 1
+    FilterMask = (1 bsl (Bitsize bsl 2)) - 1,
+    Filtered = Sizes band FilterMask,
+
+    % Add cell 1 to cell 2, turning this into internal3
+    Filtered + (S1 bsl (Bitsize * 3)).
+
+-compile({inline, internal4_sizes_merge23/2}).
+internal4_sizes_merge23(Sizes, Bitsize) ->
+    % Get cells 4 and 5
+    LowerMask = (1 bsl (Bitsize bsl 1)) - 1,
+    S45 = Sizes band LowerMask,
+
+    % Get cells 1, 2 and 3
+    CellMask = (1 bsl Bitsize) - 1,
+    S123 = Sizes bsr (Bitsize bsl 1),
+    S12 = S123 bsr Bitsize,
+
+    % Get cell 3, minus 1 for deleted key
+    S3 = (S123 band CellMask) - 1,
+
+    (
+     (
+        % Add cell 3 to cell 2
+        S12 + S3
+     )
+     % Make room for S4 and S5, turning this into internal3
+     bsl (Bitsize bsl 1)
+    ) bor S45.
+
+-compile({inline, internal4_sizes_merge34/2}).
+internal4_sizes_merge34(Sizes, Bitsize) ->
+    % Get cell 5
+    LowerMask = (1 bsl Bitsize) - 1,
+    S5 = Sizes band LowerMask,
+
+    % Get cells 1, 2 and 3
+    CellMask = (1 bsl Bitsize) - 1,
+    S123 = Sizes bsr (Bitsize bsl 1),
+
+    % Get cell 4, minus 1 for deleted key
+    S4 = ((Sizes bsr Bitsize) band CellMask) - 1,
+
+    (
+     (
+        % Add cell 4 to cell 3
+        S123 + S4
+     )
+     % Make room for S5, which will become cell 4, turning this into internal3
+     bsl Bitsize
+    ) bor S5.
+
+-compile({inline, internal4_sizes_merge45/2}).
+internal4_sizes_merge45(Sizes, Bitsize) ->
+    % Get cell 5, minus 1 for deleted key
+    LowerMask = (1 bsl Bitsize) - 1,
+    S5 = (Sizes band LowerMask) - 1,
+
+    % Add cell 5 to cell 4, turning this into internal3
+    (Sizes bsr Bitsize) + S5.
+
+%%%
+
+-compile({inline, internal4_sizes_take_largest/2}).
+internal4_sizes_take_largest(Sizes, Bitsize) ->
+    S5 = Sizes band ((1 bsl Bitsize) - 1),
+    Remaining = Sizes bsr Bitsize,
+    {S5, Remaining}.
+
+%%%%%%%%%%%%%%%%%%
+
+-compile({inline, internal3_sizes_inc1/2}).
+internal3_sizes_inc1(Sizes, Bitsize) ->
+    Sizes + (1 bsl (Bitsize * 3)).
+
+-compile({inline, internal3_sizes_inc2/2}).
+internal3_sizes_inc2(Sizes, Bitsize) ->
+    Sizes + (1 bsl (Bitsize bsl 1)).
+
+-compile({inline, internal3_sizes_inc3/2}).
+internal3_sizes_inc3(Sizes, Bitsize) ->
+    Sizes + (1 bsl Bitsize).
+
+-compile({inline, internal3_sizes_inc4/1}).
+internal3_sizes_inc4(Sizes) ->
+    Sizes + 1.
+
+-compile({inline, internal3_sizes_enlarge1/4}).
+internal3_sizes_enlarge1(Sizes, Bitsize, LeftSize, RightSize) ->
+    FullMask = (1 bsl (Bitsize bsl 2)) - 1,
+    ReverseMask = ((1 bsl Bitsize) - 1) bsl (Bitsize * 3),
+    ResetMask = FullMask bxor ReverseMask,
+
+    (
+     % Reset size of cell 1
+     (Sizes band ResetMask)
+     % Set cell 1 to RightSide
+     bor (RightSize bsl (Bitsize * 3))
+     % Prepend new cell 1 with LeftSide, turning these into internal4
+     bor (LeftSize bsl (Bitsize bsl 2))
+    ).
+
+-compile({inline, internal3_sizes_enlarge2/4}).
+internal3_sizes_enlarge2(Sizes, Bitsize, LeftSize, RightSize) ->
+    UpperMask = ((1 bsl Bitsize) - 1) bsl (Bitsize * 3),
+    LowerMask = (1 bsl (Bitsize bsl 1)) - 1,
+
+    (
+     % Filter cells 3 and 4
+     (Sizes band LowerMask)
+     % Set cell 2
+     bor (RightSize bsl (Bitsize bsl 1))
+     % Prepend new cell 2
+     bor (LeftSize bsl (Bitsize * 3))
+     % Restore cell 1, shifted
+     bor ((Sizes band UpperMask) bsl Bitsize)
+    ).
+
+-compile({inline, internal3_sizes_enlarge3/4}).
+internal3_sizes_enlarge3(Sizes, Bitsize, LeftSize, RightSize) ->
+    UpperMask = ((1 bsl Bitsize) - 1) bsl (Bitsize bsl 1),
+    LowerMask = (1 bsl Bitsize) - 1,
+
+    (
+     % Filter cell 4
+     (Sizes band LowerMask)
+     % Set cell 3
+     bor (RightSize bsl Bitsize)
+     % Prepend new cell 3
+     bor (LeftSize bsl (Bitsize bsl 1))
+     % Restore cells 1 and 2, shifted
+     bor ((Sizes band UpperMask) bsl Bitsize)
+    ).
+
+
+-compile({inline, internal3_sizes_enlarge4/4}).
+internal3_sizes_enlarge4(Sizes, Bitsize, LeftSize, RightSize) ->
+    (
+     (
+      % Push cell 4 away
+      (Sizes bsr Bitsize) 
+      % Make room for 2 new cells
+      bsl (Bitsize bsl 1)
+     ) 
+     % add LeftSize, shifted
+     bor (LeftSize bsl Bitsize)
+     % add RightSize
+     bor RightSize
+    ).
+
+%%%
+
+-compile({inline, internal2_sizes_pack/4}).
+internal2_sizes_pack(S1, S2, S3, Bitsize) ->
+    (
+     (S1 bsl (Bitsize bsl 1))
+     bor (S2 bsl Bitsize)
+     bor S3
+    ).
+
+-compile({inline, internal2_sizes_inc1/2}).
+internal2_sizes_inc1(Sizes, Bitsize) ->
+    Sizes + (1 bsl (Bitsize bsl 1)).
+
+-compile({inline, internal2_sizes_inc2/2}).
+internal2_sizes_inc2(Sizes, Bitsize) ->
+    Sizes + (1 bsl Bitsize).
+
+-compile({inline, internal2_sizes_inc3/1}).
+internal2_sizes_inc3(Sizes) ->
+    Sizes + 1.
+
+-compile({inline, internal2_sizes_enlarge1/4}).
+internal2_sizes_enlarge1(Sizes, Bitsize, LeftSize, RightSize) ->
+    FullMask = (1 bsl (Bitsize * 3)) - 1,
+    ReverseMask = ((1 bsl Bitsize) - 1) bsl (Bitsize bsl 1),
+    ResetMask = FullMask bxor ReverseMask,
+
+    (
+     % Reset cell 1
+     (Sizes band ResetMask)
+     % Set cell 1 to RightSide
+     bor (RightSize bsl (Bitsize bsl 1))
+     % Prepend new cell 1 with LeftSide, turning these into internal3
+     bor (LeftSize bsl (Bitsize * 3))
+    ).
+
+-compile({inline, internal2_sizes_enlarge2/4}).
+internal2_sizes_enlarge2(Sizes, Bitsize, LeftSize, RightSize) ->
+    UpperMask = ((1 bsl Bitsize) - 1) bsl Bitsize,
+    LowerMask = (1 bsl Bitsize) - 1,
+
+    (
+     % Filter cell 3
+     (Sizes band LowerMask)
+     % Set cell 2
+     bor (RightSize bsl Bitsize)
+     % Prepend new cell 2
+     bor (LeftSize bsl (Bitsize bsl 1))
+     % Restore cell 1, shifted
+     bor ((Sizes band UpperMask) bsl Bitsize)
+    ).
+
+
+-compile({inline, internal2_sizes_enlarge3/4}).
+internal2_sizes_enlarge3(Sizes, Bitsize, LeftSize, RightSize) ->
+    (
+     (
+      % Push cell 3 away
+      (Sizes bsr Bitsize) 
+      % Make room for 2 new cells
+      bsl (Bitsize bsl 1)
+     ) 
+     % add LeftSize, shifted
+     bor (LeftSize bsl Bitsize)
+     % add RightSize
+     bor RightSize
+    ).
+
+%%%
+
+-compile({inline, internal1_sizes_inc1/2}).
+internal1_sizes_inc1(Sizes, Bitsize) ->
+    Sizes + (1 bsl Bitsize).
+
+-compile({inline, internal1_sizes_inc2/1}).
+internal1_sizes_inc2(Sizes) ->
+    Sizes + 1.
+
+-compile({inline, internal1_sizes_enlarge1/4}).
+internal1_sizes_enlarge1(Sizes, Bitsize, LeftSize, RightSize) ->
+    Mask = (1 bsl Bitsize) - 1,
+
+    (
+     % Filter cell 2
+     (Sizes band Mask)
+     % Prepend new cell 1
+     bor (RightSize bsl Bitsize)
+     bor (LeftSize bsl (Bitsize bsl 1))
+    ).
+
+-compile({inline, internal1_sizes_enlarge2/4}).
+internal1_sizes_enlarge2(Sizes, Bitsize, LeftSize, RightSize) ->
+    (
+        (
+         % Push cell 2 away
+         (Sizes bsr Bitsize)
+         % Make room for 2 new cells
+         bsl (Bitsize bsl 1)
+        )
+        % Add LeftSize
+        bor (LeftSize bsl Bitsize)
+        % Add RightSize
+        bor RightSize
+    ).
+
+%%%
+
+internal1_sizes_prepend(Sizes, S0, Bitsize) ->
+    % Turns into internal2
+    Sizes bor (S0 bsl Bitsize).
