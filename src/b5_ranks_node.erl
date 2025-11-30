@@ -32,7 +32,7 @@
     map/2,
     new/0,
     next/1,
-    nth/2,
+    nth/3,
     smaller/2,
     smallest/1,
     take/3,
@@ -360,26 +360,13 @@ insert(Key, ValueEval, ValueWrap, H2B, Root) ->
             root_insert_leaf(Key, ValueEval, ValueWrap, Root)
     end.
 
-nth(N, ?INTERNAL1(K1, V1, Sizes, C1, C2)) ->
-    [S1 | _] = internal1_sizes_unpack(Sizes),
-
-    Pos1 = S1 + 1,
-
-    if
-        N < Pos1 ->
-            nth(N, C1);
-        N > Pos1 ->
-            nth(N - Pos1, C2);
-        true ->
-            {K1, V1}
-    end;
-nth(N, ?LEAF1(K1, V1)) ->
-    case N of
-        1 ->
-            {K1, V1}
-    end;
-nth(N, Node) ->
-    nth_recur(N, Node).
+nth(N, H2B, Root) ->
+    case H2B of
+        [B | NextH2B] ->
+            root_nth_internal(B, NextH2B, N, Root);
+        [] ->
+            root_nth_leaf(N, Root)
+    end.
 
 %% @doc Creates an iterator for traversing the tree node entries.
 %% Can iterate in `ordered' (ascending) or `reversed' (descending) direction.
@@ -6595,7 +6582,53 @@ map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
 %% Internal Function Definitions: nth/4
 %% ------------------------------------------------------------------
 
-nth_recur(N, ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)) ->
+root_nth_internal(B, H2B, N, ?INTERNAL1(K1, V1, Sizes, C1, C2)) ->
+    nth_internal1(B, H2B, N, K1, V1, Sizes, C1, C2);
+root_nth_internal(B, H2B, N, Root) ->
+    nth_general_internal(B, H2B, N, Root).
+
+root_nth_leaf(N, ?LEAF1(K1, V1)) ->
+    nth_leaf1(N, K1, V1);
+root_nth_leaf(N, ?LEAF0) ->
+    error_badkey(N);
+root_nth_leaf(N, Root) ->
+    nth_general_leaf(N, Root).
+
+nth_recur(H2B, N, Node) ->
+    case H2B of
+        [B | NextH2B] ->
+            nth_general_internal(B, NextH2B, N, Node);
+        %
+        _ ->
+            nth_general_leaf(N, Node)
+    end.
+
+nth_general_internal(B, H2B, N, Node) ->
+    case Node of
+        ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
+            nth_internal4(B, H2B, N, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5);
+        %
+        ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
+            nth_internal3(B, H2B, N, K1, K2, K3, Values, Sizes, C1, C2, C3, C4);
+        %
+        ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3) ->
+            nth_internal2(B, H2B, N, K1, K2, Values, Sizes, C1, C2, C3)
+    end.
+
+nth_general_leaf(N, Node) ->
+    case Node of
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            nth_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4);
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            nth_leaf3(N, K1, K2, K3, V1, V2, V3);
+        %
+        ?LEAF2(K1, K2, V1, V2) ->
+            nth_leaf2(N, K1, K2, V1, V2)
+    end.
+
+-compile({inline, nth_internal4/14}).
+nth_internal4(B, H2B, N, K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5) ->
     {S1, S2, S3, S4, _} = internal4_sizes_unpack(Sizes),
 
     Pos3 = S1 + S2 + S3 + 3,
@@ -6610,14 +6643,14 @@ nth_recur(N, ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)) ->
 
                     if
                         N < Pos2 ->
-                            nth_recur(N - Pos1, C2);
+                            nth_recur(H2B, N - Pos1, C2);
                         N > Pos2 ->
-                            nth_recur(N - Pos2, C3);
+                            nth_recur(H2B, N - Pos2, C3);
                         true ->
                             {K2, element(2, Values)}
                     end;
                 N < Pos1 ->
-                    nth_recur(N, C1);
+                    nth_recur(H2B, N, C1);
                 true ->
                     {K1, element(1, Values)}
             end;
@@ -6626,16 +6659,18 @@ nth_recur(N, ?INTERNAL4(K1, K2, K3, K4, Values, Sizes, C1, C2, C3, C4, C5)) ->
 
             if
                 N < Pos4 ->
-                    nth_recur(N - Pos3, C4);
+                    nth_recur(H2B, N - Pos3, C4);
                 N > Pos4 ->
-                    nth_recur(N - Pos4, C5);
+                    nth_recur(H2B, N - Pos4, C5);
                 true ->
                     {K4, element(4, Values)}
             end;
         true ->
             {K3, element(3, Values)}
-    end;
-nth_recur(N, ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)) ->
+    end.
+
+-compile({inline, nth_internal3/12}).
+nth_internal3(B, H2B, N, K1, K2, K3, Values, Sizes, C1, C2, C3, C4) ->
     {S1, S2, S3, _} = internal3_sizes_unpack(Sizes),
 
     Pos2 = S1 + S2 + 2,
@@ -6646,9 +6681,9 @@ nth_recur(N, ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)) ->
 
             if
                 N < Pos1 ->
-                    nth_recur(N, C1);
+                    nth_recur(H2B, N, C1);
                 N > Pos1 ->
-                    nth_recur(N - Pos1, C2);
+                    nth_recur(H2B, N - Pos1, C2);
                 true ->
                     {K1, element(1, Values)}
             end;
@@ -6657,16 +6692,18 @@ nth_recur(N, ?INTERNAL3(K1, K2, K3, Values, Sizes, C1, C2, C3, C4)) ->
 
             if
                 N < Pos3 ->
-                    nth_recur(N - Pos2, C3);
+                    nth_recur(H2B, N - Pos2, C3);
                 N > Pos3 ->
-                    nth_recur(N - Pos3, C4);
+                    nth_recur(H2B, N - Pos3, C4);
                 true ->
                     {K3, element(3, Values)}
             end;
         true ->
             {K2, element(2, Values)}
-    end;
-nth_recur(N, ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3)) ->
+    end.
+
+-compile({inline, nth_internal2/10}).
+nth_internal2(B, H2B, N, K1, K2, Values, Sizes, C1, C2, C3) ->
     {S1, S2, _} = internal2_sizes_unpack(Sizes),
 
     Pos1 = S1 + 1,
@@ -6677,35 +6714,60 @@ nth_recur(N, ?INTERNAL2(K1, K2, Values, Sizes, C1, C2, C3)) ->
 
             if
                 N < Pos2 ->
-                    nth_recur(N - Pos1, C2);
+                    nth_recur(H2B, N - Pos1, C2);
                 N > Pos2 ->
-                    nth_recur(N - Pos2, C3);
+                    nth_recur(H2B, N - Pos2, C3);
                 true ->
                     {K2, tl(Values)}
             end;
         N < Pos1 ->
-            nth_recur(N, C1);
+            nth_recur(H2B, N, C1);
         true ->
             {K1, hd(Values)}
-    end;
-nth_recur(N, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
+    end.
+
+-compile({inline, nth_internal1/8}).
+nth_internal1(B, H2B, N, K1, V1, Sizes, C1, C2) ->
+    [S1 | _] = internal1_sizes_unpack(Sizes),
+
+    Pos1 = S1 + 1,
+
+    if
+        N < Pos1 ->
+            nth_recur(H2B, N, C1);
+        N > Pos1 ->
+            nth_recur(H2B, N - Pos1, C2);
+        true ->
+            {K1, V1}
+    end.
+
+-compile({inline, nth_leaf4/9}).
+nth_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4) ->
     case N of
         1 -> {K1, V1};
         2 -> {K2, V2};
         3 -> {K3, V3};
         4 -> {K4, V4}
-    end;
-nth_recur(N, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
+    end.
+
+-compile({inline, nth_leaf3/7}).
+nth_leaf3(N, K1, K2, K3, V1, V2, V3) ->
     case N of
         1 -> {K1, V1};
         2 -> {K2, V2};
         3 -> {K3, V3}
-    end;
-nth_recur(N, ?LEAF2(K1, K2, V1, V2)) ->
+    end.
+
+-compile({inline, nth_leaf2/5}).
+nth_leaf2(N, K1, K2, V1, V2) ->
     case N of
         1 -> {K1, V1};
         2 -> {K2, V2}
     end.
+
+-compile({inline, nth_leaf1/3}).
+nth_leaf1(1, K1, V1) ->
+    {K1, V1}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Size Packing for INTERNAL4

@@ -437,11 +437,11 @@ next(Iter) ->
     b5_ranks_node:next(Iter).
 
 %% TODO document
-nth(N, #b5_ranks{size = Size, root = Root}) ->
+nth(N, #b5_ranks{size = Size, h2b = H2B, root = Root}) ->
     % Should we optimize for first and last? (Call smallest and largest)
     case N < 1 orelse N > Size of
         false ->
-            b5_ranks_node:nth(N, Root);
+            b5_ranks_node:nth(N, H2B, Root);
         _ ->
             error({badarg, N})
     end.
