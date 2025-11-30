@@ -97,10 +97,11 @@
 %% API Type Definitions
 %% ------------------------------------------------------------------
 
--record(b5_ranks, {size, root}).
+-record(b5_ranks, {size, h2b, root}).
 
 -opaque tree(Key, Value) :: #b5_ranks{
     size :: non_neg_integer(),
+    h2b :: b5_ranks_h2b:t(),
     root :: b5_ranks_node:t(Key, Value)
 }.
 -export_type([tree/2]).
@@ -123,11 +124,20 @@ Returns the new tree.
 -endif.
 -spec delete(Key, Tree) -> UpdatedTree when
     Key :: term(), Value :: term(), Tree :: tree(Key, Value), UpdatedTree :: tree(Key, Value).
-delete(Key, #b5_ranks{root = Root, size = Size} = Tree) ->
-    Tree#b5_ranks{
-        root = b5_ranks_node:delete_key(Key, Root),
-        size = Size - 1
-    }.
+delete(Key, #b5_ranks{root = Root, h2b = H2B, size = Size} = Tree) ->
+    case b5_ranks_node:delete(Key, H2B, Root) of
+        {height_decreased, UpdatedRoot} ->
+            Tree#b5_ranks{
+                size = Size - 1,
+                h2b = tl(H2B),
+                root = UpdatedRoot
+            };
+        UpdatedRoot ->
+            Tree#b5_ranks{
+                size = Size - 1,
+                root = UpdatedRoot
+            }
+    end.
 
 % TODO make this hidden, merely a convenience function
 -if(?OTP_RELEASE >= 27).
@@ -144,16 +154,25 @@ Returns the new tree.
 """.
 -endif.
 -spec enter(Key, Value, tree(Key, Value)) -> tree(Key, Value).
-enter(Key, Value, #b5_ranks{size = Size, root = Root} = Tree) ->
+enter(Key, Value, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
     try b5_ranks_node:update(Key, eager, Value, Root) of
         UpdatedRoot ->
             Tree#b5_ranks{root = UpdatedRoot}
     catch
         error:{badkey, K} when K =:= Key ->
-            Tree#b5_ranks{
-                root = b5_ranks_node:insert(Key, eager, Value, Root),
-                size = Size + 1
-            }
+            case b5_ranks_node:insert(Key, eager, Value, H2B, Root) of
+                {height_increased, UpdatedH2B, UpdatedRoot} ->
+                    Tree#b5_ranks{
+                        size = Size + 1,
+                        h2b = UpdatedH2B,
+                        root = UpdatedRoot
+                    };
+                UpdatedRoot ->
+                    Tree#b5_ranks{
+                        size = Size + 1,
+                        root = UpdatedRoot
+                    }
+            end
     end.
 
 -if(?OTP_RELEASE >= 27).
@@ -210,11 +229,20 @@ tree.
 -endif.
 -spec insert(Key, Value, Tree) -> UpdatedTree when
     Tree :: tree(Key, Value), UpdatedTree :: tree(Key, Value).
-insert(Key, Value, #b5_ranks{size = Size, root = Root} = Tree) ->
-    Tree#b5_ranks{
-        size = Size + 1,
-        root = b5_ranks_node:insert(Key, eager, Value, Root)
-    }.
+insert(Key, Value, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
+    case b5_ranks_node:insert(Key, eager, Value, H2B, Root) of
+        {height_increased, UpdatedH2B, UpdatedRoot} ->
+            Tree#b5_ranks{
+                size = Size + 1,
+                h2b = UpdatedH2B,
+                root = UpdatedRoot
+            };
+        UpdatedRoot ->
+            Tree#b5_ranks{
+                size = Size + 1,
+                root = UpdatedRoot
+            }
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -232,11 +260,20 @@ present in the tree.
     Tree :: tree(Key, Value),
     Fun :: fun(() -> Value),
     UpdatedTree :: tree(Key, Value).
-insert_with(Key, Fun, #b5_ranks{size = Size, root = Root} = Tree) ->
-    Tree#b5_ranks{
-        size = Size + 1,
-        root = b5_ranks_node:insert(Key, lazy, Fun, Root)
-    }.
+insert_with(Key, Fun, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
+    case b5_ranks_node:insert(Key, lazy, Fun, H2B, Root) of
+        {height_increased, UpdatedH2B, UpdatedRoot} ->
+            Tree#b5_ranks{
+                size = Size + 1,
+                h2b = UpdatedH2B,
+                root = UpdatedRoot
+            };
+        UpdatedRoot ->
+            Tree#b5_ranks{
+                size = Size + 1,
+                root = UpdatedRoot
+            }
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc "Returns `true` if `Key` is present in `Tree`, otherwise `false`.".
@@ -382,7 +419,12 @@ map(Fun, #b5_ranks{root = Root} = Tree) ->
 -doc "Returns a new empty tree.".
 -endif.
 -spec new() -> tree(_, _).
-new() -> #b5_ranks{root = b5_ranks_node:new(), size = 0}.
+new() ->
+    #b5_ranks{
+        size = 0,
+        h2b = [],
+        root = b5_ranks_node:new()
+    }.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -441,10 +483,24 @@ key is not present in the tree.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take(Key, #b5_ranks{size = Size, root = Root} = Tree) ->
-    {Value, UpdatedRoot} = b5_ranks_node:take_key(Key, Root),
-    UpdatedTree = Tree#b5_ranks{size = Size - 1, root = UpdatedRoot},
-    {Value, UpdatedTree}.
+take(Key, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
+    case b5_ranks_node:take(Key, H2B, Root) of
+        [TakenPair | UpdatedRoot] ->
+            UpdatedTree = Tree#b5_ranks{
+                size = Size - 1,
+                root = UpdatedRoot
+            },
+            [_ | Value] = TakenPair,
+            {Value, UpdatedTree};
+        {height_decreased, TakenPair, UpdatedRoot} ->
+            UpdatedTree = Tree#b5_ranks{
+                size = Size - 1,
+                h2b = tl(H2B),
+                root = UpdatedRoot
+            },
+            [_ | Value] = TakenPair,
+            {Value, UpdatedTree}
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -477,21 +533,45 @@ if the tree is empty.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take_largest(#b5_ranks{size = Size, root = Root} = Tree) ->
-    {Key, Value, UpdatedRoot} = b5_ranks_node:take_largest(Root),
-    UpdatedTree = Tree#b5_ranks{size = Size - 1, root = UpdatedRoot},
-    {Key, Value, UpdatedTree}.
+take_largest(#b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
+    case b5_ranks_node:take_largest(H2B, Root) of
+        [TakenPair | UpdatedRoot] ->
+            UpdatedTree = Tree#b5_ranks{
+                size = Size - 1,
+                root = UpdatedRoot
+            },
+            [Key | Value] = TakenPair,
+            {Key, Value, UpdatedTree};
+        {height_decreased, TakenPair, UpdatedRoot} ->
+            UpdatedTree = Tree#b5_ranks{
+                size = Size - 1,
+                h2b = tl(H2B),
+                root = UpdatedRoot
+            },
+            [Key | Value] = TakenPair,
+            {Key, Value, UpdatedTree}
+    end.
 
 %% TODO document
-take_nth(N, #b5_ranks{size = Size, root = Root} = Tree) ->
-    % Optimize for first and last?
-    case N < 0 orelse N > Size of
-        false ->
-            {Key, Value, UpdatedRoot} = b5_ranks_node:take_nth(N, Root),
-            UpdatedTree = Tree#b5_ranks{size = Size - 1, root = UpdatedRoot},
+take_nth(N, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) when N >= 0 andalso N =< Size ->
+    % TODO Optimize for first and last?
+
+    case b5_ranks_node:take_nth(N, H2B, Root) of
+        [TakenPair | UpdatedRoot] ->
+            UpdatedTree = Tree#b5_ranks{
+                size = Size - 1,
+                root = UpdatedRoot
+            },
+            [Key | Value] = TakenPair,
             {Key, Value, UpdatedTree};
-        _ ->
-            error({badarg, N})
+        {height_decreased, TakenPair, UpdatedRoot} ->
+            UpdatedTree = Tree#b5_ranks{
+                size = Size - 1,
+                h2b = tl(H2B),
+                root = UpdatedRoot
+            },
+            [Key | Value] = TakenPair,
+            {Key, Value, UpdatedTree}
     end.
 
 -if(?OTP_RELEASE >= 27).
@@ -506,10 +586,24 @@ exception if the tree is empty.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take_smallest(#b5_ranks{size = Size, root = Root} = Tree) ->
-    {Key, Value, UpdatedRoot} = b5_ranks_node:take_smallest(Root),
-    UpdatedTree = Tree#b5_ranks{size = Size - 1, root = UpdatedRoot},
-    {Key, Value, UpdatedTree}.
+take_smallest(#b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
+    case b5_ranks_node:take_smallest(H2B, Root) of
+        [TakenPair | UpdatedRoot] ->
+            UpdatedTree = Tree#b5_ranks{
+                size = Size - 1,
+                root = UpdatedRoot
+            },
+            [Key | Value] = TakenPair,
+            {Key, Value, UpdatedTree};
+        {height_decreased, TakenPair, UpdatedRoot} ->
+            UpdatedTree = Tree#b5_ranks{
+                size = Size - 1,
+                h2b = tl(H2B),
+                root = UpdatedRoot
+            },
+            [Key | Value] = TakenPair,
+            {Key, Value, UpdatedTree}
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc "Converts a tree into an ordered list of key-value tuples.".
@@ -564,16 +658,25 @@ If the key does not exist, `Init` is inserted as the value.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value | Value2 | Init).
 
-update_with(Key, Fun, Init, #b5_ranks{root = Root} = Tree) ->
+update_with(Key, Fun, Init, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
     try b5_ranks_node:update(Key, lazy, Fun, Root) of
         UpdatedRoot ->
             Tree#b5_ranks{root = UpdatedRoot}
     catch
         error:{badkey, K} when K =:= Key ->
-            Tree#b5_ranks{
-                root = b5_ranks_node:insert(Key, eager, Init, Root),
-                size = Tree#b5_ranks.size + 1
-            }
+            case b5_ranks_node:insert(Key, eager, Init, H2B, Root) of
+                {height_increased, UpdatedH2B, UpdatedRoot} ->
+                    Tree#b5_ranks{
+                        size = Tree#b5_ranks.size + 1,
+                        h2b = UpdatedH2B,
+                        root = UpdatedRoot
+                    };
+                UpdatedRoot ->
+                    Tree#b5_ranks{
+                        size = Size + 1,
+                        root = UpdatedRoot
+                    }
+            end
     end.
 
 -if(?OTP_RELEASE >= 27).
@@ -611,8 +714,10 @@ The input map must contain `root` and `size` fields.
 -spec from_constituent_parts(#{
     root := b5_ranks_node:t(Key, Value), size := non_neg_integer()
 }) -> tree(Key, Value).
-from_constituent_parts(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
-    #b5_ranks{root = Root, size = Size}.
+from_constituent_parts(#{root := Root, h2b := H2B, size := Size}) when
+    is_integer(Size), Size >= 0
+->
+    #b5_ranks{root = Root, h2b = H2B, size = Size}.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -627,8 +732,11 @@ Returns `error` if the input is not a valid tree.
 """.
 -endif.
 -spec to_constituent_parts(tree(Key, Value) | term()) ->
-    {ok, #{root := b5_ranks_node:t(Key, Value), size := non_neg_integer()}} | error.
-to_constituent_parts(#b5_ranks{root = Root, size = Size}) when is_integer(Size), Size >= 0 ->
-    {ok, #{root => Root, size => Size}};
+    {ok, #{root := b5_ranks_node:t(Key, Value), h2b := b5_ranks_h2b:t(), size := non_neg_integer()}}
+    | error.
+to_constituent_parts(#b5_ranks{root = Root, h2b = H2B, size = Size}) when
+    is_integer(Size), Size >= 0
+->
+    {ok, #{root => Root, h2b => H2B, size => Size}};
 to_constituent_parts(_) ->
     error.

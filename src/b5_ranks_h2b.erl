@@ -1,4 +1,4 @@
--module(b5_ranks_bitsizes).
+-module(b5_ranks_h2b).
 
 % Max keys computed by the recursive formula:
 % 4 + 5 * max_keys(Height - 1)
