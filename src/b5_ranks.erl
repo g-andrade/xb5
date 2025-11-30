@@ -687,8 +687,8 @@ Returns information about the tree structure for debugging purposes.
 -endif.
 -spec validate(tree(_, _)) ->
     {ok, b5_ranks_node:valid_stats()} | {error, term()}.
-validate(#b5_ranks{size = Size, root = Root}) ->
-    b5_ranks_node:validate(Size, Root).
+validate(#b5_ranks{size = Size, h2b = H2B, root = Root}) ->
+    b5_ranks_node:validate(Size, H2B, Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc """
