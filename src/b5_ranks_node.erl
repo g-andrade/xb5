@@ -45,6 +45,8 @@
     values/1
 ]).
 
+%-compile([export_all]).
+
 -include_lib("stdlib/include/assert.hrl").
 
 %% ------------------------------------------------------------------
@@ -88,6 +90,10 @@
 -define(SPLIT(SplitK, SplitV, SplitLSize, SplitL, SplitRSize, SplitR),
     {split, {SplitK, SplitV, SplitLSize, SplitL, SplitRSize, SplitR}}
 ).
+
+%%
+
+-define(PACKED_MASK(B), ((1 bsl B) - 1)).
 
 %% ------------------------------------------------------------------
 %% Type Definitions
@@ -2845,7 +2851,7 @@ delete_internal4_rebalance_child1(
             UpdatedSizes = internal4_sizes_update1(B, Sizes, -1),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, UpdatedSizes, C1, C2, C3, C4, C5);
         {UpK, UpVal, UpdatedC1, UpdatedC2, MovedSize} ->
-            UpdatedSizes = internal4_sizes_move_left12(B, Sizes, MovedSize),
+            UpdatedSizes = internal4_sizes_update12(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL4(
                 UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedSizes, UpdatedC1, UpdatedC2, C3, C4, C5
             );
@@ -2863,7 +2869,7 @@ delete_internal4_rebalance_child2(
             UpdatedSizes = internal4_sizes_update2(B, Sizes, -1),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, UpdatedSizes, C1, C2, C3, C4, C5);
         {from_left, {UpK, UpVal, UpdatedC1, RebalancedC2, MovedSize}} ->
-            UpdatedSizes = internal4_sizes_move_right12(B, Sizes, MovedSize),
+            UpdatedSizes = internal4_sizes_update12(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL4(
                 UpK,
                 K2,
@@ -2878,7 +2884,7 @@ delete_internal4_rebalance_child2(
                 C5
             );
         {from_right, {UpK, UpVal, RebalancedC2, UpdatedC3, MovedSize}} ->
-            UpdatedSizes = internal4_sizes_move_left23(B, Sizes, MovedSize),
+            UpdatedSizes = internal4_sizes_update23(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL4(
                 K1,
                 UpK,
@@ -2906,7 +2912,7 @@ delete_internal4_rebalance_child3(
             UpdatedSizes = internal4_sizes_update3(B, Sizes, -1),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, UpdatedSizes, C1, C2, C3, C4, C5);
         {from_left, {UpK, UpVal, UpdatedC2, RebalancedC3, MovedSize}} ->
-            UpdatedSizes = internal4_sizes_move_right23(B, Sizes, MovedSize),
+            UpdatedSizes = internal4_sizes_update23(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL4(
                 K1,
                 UpK,
@@ -2921,7 +2927,7 @@ delete_internal4_rebalance_child3(
                 C5
             );
         {from_right, {UpK, UpVal, RebalancedC3, UpdatedC4, MovedSize}} ->
-            UpdatedSizes = internal4_sizes_move_left34(B, Sizes, MovedSize),
+            UpdatedSizes = internal4_sizes_update34(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL4(
                 K1,
                 K2,
@@ -2949,7 +2955,7 @@ delete_internal4_rebalance_child4(
             UpdatedSizes = internal4_sizes_update4(B, Sizes, -1),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, UpdatedSizes, C1, C2, C3, C4, C5);
         {from_left, {UpK, UpVal, UpdatedC3, RebalancedC4, MovedSize}} ->
-            UpdatedSizes = internal4_sizes_move_right34(B, Sizes, MovedSize),
+            UpdatedSizes = internal4_sizes_update34(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL4(
                 K1,
                 K2,
@@ -2964,7 +2970,7 @@ delete_internal4_rebalance_child4(
                 C5
             );
         {from_right, {UpK, UpVal, RebalancedC4, UpdatedC5, MovedSize}} ->
-            UpdatedSizes = internal4_sizes_move_left45(B, Sizes, MovedSize),
+            UpdatedSizes = internal4_sizes_update45(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL4(
                 K1,
                 K2,
@@ -2992,7 +2998,7 @@ delete_internal4_rebalance_child5(
             UpdatedSizes = internal4_sizes_update5(B, Sizes, -1),
             ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, UpdatedSizes, C1, C2, C3, C4, C5);
         {UpK, UpVal, UpdatedC4, RebalancedC5, MovedSize} ->
-            UpdatedSizes = internal4_sizes_move_right45(B, Sizes, MovedSize),
+            UpdatedSizes = internal4_sizes_update45(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL4(
                 K1,
                 K2,
@@ -3191,7 +3197,7 @@ delete_internal3_rebalance_child1(B, H2B, K1, K2, K3, V1, V2, V3, Sizes, C1, C2,
             UpdatedSizes = internal3_sizes_update1(B, Sizes, -1),
             ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, UpdatedSizes, C1, C2, C3, C4);
         {UpK, UpVal, UpdatedC1, UpdatedC2, MovedSize} ->
-            UpdatedSizes = internal3_sizes_move_left12(B, Sizes, MovedSize),
+            UpdatedSizes = internal3_sizes_update12(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL3(UpK, K2, K3, {UpVal, V2, V3}, UpdatedSizes, UpdatedC1, UpdatedC2, C3, C4);
         {merged, MergedC1C2} ->
             UpdatedSizes = internal3_sizes_merge12(B, Sizes),
@@ -3205,10 +3211,10 @@ delete_internal3_rebalance_child2(B, H2B, K1, K2, K3, V1, V2, V3, Sizes, C1, C2,
             UpdatedSizes = internal3_sizes_update2(B, Sizes, -1),
             ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, UpdatedSizes, C1, C2, C3, C4);
         {from_left, {UpK, UpVal, UpdatedC1, RebalancedC2, MovedSize}} ->
-            UpdatedSizes = internal3_sizes_move_right12(B, Sizes, MovedSize),
+            UpdatedSizes = internal3_sizes_update12(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL3(UpK, K2, K3, {UpVal, V2, V3}, UpdatedSizes, UpdatedC1, RebalancedC2, C3, C4);
         {from_right, {UpK, UpVal, RebalancedC2, UpdatedC3, MovedSize}} ->
-            UpdatedSizes = internal3_sizes_move_left23(B, Sizes, MovedSize),
+            UpdatedSizes = internal3_sizes_update23(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL3(K1, UpK, K3, {V1, UpVal, V3}, UpdatedSizes, C1, RebalancedC2, UpdatedC3, C4);
         {from_left, {merged, MergedC1C2}} ->
             UpdatedSizes = internal3_sizes_merge12(B, Sizes),
@@ -3222,10 +3228,10 @@ delete_internal3_rebalance_child3(B, H2B, K1, K2, K3, V1, V2, V3, Sizes, C1, C2,
             UpdatedSizes = internal3_sizes_update3(B, Sizes, -1),
             ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, UpdatedSizes, C1, C2, C3, C4);
         {from_left, {UpK, UpVal, UpdatedC2, RebalancedC3, MovedSize}} ->
-            UpdatedSizes = internal3_sizes_move_right23(B, Sizes, MovedSize),
+            UpdatedSizes = internal3_sizes_update23(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL3(K1, UpK, K3, {V1, UpVal, V3}, UpdatedSizes, C1, UpdatedC2, RebalancedC3, C4);
         {from_right, {UpK, UpVal, RebalancedC3, UpdatedC4, MovedSize}} ->
-            UpdatedSizes = internal3_sizes_move_left34(B, Sizes, MovedSize),
+            UpdatedSizes = internal3_sizes_update34(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL3(K1, K2, UpK, {V1, V2, UpVal}, UpdatedSizes, C1, C2, RebalancedC3, UpdatedC4);
         {from_left, {merged, MergedC2C3}} ->
             UpdatedSizes = internal3_sizes_merge23(B, Sizes),
@@ -3239,7 +3245,7 @@ delete_internal3_rebalance_child4(B, H2B, K1, K2, K3, V1, V2, V3, Sizes, C1, C2,
             UpdatedSizes = internal3_sizes_update4(B, Sizes, -1),
             ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, UpdatedSizes, C1, C2, C3, C4);
         {UpK, UpVal, UpdatedC3, RebalancedC4, MovedSize} ->
-            UpdatedSizes = internal3_sizes_move_right34(B, Sizes, MovedSize),
+            UpdatedSizes = internal3_sizes_update34(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL3(K1, K2, UpK, {V1, V2, UpVal}, UpdatedSizes, C1, C2, UpdatedC3, RebalancedC4);
         {merged, MergedC3C4} ->
             UpdatedSizes = internal3_sizes_merge34(B, Sizes),
@@ -3364,7 +3370,7 @@ delete_internal2_rebalance_child1(B, H2B, K1, K2, V1, V2, Sizes, C1, C2, C3) ->
             UpdatedSizes = internal2_sizes_update1(B, Sizes, -1),
             ?INTERNAL2(K1, K2, [V1 | V2], UpdatedSizes, C1, C2, C3);
         {UpK, UpVal, UpdatedC1, UpdatedC2, MovedSize} ->
-            UpdatedSizes = internal2_sizes_move_left12(B, Sizes, MovedSize),
+            UpdatedSizes = internal2_sizes_update12(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL2(UpK, K2, [UpVal | V2], UpdatedSizes, UpdatedC1, UpdatedC2, C3);
         {merged, MergedC1C2} ->
             UpdatedSizes = internal2_sizes_merge12(B, Sizes),
@@ -3378,10 +3384,10 @@ delete_internal2_rebalance_child2(B, H2B, K1, K2, V1, V2, Sizes, C1, C2, C3) ->
             UpdatedSizes = internal2_sizes_update2(B, Sizes, -1),
             ?INTERNAL2(K1, K2, [V1 | V2], UpdatedSizes, C1, C2, C3);
         {from_left, {UpK, UpVal, UpdatedC1, RebalancedC2, MovedSize}} ->
-            UpdatedSizes = internal2_sizes_move_right12(B, Sizes, MovedSize),
+            UpdatedSizes = internal2_sizes_update12(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL2(UpK, K2, [UpVal | V2], UpdatedSizes, UpdatedC1, RebalancedC2, C3);
         {from_right, {UpK, UpVal, RebalancedC2, UpdatedC3, MovedSize}} ->
-            UpdatedSizes = internal2_sizes_move_left23(B, Sizes, MovedSize),
+            UpdatedSizes = internal2_sizes_update23(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL2(K1, UpK, [V1 | UpVal], UpdatedSizes, C1, RebalancedC2, UpdatedC3);
         {from_left, {merged, MergedC1C2}} ->
             UpdatedSizes = internal2_sizes_merge12(B, Sizes),
@@ -3395,7 +3401,7 @@ delete_internal2_rebalance_child3(B, H2B, K1, K2, V1, V2, Sizes, C1, C2, C3) ->
             UpdatedSizes = internal2_sizes_update3(B, Sizes, -1),
             ?INTERNAL2(K1, K2, [V1 | V2], UpdatedSizes, C1, C2, C3);
         {UpK, UpVal, UpdatedC2, RebalancedC3, MovedSize} ->
-            UpdatedSizes = internal2_sizes_move_right23(B, Sizes, MovedSize),
+            UpdatedSizes = internal2_sizes_update23(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL2(K1, UpK, [V1 | UpVal], UpdatedSizes, C1, UpdatedC2, RebalancedC3);
         {merged, MergedC2C3} ->
             UpdatedSizes = internal2_sizes_merge23(B, Sizes),
@@ -3470,7 +3476,7 @@ delete_internal1_rebalance_child1(B, H2B, K1, V1, Sizes, C1, C2) ->
             UpdatedSizes = internal1_sizes_update1(B, Sizes, -1),
             ?INTERNAL1(K1, V1, UpdatedSizes, C1, C2);
         {UpK, UpVal, UpdatedC1, UpdatedC2, MovedSize} ->
-            UpdatedSizes = internal1_sizes_move_left12(B, Sizes, MovedSize),
+            UpdatedSizes = internal1_sizes_update12(B, Sizes, MovedSize, -MovedSize - 1),
             ?INTERNAL1(UpK, UpVal, UpdatedSizes, UpdatedC1, UpdatedC2);
         {merged, MergedC1C2} ->
             % This can only happen on root
@@ -3484,7 +3490,7 @@ delete_internal1_rebalance_child2(B, H2B, K1, V1, Sizes, C1, C2) ->
             UpdatedSizes = internal1_sizes_update2(B, Sizes, -1),
             ?INTERNAL1(K1, V1, UpdatedSizes, C1, C2);
         {UpK, UpVal, UpdatedC1, RebalancedC2, MovedSize} ->
-            UpdatedSizes = internal1_sizes_move_right12(B, Sizes, MovedSize),
+            UpdatedSizes = internal1_sizes_update12(B, Sizes, -MovedSize - 1, MovedSize),
             ?INTERNAL1(UpK, UpVal, UpdatedSizes, UpdatedC1, RebalancedC2);
         {merged, MergedC1C2} ->
             % This can only happen on root - height is reduced
@@ -5479,19 +5485,22 @@ rebalance_right_internal1_internal3(
 ) ->
     {LeftV1, LeftV2, LeftV3} = LeftValues,
 
-    {LeftS1, LeftS2, LeftS3, LeftS4} = internal3_sizes_unpack(B, LeftSizes),
-    [RightS1 | RightS2] = internal1_sizes_unpack(B, RightSizes),
+    % {LeftS1, LeftS2, LeftS3, LeftS4} = internal3_sizes_unpack(B, LeftSizes),
+    % [RightS1 | RightS2] = internal1_sizes_unpack(B, RightSizes),
+
+    {NewLeftSizes, NewRightSizes, MovedSize} = internal3_sizes_rebalance_right_with_internal1(B, LeftSizes, RightSizes),
 
     UpK = LeftK3,
     UpVal = LeftV3,
     MovedChild = LeftC4,
-    MovedSize = LeftS4,
+    %MovedSize = LeftS4,
 
     UpdatedLeft = ?INTERNAL2(
         LeftK1,
         LeftK2,
         [LeftV1 | LeftV2],
-        internal2_sizes_pack(B, LeftS1, LeftS2, LeftS3),
+        % internal2_sizes_pack(B, LeftS1, LeftS2, LeftS3),
+        N
         LeftC1,
         LeftC2,
         LeftC3
@@ -5530,8 +5539,9 @@ rebalance_right_internal1_internal2(
 ) ->
     [LeftV1 | LeftV2] = LeftValues,
 
-    {LeftS1, LeftS2, LeftS3} = internal2_sizes_unpack(B, LeftSizes),
-    [RightS1 | RightS2] = internal1_sizes_unpack(B, RightSizes),
+    % {LeftS1, LeftS2, LeftS3} = internal2_sizes_unpack(B, LeftSizes),
+    % [RightS1 | RightS2] = internal1_sizes_unpack(B, RightSizes),
+    MergedSizes = internal1_sizes_rebalance_merge_with_internal2(B, LeftSizes, RightSizes),
 
     {merged,
         ?INTERNAL4(
@@ -5540,7 +5550,8 @@ rebalance_right_internal1_internal2(
             ParentK,
             RightK1,
             {LeftV1, LeftV2, ParentV, RightV1},
-            internal4_sizes_pack(B, LeftS1, LeftS2, LeftS3, RightS1, RightS2),
+            MergedSizes,
+            %internal4_sizes_pack(B, LeftS1, LeftS2, LeftS3, RightS1, RightS2),
             LeftC1,
             LeftC2,
             LeftC3,
@@ -5685,7 +5696,7 @@ stats_recur(?INTERNAL2(_, _, _, Sizes, C1, C2, C3), Depth, [B | H2B], ExpectedNr
     Acc5 = stats_recur(C3, Depth + 1, H2B, S3, Acc4),
     Acc5;
 stats_recur(?INTERNAL1(_, _, Sizes, C1, C2), Depth, [B | H2B], ExpectedNrOfKeys, Acc) ->
-    [S1 | S2] = internal2_sizes_unpack(B, Sizes),
+    [S1 | S2] = internal1_sizes_unpack(B, Sizes),
     ?assertEqual(S1 + S2 + 1, ExpectedNrOfKeys),
 
     Acc2 =
@@ -6838,161 +6849,111 @@ nth_leaf1(1, K1, V1) ->
 %% Internal Function Definitions: Size Packing for INTERNAL4
 %% ------------------------------------------------------------------
 
+%% Layouts:
+%% INTERNAL4: [<<S2, S1>>, <<S4, S3>> | S5]
+
 -compile({inline, internal4_sizes_pack/6}).
 internal4_sizes_pack(B, S1, S2, S3, S4, S5) ->
-    {S1, S2, S3, S4, S5}.
+    S21 = S1 bor (S2 bsl B),
+    S43 = S3 bor (S4 bsl B),
+    [S21, S43 | S5].
 
 -compile({inline, internal4_sizes_unpack/2}).
-internal4_sizes_unpack(B, Sizes) ->
-    Sizes.
+internal4_sizes_unpack(B, [S21, S43 | S5]) ->
+    Mask = ?PACKED_MASK(B),
+    S1 = S21 band Mask,
+    S2 = S21 bsr B,
+    S3 = S43 band Mask,
+    S4 = S43 bsr B,
+    {S1, S2, S3, S4, S5}.
 
 %%%
 
 -compile({inline, internal4_sizes_update1/3}).
-internal4_sizes_update1(B, {S1, S2, S3, S4, S5}, Inc) ->
-    {S1 + Inc, S2, S3, S4, S5}.
+internal4_sizes_update1(_, [S21 | Tail], Inc) ->
+    [S21 + Inc | Tail].
 
 -compile({inline, internal4_sizes_update2/3}).
-internal4_sizes_update2(B, {S1, S2, S3, S4, S5}, Inc) ->
-    {S1, S2 + Inc, S3, S4, S5}.
+internal4_sizes_update2(B, [S21 | Tail], Inc) ->
+    [S21 + (Inc bsl B) | Tail].
 
 -compile({inline, internal4_sizes_update3/3}).
-internal4_sizes_update3(B, {S1, S2, S3, S4, S5}, Inc) ->
-    {S1, S2, S3 + Inc, S4, S5}.
+internal4_sizes_update3(_, [S21, S43 | S5], Inc) ->
+    [S21, S43 + Inc | S5].
 
 -compile({inline, internal4_sizes_update4/3}).
-internal4_sizes_update4(B, {S1, S2, S3, S4, S5}, Inc) ->
-    {S1, S2, S3, S4 + Inc, S5}.
+internal4_sizes_update4(B, [S21, S43 | S5], Inc) ->
+    [S21, S43 + (Inc bsl B) | S5].
 
 -compile({inline, internal4_sizes_update5/3}).
-internal4_sizes_update5(B, {S1, S2, S3, S4, S5}, Inc) ->
-    {S1, S2, S3, S4, S5 + Inc}.
+internal4_sizes_update5(_, [S21, S43 | S5], Inc) ->
+    [S21, S43 | S5 + Inc].
 
 %%%
 
--compile({inline, internal4_sizes_move_left12/3}).
-internal4_sizes_move_left12(B, {S1, S2, S3, S4, S5}, MovedSize) ->
-    {
-        S1 + MovedSize,
-        S2 - MovedSize - 1,
-        S3,
-        S4,
-        S5
-    }.
+-compile({inline, internal4_sizes_update12/4}).
+internal4_sizes_update12(B, [S21 | Tail], Inc1, Inc2) ->
+    [S21 + Inc1 + (Inc2 bsl B) | Tail].
 
--compile({inline, internal4_sizes_move_left23/3}).
-internal4_sizes_move_left23(B, {S1, S2, S3, S4, S5}, MovedSize) ->
-    {
-        S1,
-        S2 + MovedSize,
-        S3 - MovedSize - 1,
-        S4,
-        S5
-    }.
+-compile({inline, internal4_sizes_update23/4}).
+internal4_sizes_update23(B, [S21, S43 | S5], Inc2, Inc3) ->
+    [S21 + (Inc2 bsl B), S43 + Inc3 | S5].
 
--compile({inline, internal4_sizes_move_left34/3}).
-internal4_sizes_move_left34(B, {S1, S2, S3, S4, S5}, MovedSize) ->
-    {
-        S1,
-        S2,
-        S3 + MovedSize,
-        S4 - MovedSize - 1,
-        S5
-    }.
+-compile({inline, internal4_sizes_update34/4}).
+internal4_sizes_update34(B, [S21, S43 | S5], Inc3, Inc4) ->
+    [S21, S43 + Inc3 + (Inc4 bsl B) | S5].
 
--compile({inline, internal4_sizes_move_left45/3}).
-internal4_sizes_move_left45(B, {S1, S2, S3, S4, S5}, MovedSize) ->
-    {
-        S1,
-        S2,
-        S3,
-        S4 + MovedSize,
-        S5 - MovedSize - 1
-    }.
+-compile({inline, internal4_sizes_update45/4}).
+internal4_sizes_update45(B, [S21, S43 | S5], Inc4, Inc5) ->
+    [S21, S43 + (Inc4 bsl B) | S5 + Inc5].
 
 %%%
-
--compile({inline, internal4_sizes_move_right12/3}).
-internal4_sizes_move_right12(B, {S1, S2, S3, S4, S5}, MovedSize) ->
-    {
-        S1 - MovedSize - 1,
-        S2 + MovedSize,
-        S3,
-        S4,
-        S5
-    }.
-
--compile({inline, internal4_sizes_move_right23/3}).
-internal4_sizes_move_right23(B, {S1, S2, S3, S4, S5}, MovedSize) ->
-    {
-        S1,
-        S2 - MovedSize - 1,
-        S3 + MovedSize,
-        S4,
-        S5
-    }.
-
--compile({inline, internal4_sizes_move_right34/3}).
-internal4_sizes_move_right34(B, {S1, S2, S3, S4, S5}, MovedSize) ->
-    {
-        S1,
-        S2,
-        S3 - MovedSize - 1,
-        S4 + MovedSize,
-        S5
-    }.
-
--compile({inline, internal4_sizes_move_right45/3}).
-internal4_sizes_move_right45(B, {S1, S2, S3, S4, S5}, MovedSize) ->
-    {
-        S1,
-        S2,
-        S3,
-        S4 - MovedSize - 1,
-        S5 + MovedSize
-    }.
 
 %%%
 
 -compile({inline, internal4_sizes_merge12/2}).
-internal4_sizes_merge12(B, {S1, S2, S3, S4, S5}) ->
-    internal3_sizes_pack(
-        B,
-        S1 + S2,
-        S3,
-        S4,
-        S5
-    ).
+internal4_sizes_merge12(B, [S21, S43 | S5]) ->
+    Mask = ?PACKED_MASK(B),
+    NewS1 = (S21 band Mask) + (S21 bsr B),
+    NewS2 = S43 band Mask,
+    NewS3 = S43 bsr B,
+    NewS4 = S5,
+
+    NewS21 = NewS1 bor (NewS2 bsl B),
+    NewS43 = NewS3 bor (NewS4 bsl B),
+    [NewS21 | NewS43].
+
 
 -compile({inline, internal4_sizes_merge23/2}).
-internal4_sizes_merge23(B, {S1, S2, S3, S4, S5}) ->
-    internal3_sizes_pack(
-        B,
-        S1,
-        S2 + S3,
-        S4,
-        S5
-    ).
+internal4_sizes_merge23(B, [S21, S43 | S5]) ->
+    Mask = ?PACKED_MASK(B),
+
+    NewS1 = S21 band Mask,
+    NewS2 = (S21 bsr B) + (S43 band Mask),
+    NewS3 = S43 bsr B,
+    NewS4 = S5,
+
+    NewS21 = NewS1 bor (NewS2 bsl B),
+    NewS43 = NewS3 bor (NewS4 bsl B),
+    [NewS21 | NewS43].
+
 
 -compile({inline, internal4_sizes_merge34/2}).
-internal4_sizes_merge34(B, {S1, S2, S3, S4, S5}) ->
-    internal3_sizes_pack(
-        B,
-        S1,
-        S2,
-        S3 + S4,
-        S5
-    ).
+internal4_sizes_merge34(B, [S21, S43 | S5]) ->
+    Mask = ?PACKED_MASK(B),
+
+    NewS3 = (S43 bsr B) + (S43 band Mask),
+    NewS4 = S5,
+
+    NewS21 = S21,
+    NewS43 = NewS3 bor (NewS4 bsl B),
+    [NewS21 | NewS43].
 
 -compile({inline, internal4_sizes_merge45/2}).
-internal4_sizes_merge45(B, {S1, S2, S3, S4, S5}) ->
-    internal3_sizes_pack(
-        B,
-        S1,
-        S2,
-        S3,
-        S4 + S5
-    ).
+internal4_sizes_merge45(B, [S21, S43 | S5]) ->
+    NewS21 = S21,
+    NewS43 = S43 + (S5 bsl B),
+    [NewS21 | NewS43].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Size Packing for INTERNAL3
@@ -7000,239 +6961,279 @@ internal4_sizes_merge45(B, {S1, S2, S3, S4, S5}) ->
 
 -compile({inline, internal3_sizes_pack/5}).
 internal3_sizes_pack(B, S1, S2, S3, S4) ->
-    {S1, S2, S3, S4}.
+    S21 = S1 bor (S2 bsl B),
+    S43 = S3 bor (S4 bsl B),
+    [S21 | S43].
 
 -compile({inline, internal3_sizes_unpack/2}).
-internal3_sizes_unpack(B, Sizes) ->
-    Sizes.
+internal3_sizes_unpack(B, [S21 | S43]) ->
+    Mask = ?PACKED_MASK(B),
+
+    S1 = S21 band Mask,
+    S2 = S21 bsr B,
+    S3 = S43 band Mask,
+    S4 = S43 bsr B,
+
+    {S1, S2, S3, S4}.
 
 %%%
 
 -compile({inline, internal3_sizes_split1/4}).
-internal3_sizes_split1(B, {_, S2, S3, S4}, LSize, RSize) ->
-    internal4_sizes_pack(B, LSize, RSize, S2, S3, S4).
+internal3_sizes_split1(B, [S21 | S43], LSize, RSize) ->
+    Mask = ?PACKED_MASK(B),
+
+%    NewS1 = LSize,
+%    NewS2 = RSize,
+%    NewS3 = S21 bsr B,
+%    NewS4 = S43 band Mask,
+%    NewS5 = S43 bsr B,
+%
+%    internal4_sizes_pack(B, NewS1, NewS2, NewS3, NewS4, NewS5).
+
+    NewS21 = RSize bor (LSize bsl B),
+    NewS43 = (S21 bsr B) bor ((S43 band Mask) bsl B),
+    NewS5 = S43 bsr B,
+    [NewS21, NewS43 | NewS5].
 
 -compile({inline, internal3_sizes_split2/4}).
-internal3_sizes_split2(B, {S1, _, S3, S4}, LSize, RSize) ->
-    internal4_sizes_pack(B, S1, LSize, RSize, S3, S4).
+internal3_sizes_split2(B, [S21 | S43], LSize, RSize) ->
+    Mask = ?PACKED_MASK(B),
+
+%    NewS1 = S21 band Mask,
+%    NewS2 = LSize,
+%    NewS3 = RSize,
+%    NewS4 = S43 band Mask,
+%    NewS5 = S43 bsr B,
+%
+%    internal4_sizes_pack(B, NewS1, NewS2, NewS3, NewS4, NewS5).
+
+    NewS21 = (S21 band Mask) bor (LSize bsl B),
+    NewS43 = RSize bor ((S43 band Mask) bsl B),
+    NewS5 = S43 bsr B,
+    [NewS21, NewS43 | NewS5].
 
 -compile({inline, internal3_sizes_split3/4}).
-internal3_sizes_split3(B, {S1, S2, _, S4}, LSize, RSize) ->
-    internal4_sizes_pack(B, S1, S2, LSize, RSize, S4).
+internal3_sizes_split3(B, [S21 | S43], LSize, RSize) ->
+%    NewS1 = S21 band Mask,
+%    NewS2 = S21 bsr B,
+%    NewS3 = LSize,
+%    NewS4 = RSize,
+%    NewS5 = S43 bsr B,
+%
+%    internal4_sizes_pack(B, NewS1, NewS2, NewS3, NewS4, NewS5).
+
+    NewS21 = S21,
+    NewS43 = RSize bor (LSize bsl B),
+    NewS5 = S43 bsr B,
+    [NewS21, NewS43 | NewS5].
 
 -compile({inline, internal3_sizes_split4/4}).
-internal3_sizes_split4(B, {S1, S2, S3, _}, LSize, RSize) ->
-    internal4_sizes_pack(B, S1, S2, S3, LSize, RSize).
+internal3_sizes_split4(B, [S21 | S43], LSize, RSize) ->
+    Mask = ?PACKED_MASK(B),
+
+%    NewS1 = S21 band Mask,
+%    NewS2 = S21 bsr B,
+%    NewS3 = S43 band Mask,
+%    NewS4 = LSize,
+%    NewS5 = RSize,
+%
+%    internal4_sizes_pack(B, NewS1, NewS2, NewS3, NewS4, NewS5).
+
+    NewS21 = S21,
+    NewS43 = (S43 band Mask) bor (LSize bsl B),
+    NewS5 = RSize,
+    [NewS21, NewS43 | NewS5].
 
 %%%
 
 -compile({inline, internal3_sizes_update1/3}).
-internal3_sizes_update1(B, {S1, S2, S3, S4}, Inc) ->
-    {S1 + Inc, S2, S3, S4}.
+internal3_sizes_update1(_, [S21 | S43], Inc) ->
+    [S21 + Inc | S43].
 
 -compile({inline, internal3_sizes_update2/3}).
-internal3_sizes_update2(B, {S1, S2, S3, S4}, Inc) ->
-    {S1, S2 + Inc, S3, S4}.
+internal3_sizes_update2(B, [S21 | S43], Inc) ->
+    [S21 + (Inc bsl B) | S43].
 
 -compile({inline, internal3_sizes_update3/3}).
-internal3_sizes_update3(B, {S1, S2, S3, S4}, Inc) ->
-    {S1, S2, S3 + Inc, S4}.
+internal3_sizes_update3(_, [S21 | S43], Inc) ->
+    [S21 | S43 + Inc].
 
 -compile({inline, internal3_sizes_update4/3}).
-internal3_sizes_update4(B, {S1, S2, S3, S4}, Inc) ->
-    {S1, S2, S3, S4 + Inc}.
+internal3_sizes_update4(B, [S21 | S43], Inc) ->
+    [S21 | S43 + (Inc bsl B)].
 
 %%%
 
--compile({inline, internal3_sizes_move_left12/3}).
-internal3_sizes_move_left12(B, {S1, S2, S3, S4}, MovedSize) ->
-    {
-        S1 + MovedSize,
-        S2 - MovedSize - 1,
-        S3,
-        S4
-    }.
+-compile({inline, internal3_sizes_update12/4}).
+internal3_sizes_update12(B, [S21 | S43], Inc1, Inc2) ->
+    [
+     S21 + Inc1 + (Inc2 bsl B)
+     | S43
+    ].
 
--compile({inline, internal3_sizes_move_left23/3}).
-internal3_sizes_move_left23(B, {S1, S2, S3, S4}, MovedSize) ->
-    {
-        S1,
-        S2 + MovedSize,
-        S3 - MovedSize - 1,
-        S4
-    }.
+-compile({inline, internal3_sizes_update23/4}).
+internal3_sizes_update23(B, [S21 | S43], Inc2, Inc3) ->
+    [
+     S21 + (Inc2 bsl B)
+     | S43 + Inc3
+    ].
 
--compile({inline, internal3_sizes_move_left34/3}).
-internal3_sizes_move_left34(B, {S1, S2, S3, S4}, MovedSize) ->
-    {
-        S1,
-        S2,
-        S3 + MovedSize,
-        S4 - MovedSize - 1
-    }.
 
-%%%
+-compile({inline, internal3_sizes_update34/4}).
+internal3_sizes_update34(B, [S21 | S43], Inc3, Inc4) ->
+    [
+     S21
+     | S43 + Inc3 + (Inc4 bsl B)
+    ].
 
--compile({inline, internal3_sizes_move_right12/3}).
-internal3_sizes_move_right12(B, {S1, S2, S3, S4}, MovedSize) ->
-    {
-        S1 - MovedSize - 1,
-        S2 + MovedSize,
-        S3,
-        S4
-    }.
-
--compile({inline, internal3_sizes_move_right23/3}).
-internal3_sizes_move_right23(B, {S1, S2, S3, S4}, MovedSize) ->
-    {
-        S1,
-        S2 - MovedSize - 1,
-        S3 + MovedSize,
-        S4
-    }.
-
--compile({inline, internal3_sizes_move_right34/3}).
-internal3_sizes_move_right34(B, {S1, S2, S3, S4}, MovedSize) ->
-    {
-        S1,
-        S2,
-        S3 - MovedSize - 1,
-        S4 + MovedSize
-    }.
 
 %%%
 
 -compile({inline, internal3_sizes_merge12/2}).
-internal3_sizes_merge12(B, {S1, S2, S3, S4}) ->
-    internal2_sizes_pack(
-        B,
-        S1 + S2,
-        S3,
-        S4
-    ).
+internal3_sizes_merge12(B, [S21 | S43]) ->
+    Mask = ?PACKED_MASK(B),
+    NewS1 = (S21 band Mask) + (S21 bsr Mask),
+    % NewS2 = S43 band Mask,
+    % NewS3 = S43 bsr B,
+    NewS32 = S43,
+    [NewS1 | NewS32].
 
 -compile({inline, internal3_sizes_merge23/2}).
-internal3_sizes_merge23(B, {S1, S2, S3, S4}) ->
-    internal2_sizes_pack(
-        B,
-        S1,
-        S2 + S3,
-        S4
-    ).
+internal3_sizes_merge23(B, [S21 | S43]) ->
+    Mask = ?PACKED_MASK(B),
+    NewS1 = S21 band Mask,
+    % NewS2 = (S21 bsr B) + (S43 band Mask),
+    % NewS3 = S43 bsr B,
+    NewS32 = S43 + (S21 bsr B),
+    [NewS1 | NewS32].
 
 -compile({inline, internal3_sizes_merge34/2}).
-internal3_sizes_merge34(B, {S1, S2, S3, S4}) ->
-    internal2_sizes_pack(
-        B,
-        S1,
-        S2,
-        S3 + S4
-    ).
+internal3_sizes_merge34(B, [S21 | S43]) ->
+    Mask = ?PACKED_MASK(B),
+    NewS1 = S21 band Mask,
+    NewS2 = S21 bsr B,
+    NewS3 = (S43 band Mask) + (S43 bsr B),
+    NewS32 = NewS2 bor (NewS3 bsl B),
+    [NewS1 | NewS32].
+
+%%%
+
+-compile({inline, internal3_sizes_rebalance_right_with_internal1/3}).
+internal3_sizes_rebalance_right_with_internal1(B, [Left21 | Left43], [Right1 | Right2]) ->
+    Mask = ?PACKED_MASK(B),
+
+    NewLeft1 = Left21 band Mask,
+    NewLeft2 = Left21 bsr B,
+    NewLeft3 = Left43 band Mask,
+    
+    % MovedSize = LeftS4,
+    MovedSize = Left43 bsr B,
+
+    NewRight1 = MovedSize,
+    NewRight2 = Right1,
+    NewRight3 = Right2,
+
+    NewLeftSizes = internal2_sizes_pack(B, NewLeft1, NewLeft2, NewLeft3),
+    NewRightSizes = internal2_sizes_pack(B, NewRight1, NewRight2, NewRight3),
+    {NewLeftSizes, NewRightSizes, MovedSize}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Size Packing for INTERNAL2
 %% ------------------------------------------------------------------
 
+%% Layouts:
+%% INTERNAL3: [<<S4, S1>>, <<S3, S2>>]
+%%
+%% INTERNAL2: [<<S1>>, <<S3, S2>>]
+
 -compile({inline, internal2_sizes_pack/4}).
 internal2_sizes_pack(B, S1, S2, S3) ->
-    {S1, S2, S3}.
+    S32 = S2 bor (S3 bsl B),
+    [S1 | S32].
 
 -compile({inline, internal2_sizes_unpack/2}).
-internal2_sizes_unpack(B, Sizes) ->
-    Sizes.
+internal2_sizes_unpack(B, [S1 | S32]) ->
+    S2 = S32 band ?PACKED_MASK(B),
+    S3 = S32 bsr B,
+    {S1, S2, S3}.
 
 %%%
 
 -compile({inline, internal2_sizes_split1/4}).
-internal2_sizes_split1(B, {_, S2, S3}, LSize, RSize) ->
-    internal3_sizes_pack(B, LSize, RSize, S2, S3).
+internal2_sizes_split1(B, [_ | S32], LSize, RSize) ->
+    % NewS1 = LSize,
+    % NewS2 = RSize,
+    % NewS3 = S32 band ?PACKED_MASK(B),
+    % NewS4 = S32 bsr B,
+    % internal3_sizes_pack(B, NewS1, NewS2, NewS3, NewS4).
+
+    NewS21 = RSize bor (LSize bsl B),
+    NewS43 = S32,
+    [NewS21 | NewS43].
 
 -compile({inline, internal2_sizes_split2/4}).
-internal2_sizes_split2(B, {S1, _, S3}, LSize, RSize) ->
-    internal3_sizes_pack(B, S1, LSize, RSize, S3).
+internal2_sizes_split2(B, [S1 | S32], LSize, RSize) ->
+    NewS1 = S1,
+    NewS2 = LSize,
+    NewS3 = RSize,
+    NewS4 = S32 bsr B,
+    internal3_sizes_pack(B, NewS1, NewS2, NewS3, NewS4).
 
 -compile({inline, internal2_sizes_split3/4}).
-internal2_sizes_split3(B, {S1, S2, _}, LSize, RSize) ->
-    internal3_sizes_pack(B, S1, S2, LSize, RSize).
+internal2_sizes_split3(B, [S1 | S32], LSize, RSize) ->
+    NewS1 = S1,
+    NewS2 = S32 band ?PACKED_MASK(B),
+    NewS3 = LSize,
+    NewS4 = RSize,
+    internal3_sizes_pack(B, NewS1, NewS2, NewS3, NewS4).
 
 %%%
 
 -compile({inline, internal2_sizes_update1/3}).
-internal2_sizes_update1(B, {S1, S2, S3}, Inc) ->
-    {S1 + Inc, S2, S3}.
+internal2_sizes_update1(_, [S1 | S32], Inc) ->
+    [S1 + Inc | S32].
 
 -compile({inline, internal2_sizes_update2/3}).
-internal2_sizes_update2(B, {S1, S2, S3}, Inc) ->
-    {S1, S2 + Inc, S3}.
+internal2_sizes_update2(_, [S1 | S32], Inc) ->
+    [S1 | S32 + Inc].
 
 -compile({inline, internal2_sizes_update3/3}).
-internal2_sizes_update3(B, {S1, S2, S3}, Inc) ->
-    {S1, S2, S3 + Inc}.
+internal2_sizes_update3(B, [S1 | S32], Inc) ->
+    [S1 | S32 + (Inc bsl B)].
 
 %%%
 
--compile({inline, internal2_sizes_move_left12/3}).
-internal2_sizes_move_left12(B, {S1, S2, S3}, MovedSize) ->
-    {
-        S1 + MovedSize,
-        S2 - MovedSize - 1,
-        S3
-    }.
+-compile({inline, internal2_sizes_update12/4}).
+internal2_sizes_update12(_, [S1 | S32], Inc1, Inc2) ->
+    [S1 + Inc1 | S32 + Inc2].
 
--compile({inline, internal2_sizes_move_left23/3}).
-internal2_sizes_move_left23(B, {S1, S2, S3}, MovedSize) ->
-    {
-        S1,
-        S2 + MovedSize,
-        S3 - MovedSize - 1
-    }.
-
-%%%
-
--compile({inline, internal2_sizes_move_right12/3}).
-internal2_sizes_move_right12(B, {S1, S2, S3}, MovedSize) ->
-    {
-        S1 - MovedSize - 1,
-        S2 + MovedSize,
-        S3
-    }.
-
--compile({inline, internal2_sizes_move_right23/3}).
-internal2_sizes_move_right23(B, {S1, S2, S3}, MovedSize) ->
-    {
-        S1,
-        S2 - MovedSize - 1,
-        S3 + MovedSize
-    }.
+-compile({inline, internal2_sizes_update23/4}).
+internal2_sizes_update23(B, [S1 | S32], Inc2, Inc3) ->
+    [S1 | S32 + Inc2 + (Inc3 bsl B)].
 
 %%%
 
 -compile({inline, internal2_sizes_merge12/2}).
-internal2_sizes_merge12(B, {S1, S2, S3}) ->
-    internal1_sizes_pack(
-        B,
-        S1 + S2,
-        S3
-    ).
+internal2_sizes_merge12(B, [S1 | S32]) ->
+    NewS1 = S1 + (S32 band ?PACKED_MASK(B)),
+    NewS2 = S32 bsr B,
+    [NewS1 | NewS2].
 
 -compile({inline, internal2_sizes_merge23/2}).
-internal2_sizes_merge23(B, {S1, S2, S3}) ->
-    internal1_sizes_pack(
-        B,
-        S1,
-        S2 + S3
-    ).
+internal2_sizes_merge23(B, [S1 | S32]) ->
+    NewS2 = (S32 band ?PACKED_MASK(B)) + (S32 bsr B),
+    [S1 | NewS2].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Size Packing for INTERNAL1
 %% ------------------------------------------------------------------
 
 -compile({inline, internal1_sizes_pack/3}).
-internal1_sizes_pack(B, S1, S2) ->
+internal1_sizes_pack(_, S1, S2) ->
     [S1 | S2].
 
 -compile({inline, internal1_sizes_unpack/2}).
-internal1_sizes_unpack(B, Sizes) ->
+internal1_sizes_unpack(_, Sizes) ->
     Sizes.
 
 %%%
@@ -7248,27 +7249,24 @@ internal1_sizes_split2(B, [S1 | _], LSize, RSize) ->
 %%%
 
 -compile({inline, internal1_sizes_update1/3}).
-internal1_sizes_update1(B, [S1 | S2], Inc) ->
+internal1_sizes_update1(_, [S1 | S2], Inc) ->
     [S1 + Inc | S2].
 
 -compile({inline, internal1_sizes_update2/3}).
-internal1_sizes_update2(B, [S1 | S2], Inc) ->
+internal1_sizes_update2(_, [S1 | S2], Inc) ->
     [S1 | S2 + Inc].
 
 %%%
 
--compile({inline, internal1_sizes_move_left12/3}).
-internal1_sizes_move_left12(B, [S1 | S2], MovedSize) ->
-    [
-        (S1 + MovedSize)
-        | (S2 - MovedSize - 1)
-    ].
+-compile({inline, internal1_sizes_update12/4}).
+internal1_sizes_update12(_, [S1 | S2], Inc1, Inc2) ->
+    [S1 + Inc1 | S2 + Inc2].
 
-%%%
+-compile({inline, internal1_sizes_rebalance_merge_with_internal2/3}).
+internal1_sizes_rebalance_merge_with_internal2(B, [LeftS1 | LeftS2], [RightS1 | RightS32]) ->
+    Mask = ?PACKED_MASK(B),
 
--compile({inline, internal1_sizes_move_right12/3}).
-internal1_sizes_move_right12(B, [S1 | S2], MovedSize) ->
-    [
-        (S1 - MovedSize - 1)
-        | (S2 + MovedSize)
-    ].
+    NewS21 = (LeftS2 bsl B) bor LeftS1,
+    NewS43 = RightS1 bor ((RightS32 band Mask) bsl B),
+    NewS5 = RightS32 bsr B,
+    [NewS21, NewS43 | NewS5].
