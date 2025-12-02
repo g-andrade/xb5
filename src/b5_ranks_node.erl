@@ -18,6 +18,10 @@
 %% This approach showed better performance and resulted in less code bloat.
 -module(b5_ranks_node).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([
     delete/3,
     foldl/3,
@@ -1052,7 +1056,7 @@ insert_internal4_child1(
     case insert_recur(H2B, Key, ValueEval, ValueWrap, C1) of
         ?SPLIT(SplitK, SplitV, SplitLSize, SplitL, SplitRSize, SplitR) ->
             {V1, V2, V3, V4} = Values,
-            {_, S2, S3, S4, S5} = internal4_sizes_unpack(B, Sizes),
+            [LeftSizes | RightSizes] = internal4_sizes_split1(B, Sizes, SplitLSize, SplitRSize),
             internal_split(
                 B,
                 SplitK,
@@ -1065,12 +1069,8 @@ insert_internal4_child1(
                 V2,
                 V3,
                 V4,
-                SplitLSize,
-                SplitRSize,
-                S2,
-                S3,
-                S4,
-                S5,
+                LeftSizes,
+                RightSizes,
                 SplitL,
                 SplitR,
                 C2,
@@ -1101,7 +1101,7 @@ insert_internal4_child2(
     case insert_recur(H2B, Key, ValueEval, ValueWrap, C2) of
         ?SPLIT(SplitK, SplitV, SplitLSize, SplitL, SplitRSize, SplitR) ->
             {V1, V2, V3, V4} = Values,
-            {S1, _, S3, S4, S5} = internal4_sizes_unpack(B, Sizes),
+            [LeftSizes | RightSizes] = internal4_sizes_split2(B, Sizes, SplitLSize, SplitRSize),
             internal_split(
                 B,
                 K1,
@@ -1114,12 +1114,7 @@ insert_internal4_child2(
                 V2,
                 V3,
                 V4,
-                S1,
-                SplitLSize,
-                SplitRSize,
-                S3,
-                S4,
-                S5,
+                LeftSizes, RightSizes,
                 C1,
                 SplitL,
                 SplitR,
@@ -1150,7 +1145,7 @@ insert_internal4_child3(
     case insert_recur(H2B, Key, ValueEval, ValueWrap, C3) of
         ?SPLIT(SplitK, SplitV, SplitLSize, SplitL, SplitRSize, SplitR) ->
             {V1, V2, V3, V4} = Values,
-            {S1, S2, _, S4, S5} = internal4_sizes_unpack(B, Sizes),
+            [LeftSizes | RightSizes] = internal4_sizes_split3(B, Sizes, SplitLSize, SplitRSize),
             internal_split(
                 B,
                 K1,
@@ -1163,12 +1158,7 @@ insert_internal4_child3(
                 SplitV,
                 V3,
                 V4,
-                S1,
-                S2,
-                SplitLSize,
-                SplitRSize,
-                S4,
-                S5,
+                LeftSizes, RightSizes,
                 C1,
                 C2,
                 SplitL,
@@ -1199,7 +1189,7 @@ insert_internal4_child4(
     case insert_recur(H2B, Key, ValueEval, ValueWrap, C4) of
         ?SPLIT(SplitK, SplitV, SplitLSize, SplitL, SplitRSize, SplitR) ->
             {V1, V2, V3, V4} = Values,
-            {S1, S2, S3, _, S5} = internal4_sizes_unpack(B, Sizes),
+            [LeftSizes | RightSizes] = internal4_sizes_split4(B, Sizes, SplitLSize, SplitRSize),
             internal_split(
                 B,
                 K1,
@@ -1212,12 +1202,7 @@ insert_internal4_child4(
                 V3,
                 SplitV,
                 V4,
-                S1,
-                S2,
-                S3,
-                SplitLSize,
-                SplitRSize,
-                S5,
+                LeftSizes, RightSizes,
                 C1,
                 C2,
                 C3,
@@ -1248,7 +1233,7 @@ insert_internal4_child5(
     case insert_recur(H2B, Key, ValueEval, ValueWrap, C5) of
         ?SPLIT(SplitK, SplitV, SplitLSize, SplitL, SplitRSize, SplitR) ->
             {V1, V2, V3, V4} = Values,
-            {S1, S2, S3, S4, _} = internal4_sizes_unpack(B, Sizes),
+            [LeftSizes | RightSizes] = internal4_sizes_split5(B, Sizes, SplitLSize, SplitRSize),
             internal_split(
                 B,
                 K1,
@@ -1261,12 +1246,7 @@ insert_internal4_child5(
                 V3,
                 V4,
                 SplitV,
-                S1,
-                S2,
-                S3,
-                S4,
-                SplitLSize,
-                SplitRSize,
+                LeftSizes, RightSizes,
                 C1,
                 C2,
                 C3,
@@ -1859,7 +1839,7 @@ insert_leaf1_key2(Key, ValueEval, ValueWrap, K1, V1) ->
 eval_insert_value(eager, Value) -> Value;
 eval_insert_value(lazy, Fun) -> Fun().
 
--compile({inline, internal_split/23}).
+-compile({inline, internal_split/19}).
 -spec internal_split(
     pos_integer(),
     K,
@@ -1872,12 +1852,8 @@ eval_insert_value(lazy, Fun) -> Fun().
     V,
     V,
     V,
-    pos_integer(),
-    pos_integer(),
-    pos_integer(),
-    pos_integer(),
-    pos_integer(),
-    pos_integer(),
+    internal2_sizes(),
+    internal2_sizes(),
     C,
     C,
     C,
@@ -1897,12 +1873,8 @@ internal_split(
     V3,
     V4,
     V5,
-    S1,
-    S2,
-    S3,
-    S4,
-    S5,
-    S6,
+    SizesL,
+    SizesR,
     C1,
     C2,
     C3,
@@ -1913,12 +1885,10 @@ internal_split(
     SplitK = K3,
     SplitV = V3,
 
-    SplitLSize = S1 + S2 + S3 + 2,
-    SizesL = internal2_sizes_pack(B, S1, S2, S3),
+    SplitLSize = internal2_sizes_sum(B, SizesL) + 2,
     SplitL = ?INTERNAL2(K1, K2, [V1 | V2], SizesL, C1, C2, C3),
 
-    SplitRSize = S4 + S5 + S6 + 2,
-    SizesR = internal2_sizes_pack(B, S4, S5, S6),
+    SplitRSize = internal2_sizes_sum(B, SizesR) + 2,
     SplitR = ?INTERNAL2(K4, K5, [V4 | V5], SizesR, C4, C5, C6),
 
     ?SPLIT(SplitK, SplitV, SplitLSize, SplitL, SplitRSize, SplitR).
@@ -5121,19 +5091,18 @@ rebalance_left_internal1_internal4(
 ) ->
     {RightV1, RightV2, RightV3, RightV4} = RightValues,
 
-    [LeftS1 | LeftS2] = internal1_sizes_unpack(B, LeftSizes),
-    {RightS1, RightS2, RightS3, RightS4, RightS5} = internal4_sizes_unpack(B, RightSizes),
+    {NewLeftSizes, NewRightSizes, MovedSize} = internal1_sizes_rebalance_left_with_internal4(B, LeftSizes, RightSizes),
 
     UpK = RightK1,
     UpVal = RightV1,
     MovedChild = RightC1,
-    MovedSize = RightS1,
 
     UpdatedLeft = ?INTERNAL2(
         LeftK1,
         ParentK,
         [LeftV1 | ParentV],
-        internal2_sizes_pack(B, LeftS1, LeftS2, MovedSize),
+        % internal2_sizes_pack(B, LeftS1, LeftS2, MovedSize),
+        NewLeftSizes,
         LeftC1,
         LeftC2,
         MovedChild
@@ -5144,7 +5113,8 @@ rebalance_left_internal1_internal4(
         RightK3,
         RightK4,
         {RightV2, RightV3, RightV4},
-        internal3_sizes_pack(B, RightS2, RightS3, RightS4, RightS5),
+        % internal3_sizes_pack(B, RightS2, RightS3, RightS4, RightS5),
+        NewRightSizes,
         RightC2,
         RightC3,
         RightC4,
@@ -5175,19 +5145,20 @@ rebalance_left_internal1_internal3(
 ) ->
     {RightV1, RightV2, RightV3} = RightValues,
 
-    [LeftS1 | LeftS2] = internal1_sizes_unpack(B, LeftSizes),
-    {RightS1, RightS2, RightS3, RightS4} = internal3_sizes_unpack(B, RightSizes),
+%    [LeftS1 | LeftS2] = internal1_sizes_unpack(B, LeftSizes),
+%    {RightS1, RightS2, RightS3, RightS4} = internal3_sizes_unpack(B, RightSizes),
+    {NewLeftSizes, NewRightSizes, MovedSize} = internal1_sizes_rebalance_left_with_internal3(B, LeftSizes, RightSizes),
 
     UpK = RightK1,
     UpVal = RightV1,
     MovedChild = RightC1,
-    MovedSize = RightS1,
 
     UpdatedLeft = ?INTERNAL2(
         LeftK1,
         ParentK,
         [LeftV1 | ParentV],
-        internal2_sizes_pack(B, LeftS1, LeftS2, MovedSize),
+        % internal2_sizes_pack(B, LeftS1, LeftS2, MovedSize),
+        NewLeftSizes,
         LeftC1,
         LeftC2,
         MovedChild
@@ -5197,7 +5168,8 @@ rebalance_left_internal1_internal3(
         RightK2,
         RightK3,
         [RightV2 | RightV3],
-        internal2_sizes_pack(B, RightS2, RightS3, RightS4),
+        % internal2_sizes_pack(B, RightS2, RightS3, RightS4),
+        NewRightSizes,
         RightC2,
         RightC3,
         RightC4
@@ -5223,13 +5195,13 @@ rebalance_left_internal1_internal2(
     RightC3,
     Merge
 ) ->
-    [RightV1 | RightV2] = RightValues,
-
-    [LeftS1 | LeftS2] = internal1_sizes_unpack(B, LeftSizes),
-    {RightS1, RightS2, RightS3} = internal2_sizes_unpack(B, RightSizes),
 
     if
         Merge ->
+            [RightV1 | RightV2] = RightValues,
+
+            MergedSizes = internal1_sizes_rebalance_left_merge_with_internal2(B, LeftSizes, RightSizes),
+
             {merged,
                 ?INTERNAL4(
                     LeftK1,
@@ -5237,7 +5209,8 @@ rebalance_left_internal1_internal2(
                     RightK1,
                     RightK2,
                     {LeftV1, ParentV, RightV1, RightV2},
-                    internal4_sizes_pack(B, LeftS1, LeftS2, RightS1, RightS2, RightS3),
+                    % internal4_sizes_pack(B, LeftS1, LeftS2, RightS1, RightS2, RightS3),
+                    MergedSizes,
                     LeftC1,
                     LeftC2,
                     RightC1,
@@ -5261,12 +5234,12 @@ maybe_rebalance_left_leaf(Left, ParentK, ParentV, Right, Merge) ->
 
 -compile({inline, [rebalance_left_leaf1/6]}).
 rebalance_left_leaf1(LeftK1, LeftV1, ParentK, ParentV, Right, Merge) ->
-    % Why is MovedSize 0:
+    % Why MovedSize is 0:
     % * We deleted a key in the left node
     % * Then we're gonna move a key from right to left
     %
-    % So, left's size doesn't change. Right does - by -1 - which is what
-    % the deletion rebalance functions assume (one additional key lost).
+    % So, left's size doesn't change. Right does -- by -1 -- which is what the
+    % deletion rebalance functions assume (one additional key lost).
     %
     % Therefore we return 0 and everything works as expected.
 
@@ -5430,20 +5403,19 @@ rebalance_right_internal1_internal4(
 ) ->
     {LeftV1, LeftV2, LeftV3, LeftV4} = LeftValues,
 
-    {LeftS1, LeftS2, LeftS3, LeftS4, LeftS5} = internal4_sizes_unpack(B, LeftSizes),
-    [RightS1 | RightS2] = internal1_sizes_unpack(B, RightSizes),
+    {NewLeftSizes, NewRightSizes, MovedSize} = internal1_sizes_rebalance_right_with_internal4(B, LeftSizes, RightSizes),
 
     UpK = LeftK4,
     UpVal = LeftV4,
     MovedChild = LeftC5,
-    MovedSize = LeftS5,
 
     UpdatedLeft = ?INTERNAL3(
         LeftK1,
         LeftK2,
         LeftK3,
         {LeftV1, LeftV2, LeftV3},
-        internal3_sizes_pack(B, LeftS1, LeftS2, LeftS3, LeftS4),
+        % internal3_sizes_pack(B, LeftS1, LeftS2, LeftS3, LeftS4),
+        NewLeftSizes,
         LeftC1,
         LeftC2,
         LeftC3,
@@ -5455,7 +5427,8 @@ rebalance_right_internal1_internal4(
             ParentK,
             RightK1,
             [ParentV | RightV1],
-            internal2_sizes_pack(B, MovedSize, RightS1, RightS2),
+            NewRightSizes,
+            % internal2_sizes_pack(B, MovedSize, RightS1, RightS2),
             MovedChild,
             RightC1,
             RightC2
@@ -5485,22 +5458,18 @@ rebalance_right_internal1_internal3(
 ) ->
     {LeftV1, LeftV2, LeftV3} = LeftValues,
 
-    % {LeftS1, LeftS2, LeftS3, LeftS4} = internal3_sizes_unpack(B, LeftSizes),
-    % [RightS1 | RightS2] = internal1_sizes_unpack(B, RightSizes),
-
-    {NewLeftSizes, NewRightSizes, MovedSize} = internal3_sizes_rebalance_right_with_internal1(B, LeftSizes, RightSizes),
+    {NewLeftSizes, NewRightSizes, MovedSize} = internal1_sizes_rebalance_right_with_internal3(B, LeftSizes, RightSizes),
 
     UpK = LeftK3,
     UpVal = LeftV3,
     MovedChild = LeftC4,
-    %MovedSize = LeftS4,
 
     UpdatedLeft = ?INTERNAL2(
         LeftK1,
         LeftK2,
         [LeftV1 | LeftV2],
+        NewLeftSizes,
         % internal2_sizes_pack(B, LeftS1, LeftS2, LeftS3),
-        N
         LeftC1,
         LeftC2,
         LeftC3
@@ -5511,7 +5480,8 @@ rebalance_right_internal1_internal3(
             ParentK,
             RightK1,
             [ParentV | RightV1],
-            internal2_sizes_pack(B, MovedSize, RightS1, RightS2),
+            NewRightSizes,
+            % internal2_sizes_pack(B, MovedSize, RightS1, RightS2),
             MovedChild,
             RightC1,
             RightC2
@@ -5539,9 +5509,7 @@ rebalance_right_internal1_internal2(
 ) ->
     [LeftV1 | LeftV2] = LeftValues,
 
-    % {LeftS1, LeftS2, LeftS3} = internal2_sizes_unpack(B, LeftSizes),
-    % [RightS1 | RightS2] = internal1_sizes_unpack(B, RightSizes),
-    MergedSizes = internal1_sizes_rebalance_merge_with_internal2(B, LeftSizes, RightSizes),
+    MergedSizes = internal1_sizes_rebalance_right_merge_with_internal2(B, LeftSizes, RightSizes),
 
     {merged,
         ?INTERNAL4(
@@ -5570,12 +5538,12 @@ maybe_rebalance_right_leaf(Left, ParentK, ParentV, Right) ->
 
 -compile({inline, [rebalance_right_leaf1/5]}).
 rebalance_right_leaf1(RightK1, RightV1, ParentK, ParentV, Left) ->
-    % Why is MovedSize 0:
+    % Why MovedSize is 0:
     % * We deleted a key in the right node
     % * Then we're gonna move a key from left to right
     %
-    % So, right's size doesn't change. Left does - by -1 - which is what
-    % the deletion rebalance functions assume (one additional key lost).
+    % So, right's size doesn't change. Left does -- by -1 -- which is what the
+    % deletion rebalance functions assume (one additional key lost).
     %
     % Therefore we return 0 and everything works as expected.
 
@@ -6852,11 +6820,13 @@ nth_leaf1(1, K1, V1) ->
 %% Layouts:
 %% INTERNAL4: [<<S2, S1>>, <<S4, S3>> | S5]
 
+-ifdef(TEST).
 -compile({inline, internal4_sizes_pack/6}).
 internal4_sizes_pack(B, S1, S2, S3, S4, S5) ->
     S21 = S1 bor (S2 bsl B),
     S43 = S3 bor (S4 bsl B),
     [S21, S43 | S5].
+-endif.
 
 -compile({inline, internal4_sizes_unpack/2}).
 internal4_sizes_unpack(B, [S21, S43 | S5]) ->
@@ -6866,6 +6836,78 @@ internal4_sizes_unpack(B, [S21, S43 | S5]) ->
     S3 = S43 band Mask,
     S4 = S43 bsr B,
     {S1, S2, S3, S4, S5}.
+
+%%%
+
+-compile({inline, internal4_sizes_split1/4}).
+internal4_sizes_split1(B, [S21, S43 | S5], LSize, RSize) ->
+    Mask = ?PACKED_MASK(B),
+
+    Left1 = LSize,
+    Left32 = RSize bor (S21 band (Mask bsl B)),
+
+    Right1 = S43 band Mask,
+    Right32 = (S43 bsr B) bor (S5 bsl B),
+
+    LeftSizes = [Left1 | Left32],
+    RightSizes = [Right1 | Right32],
+    [LeftSizes | RightSizes].
+
+-compile({inline, internal4_sizes_split2/4}).
+internal4_sizes_split2(B, [S21, S43 | S5], LSize, RSize) ->
+    Mask = ?PACKED_MASK(B),
+
+    Left1 = S21 band Mask,
+    Left32 = LSize bor (RSize bsl B),
+
+    Right1 = S43 band Mask,
+    Right32 = (S43 bsr B) bor (S5 bsl B),
+
+    LeftSizes = [Left1 | Left32],
+    RightSizes = [Right1 | Right32],
+    [LeftSizes | RightSizes].
+
+-compile({inline, internal4_sizes_split3/4}).
+internal4_sizes_split3(B, [S21, S43 | S5], LSize, RSize) ->
+    Mask = ?PACKED_MASK(B),
+
+    Left1 = S21 band Mask,
+    Left32 = (S21 bsr B) bor (LSize bsl B),
+
+    Right1 = RSize,
+    Right32 = (S43 bsr B) bor (S5 bsl B),
+
+    LeftSizes = [Left1 | Left32],
+    RightSizes = [Right1 | Right32],
+    [LeftSizes | RightSizes].
+
+-compile({inline, internal4_sizes_split4/4}).
+internal4_sizes_split4(B, [S21, S43 | S5], LSize, RSize) ->
+    Mask = ?PACKED_MASK(B),
+
+    Left1 = S21 band Mask,
+    Left32 = (S21 bsr B) bor ((S43 band Mask) bsl B),
+
+    Right1 = LSize,
+    Right32 = RSize bor (S5 bsl B),
+
+    LeftSizes = [Left1 | Left32],
+    RightSizes = [Right1 | Right32],
+    [LeftSizes | RightSizes].
+
+-compile({inline, internal4_sizes_split5/4}).
+internal4_sizes_split5(B, [S21, S43 | _], LSize, RSize) ->
+    Mask = ?PACKED_MASK(B),
+
+    Left1 = S21 band Mask,
+    Left32 = (S21 bsr B) bor ((S43 band Mask) bsl B),
+
+    Right1 = S43 bsr B,
+    Right32 = LSize bor (RSize bsl B),
+
+    LeftSizes = [Left1 | Left32],
+    RightSizes = [Right1 | Right32],
+    [LeftSizes | RightSizes].
 
 %%%
 
@@ -6990,7 +7032,7 @@ internal3_sizes_split1(B, [S21 | S43], LSize, RSize) ->
 %
 %    internal4_sizes_pack(B, NewS1, NewS2, NewS3, NewS4, NewS5).
 
-    NewS21 = RSize bor (LSize bsl B),
+    NewS21 = LSize bor (RSize bsl B),
     NewS43 = (S21 bsr B) bor ((S43 band Mask) bsl B),
     NewS5 = S43 bsr B,
     [NewS21, NewS43 | NewS5].
@@ -7023,7 +7065,7 @@ internal3_sizes_split3(B, [S21 | S43], LSize, RSize) ->
 %    internal4_sizes_pack(B, NewS1, NewS2, NewS3, NewS4, NewS5).
 
     NewS21 = S21,
-    NewS43 = RSize bor (LSize bsl B),
+    NewS43 = LSize bor (RSize bsl B),
     NewS5 = S43 bsr B,
     [NewS21, NewS43 | NewS5].
 
@@ -7092,7 +7134,7 @@ internal3_sizes_update34(B, [S21 | S43], Inc3, Inc4) ->
 -compile({inline, internal3_sizes_merge12/2}).
 internal3_sizes_merge12(B, [S21 | S43]) ->
     Mask = ?PACKED_MASK(B),
-    NewS1 = (S21 band Mask) + (S21 bsr Mask),
+    NewS1 = (S21 band Mask) + (S21 bsr B),
     % NewS2 = S43 band Mask,
     % NewS3 = S43 bsr B,
     NewS32 = S43,
@@ -7116,27 +7158,6 @@ internal3_sizes_merge34(B, [S21 | S43]) ->
     NewS32 = NewS2 bor (NewS3 bsl B),
     [NewS1 | NewS32].
 
-%%%
-
--compile({inline, internal3_sizes_rebalance_right_with_internal1/3}).
-internal3_sizes_rebalance_right_with_internal1(B, [Left21 | Left43], [Right1 | Right2]) ->
-    Mask = ?PACKED_MASK(B),
-
-    NewLeft1 = Left21 band Mask,
-    NewLeft2 = Left21 bsr B,
-    NewLeft3 = Left43 band Mask,
-    
-    % MovedSize = LeftS4,
-    MovedSize = Left43 bsr B,
-
-    NewRight1 = MovedSize,
-    NewRight2 = Right1,
-    NewRight3 = Right2,
-
-    NewLeftSizes = internal2_sizes_pack(B, NewLeft1, NewLeft2, NewLeft3),
-    NewRightSizes = internal2_sizes_pack(B, NewRight1, NewRight2, NewRight3),
-    {NewLeftSizes, NewRightSizes, MovedSize}.
-
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Size Packing for INTERNAL2
 %% ------------------------------------------------------------------
@@ -7157,6 +7178,10 @@ internal2_sizes_unpack(B, [S1 | S32]) ->
     S3 = S32 bsr B,
     {S1, S2, S3}.
 
+-compile({inline, internal2_sizes_sum/2}).
+internal2_sizes_sum(B, [S1 | S32]) ->
+    S1 + (S32 band ?PACKED_MASK(B)) + (S32 bsr B).
+
 %%%
 
 -compile({inline, internal2_sizes_split1/4}).
@@ -7167,7 +7192,7 @@ internal2_sizes_split1(B, [_ | S32], LSize, RSize) ->
     % NewS4 = S32 bsr B,
     % internal3_sizes_pack(B, NewS1, NewS2, NewS3, NewS4).
 
-    NewS21 = RSize bor (LSize bsl B),
+    NewS21 = LSize bor (RSize bsl B),
     NewS43 = S32,
     [NewS21 | NewS43].
 
@@ -7262,11 +7287,1228 @@ internal1_sizes_update2(_, [S1 | S2], Inc) ->
 internal1_sizes_update12(_, [S1 | S2], Inc1, Inc2) ->
     [S1 + Inc1 | S2 + Inc2].
 
--compile({inline, internal1_sizes_rebalance_merge_with_internal2/3}).
-internal1_sizes_rebalance_merge_with_internal2(B, [LeftS1 | LeftS2], [RightS1 | RightS32]) ->
+%%%
+
+-compile({inline, internal1_sizes_rebalance_left_with_internal4/3}).
+internal1_sizes_rebalance_left_with_internal4(B, [Left1 | Left2], [Right21, Right43 | Right5]) ->
     Mask = ?PACKED_MASK(B),
 
-    NewS21 = (LeftS2 bsl B) bor LeftS1,
-    NewS43 = RightS1 bor ((RightS32 band Mask) bsl B),
-    NewS5 = RightS32 bsr B,
-    [NewS21, NewS43 | NewS5].
+    MovedSize = Right21 band Mask,
+
+    NewLeft1 = Left1,
+    NewLeft32 = Left2 bor (MovedSize bsl B),
+    NewLeftSizes = [NewLeft1 | NewLeft32],
+
+    NewRight21 = (Right21 bsr B) bor ((Right43 band Mask) bsl B),
+    NewRight43 = (Right43 bsr B) bor (Right5 bsl B),
+    NewRightSizes = [NewRight21 | NewRight43],
+
+    {NewLeftSizes, NewRightSizes, MovedSize}.
+
+-compile({inline, internal1_sizes_rebalance_left_with_internal3/3}).
+internal1_sizes_rebalance_left_with_internal3(B, [Left1 | Left2], [Right21 | Right43]) ->
+    Mask = ?PACKED_MASK(B),
+
+    MovedSize = Right21 band Mask,
+
+    NewLeft1 = Left1,
+    NewLeft32 = Left2 bor (MovedSize bsl B),
+    NewLeftSizes = [NewLeft1 | NewLeft32],
+
+    NewRight1 = Right21 bsr B,
+    NewRight32 = Right43,
+    NewRightSizes = [NewRight1 | NewRight32],
+
+    {NewLeftSizes, NewRightSizes, MovedSize}.
+
+-compile({inline, internal1_sizes_rebalance_left_merge_with_internal2/3}).
+internal1_sizes_rebalance_left_merge_with_internal2(B, [Left1 | Left2], [Right1 | Right32]) ->
+    % TODO test
+    Mask = ?PACKED_MASK(B),
+
+    Merged21 = Left1 bor (Left2 bsl B),
+    Merged43 = Right1 bor ((Right32 band Mask) bsl B),
+    Merged5 = Right32 bsr B,
+
+    [Merged21, Merged43 | Merged5].
+
+%%%
+
+-compile({inline, internal1_sizes_rebalance_right_with_internal4/3}).
+internal1_sizes_rebalance_right_with_internal4(B, [Left21, Left43 | Left5], [Right1 | Right2]) ->
+    MovedSize = Left5,
+
+    NewLeftSizes = [Left21 | Left43],
+
+    NewRight1 = MovedSize,
+    NewRight32 = Right1 bor (Right2 bsl B),
+    NewRightSizes = [NewRight1 | NewRight32],
+
+    {NewLeftSizes, NewRightSizes, MovedSize}.
+
+-compile({inline, internal1_sizes_rebalance_right_with_internal3/3}).
+internal1_sizes_rebalance_right_with_internal3(B, [Left21 | Left43], [Right1 | Right2]) ->
+    Mask = ?PACKED_MASK(B),
+
+    MovedSize = Left43 bsr B,
+
+    NewLeft1 = Left21 band Mask,
+    NewLeft32 = (Left21 bsr B) bor ((Left43 band Mask) bsl B),
+    NewLeftSizes = [NewLeft1 | NewLeft32],
+
+    NewRight1 = MovedSize,
+    NewRight32 = Right1 bor (Right2 bsl B),
+    NewRightSizes = [NewRight1 | NewRight32],
+
+    {NewLeftSizes, NewRightSizes, MovedSize}.
+
+-compile({inline, internal1_sizes_rebalance_right_merge_with_internal2/3}).
+internal1_sizes_rebalance_right_merge_with_internal2(B, [Left1 | Left32], [Right1 | Right2]) ->
+    % TODO test
+    Mask = ?PACKED_MASK(B),
+
+    Merged21 = Left1 bor ((Left32 band Mask) bsl B),
+    Merged43 = (Left32 bsr B) bor (Right1 bsl B),
+    Merged5 = Right2,
+
+    [Merged21, Merged43 | Merged5].
+
+%% ------------------------------------------------------------------
+%% Unit Test Definitions
+%% ------------------------------------------------------------------
+-ifdef(TEST).
+
+%%%%%%
+%%%%%% Internal 4
+%%%%%%
+
+internal4_sizes_repack_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, Packed),
+           {S1, S2, S3, S4, S5}
+        )
+      end).
+
+internal4_sizes_split1_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5, LSize, RSize]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        [SplitLSizes | SplitRSizes] = internal4_sizes_split1(B, Packed, LSize, RSize),
+        ?assertEqual({LSize, RSize, S2}, internal2_sizes_unpack(B, SplitLSizes)),
+        ?assertEqual({S3, S4, S5}, internal2_sizes_unpack(B, SplitRSizes))
+      end).
+
+internal4_sizes_split2_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5, LSize, RSize]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        [SplitLSizes | SplitRSizes] = internal4_sizes_split2(B, Packed, LSize, RSize),
+        ?assertEqual({S1, LSize, RSize}, internal2_sizes_unpack(B, SplitLSizes)),
+        ?assertEqual({S3, S4, S5}, internal2_sizes_unpack(B, SplitRSizes))
+      end).
+
+internal4_sizes_split3_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5, LSize, RSize]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        [SplitLSizes | SplitRSizes] = internal4_sizes_split3(B, Packed, LSize, RSize),
+        ?assertEqual({S1, S2, LSize}, internal2_sizes_unpack(B, SplitLSizes)),
+        ?assertEqual({RSize, S4, S5}, internal2_sizes_unpack(B, SplitRSizes))
+      end).
+
+internal4_sizes_split4_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5, LSize, RSize]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        [SplitLSizes | SplitRSizes] = internal4_sizes_split4(B, Packed, LSize, RSize),
+        ?assertEqual({S1, S2, S3}, internal2_sizes_unpack(B, SplitLSizes)),
+        ?assertEqual({LSize, RSize, S5}, internal2_sizes_unpack(B, SplitRSizes))
+      end).
+
+internal4_sizes_split5_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5, LSize, RSize]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        [SplitLSizes | SplitRSizes] = internal4_sizes_split5(B, Packed, LSize, RSize),
+        ?assertEqual({S1, S2, S3}, internal2_sizes_unpack(B, SplitLSizes)),
+        ?assertEqual({S4, LSize, RSize}, internal2_sizes_unpack(B, SplitRSizes))
+      end).
+
+internal4_sizes_update1_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        Inc = random_inc(S1),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal4_sizes_update1(B, Packed, Inc)),
+           {S1 + Inc, S2, S3, S4, S5}
+        )
+      end).
+
+internal4_sizes_update2_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        Inc = random_inc(S2),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal4_sizes_update2(B, Packed, Inc)),
+           {S1, S2 + Inc, S3, S4, S5}
+        )
+      end).
+
+internal4_sizes_update3_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        Inc = random_inc(S3),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal4_sizes_update3(B, Packed, Inc)),
+           {S1, S2, S3 + Inc, S4, S5}
+        )
+      end).
+
+internal4_sizes_update4_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        Inc = random_inc(S4),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal4_sizes_update4(B, Packed, Inc)),
+           {S1, S2, S3, S4 + Inc, S5}
+        )
+      end).
+
+internal4_sizes_update5_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        Inc = random_inc(S5),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal4_sizes_update5(B, Packed, Inc)),
+           {S1, S2, S3, S4, S5 + Inc}
+        )
+      end).
+
+internal4_sizes_update12_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        Inc = random_inc_many([S1, S2]),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal4_sizes_update12(B, Packed, Inc, -Inc)),
+           {S1 + Inc, S2 - Inc, S3, S4, S5}
+        )
+      end).
+
+internal4_sizes_update23_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        Inc = random_inc_many([S2, S3]),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal4_sizes_update23(B, Packed, Inc, -Inc)),
+           {S1, S2 + Inc, S3 - Inc, S4, S5}
+        )
+      end).
+
+internal4_sizes_update34_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        Inc = random_inc_many([S3, S4]),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal4_sizes_update34(B, Packed, Inc, -Inc)),
+           {S1, S2, S3 + Inc, S4 - Inc, S5}
+        )
+      end).
+
+internal4_sizes_update45_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        Inc = random_inc_many([S4, S5]),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal4_sizes_update45(B, Packed, Inc, -Inc)),
+           {S1, S2, S3, S4 + Inc, S5 - Inc}
+        )
+      end).
+
+internal4_sizes_merge12_test() ->
+    run_test_repeatedly(
+      fun () ->
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal4_sizes_merge12(B, Packed)),
+           {S1 + S2, S3, S4, S5}
+        )
+      end).
+
+internal4_sizes_merge23_test() ->
+    run_test_repeatedly(
+      fun () ->
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal4_sizes_merge23(B, Packed)),
+           {S1, S2 + S3, S4, S5}
+        )
+      end).
+
+internal4_sizes_merge34_test() ->
+    run_test_repeatedly(
+      fun () ->
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal4_sizes_merge34(B, Packed)),
+           {S1, S2, S3 + S4, S5}
+        )
+      end).
+
+internal4_sizes_merge45_test() ->
+    run_test_repeatedly(
+      fun () ->
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        S5 = random_size(RB),
+        B = test_b([S1, S2, S3, S4, S5]),
+        Packed = internal4_sizes_pack(B, S1, S2, S3, S4, S5),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal4_sizes_merge45(B, Packed)),
+           {S1, S2, S3, S4 + S5}
+        )
+      end).
+
+%%%%%%
+%%%%%% Internal 3
+%%%%%%
+
+internal3_sizes_repack_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, Packed),
+           {S1, S2, S3, S4}
+        )
+      end).
+
+internal3_sizes_split1_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, S4, LSize, RSize]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal3_sizes_split1(B, Packed, LSize, RSize)),
+           {LSize, RSize, S2, S3, S4}
+        )
+      end).
+
+internal3_sizes_split2_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, S4, LSize, RSize]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal3_sizes_split2(B, Packed, LSize, RSize)),
+           {S1, LSize, RSize, S3, S4}
+        )
+      end).
+
+internal3_sizes_split3_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, S4, LSize, RSize]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal3_sizes_split3(B, Packed, LSize, RSize)),
+           {S1, S2, LSize, RSize, S4}
+        )
+      end).
+
+internal3_sizes_split4_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, S4, LSize, RSize]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal4_sizes_unpack(B, internal3_sizes_split4(B, Packed, LSize, RSize)),
+           {S1, S2, S3, LSize, RSize}
+        )
+      end).
+
+internal3_sizes_update1_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        Inc = random_inc(S1),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal3_sizes_update1(B, Packed, Inc)),
+           {S1 + Inc, S2, S3, S4}
+        )
+      end).
+
+internal3_sizes_update2_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        Inc = random_inc(S2),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal3_sizes_update2(B, Packed, Inc)),
+           {S1, S2 + Inc, S3, S4}
+        )
+      end).
+
+internal3_sizes_update3_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        Inc = random_inc(S3),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal3_sizes_update3(B, Packed, Inc)),
+           {S1, S2, S3 + Inc, S4}
+        )
+      end).
+
+internal3_sizes_update4_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        Inc = random_inc(S4),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal3_sizes_update4(B, Packed, Inc)),
+           {S1, S2, S3, S4 + Inc}
+        )
+      end).
+
+internal3_sizes_update12_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        Inc = random_inc_many([S1, S2]),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal3_sizes_update12(B, Packed, Inc, -Inc)),
+           {S1 + Inc, S2 - Inc, S3, S4}
+        )
+      end).
+
+internal3_sizes_update23_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        Inc = random_inc_many([S2, S3]),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal3_sizes_update23(B, Packed, Inc, -Inc)),
+           {S1, S2 + Inc, S3 - Inc, S4}
+        )
+      end).
+
+internal3_sizes_update34_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        Inc = random_inc_many([S3, S4]),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal3_sizes_update34(B, Packed, Inc, -Inc)),
+           {S1, S2, S3 + Inc, S4 - Inc}
+        )
+      end).
+
+internal3_sizes_merge12_test() ->
+    run_test_repeatedly(
+      fun () ->
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal3_sizes_merge12(B, Packed)),
+           {S1 + S2, S3, S4}
+        )
+      end).
+
+internal3_sizes_merge23_test() ->
+    run_test_repeatedly(
+      fun () ->
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal3_sizes_merge23(B, Packed)),
+           {S1, S2 + S3, S4}
+        )
+      end).
+
+internal3_sizes_merge34_test() ->
+    run_test_repeatedly(
+      fun () ->
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        S4 = random_size(RB),
+        B = test_b([S1, S2, S3, S4]),
+        Packed = internal3_sizes_pack(B, S1, S2, S3, S4),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal3_sizes_merge34(B, Packed)),
+           {S1, S2, S3 + S4}
+        )
+      end).
+
+%%%%%%
+%%%%%% Internal 2
+%%%%%%
+
+internal2_sizes_repack_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        B = test_b([S1, S2, S3]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, Packed),
+           {S1, S2, S3}
+        )
+      end).
+
+internal2_sizes_split1_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, LSize, RSize]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal2_sizes_split1(B, Packed, LSize, RSize)),
+           {LSize, RSize, S2, S3}
+        )
+      end).
+
+internal2_sizes_split2_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, LSize, RSize]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal2_sizes_split2(B, Packed, LSize, RSize)),
+           {S1, LSize, RSize, S3}
+        )
+      end).
+
+internal2_sizes_split3_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, S3, LSize, RSize]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal3_sizes_unpack(B, internal2_sizes_split3(B, Packed, LSize, RSize)),
+           {S1, S2, LSize, RSize}
+        )
+      end).
+
+internal2_sizes_update1_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        Inc = random_inc(S1),
+        B = test_b([S1, S2, S3]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal2_sizes_update1(B, Packed, Inc)),
+           {S1 + Inc, S2, S3}
+        )
+      end).
+
+internal2_sizes_update2_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        Inc = random_inc(S2),
+        B = test_b([S1, S2, S3]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal2_sizes_update2(B, Packed, Inc)),
+           {S1, S2 + Inc, S3}
+        )
+      end).
+
+internal2_sizes_update3_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        Inc = random_inc(S3),
+        B = test_b([S1, S2, S3]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal2_sizes_update3(B, Packed, Inc)),
+           {S1, S2, S3 + Inc}
+        )
+      end).
+
+internal2_sizes_update12_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        Inc = random_inc_many([S1, S2]),
+        B = test_b([S1, S2, S3]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal2_sizes_update12(B, Packed, Inc, -Inc)),
+           {S1 + Inc, S2 - Inc, S3}
+        )
+      end).
+
+internal2_sizes_update23_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        Inc = random_inc_many([S2, S3]),
+        B = test_b([S1, S2, S3]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal2_sizes_update23(B, Packed, Inc, -Inc)),
+           {S1, S2 + Inc, S3 - Inc}
+        )
+      end).
+
+internal2_sizes_merge12_test() ->
+    run_test_repeatedly(
+      fun () ->
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        B = test_b([S1, S2, S3]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal1_sizes_unpack(B, internal2_sizes_merge12(B, Packed)),
+           [S1 + S2 | S3]
+        )
+      end).
+
+internal2_sizes_merge23_test() ->
+    run_test_repeatedly(
+      fun () ->
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        S3 = random_size(RB),
+        B = test_b([S1, S2, S3]),
+        Packed = internal2_sizes_pack(B, S1, S2, S3),
+
+        ?assertEqual(
+           internal1_sizes_unpack(B, internal2_sizes_merge23(B, Packed)),
+           [S1 | S2 + S3]
+        )
+      end).
+
+%%%%%%
+%%%%%% Internal 1
+%%%%%%
+
+internal1_sizes_repack_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        B = test_b([S1, S2]),
+        Packed = internal1_sizes_pack(B, S1, S2),
+
+        ?assertEqual(
+           internal1_sizes_unpack(B, Packed),
+           [S1 | S2]
+        )
+      end).
+
+internal1_sizes_split1_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, LSize, RSize]),
+        Packed = internal1_sizes_pack(B, S1, S2),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal1_sizes_split1(B, Packed, LSize, RSize)),
+           {LSize, RSize, S2}
+        )
+      end).
+
+internal1_sizes_split2_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        LSize = random_size(RB),
+        RSize = random_size(RB),
+        B = test_b([S1, S2, LSize, RSize]),
+        Packed = internal1_sizes_pack(B, S1, S2),
+
+        ?assertEqual(
+           internal2_sizes_unpack(B, internal1_sizes_split2(B, Packed, LSize, RSize)),
+           {S1, LSize, RSize}
+        )
+      end).
+
+internal1_sizes_update1_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        Inc = random_inc(S1),
+        B = test_b([S1, S2]),
+        Packed = internal1_sizes_pack(B, S1, S2),
+
+        ?assertEqual(
+           internal1_sizes_unpack(B, internal1_sizes_update1(B, Packed, Inc)),
+           [S1 + Inc | S2]
+        )
+      end).
+
+internal1_sizes_update2_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        Inc = random_inc(S2),
+        B = test_b([S1, S2]),
+        Packed = internal1_sizes_pack(B, S1, S2),
+
+        ?assertEqual(
+           internal1_sizes_unpack(B, internal1_sizes_update2(B, Packed, Inc)),
+           [S1 | S2 + Inc]
+        )
+      end).
+
+internal1_sizes_update12_test() ->
+    run_test_repeatedly(
+      fun () -> 
+        RB = random_bitsize(),
+        S1 = random_size(RB),
+        S2 = random_size(RB),
+        Inc = random_inc_many([S1, S2]),
+        B = test_b([S1, S2]),
+        Packed = internal1_sizes_pack(B, S1, S2),
+
+        ?assertEqual(
+           internal1_sizes_unpack(B, internal1_sizes_update12(B, Packed, Inc, -Inc)),
+           [S1 + Inc | S2 - Inc]
+        )
+      end).
+
+%%%%%%%%%%%%%%%%%
+%%% Rebalancing left
+
+internal1_sizes_rebalance_left_with_internal4_test() ->
+    run_test_repeatedly(
+      fun () ->
+              RB = random_bitsize(),
+              LeftS1 = random_size(RB),
+              LeftS2 = random_size(RB),
+
+              RightS1 = random_size(RB),
+              RightS2 = random_size(RB),
+              RightS3 = random_size(RB),
+              RightS4 = random_size(RB),
+              RightS5 = random_size(RB),
+
+              B = test_b([LeftS1, LeftS2, RightS1, RightS2, RightS3, RightS4, RightS5]),
+              Left = internal1_sizes_pack(B, LeftS1, LeftS2),
+              Right = internal4_sizes_pack(B, RightS1, RightS2, RightS3, RightS4, RightS5),
+
+              {NewLeft, NewRight, MovedSize} = internal1_sizes_rebalance_left_with_internal4(B, Left, Right),
+
+              ?assertEqual(
+                 internal2_sizes_unpack(B, NewLeft),
+                 {LeftS1, LeftS2, RightS1}
+              ),
+
+              ?assertEqual(
+                 internal3_sizes_unpack(B, NewRight),
+                 {RightS2, RightS3, RightS4, RightS5}
+              ),
+
+              ?assertEqual(MovedSize, RightS1)
+      end).
+
+internal1_sizes_rebalance_left_with_internal3_test() ->
+    run_test_repeatedly(
+      fun () ->
+              RB = random_bitsize(),
+              LeftS1 = random_size(RB),
+              LeftS2 = random_size(RB),
+
+              RightS1 = random_size(RB),
+              RightS2 = random_size(RB),
+              RightS3 = random_size(RB),
+              RightS4 = random_size(RB),
+
+              B = test_b([LeftS1, LeftS2, RightS1, RightS2, RightS3, RightS4]),
+              Left = internal1_sizes_pack(B, LeftS1, LeftS2),
+              Right = internal3_sizes_pack(B, RightS1, RightS2, RightS3, RightS4),
+
+              {NewLeft, NewRight, MovedSize} = internal1_sizes_rebalance_left_with_internal3(B, Left, Right),
+
+              ?assertEqual(
+                 internal2_sizes_unpack(B, NewLeft),
+                 {LeftS1, LeftS2, RightS1}
+              ),
+
+              ?assertEqual(
+                 internal2_sizes_unpack(B, NewRight),
+                 {RightS2, RightS3, RightS4}
+              ),
+
+              ?assertEqual(MovedSize, RightS1)
+      end).
+
+internal1_sizes_rebalance_left_merge_with_internal2_test() ->
+    run_test_repeatedly(
+      fun () ->
+              RB = random_bitsize(),
+              LeftS1 = random_size(RB),
+              LeftS2 = random_size(RB),
+
+              RightS1 = random_size(RB),
+              RightS2 = random_size(RB),
+              RightS3 = random_size(RB),
+
+              B = test_b([LeftS1, LeftS2, RightS1, RightS2, RightS3]),
+              Left = internal1_sizes_pack(B, LeftS1, LeftS2),
+              Right = internal2_sizes_pack(B, RightS1, RightS2, RightS3),
+
+              MergedSizes = internal1_sizes_rebalance_left_merge_with_internal2(B, Left, Right),
+
+              ?assertEqual(
+                 internal4_sizes_unpack(B, MergedSizes),
+                 {LeftS1, LeftS2, RightS1, RightS2, RightS3}
+              )
+      end).
+
+%%%%%%%%%%%%%%%%%
+%%% Rebalancing right
+
+internal1_sizes_rebalance_right_with_internal4_test() ->
+    run_test_repeatedly(
+      fun () ->
+              RB = random_bitsize(),
+              LeftS1 = random_size(RB),
+              LeftS2 = random_size(RB),
+              LeftS3 = random_size(RB),
+              LeftS4 = random_size(RB),
+              LeftS5 = random_size(RB),
+
+              RightS1 = random_size(RB),
+              RightS2 = random_size(RB),
+
+              B = test_b([LeftS1, LeftS2, LeftS3, LeftS4, LeftS5, RightS1, RightS2]),
+              Left = internal4_sizes_pack(B, LeftS1, LeftS2, LeftS3, LeftS4, LeftS5),
+              Right = internal1_sizes_pack(B, RightS1, RightS2),
+
+              {NewLeft, NewRight, MovedSize} = internal1_sizes_rebalance_right_with_internal4(B, Left, Right),
+
+              ?assertEqual(
+                 internal3_sizes_unpack(B, NewLeft),
+                 {LeftS1, LeftS2, LeftS3, LeftS4}
+              ),
+
+              ?assertEqual(
+                 internal2_sizes_unpack(B, NewRight),
+                 {LeftS5, RightS1, RightS2}
+              ),
+
+              ?assertEqual(MovedSize, LeftS5)
+      end).
+
+internal1_sizes_rebalance_right_with_internal3_test() ->
+    run_test_repeatedly(
+      fun () ->
+              RB = random_bitsize(),
+              LeftS1 = random_size(RB),
+              LeftS2 = random_size(RB),
+              LeftS3 = random_size(RB),
+              LeftS4 = random_size(RB),
+
+              RightS1 = random_size(RB),
+              RightS2 = random_size(RB),
+
+              B = test_b([LeftS1, LeftS2, LeftS3, LeftS4, RightS1, RightS2]),
+              Left = internal3_sizes_pack(B, LeftS1, LeftS2, LeftS3, LeftS4),
+              Right = internal1_sizes_pack(B, RightS1, RightS2),
+
+              {NewLeft, NewRight, MovedSize} = internal1_sizes_rebalance_right_with_internal3(B, Left, Right),
+
+              ?assertEqual(
+                 internal2_sizes_unpack(B, NewLeft),
+                 {LeftS1, LeftS2, LeftS3}
+              ),
+
+              ?assertEqual(
+                 internal2_sizes_unpack(B, NewRight),
+                 {LeftS4, RightS1, RightS2}
+              ),
+
+              ?assertEqual(MovedSize, LeftS4)
+      end).
+
+internal1_sizes_rebalance_right_with_internal2_test() ->
+    run_test_repeatedly(
+      fun () ->
+              RB = random_bitsize(),
+              LeftS1 = random_size(RB),
+              LeftS2 = random_size(RB),
+              LeftS3 = random_size(RB),
+
+              RightS1 = random_size(RB),
+              RightS2 = random_size(RB),
+
+              B = test_b([LeftS1, LeftS2, LeftS3, RightS1, RightS2]),
+              Left = internal2_sizes_pack(B, LeftS1, LeftS2, LeftS3),
+              Right = internal1_sizes_pack(B, RightS1, RightS2),
+
+              MergedSizes = internal1_sizes_rebalance_right_merge_with_internal2(B, Left, Right),
+
+              ?assertEqual(
+                 internal4_sizes_unpack(B, MergedSizes),
+                 {LeftS1, LeftS2, LeftS3, RightS1, RightS2}
+              )
+      end).
+
+%%%%%%%%%%%%%%%%%%
+
+random_bitsize() ->
+    6 + rand:uniform(100).
+
+random_size(Bitsize) ->
+    rand:uniform((1 bsl Bitsize) - 1).
+
+test_b(List) ->
+    ceil(1 + math:log2(lists:max(List) + 1)).
+
+random_inc(S) ->
+    Inc = rand:uniform(S) - (S div 2),
+    ?assert(S + Inc > 0),
+    Inc.
+
+random_inc_many(List) ->
+    Min = lists:min(List),
+    rand:uniform(Min) - (Min div 2).
+
+run_test_repeatedly(Fun) ->
+    run_test_repeatedly_recur(Fun, 500).
+
+run_test_repeatedly_recur(Fun, N) when N > 0 ->
+    Fun(),
+    run_test_repeatedly_recur(Fun, N - 1);
+run_test_repeatedly_recur(_, 0) ->
+    ok.
+
+-endif. % -ifdef(TEST).
