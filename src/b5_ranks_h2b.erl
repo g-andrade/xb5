@@ -241,7 +241,9 @@ decrease_height([_ | RemainingHeightBits]) ->
     RemainingHeightBits.
 
 height_to_b(Height) ->
-    case Height =< 11 of
+    % FIXME
+    % case Height =< 11 of
+    case Height =< 0 of
         true ->
             small;
         _ ->
