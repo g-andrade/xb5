@@ -94,14 +94,19 @@
 ]).
 
 %% ------------------------------------------------------------------
+%% Macro Definitions
+%% ------------------------------------------------------------------
+
+-define(SIZE_HEIGHT(Size, Height), [Size | Height]).
+
+%% ------------------------------------------------------------------
 %% API Type Definitions
 %% ------------------------------------------------------------------
 
--record(b5_ranks, {size, h2b, root}).
+-record(b5_ranks, {size_height, root}).
 
 -opaque tree(Key, Value) :: #b5_ranks{
-    size :: non_neg_integer(),
-    h2b :: b5_ranks_h2b:t(),
+    size_height :: nonempty_improper_list(non_neg_integer(), non_neg_integer()),
     root :: b5_ranks_node:t(Key, Value)
 }.
 -export_type([tree/2]).
@@ -124,17 +129,16 @@ Returns the new tree.
 -endif.
 -spec delete(Key, Tree) -> UpdatedTree when
     Key :: term(), Value :: term(), Tree :: tree(Key, Value), UpdatedTree :: tree(Key, Value).
-delete(Key, #b5_ranks{root = Root, h2b = H2B, size = Size} = Tree) ->
-    case b5_ranks_node:delete(Key, H2B, Root) of
+delete(Key, #b5_ranks{root = Root, size_height = ?SIZE_HEIGHT(Size, Height)} = Tree) ->
+    case b5_ranks_node:delete(Key, Root) of
         {height_decreased, UpdatedRoot} ->
             Tree#b5_ranks{
-                size = Size - 1,
-                h2b = tl(H2B),
+                size_height = ?SIZE_HEIGHT(Size - 1, Height - 1),
                 root = UpdatedRoot
             };
         UpdatedRoot ->
             Tree#b5_ranks{
-                size = Size - 1,
+                size_height = ?SIZE_HEIGHT(Size - 1, Height),
                 root = UpdatedRoot
             }
     end.
@@ -154,22 +158,21 @@ Returns the new tree.
 """.
 -endif.
 -spec enter(Key, Value, tree(Key, Value)) -> tree(Key, Value).
-enter(Key, Value, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
+enter(Key, Value, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree) ->
     try b5_ranks_node:update(Key, eager, Value, Root) of
         UpdatedRoot ->
             Tree#b5_ranks{root = UpdatedRoot}
     catch
         error:{badkey, K} when K =:= Key ->
-            case b5_ranks_node:insert(Key, eager, Value, H2B, Root) of
-                {height_increased, UpdatedH2B, UpdatedRoot} ->
+            case b5_ranks_node:insert(Key, eager, Value, Height, Root) of
+                {height_increased, UpdatedRoot} ->
                     Tree#b5_ranks{
-                        size = Size + 1,
-                        h2b = UpdatedH2B,
+                        size_height = ?SIZE_HEIGHT(Size + 1, Height + 1),
                         root = UpdatedRoot
                     };
                 UpdatedRoot ->
                     Tree#b5_ranks{
-                        size = Size + 1,
+                        size_height = ?SIZE_HEIGHT(Size + 1, Height),
                         root = UpdatedRoot
                     }
             end
@@ -229,17 +232,16 @@ tree.
 -endif.
 -spec insert(Key, Value, Tree) -> UpdatedTree when
     Tree :: tree(Key, Value), UpdatedTree :: tree(Key, Value).
-insert(Key, Value, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
-    case b5_ranks_node:insert(Key, eager, Value, H2B, Root) of
-        {height_increased, UpdatedH2B, UpdatedRoot} ->
+insert(Key, Value, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree) ->
+    case b5_ranks_node:insert(Key, eager, Value, Height, Root) of
+        {height_increased, UpdatedRoot} ->
             Tree#b5_ranks{
-                size = Size + 1,
-                h2b = UpdatedH2B,
+                size_height = ?SIZE_HEIGHT(Size + 1, Height + 1),
                 root = UpdatedRoot
             };
         UpdatedRoot ->
             Tree#b5_ranks{
-                size = Size + 1,
+                size_height = ?SIZE_HEIGHT(Size + 1, Height),
                 root = UpdatedRoot
             }
     end.
@@ -260,17 +262,16 @@ present in the tree.
     Tree :: tree(Key, Value),
     Fun :: fun(() -> Value),
     UpdatedTree :: tree(Key, Value).
-insert_with(Key, Fun, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
-    case b5_ranks_node:insert(Key, lazy, Fun, H2B, Root) of
-        {height_increased, UpdatedH2B, UpdatedRoot} ->
+insert_with(Key, Fun, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree) ->
+    case b5_ranks_node:insert(Key, lazy, Fun, Height, Root) of
+        {height_increased, UpdatedRoot} ->
             Tree#b5_ranks{
-                size = Size + 1,
-                h2b = UpdatedH2B,
+                size_height = ?SIZE_HEIGHT(Size + 1, Height + 1),
                 root = UpdatedRoot
             };
         UpdatedRoot ->
             Tree#b5_ranks{
-                size = Size + 1,
+                size_height = ?SIZE_HEIGHT(Size + 1, Height),
                 root = UpdatedRoot
             }
     end.
@@ -292,7 +293,7 @@ is_defined(Key, Tree) ->
 -doc "Returns `true` if `Tree` is an empty tree, otherwise `false`.".
 -endif.
 -spec is_empty(tree(_, _)) -> boolean().
-is_empty(#b5_ranks{size = Size}) ->
+is_empty(#b5_ranks{size_height = ?SIZE_HEIGHT(Size, _)}) ->
     Size =:= 0.
 
 -if(?OTP_RELEASE >= 27).
@@ -421,8 +422,7 @@ map(Fun, #b5_ranks{root = Root} = Tree) ->
 -spec new() -> tree(_, _).
 new() ->
     #b5_ranks{
-        size = 0,
-        h2b = [],
+        size_height = ?SIZE_HEIGHT(0, 0),
         root = b5_ranks_node:new()
     }.
 
@@ -437,11 +437,11 @@ next(Iter) ->
     b5_ranks_node:next(Iter).
 
 %% TODO document
-nth(N, #b5_ranks{size = Size, h2b = H2B, root = Root}) ->
+nth(N, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, _), root = Root}) ->
     % Should we optimize for first and last? (Call smallest and largest)
     case N < 1 orelse N > Size of
         false ->
-            b5_ranks_node:nth(N, H2B, Root);
+            b5_ranks_node:nth(N, Root);
         _ ->
             error({badarg, N})
     end.
@@ -450,7 +450,8 @@ nth(N, #b5_ranks{size = Size, h2b = H2B, root = Root}) ->
 -doc "Returns the number of nodes in the tree.".
 -endif.
 -spec size(Tree) -> non_neg_integer() when Tree :: tree(_, _).
-size(#b5_ranks{size = Size}) -> Size.
+size(#b5_ranks{size_height = ?SIZE_HEIGHT(Size, _)}) ->
+    Size.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -483,19 +484,18 @@ key is not present in the tree.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take(Key, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
-    case b5_ranks_node:take(Key, H2B, Root) of
+take(Key, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree) ->
+    case b5_ranks_node:take(Key, Root) of
         [TakenPair | UpdatedRoot] ->
             UpdatedTree = Tree#b5_ranks{
-                size = Size - 1,
+                size_height = ?SIZE_HEIGHT(Size - 1, Height),
                 root = UpdatedRoot
             },
             [_ | Value] = TakenPair,
             {Value, UpdatedTree};
         {height_decreased, TakenPair, UpdatedRoot} ->
             UpdatedTree = Tree#b5_ranks{
-                size = Size - 1,
-                h2b = tl(H2B),
+                size_height = ?SIZE_HEIGHT(Size - 1, Height - 1),
                 root = UpdatedRoot
             },
             [_ | Value] = TakenPair,
@@ -533,19 +533,18 @@ if the tree is empty.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take_largest(#b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
-    case b5_ranks_node:take_largest(H2B, Root) of
+take_largest(#b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree) ->
+    case b5_ranks_node:take_largest(Root) of
         [TakenPair | UpdatedRoot] ->
             UpdatedTree = Tree#b5_ranks{
-                size = Size - 1,
+                size_height = ?SIZE_HEIGHT(Size - 1, Height),
                 root = UpdatedRoot
             },
             [Key | Value] = TakenPair,
             {Key, Value, UpdatedTree};
         {height_decreased, TakenPair, UpdatedRoot} ->
             UpdatedTree = Tree#b5_ranks{
-                size = Size - 1,
-                h2b = tl(H2B),
+                size_height = ?SIZE_HEIGHT(Size - 1, Height - 1),
                 root = UpdatedRoot
             },
             [Key | Value] = TakenPair,
@@ -553,21 +552,22 @@ take_largest(#b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
     end.
 
 %% TODO document
-take_nth(N, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) when N >= 0 andalso N =< Size ->
+take_nth(N, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree) when
+    N >= 0 andalso N =< Size
+->
     % TODO Optimize for first and last?
 
-    case b5_ranks_node:take_nth(N, H2B, Root) of
+    case b5_ranks_node:take_nth(N, Root) of
         [TakenPair | UpdatedRoot] ->
             UpdatedTree = Tree#b5_ranks{
-                size = Size - 1,
+                size_height = ?SIZE_HEIGHT(Size - 1, Height),
                 root = UpdatedRoot
             },
             [Key | Value] = TakenPair,
             {Key, Value, UpdatedTree};
         {height_decreased, TakenPair, UpdatedRoot} ->
             UpdatedTree = Tree#b5_ranks{
-                size = Size - 1,
-                h2b = tl(H2B),
+                size_height = ?SIZE_HEIGHT(Size - 1, Height - 1),
                 root = UpdatedRoot
             },
             [Key | Value] = TakenPair,
@@ -586,19 +586,18 @@ exception if the tree is empty.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take_smallest(#b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
-    case b5_ranks_node:take_smallest(H2B, Root) of
+take_smallest(#b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree) ->
+    case b5_ranks_node:take_smallest(Root) of
         [TakenPair | UpdatedRoot] ->
             UpdatedTree = Tree#b5_ranks{
-                size = Size - 1,
+                size_height = ?SIZE_HEIGHT(Size - 1, Height),
                 root = UpdatedRoot
             },
             [Key | Value] = TakenPair,
             {Key, Value, UpdatedTree};
         {height_decreased, TakenPair, UpdatedRoot} ->
             UpdatedTree = Tree#b5_ranks{
-                size = Size - 1,
-                h2b = tl(H2B),
+                size_height = ?SIZE_HEIGHT(Size - 1, Height - 1),
                 root = UpdatedRoot
             },
             [Key | Value] = TakenPair,
@@ -658,22 +657,23 @@ If the key does not exist, `Init` is inserted as the value.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value | Value2 | Init).
 
-update_with(Key, Fun, Init, #b5_ranks{size = Size, h2b = H2B, root = Root} = Tree) ->
+update_with(
+    Key, Fun, Init, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree
+) ->
     try b5_ranks_node:update(Key, lazy, Fun, Root) of
         UpdatedRoot ->
             Tree#b5_ranks{root = UpdatedRoot}
     catch
         error:{badkey, K} when K =:= Key ->
-            case b5_ranks_node:insert(Key, eager, Init, H2B, Root) of
-                {height_increased, UpdatedH2B, UpdatedRoot} ->
+            case b5_ranks_node:insert(Key, eager, Init, Height, Root) of
+                {height_increased, UpdatedRoot} ->
                     Tree#b5_ranks{
-                        size = Tree#b5_ranks.size + 1,
-                        h2b = UpdatedH2B,
+                        size_height = ?SIZE_HEIGHT(Size + 1, Height + 1),
                         root = UpdatedRoot
                     };
                 UpdatedRoot ->
                     Tree#b5_ranks{
-                        size = Size + 1,
+                        size_height = ?SIZE_HEIGHT(Size + 1, Height),
                         root = UpdatedRoot
                     }
             end
@@ -687,8 +687,9 @@ Returns information about the tree structure for debugging purposes.
 -endif.
 -spec validate(tree(_, _)) ->
     {ok, b5_ranks_node:valid_stats()} | {error, term()}.
-validate(#b5_ranks{size = Size, h2b = H2B, root = Root}) ->
-    b5_ranks_node:validate(Size, H2B, Root).
+validate(#b5_ranks{size_height = ?SIZE_HEIGHT(Size, _), root = Root}) ->
+    % TODO validate height
+    b5_ranks_node:validate(Size, Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -711,13 +712,14 @@ structure differently (e.g., in an Elixir struct).
 The input map must contain `root` and `size` fields.
 """.
 -endif.
+% FIXME wrong spec
 -spec from_constituent_parts(#{
-    root := b5_ranks_node:t(Key, Value), size := non_neg_integer()
+    root := b5_ranks_node:t(Key, Value), size := non_neg_integer(), height := non_neg_integer()
 }) -> tree(Key, Value).
-from_constituent_parts(#{root := Root, h2b := H2B, size := Size}) when
-    is_integer(Size), Size >= 0
+from_constituent_parts(#{root := Root, size := Size, height := Height}) when
+    is_integer(Size), Size >= 0, is_integer(Height), Height >= 0
 ->
-    #b5_ranks{root = Root, h2b = H2B, size = Size}.
+    #b5_ranks{root = Root, size_height = ?SIZE_HEIGHT(Size, Height)}.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -734,9 +736,9 @@ Returns `error` if the input is not a valid tree.
 -spec to_constituent_parts(tree(Key, Value) | term()) ->
     {ok, #{root := b5_ranks_node:t(Key, Value), h2b := b5_ranks_h2b:t(), size := non_neg_integer()}}
     | error.
-to_constituent_parts(#b5_ranks{root = Root, h2b = H2B, size = Size}) when
-    is_integer(Size), Size >= 0
+to_constituent_parts(#b5_ranks{root = Root, size_height = ?SIZE_HEIGHT(Size, Height)}) when
+    is_integer(Size), Size >= 0, is_integer(Size), Size >= 0
 ->
-    {ok, #{root => Root, h2b => H2B, size => Size}};
+    {ok, #{root => Root, size => Size, height => Height}};
 to_constituent_parts(_) ->
     error.
