@@ -36,7 +36,7 @@
     map/2,
     new/0,
     next/1,
-    %nth/2, % FIXME
+    nth/2,
     smaller/2,
     smallest/1,
     take/2,
@@ -501,6 +501,14 @@ next(#b5_ranks_reverse_iter{steps = Steps} = Iter) ->
         [] ->
             none
     end.
+
+%% TODO document
+nth(N, ?INTERNAL1(K1, V1, S1, C1, C2)) ->
+    nth_internal1(N, K1, V1, S1, C1, C2);
+nth(N, ?LEAF1(K1, V1)) ->
+    nth_leaf1(N, K1, V1);
+nth(N, Node) ->
+    nth_recur(N, Node).
 
 %% @doc Maps a function over all key-value pairs in the tree node.
 %% Returns a new tree node with the same keys and transformed values.
@@ -7417,217 +7425,160 @@ map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
 %% Internal Function Definitions: nth/4
 %% ------------------------------------------------------------------
 
-% nth_recur(N, Node) ->
-%     case Node of
-%         ?INTERNAL4(K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5) ->
-%             nth_internal4(N, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5);
-%         %
-%         ?INTERNAL3(K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4) ->
-%             nth_internal3(N, K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4);
-%         %
-%         ?INTERNAL2(K1, K2, Values, S1, S2, C1, C2, C3) ->
-%             nth_internal2(N, K1, K2, Values, S1, S2, C1, C2, C3);
-%         %
-%         ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-%             nth_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4);
-%         %
-%         ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-%             nth_leaf3(N, K1, K2, K3, V1, V2, V3);
-%         %
-%         ?LEAF2(K1, K2, V1, V2) ->
-%             nth_leaf2(N, K1, K2, V1, V2)
-%     end.
-%
-% -compile({inline, nth_internal4/12}).
-% nth_internal4(N, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5) ->
-%     case Sizes of
-%         [S21, S43 | _] ->
-%             nth_internal4_small(N, K1, K2, K3, K4, Values, S21, S43, C1, C2, C3, C4, C5);
-%         {S1, S2, S3, S4} ->
-%             nth_internal4_big(N, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5)
-%     end.
-%
-% -compile({inline, nth_internal4_small/13}).
-% nth_internal4_small(N, K1, K2, K3, K4, Values, S21, S43, C1, C2, C3, C4, C5) ->
-%     %Pos3 = S1 + S2 + S3 + 3,
-%     S1 = S21 band ?PACKED_MASK,
-%     Pos3 = S1 + (S21 bsr ?PACKED_SHIFT) + (S43 band ?PACKED_MASK) + 3,
-%
-%     if
-%         N < Pos3 ->
-%             Pos1 = S1 + 1,
-%
-%             if
-%                 N > Pos1 ->
-%                     Pos2 = Pos1 + (S21 bsr ?PACKED_SHIFT) + 1,
-%
-%                     if
-%                         N < Pos2 ->
-%                             nth_recur(N - Pos1, C2);
-%                         N > Pos2 ->
-%                             nth_recur(N - Pos2, C3);
-%                         true ->
-%                             {K2, element(2, Values)}
-%                     end;
-%                 N < Pos1 ->
-%                     nth_recur(N, C1);
-%                 true ->
-%                     {K1, element(1, Values)}
-%             end;
-%         N > Pos3 ->
-%             Pos4 = Pos3 + (S43 bsr ?PACKED_SHIFT) + 1,
-%
-%             if
-%                 N < Pos4 ->
-%                     nth_recur(N - Pos3, C4);
-%                 N > Pos4 ->
-%                     nth_recur(N - Pos4, C5);
-%                 true ->
-%                     {K4, element(4, Values)}
-%             end;
-%         true ->
-%             {K3, element(3, Values)}
-%     end.
-%
-% -compile({inline, nth_internal4_big/15}).
-% nth_internal4_big(N, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5) ->
-%     Pos3 = S1 + S2 + S3 + 3,
-%
-%     if
-%         N < Pos3 ->
-%             Pos1 = S1 + 1,
-%
-%             if
-%                 N > Pos1 ->
-%                     Pos2 = Pos1 + S2 + 1,
-%
-%                     if
-%                         N < Pos2 ->
-%                             nth_recur(N - Pos1, C2);
-%                         N > Pos2 ->
-%                             nth_recur(N - Pos2, C3);
-%                         true ->
-%                             {K2, element(2, Values)}
-%                     end;
-%                 N < Pos1 ->
-%                     nth_recur(N, C1);
-%                 true ->
-%                     {K1, element(1, Values)}
-%             end;
-%         N > Pos3 ->
-%             Pos4 = Pos3 + S4 + 1,
-%
-%             if
-%                 N < Pos4 ->
-%                     nth_recur(N - Pos3, C4);
-%                 N > Pos4 ->
-%                     nth_recur(N - Pos4, C5);
-%                 true ->
-%                     {K4, element(4, Values)}
-%             end;
-%         true ->
-%             {K3, element(3, Values)}
-%     end.
-%
-% -compile({inline, nth_internal3/10}).
-% nth_internal3(N, K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4) ->
-%     {S1, S2, S3, _} = internal3_sizes_unpack(Sizes),
-%
-%     Pos2 = S1 + S2 + 2,
-%
-%     if
-%         N < Pos2 ->
-%             Pos1 = S1 + 1,
-%
-%             if
-%                 N < Pos1 ->
-%                     nth_recur(N, C1);
-%                 N > Pos1 ->
-%                     nth_recur(N - Pos1, C2);
-%                 true ->
-%                     {K1, element(1, Values)}
-%             end;
-%         N > Pos2 ->
-%             Pos3 = Pos2 + S3 + 1,
-%
-%             if
-%                 N < Pos3 ->
-%                     nth_recur(N - Pos2, C3);
-%                 N > Pos3 ->
-%                     nth_recur(N - Pos3, C4);
-%                 true ->
-%                     {K3, element(3, Values)}
-%             end;
-%         true ->
-%             {K2, element(2, Values)}
-%     end.
-%
-% -compile({inline, nth_internal2/8}).
-% nth_internal2(N, K1, K2, Values, S1, S2, C1, C2, C3) ->
-%     {S1, S2, _} = internal2_sizes_unpack(Sizes),
-%
-%     Pos1 = S1 + 1,
-%
-%     if
-%         N > Pos1 ->
-%             Pos2 = Pos1 + S2 + 1,
-%
-%             if
-%                 N < Pos2 ->
-%                     nth_recur(N - Pos1, C2);
-%                 N > Pos2 ->
-%                     nth_recur(N - Pos2, C3);
-%                 true ->
-%                     {K2, tl(Values)}
-%             end;
-%         N < Pos1 ->
-%             nth_recur(N, C1);
-%         true ->
-%             {K1, hd(Values)}
-%     end.
-%
-% -compile({inline, nth_internal1/6}).
-% nth_internal1(N, K1, V1, Sizes, C1, C2) ->
-%     [S1 | _] = internal1_sizes_unpack(Sizes),
-%
-%     Pos1 = S1 + 1,
-%
-%     if
-%         N < Pos1 ->
-%             nth_recur(N, C1);
-%         N > Pos1 ->
-%             nth_recur(N - Pos1, C2);
-%         true ->
-%             {K1, V1}
-%     end.
-%
-% -compile({inline, nth_leaf4/9}).
-% nth_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4) ->
-%     case N of
-%         1 -> {K1, V1};
-%         2 -> {K2, V2};
-%         3 -> {K3, V3};
-%         4 -> {K4, V4}
-%     end.
-%
-% -compile({inline, nth_leaf3/7}).
-% nth_leaf3(N, K1, K2, K3, V1, V2, V3) ->
-%     case N of
-%         1 -> {K1, V1};
-%         2 -> {K2, V2};
-%         3 -> {K3, V3}
-%     end.
-%
-% -compile({inline, nth_leaf2/5}).
-% nth_leaf2(N, K1, K2, V1, V2) ->
-%     case N of
-%         1 -> {K1, V1};
-%         2 -> {K2, V2}
-%     end.
-%
-% -compile({inline, nth_leaf1/3}).
-% nth_leaf1(1, K1, V1) ->
-%     {K1, V1}.
+nth_recur(N, Node) ->
+    case Node of
+        ?INTERNAL4(K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5) ->
+            nth_internal4(N, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5);
+        %
+        ?INTERNAL3(K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4) ->
+            nth_internal3(N, K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4);
+        %
+        ?INTERNAL2(K1, K2, Values, S1, S2, C1, C2, C3) ->
+            nth_internal2(N, K1, K2, Values, S1, S2, C1, C2, C3);
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            nth_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4);
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            nth_leaf3(N, K1, K2, K3, V1, V2, V3);
+        %
+        ?LEAF2(K1, K2, V1, V2) ->
+            nth_leaf2(N, K1, K2, V1, V2)
+    end.
+
+-compile({inline, nth_internal4/15}).
+nth_internal4(N, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5) ->
+    Pos3 = S1 + S2 + S3 + 3,
+
+    if
+        N < Pos3 ->
+            Pos1 = S1 + 1,
+
+            if
+                N > Pos1 ->
+                    Pos2 = Pos1 + S2 + 1,
+
+                    if
+                        N < Pos2 ->
+                            nth_recur(N - Pos1, C2);
+                        N > Pos2 ->
+                            nth_recur(N - Pos2, C3);
+                        true ->
+                            {K2, element(2, Values)}
+                    end;
+                N < Pos1 ->
+                    nth_recur(N, C1);
+                true ->
+                    {K1, element(1, Values)}
+            end;
+        N > Pos3 ->
+            Pos4 = Pos3 + S4 + 1,
+
+            if
+                N < Pos4 ->
+                    nth_recur(N - Pos3, C4);
+                N > Pos4 ->
+                    nth_recur(N - Pos4, C5);
+                true ->
+                    {K4, element(4, Values)}
+            end;
+        true ->
+            {K3, element(3, Values)}
+    end.
+
+-compile({inline, nth_internal3/12}).
+nth_internal3(N, K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4) ->
+    Pos2 = S1 + S2 + 2,
+
+    if
+        N < Pos2 ->
+            Pos1 = S1 + 1,
+
+            if
+                N < Pos1 ->
+                    nth_recur(N, C1);
+                N > Pos1 ->
+                    nth_recur(N - Pos1, C2);
+                true ->
+                    {K1, element(1, Values)}
+            end;
+        N > Pos2 ->
+            Pos3 = Pos2 + S3 + 1,
+
+            if
+                N < Pos3 ->
+                    nth_recur(N - Pos2, C3);
+                N > Pos3 ->
+                    nth_recur(N - Pos3, C4);
+                true ->
+                    {K3, element(3, Values)}
+            end;
+        true ->
+            {K2, element(2, Values)}
+    end.
+
+-compile({inline, nth_internal2/9}).
+nth_internal2(N, K1, K2, Values, S1, S2, C1, C2, C3) ->
+    Pos1 = S1 + 1,
+
+    if
+        N > Pos1 ->
+            Pos2 = Pos1 + S2 + 1,
+
+            if
+                N < Pos2 ->
+                    nth_recur(N - Pos1, C2);
+                N > Pos2 ->
+                    nth_recur(N - Pos2, C3);
+                true ->
+                    {K2, tl(Values)}
+            end;
+        N < Pos1 ->
+            nth_recur(N, C1);
+        true ->
+            {K1, hd(Values)}
+    end.
+
+-compile({inline, nth_internal1/6}).
+nth_internal1(N, K1, V1, S1, C1, C2) ->
+    Pos1 = S1 + 1,
+
+    if
+        N < Pos1 ->
+            nth_recur(N, C1);
+        N > Pos1 ->
+            nth_recur(N - Pos1, C2);
+        true ->
+            {K1, V1}
+    end.
+
+-compile({inline, nth_leaf4/9}).
+nth_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    case N of
+        1 -> {K1, V1};
+        2 -> {K2, V2};
+        3 -> {K3, V3};
+        4 -> {K4, V4}
+    end.
+
+-compile({inline, nth_leaf3/7}).
+nth_leaf3(N, K1, K2, K3, V1, V2, V3) ->
+    case N of
+        1 -> {K1, V1};
+        2 -> {K2, V2};
+        3 -> {K3, V3}
+    end.
+
+-compile({inline, nth_leaf2/5}).
+nth_leaf2(N, K1, K2, V1, V2) ->
+    case N of
+        1 -> {K1, V1};
+        2 -> {K2, V2}
+    end.
+
+-compile({inline, nth_leaf1/3}).
+nth_leaf1(1, K1, V1) ->
+    {K1, V1}.
 
 %%%%%%%%%%%%%%%%%%%
 
