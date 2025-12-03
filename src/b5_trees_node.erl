@@ -4095,16 +4095,35 @@ rebalance_right_leaf1(RightK1, RightV1, ParentK, ParentV, Left) ->
 
 -compile({inline, maybe_rebalance_mid/7}).
 maybe_rebalance_mid(Left, ParentK1, ParentV1, Mid, ParentK2, ParentV2, Right) ->
-    case maybe_rebalance_left(Mid, ParentK2, ParentV2, Right, false) of
-        no ->
-            case maybe_rebalance_right(Left, ParentK1, ParentV1, Mid) of
+    case Mid of
+        ?INTERNAL1(K1, V1, C1, C2) ->
+            case
+                rebalance_left_internal1(
+                    K1, V1, C1, C2, ParentK2, ParentV2, Right, _Merge = false
+                )
+            of
                 no ->
-                    no;
+                    Rebalanced = rebalance_right_internal1(
+                        K1, V1, C1, C2, ParentK1, ParentV1, Left
+                    ),
+                    [from_left | Rebalanced];
+                %
                 Rebalanced ->
-                    [from_left | Rebalanced]
+                    [from_right | Rebalanced]
             end;
-        Rebalanced ->
-            [from_right | Rebalanced]
+        %
+        ?LEAF1(K1, V1) ->
+            case rebalance_left_leaf1(K1, V1, ParentK2, ParentV2, Right, _Merge = false) of
+                no ->
+                    Rebalanced = rebalance_right_leaf1(K1, V1, ParentK1, ParentV1, Left),
+                    [from_left | Rebalanced];
+                %
+                Rebalanced ->
+                    [from_right | Rebalanced]
+            end;
+        %
+        _ ->
+            no
     end.
 
 %%%%%%%%%

@@ -6366,6 +6366,7 @@ maybe_rebalance_mid(Left, LeftSize, ParentK1, ParentV1, Mid, MidSize, ParentK2, 
                 Rebalanced ->
                     [from_right | Rebalanced]
             end;
+        %
         ?LEAF1(K1, V1) ->
             case rebalance_left_leaf1(K1, V1, ParentK2, ParentV2, Right, _Merge = false) of
                 no ->
@@ -6375,6 +6376,7 @@ maybe_rebalance_mid(Left, LeftSize, ParentK1, ParentV1, Mid, MidSize, ParentK2, 
                 Rebalanced ->
                     [from_right | Rebalanced]
             end;
+        %
         _ ->
             no
     end.
