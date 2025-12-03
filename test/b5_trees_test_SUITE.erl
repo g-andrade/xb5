@@ -158,7 +158,7 @@ end_per_suite(_Config) ->
 test_node_validate_leaf1_deep_in_the_tree(_Config) ->
     %% Build tree with inconsistent heights manually
     Root = b5_trees_util:dialyzer_opaque_term(
-        {internal1, k3, v3, {k1, k2, v1, v2}, ?IMPROPER_LIST(k4, v4)}
+        {internal1, k3, v3, {k1, k2, v1, v2}, {k4, v4}}
     ),
 
     ?assertEqual(
@@ -169,8 +169,7 @@ test_node_validate_leaf1_deep_in_the_tree(_Config) ->
 test_node_validate_internal1_deep_in_the_tree(_Config) ->
     %% Build tree with inconsistent heights manually
     Root = b5_trees_util:dialyzer_opaque_term(
-        {internal1, k3, v3, {k1, k2, v1, v2},
-            {internal1, k5, v5, ?IMPROPER_LIST(k4, v4), ?IMPROPER_LIST(k6, v6)}}
+        {internal1, k3, v3, {k1, k2, v1, v2}, {internal1, k5, v5, {k4, v4}, {k6, v6}}}
     ),
 
     ?assertEqual(

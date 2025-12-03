@@ -122,7 +122,7 @@ Returns the new tree.
     Key :: term(), Value :: term(), Tree :: tree(Key, Value), UpdatedTree :: tree(Key, Value).
 delete(Key, #b5_trees{root = Root, size = Size} = Tree) ->
     Tree#b5_trees{
-        root = b5_trees_node:delete_key(Key, Root),
+        root = b5_trees_node:delete(Key, Root),
         size = Size - 1
     }.
 
@@ -429,8 +429,10 @@ key is not present in the tree.
     Tree2 :: tree(Key, Value).
 
 take(Key, #b5_trees{size = Size, root = Root} = Tree) ->
-    {Value, UpdatedRoot} = b5_trees_node:take_key(Key, Root),
+    [TakenPair | UpdatedRoot] = b5_trees_node:take(Key, Root),
     UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
+
+    [_ | Value] = TakenPair,
     {Value, UpdatedTree}.
 
 -if(?OTP_RELEASE >= 27).
@@ -465,8 +467,10 @@ if the tree is empty.
     Tree2 :: tree(Key, Value).
 
 take_largest(#b5_trees{size = Size, root = Root} = Tree) ->
-    {Key, Value, UpdatedRoot} = b5_trees_node:take_largest(Root),
+    [TakenPair | UpdatedRoot] = b5_trees_node:take_largest(Root),
     UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
+
+    [Key | Value] = TakenPair,
     {Key, Value, UpdatedTree}.
 
 -if(?OTP_RELEASE >= 27).
@@ -482,8 +486,10 @@ exception if the tree is empty.
     Tree2 :: tree(Key, Value).
 
 take_smallest(#b5_trees{size = Size, root = Root} = Tree) ->
-    {Key, Value, UpdatedRoot} = b5_trees_node:take_smallest(Root),
+    [TakenPair | UpdatedRoot] = b5_trees_node:take_smallest(Root),
     UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
+
+    [Key | Value] = TakenPair,
     {Key, Value, UpdatedTree}.
 
 -if(?OTP_RELEASE >= 27).
