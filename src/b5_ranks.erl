@@ -164,7 +164,7 @@ enter(Key, Value, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Roo
             Tree#b5_ranks{root = UpdatedRoot}
     catch
         error:{badkey, K} when K =:= Key ->
-            case b5_ranks_node:insert(Key, eager, Value, Height, Root) of
+            case b5_ranks_node:insert(Key, eager, Value, Size, Root) of
                 {height_increased, UpdatedRoot} ->
                     Tree#b5_ranks{
                         size_height = ?SIZE_HEIGHT(Size + 1, Height + 1),
@@ -233,7 +233,7 @@ tree.
 -spec insert(Key, Value, Tree) -> UpdatedTree when
     Tree :: tree(Key, Value), UpdatedTree :: tree(Key, Value).
 insert(Key, Value, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree) ->
-    case b5_ranks_node:insert(Key, eager, Value, Height, Root) of
+    case b5_ranks_node:insert(Key, eager, Value, Size, Root) of
         {height_increased, UpdatedRoot} ->
             Tree#b5_ranks{
                 size_height = ?SIZE_HEIGHT(Size + 1, Height + 1),
@@ -263,7 +263,7 @@ present in the tree.
     Fun :: fun(() -> Value),
     UpdatedTree :: tree(Key, Value).
 insert_with(Key, Fun, #b5_ranks{size_height = ?SIZE_HEIGHT(Size, Height), root = Root} = Tree) ->
-    case b5_ranks_node:insert(Key, lazy, Fun, Height, Root) of
+    case b5_ranks_node:insert(Key, lazy, Fun, Size, Root) of
         {height_increased, UpdatedRoot} ->
             Tree#b5_ranks{
                 size_height = ?SIZE_HEIGHT(Size + 1, Height + 1),
@@ -665,7 +665,7 @@ update_with(
             Tree#b5_ranks{root = UpdatedRoot}
     catch
         error:{badkey, K} when K =:= Key ->
-            case b5_ranks_node:insert(Key, eager, Init, Height, Root) of
+            case b5_ranks_node:insert(Key, eager, Init, Size, Root) of
                 {height_increased, UpdatedRoot} ->
                     Tree#b5_ranks{
                         size_height = ?SIZE_HEIGHT(Size + 1, Height + 1),
