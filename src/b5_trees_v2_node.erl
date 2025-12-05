@@ -2488,7 +2488,7 @@ delete_internal1(Key, Node, K1, V1, C1, C2) ->
         Key > K1 ->
             delete_internal1_child2(Key, Node, K1, V1, C1, C2);
         true ->
-            delete_internal1_key1(Node, C1, C2)
+            delete_internal1_key1(Node, K1, C1, C2)
     end.
 
 %%%
@@ -2501,16 +2501,18 @@ delete_internal1_child2(Key, Node, K1, V1, C1, C2) ->
     UpdatedC2 = delete_recur(Key, Node, 2, C2),
     maybe_rebalance_internal1_child2(K1, V1, C1, UpdatedC2).
 
-delete_internal1_key1(Node, C1, C2) ->
+delete_internal1_key1(Node, K1, C1, C2) ->
     % FIXME PROBLEM WITH THIS
     % * Replacement key goes into the rebalanced child node
+    %maybe_rebalance_internal1_child2(
+    %    ReplacementK,
+    %    ReplacementV,
+    %    C1,
+    %    UpdatedC2
+    %).
+
     [[ReplacementK | ReplacementV] | UpdatedC2] = take_smallest_recur(Node, 2, C2),
-    maybe_rebalance_internal1_child2(
-        ReplacementK,
-        ReplacementV,
-        C1,
-        UpdatedC2
-    ).
+    maybe_rebalance_internal1_key1(ReplacementK, ReplacementV, K1, C1, UpdatedC2).
 
 %%%%%%%%%%%%%%%%%%%%%
 
@@ -3127,9 +3129,10 @@ take_internal1_key1(Node, K1, V1, C1, C2) ->
 
     [
         TakenPair
-        | maybe_rebalance_internal1_child2(
+        | maybe_rebalance_internal1_key1(
             ReplacementK,
             ReplacementV,
+            K1,
             C1,
             UpdatedC2
         )
@@ -4412,6 +4415,21 @@ maybe_rebalance_internal1_child2(K1, V1, C1, C2) ->
             end;
         UpdatedC2 ->
             ?INTERNAL1(K1, V1, C1, UpdatedC2)
+    end.
+
+maybe_rebalance_internal1_key1(ReplacementK, ReplacementV, K1, C1, C2) ->
+    case C2 of
+        [rebalanced | RebalanceResult] ->
+            case RebalanceResult of
+                [UpdatedC1 | UpdatedC2] ->
+                    ?INTERNAL1(ReplacementK, ReplacementV, UpdatedC1, UpdatedC2);
+                MergedC1C2 ->
+                    % Height reduction, can only happen on root node
+                    NodeWithoutKey = root_delete(K1, MergedC1C2),
+                    insert(ReplacementK, eager, ReplacementV, NodeWithoutKey)
+            end;
+        UpdatedC2 ->
+            ?INTERNAL1(ReplacementK, ReplacementV, C1, UpdatedC2)
     end.
 
 %%%%%%%%%%%%%%
