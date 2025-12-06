@@ -45,6 +45,10 @@
 
 % -include_lib("stdlib/include/assert.hrl").
 
+%-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+%-endif.
+
 %% ------------------------------------------------------------------
 %% Macro Definitions
 %% ------------------------------------------------------------------
@@ -111,24 +115,18 @@
 -define(TAKEN(TakenPair, UpdatedNode), [TakenPair | UpdatedNode]).
 
 % 3 elements
--define(TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode), {merged_from_right, TakenPair, MergedNode}).
+-define(TAKE_MERGED_WITH_RIGHT(TakenPair, MergedNode), {merged_with_right, TakenPair, MergedNode}).
 
 % 3 elements
--define(TAKE_MERGED_FROM_LEFT(TakenPair, MergedNode), {merged_from_left, TakenPair, MergedNode}).
+-define(TAKE_MERGED_WITH_LEFT(TakenPair, MergedNode), {merged_with_left, TakenPair, MergedNode}).
 
 % 5 elements
--define(TAKE_ROTATED_FROM_LEFT(TakenPair, MergedNode, UpdatedLeft, UpdatedRight), {rotated_from_left, TakenPair, MergedNode, UpdatedLeft, UpdatedRight}).
+-define(TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight), {rotated_from_left, MovedUp, TakenPair, UpdatedLeft, UpdatedRight}).
 
 % 5 elements
--define(TAKE_ROTATED_FROM_RIGHT(TakenPair, MergedNode, UpdatedLeft, UpdatedRight), {rotated_from_right, TakenPair, MergedNode, UpdatedLeft, UpdatedRight}).
+-define(TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight), {rotated_from_right, MovedUp, TakenPair, UpdatedLeft, UpdatedRight}).
 
-
-%-define(DELETION_HELPER_LEFTMOST(Right, RParentK, RParentV), {Right, RParentK, RParentV}).
-%
-%-define(DELETION_HELPER_RIGHTMOST(Right, RParentK, RParentV), {rightmost, Right, RParentK, RParentV}).
-%
-%-define(DELETION_HELPER_MID(Left, LParentK, LParentV, Right, RParentK, RParentV), 
-%        {Left, LParentK, LParentV, Right, RParentK, RParentV}).
+%%%
 
 -define(DHELPER(L, LK, LV, R, RK, RV), L, LK, LV, R, RK, RV).
 
@@ -2191,1054 +2189,6 @@ eval_update_value(eager, Value, _) -> Value;
 eval_update_value(lazy, Fun, PrevValue) -> Fun(PrevValue).
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: Node Deletion
-%% ------------------------------------------------------------------
-
-% root_delete(Key, Node) ->
-%     try
-%         delete_recur(Key, nil, nil, Node)
-%     catch
-%         ?INTERNAL1(K1, V1, C1, C2) ->
-%             delete_internal1(Key, Node, K1, V1, C1, C2);
-%         %
-%         ?LEAF1(K1, _) ->
-%             delete_leaf1(Key, K1);
-%         %
-%         ?LEAF0 ->
-%             error_badkey(Key)
-%     end.
-% 
-% delete_recur(Key, Parent, Pos, Node) ->
-%     case Node of
-%         ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%             delete_internal4(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%         %
-%         ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4) ->
-%             delete_internal3(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%         %
-%         ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
-%             delete_internal2(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%         %
-%         ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-%             delete_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4);
-%         %
-%         ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-%             delete_leaf3(Key, K1, K2, K3, V1, V2, V3);
-%         %
-%         ?LEAF2(K1, K2, V1, V2) ->
-%             delete_leaf2(Key, Parent, Pos, K1, K2, V1, V2);
-%         %
-%         _ ->
-%             throw(Node)
-%     end.
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%
-% 
-% -compile({inline, delete_internal4/12}).
-% delete_internal4(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     if
-%         Key < K3 ->
-%             if
-%                 Key > K1 ->
-%                     if
-%                         Key < K2 ->
-%                             delete_internal4_child2(
-%                                 Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
-%                             );
-%                         Key > K2 ->
-%                             delete_internal4_child3(
-%                                 Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
-%                             );
-%                         true ->
-%                             delete_internal4_key2(Node, K1, K3, K4, Values, C1, C2, C3, C4, C5)
-%                     end;
-%                 Key < K1 ->
-%                     delete_internal4_child1(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%                 true ->
-%                     delete_internal4_key1(Node, K2, K3, K4, Values, C1, C2, C3, C4, C5)
-%             end;
-%         Key > K3 ->
-%             if
-%                 Key < K4 ->
-%                     delete_internal4_child4(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%                 Key > K4 ->
-%                     delete_internal4_child5(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%                 true ->
-%                     delete_internal4_key4(Node, K1, K2, K3, Values, C1, C2, C3, C4, C5)
-%             end;
-%         true ->
-%             delete_internal4_key3(Node, K1, K2, K4, Values, C1, C2, C3, C4, C5)
-%     end.
-% 
-% %%%
-% 
-% -compile({inline, delete_internal4_child1/12}).
-% delete_internal4_child1(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     UpdatedC1 = delete_recur(Key, Node, 1, C1),
-%     maybe_rebalance_internal4_child1(K1, K2, K3, K4, Values, UpdatedC1, C2, C3, C4, C5).
-% 
-% -compile({inline, delete_internal4_child2/12}).
-% delete_internal4_child2(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     UpdatedC2 = delete_recur(Key, Node, 2, C2),
-%     maybe_rebalance_internal4_child2(K1, K2, K3, K4, Values, C1, UpdatedC2, C3, C4, C5).
-% 
-% -compile({inline, delete_internal4_child3/12}).
-% delete_internal4_child3(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     UpdatedC3 = delete_recur(Key, Node, 3, C3),
-%     maybe_rebalance_internal4_child3(K1, K2, K3, K4, Values, C1, C2, UpdatedC3, C4, C5).
-% 
-% -compile({inline, delete_internal4_child4/12}).
-% delete_internal4_child4(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     UpdatedC4 = delete_recur(Key, Node, 4, C4),
-%     maybe_rebalance_internal4_child4(K1, K2, K3, K4, Values, C1, C2, C3, UpdatedC4, C5).
-% 
-% -compile({inline, delete_internal4_child5/12}).
-% delete_internal4_child5(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     UpdatedC5 = delete_recur(Key, Node, 5, C5),
-%     maybe_rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, UpdatedC5).
-% 
-% %%%
-% 
-% delete_internal4_key1(Node, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC2] = take_smallest_recur(Node, 2, C2),
-%     {_, V2, V3, V4} = Values,
-% 
-%     maybe_rebalance_internal4_child2(
-%         ReplacementK,
-%         K2,
-%         K3,
-%         K4,
-%         {ReplacementV, V2, V3, V4},
-%         C1,
-%         UpdatedC2,
-%         C3,
-%         C4,
-%         C5
-%     ).
-% 
-% delete_internal4_key2(Node, K1, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC3] = take_smallest_recur(Node, 3, C3),
-%     {V1, _, V3, V4} = Values,
-% 
-%     maybe_rebalance_internal4_child3(
-%         K1,
-%         ReplacementK,
-%         K3,
-%         K4,
-%         {V1, ReplacementV, V3, V4},
-%         C1,
-%         C2,
-%         UpdatedC3,
-%         C4,
-%         C5
-%     ).
-% 
-% delete_internal4_key3(Node, K1, K2, K4, Values, C1, C2, C3, C4, C5) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC4] = take_smallest_recur(Node, 4, C4),
-%     {V1, V2, _, V4} = Values,
-% 
-%     maybe_rebalance_internal4_child4(
-%         K1,
-%         K2,
-%         ReplacementK,
-%         K4,
-%         {V1, V2, ReplacementV, V4},
-%         C1,
-%         C2,
-%         C3,
-%         UpdatedC4,
-%         C5
-%     ).
-% 
-% delete_internal4_key4(Node, K1, K2, K3, Values, C1, C2, C3, C4, C5) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC5] = take_smallest_recur(Node, 5, C5),
-%     {V1, V2, V3, _} = Values,
-% 
-%     maybe_rebalance_internal4_child5(
-%         K1,
-%         K2,
-%         K3,
-%         ReplacementK,
-%         {V1, V2, V3, ReplacementV},
-%         C1,
-%         C2,
-%         C3,
-%         C4,
-%         UpdatedC5
-%     ).
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%
-% 
-% delete_internal3(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     if
-%         Key < K2 ->
-%             if
-%                 Key < K1 ->
-%                     delete_internal3_child1(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%                 Key > K1 ->
-%                     delete_internal3_child2(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%                 true ->
-%                     delete_internal3_key1(Node, K2, K3, Values, C1, C2, C3, C4)
-%             end;
-%         Key > K2 ->
-%             if
-%                 Key < K3 ->
-%                     delete_internal3_child3(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%                 Key > K3 ->
-%                     delete_internal3_child4(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%                 true ->
-%                     delete_internal3_key3(Node, K1, K2, Values, C1, C2, C3, C4)
-%             end;
-%         true ->
-%             delete_internal3_key2(Node, K1, K3, Values, C1, C2, C3, C4)
-%     end.
-% 
-% %%
-% 
-% delete_internal3_child1(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     UpdatedC1 = delete_recur(Key, Node, 1, C1),
-%     maybe_rebalance_internal3_child1(K1, K2, K3, Values, UpdatedC1, C2, C3, C4).
-% 
-% delete_internal3_child2(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     UpdatedC2 = delete_recur(Key, Node, 2, C2),
-%     maybe_rebalance_internal3_child2(K1, K2, K3, Values, C1, UpdatedC2, C3, C4).
-% 
-% delete_internal3_child3(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     UpdatedC3 = delete_recur(Key, Node, 3, C3),
-%     maybe_rebalance_internal3_child3(K1, K2, K3, Values, C1, C2, UpdatedC3, C4).
-% 
-% delete_internal3_child4(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     UpdatedC4 = delete_recur(Key, Node, 4, C4),
-%     maybe_rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, UpdatedC4).
-% 
-% %%
-% 
-% delete_internal3_key1(Node, K2, K3, Values, C1, C2, C3, C4) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC2] = take_smallest_recur(Node, 2, C2),
-%     {_, V2, V3} = Values,
-% 
-%     maybe_rebalance_internal3_child2(
-%         ReplacementK,
-%         K2,
-%         K3,
-%         {ReplacementV, V2, V3},
-%         C1,
-%         UpdatedC2,
-%         C3,
-%         C4
-%     ).
-% 
-% delete_internal3_key2(Node, K1, K3, Values, C1, C2, C3, C4) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC3] = take_smallest_recur(Node, 3, C3),
-%     {V1, _, V3} = Values,
-% 
-%     maybe_rebalance_internal3_child3(
-%         K1,
-%         ReplacementK,
-%         K3,
-%         {V1, ReplacementV, V3},
-%         C1,
-%         C2,
-%         UpdatedC3,
-%         C4
-%     ).
-% 
-% delete_internal3_key3(Node, K1, K2, Values, C1, C2, C3, C4) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC4] = take_smallest_recur(Node, 4, C4),
-%     {V1, V2, _} = Values,
-% 
-%     maybe_rebalance_internal3_child4(
-%         K1,
-%         K2,
-%         ReplacementK,
-%         {V1, V2, ReplacementV},
-%         C1,
-%         C2,
-%         C3,
-%         UpdatedC4
-%     ).
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%
-% 
-% delete_internal2(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     if
-%         Key < K2 ->
-%             if
-%                 Key > K1 ->
-%                     delete_internal2_child2(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%                 Key < K1 ->
-%                     delete_internal2_child1(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%                 true ->
-%                     delete_internal2_key1(Parent, Pos, Node, K2, Values, C1, C2, C3)
-%             end;
-%         Key > K2 ->
-%             delete_internal2_child3(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%         true ->
-%             delete_internal2_key2(Parent, Pos, Node, K1, Values, C1, C2, C3)
-%     end.
-% 
-% %%
-% 
-% delete_internal2_child1(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     UpdatedC1 = delete_recur(Key, Node, 1, C1),
-%     maybe_rebalance_internal2_child1(Parent, Pos, K1, K2, Values, UpdatedC1, C2, C3).
-% 
-% delete_internal2_child2(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     UpdatedC2 = delete_recur(Key, Node, 2, C2),
-%     maybe_rebalance_internal2_child2(Parent, Pos, K1, K2, Values, C1, UpdatedC2, C3).
-% 
-% delete_internal2_child3(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     UpdatedC3 = delete_recur(Key, Node, 3, C3),
-%     maybe_rebalance_internal2_child3(Parent, Pos, K1, K2, Values, C1, C2, UpdatedC3).
-% 
-% %%
-% 
-% delete_internal2_key1(Parent, Pos, Node, K2, Values, C1, C2, C3) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC2] = take_smallest_recur(Node, 2, C2),
-%     [_ | V2] = Values,
-% 
-%     maybe_rebalance_internal2_child2(
-%         Parent,
-%         Pos,
-%         ReplacementK,
-%         K2,
-%         [ReplacementV | V2],
-%         C1,
-%         UpdatedC2,
-%         C3
-%     ).
-% 
-% delete_internal2_key2(Parent, Pos, Node, K1, Values, C1, C2, C3) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC3] = take_smallest_recur(Node, 3, C3),
-%     [V1 | _] = Values,
-% 
-%     maybe_rebalance_internal2_child3(
-%         Parent,
-%         Pos,
-%         K1,
-%         ReplacementK,
-%         [V1 | ReplacementV],
-%         C1,
-%         C2,
-%         UpdatedC3
-%     ).
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%
-% 
-% delete_internal1(Key, Node, K1, V1, C1, C2) ->
-%     if
-%         Key < K1 ->
-%             delete_internal1_child1(Key, Node, K1, V1, C1, C2);
-%         Key > K1 ->
-%             delete_internal1_child2(Key, Node, K1, V1, C1, C2);
-%         true ->
-%             delete_internal1_key1(Node, C1, C2)
-%     end.
-% 
-% %%%
-% 
-% delete_internal1_child1(Key, Node, K1, V1, C1, C2) ->
-%     UpdatedC1 = delete_recur(Key, Node, 1, C1),
-%     maybe_rebalance_internal1_child1(K1, V1, UpdatedC1, C2).
-% 
-% delete_internal1_child2(Key, Node, K1, V1, C1, C2) ->
-%     UpdatedC2 = delete_recur(Key, Node, 2, C2),
-%     maybe_rebalance_internal1_child2(K1, V1, C1, UpdatedC2).
-% 
-% delete_internal1_key1(Node, C1, C2) ->
-%     % FIXME PROBLEM WITH THIS
-%     % * Replacement key goes into the rebalanced child node
-%     [[ReplacementK | ReplacementV] | UpdatedC2] = take_smallest_recur(Node, 2, C2),
-%     maybe_rebalance_internal1_child2(
-%         ReplacementK,
-%         ReplacementV,
-%         C1,
-%         UpdatedC2
-%     ).
-% 
-% %%%%%%%%%%%%%%%%%%%%%
-% 
-% delete_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4) ->
-%     if
-%         Key < K3 ->
-%             if
-%                 Key == K1 ->
-%                     ?LEAF3(K2, K3, K4, V2, V3, V4);
-%                 Key == K2 ->
-%                     ?LEAF3(K1, K3, K4, V1, V3, V4);
-%                 true ->
-%                     error_badkey(Key)
-%             end;
-%         Key == K3 ->
-%             ?LEAF3(K1, K2, K4, V1, V2, V4);
-%         Key == K4 ->
-%             ?LEAF3(K1, K2, K3, V1, V2, V3);
-%         true ->
-%             error_badkey(Key)
-%     end.
-% 
-% delete_leaf3(Key, K1, K2, K3, V1, V2, V3) ->
-%     if
-%         Key < K2 ->
-%             if
-%                 Key == K1 ->
-%                     ?LEAF2(K2, K3, V2, V3);
-%                 true ->
-%                     error_badkey(Key)
-%             end;
-%         Key > K2 ->
-%             if
-%                 Key == K3 ->
-%                     ?LEAF2(K1, K2, V1, V2);
-%                 true ->
-%                     error_badkey(Key)
-%             end;
-%         true ->
-%             ?LEAF2(K1, K3, V1, V3)
-%     end.
-% 
-% delete_leaf2(Key, Parent, Pos, K1, K2, V1, V2) ->
-%     if
-%         Key == K1 ->
-%             rebalance_leaf2(Parent, Pos, K2, V2);
-%         Key == K2 ->
-%             rebalance_leaf2(Parent, Pos, K1, V1);
-%         true ->
-%             error_badkey(Key)
-%     end.
-% 
-% delete_leaf1(Key, K1) ->
-%     if
-%         Key == K1 ->
-%             ?LEAF0;
-%         true ->
-%             error_badkey(Key)
-%     end.
-% 
-% %% ------------------------------------------------------------------
-% %% Internal Function Definitions: Node Taking - Smallest
-% %% ------------------------------------------------------------------
-% 
-% -compile({inline, root_take_smallest/1}).
-% root_take_smallest(Node) ->
-%     try
-%         take_smallest_recur(nil, nil, Node)
-%     catch
-%         ?INTERNAL1(K1, V1, C1, C2) ->
-%             take_smallest_internal1(Node, K1, V1, C1, C2);
-%         %
-%         ?LEAF1(K1, V1) ->
-%             [[K1 | V1] | ?LEAF0];
-%         %
-%         ?LEAF0 ->
-%             error_empty_tree()
-%     end.
-% 
-% take_smallest_recur(Parent, Pos, Node) ->
-%     case Node of
-%         ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%             take_smallest_internal4(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%         %
-%         ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4) ->
-%             take_smallest_internal3(Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%         %
-%         ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
-%             take_smallest_internal2(Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%         %
-%         ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-%             [[K1 | V1] | ?LEAF3(K2, K3, K4, V2, V3, V4)];
-%         %
-%         ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-%             [[K1 | V1] | ?LEAF2(K2, K3, V2, V3)];
-%         %
-%         ?LEAF2(K1, K2, V1, V2) ->
-%             take_smallest_leaf2(Parent, Pos, K1, K2, V1, V2);
-%         %
-%         _ ->
-%             throw(Node)
-%     end.
-% 
-% take_smallest_internal4(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [TakenPair | UpdatedC1] = take_smallest_recur(_Parent = Node, 1, C1),
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child1(K1, K2, K3, K4, Values, UpdatedC1, C2, C3, C4, C5)
-%     ].
-% 
-% take_smallest_internal3(Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     [TakenPair | UpdatedC1] = take_smallest_recur(Node, 1, C1),
-%     [TakenPair | maybe_rebalance_internal3_child1(K1, K2, K3, Values, UpdatedC1, C2, C3, C4)].
-% 
-% take_smallest_internal2(Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     [TakenPair | UpdatedC1] = take_smallest_recur(_Parent = Node, 1, C1),
-%     [TakenPair | maybe_rebalance_internal2_child1(Parent, Pos, K1, K2, Values, UpdatedC1, C2, C3)].
-% 
-% take_smallest_internal1(Node, K1, V1, C1, C2) ->
-%     [TakenPair | UpdatedC1] = take_smallest_recur(_Parent = Node, 1, C1),
-%     [TakenPair | maybe_rebalance_internal1_child1(K1, V1, UpdatedC1, C2)].
-% 
-% take_smallest_leaf2(Parent, Pos, K1, K2, V1, V2) ->
-%     TakenPair = [K1 | V1],
-% 
-%     RemainingK = K2,
-%     RemainingV = V2,
-% 
-%     [TakenPair | rebalance_leaf2(Parent, Pos, RemainingK, RemainingV)].
-% 
-% %% ------------------------------------------------------------------
-% %% Internal Function Definitions: Node Taking - Largest
-% %% ------------------------------------------------------------------
-% 
-% -compile({inline, root_take_largest/1}).
-% root_take_largest(Node) ->
-%     try
-%         take_largest_recur(nil, nil, Node)
-%     catch
-%         ?INTERNAL1(K1, V1, C1, C2) ->
-%             take_largest_internal1(Node, K1, V1, C1, C2);
-%         %
-%         ?LEAF1(K1, V1) ->
-%             [[K1 | V1] | ?LEAF0];
-%         %
-%         ?LEAF0 ->
-%             error_empty_tree()
-%     end.
-% 
-% take_largest_recur(Parent, Pos, Node) ->
-%     case Node of
-%         ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%             take_largest_internal4(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%         %
-%         ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4) ->
-%             take_largest_internal3(Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%         %
-%         ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
-%             take_largest_internal2(Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%         %
-%         ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-%             [[K4 | V4] | ?LEAF3(K1, K2, K3, V1, V2, V3)];
-%         %
-%         ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-%             [[K3 | V3] | ?LEAF2(K1, K2, V1, V2)];
-%         %
-%         ?LEAF2(K1, K2, V1, V2) ->
-%             take_largest_leaf2(Parent, Pos, K1, K2, V1, V2);
-%         %
-%         _ ->
-%             throw(Node)
-%     end.
-% 
-% take_largest_internal4(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [TakenPair | UpdatedC5] = take_largest_recur(_Parent = Node, 5, C5),
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, UpdatedC5)
-%     ].
-% 
-% take_largest_internal3(Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     [TakenPair | UpdatedC4] = take_largest_recur(Node, 4, C4),
-%     [TakenPair | maybe_rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, UpdatedC4)].
-% 
-% take_largest_internal2(Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     [TakenPair | UpdatedC3] = take_largest_recur(_Parent = Node, 3, C3),
-%     [TakenPair | maybe_rebalance_internal2_child3(Parent, Pos, K1, K2, Values, C1, C2, UpdatedC3)].
-% 
-% take_largest_internal1(Node, K1, V1, C1, C2) ->
-%     [TakenPair | UpdatedC2] = take_largest_recur(_Parent = Node, 2, C2),
-%     [TakenPair | maybe_rebalance_internal1_child2(K1, V1, C1, UpdatedC2)].
-% 
-% take_largest_leaf2(Parent, Pos, K1, K2, V1, V2) ->
-%     TakenPair = [K2 | V2],
-% 
-%     RemainingK = K1,
-%     RemainingV = V1,
-% 
-%     [TakenPair | rebalance_leaf2(Parent, Pos, RemainingK, RemainingV)].
-% 
-% %% ------------------------------------------------------------------
-% %% Internal Function Definitions: Node Taking - Key
-% %% ------------------------------------------------------------------
-% 
-% root_take(Key, Node) ->
-%     try
-%         take_recur(Key, nil, nil, Node)
-%     catch
-%         ?INTERNAL1(K1, V1, C1, C2) ->
-%             take_internal1(Key, Node, K1, V1, C1, C2);
-%         %
-%         ?LEAF1(K1, V1) ->
-%             take_leaf1(Key, K1, V1);
-%         %
-%         ?LEAF0 ->
-%             error_badkey(Key)
-%     end.
-% 
-% take_recur(Key, Parent, Pos, Node) ->
-%     case Node of
-%         ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%             take_internal4(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%         %
-%         ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4) ->
-%             take_internal3(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%         %
-%         ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
-%             take_internal2(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%         %
-%         ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-%             take_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4);
-%         %
-%         ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-%             take_leaf3(Key, K1, K2, K3, V1, V2, V3);
-%         %
-%         ?LEAF2(K1, K2, V1, V2) ->
-%             take_leaf2(Key, Parent, Pos, K1, K2, V1, V2);
-%         %
-%         _ ->
-%             throw(Node)
-%     end.
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%
-% 
-% take_internal4(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     if
-%         Key < K3 ->
-%             if
-%                 Key > K1 ->
-%                     if
-%                         Key < K2 ->
-%                             take_internal4_child2(
-%                                 Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
-%                             );
-%                         Key > K2 ->
-%                             take_internal4_child3(
-%                                 Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5
-%                             );
-%                         true ->
-%                             take_internal4_key2(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
-%                     end;
-%                 Key < K1 ->
-%                     take_internal4_child1(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%                 true ->
-%                     take_internal4_key1(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
-%             end;
-%         Key > K3 ->
-%             if
-%                 Key < K4 ->
-%                     take_internal4_child4(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%                 Key > K4 ->
-%                     take_internal4_child5(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
-%                 true ->
-%                     take_internal4_key4(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
-%             end;
-%         true ->
-%             take_internal4_key3(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
-%     end.
-% 
-% %%%
-% 
-% take_internal4_child1(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [TakenPair | UpdatedC1] = take_recur(Key, Node, 1, C1),
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child1(K1, K2, K3, K4, Values, UpdatedC1, C2, C3, C4, C5)
-%     ].
-% 
-% take_internal4_child2(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [TakenPair | UpdatedC2] = take_recur(Key, Node, 2, C2),
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child2(K1, K2, K3, K4, Values, C1, UpdatedC2, C3, C4, C5)
-%     ].
-% 
-% take_internal4_child3(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [TakenPair | UpdatedC3] = take_recur(Key, Node, 3, C3),
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child3(K1, K2, K3, K4, Values, C1, C2, UpdatedC3, C4, C5)
-%     ].
-% 
-% take_internal4_child4(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [TakenPair | UpdatedC4] = take_recur(Key, Node, 4, C4),
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child4(K1, K2, K3, K4, Values, C1, C2, C3, UpdatedC4, C5)
-%     ].
-% 
-% take_internal4_child5(Key, Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [TakenPair | UpdatedC5] = take_recur(Key, Node, 5, C5),
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, UpdatedC5)
-%     ].
-% 
-% %%%
-% 
-% take_internal4_key1(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC2] = take_smallest_recur(Node, 2, C2),
-%     {V1, V2, V3, V4} = Values,
-% 
-%     TakenPair = [K1 | V1],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child2(
-%             ReplacementK,
-%             K2,
-%             K3,
-%             K4,
-%             {ReplacementV, V2, V3, V4},
-%             C1,
-%             UpdatedC2,
-%             C3,
-%             C4,
-%             C5
-%         )
-%     ].
-% 
-% take_internal4_key2(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC3] = take_smallest_recur(Node, 3, C3),
-%     {V1, V2, V3, V4} = Values,
-% 
-%     TakenPair = [K2 | V2],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child3(
-%             K1,
-%             ReplacementK,
-%             K3,
-%             K4,
-%             {V1, ReplacementV, V3, V4},
-%             C1,
-%             C2,
-%             UpdatedC3,
-%             C4,
-%             C5
-%         )
-%     ].
-% 
-% take_internal4_key3(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC4] = take_smallest_recur(Node, 4, C4),
-%     {V1, V2, V3, V4} = Values,
-% 
-%     TakenPair = [K3 | V3],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child4(
-%             K1,
-%             K2,
-%             ReplacementK,
-%             K4,
-%             {V1, V2, ReplacementV, V4},
-%             C1,
-%             C2,
-%             C3,
-%             UpdatedC4,
-%             C5
-%         )
-%     ].
-% 
-% take_internal4_key4(Node, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC5] = take_smallest_recur(Node, 5, C5),
-%     {V1, V2, V3, V4} = Values,
-% 
-%     TakenPair = [K4 | V4],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal4_child5(
-%             K1,
-%             K2,
-%             K3,
-%             ReplacementK,
-%             {V1, V2, V3, ReplacementV},
-%             C1,
-%             C2,
-%             C3,
-%             C4,
-%             UpdatedC5
-%         )
-%     ].
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%
-% 
-% take_internal3(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     if
-%         Key < K2 ->
-%             if
-%                 Key < K1 ->
-%                     take_internal3_child1(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%                 Key > K1 ->
-%                     take_internal3_child2(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%                 true ->
-%                     take_internal3_key1(Node, K1, K2, K3, Values, C1, C2, C3, C4)
-%             end;
-%         Key > K2 ->
-%             if
-%                 Key < K3 ->
-%                     take_internal3_child3(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%                 Key > K3 ->
-%                     take_internal3_child4(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4);
-%                 true ->
-%                     take_internal3_key3(Node, K1, K2, K3, Values, C1, C2, C3, C4)
-%             end;
-%         true ->
-%             take_internal3_key2(Node, K1, K2, K3, Values, C1, C2, C3, C4)
-%     end.
-% 
-% %%
-% 
-% take_internal3_child1(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     [TakenPair | UpdatedC1] = take_recur(Key, Node, 1, C1),
-%     [TakenPair | maybe_rebalance_internal3_child1(K1, K2, K3, Values, UpdatedC1, C2, C3, C4)].
-% 
-% take_internal3_child2(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     [TakenPair | UpdatedC2] = take_recur(Key, Node, 2, C2),
-%     [TakenPair | maybe_rebalance_internal3_child2(K1, K2, K3, Values, C1, UpdatedC2, C3, C4)].
-% 
-% take_internal3_child3(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     [TakenPair | UpdatedC3] = take_recur(Key, Node, 3, C3),
-%     [TakenPair | maybe_rebalance_internal3_child3(K1, K2, K3, Values, C1, C2, UpdatedC3, C4)].
-% 
-% take_internal3_child4(Key, Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     [TakenPair | UpdatedC4] = take_recur(Key, Node, 4, C4),
-%     [TakenPair | maybe_rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, UpdatedC4)].
-% 
-% %%
-% 
-% take_internal3_key1(Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC2] = take_smallest_recur(Node, 2, C2),
-%     {V1, V2, V3} = Values,
-% 
-%     TakenPair = [K1 | V1],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal3_child2(
-%             ReplacementK,
-%             K2,
-%             K3,
-%             {ReplacementV, V2, V3},
-%             C1,
-%             UpdatedC2,
-%             C3,
-%             C4
-%         )
-%     ].
-% 
-% take_internal3_key2(Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC3] = take_smallest_recur(Node, 3, C3),
-%     {V1, V2, V3} = Values,
-% 
-%     TakenPair = [K2 | V2],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal3_child3(
-%             K1,
-%             ReplacementK,
-%             K3,
-%             {V1, ReplacementV, V3},
-%             C1,
-%             C2,
-%             UpdatedC3,
-%             C4
-%         )
-%     ].
-% 
-% take_internal3_key3(Node, K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC4] = take_smallest_recur(Node, 4, C4),
-%     {V1, V2, V3} = Values,
-% 
-%     TakenPair = [K3 | V3],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal3_child4(
-%             K1,
-%             K2,
-%             ReplacementK,
-%             {V1, V2, ReplacementV},
-%             C1,
-%             C2,
-%             C3,
-%             UpdatedC4
-%         )
-%     ].
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%
-% 
-% take_internal2(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     if
-%         Key < K2 ->
-%             if
-%                 Key > K1 ->
-%                     take_internal2_child2(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%                 Key < K1 ->
-%                     take_internal2_child1(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%                 true ->
-%                     take_internal2_key1(Parent, Pos, Node, K1, K2, Values, C1, C2, C3)
-%             end;
-%         Key > K2 ->
-%             take_internal2_child3(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3);
-%         true ->
-%             take_internal2_key2(Parent, Pos, Node, K1, K2, Values, C1, C2, C3)
-%     end.
-% 
-% %%
-% 
-% take_internal2_child1(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     [TakenPair | UpdatedC1] = take_recur(Key, Node, 1, C1),
-%     [TakenPair | maybe_rebalance_internal2_child1(Parent, Pos, K1, K2, Values, UpdatedC1, C2, C3)].
-% 
-% take_internal2_child2(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     [TakenPair | UpdatedC2] = take_recur(Key, Node, 2, C2),
-%     [TakenPair | maybe_rebalance_internal2_child2(Parent, Pos, K1, K2, Values, C1, UpdatedC2, C3)].
-% 
-% take_internal2_child3(Key, Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     [TakenPair | UpdatedC3] = take_recur(Key, Node, 3, C3),
-%     [TakenPair | maybe_rebalance_internal2_child3(Parent, Pos, K1, K2, Values, C1, C2, UpdatedC3)].
-% 
-% %%
-% 
-% take_internal2_key1(Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC2] = take_smallest_recur(Node, 2, C2),
-%     [V1 | V2] = Values,
-% 
-%     TakenPair = [K1 | V1],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal2_child2(
-%             Parent,
-%             Pos,
-%             ReplacementK,
-%             K2,
-%             [ReplacementV | V2],
-%             C1,
-%             UpdatedC2,
-%             C3
-%         )
-%     ].
-% 
-% take_internal2_key2(Parent, Pos, Node, K1, K2, Values, C1, C2, C3) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC3] = take_smallest_recur(Node, 3, C3),
-%     [V1 | V2] = Values,
-% 
-%     TakenPair = [K2 | V2],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal2_child3(
-%             Parent,
-%             Pos,
-%             K1,
-%             ReplacementK,
-%             [V1 | ReplacementV],
-%             C1,
-%             C2,
-%             UpdatedC3
-%         )
-%     ].
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%
-% 
-% take_internal1(Key, Node, K1, V1, C1, C2) ->
-%     if
-%         Key < K1 ->
-%             take_internal1_child1(Key, Node, K1, V1, C1, C2);
-%         Key > K1 ->
-%             take_internal1_child2(Key, Node, K1, V1, C1, C2);
-%         true ->
-%             take_internal1_key1(Node, K1, V1, C1, C2)
-%     end.
-% 
-% %%%
-% 
-% take_internal1_child1(Key, Node, K1, V1, C1, C2) ->
-%     [TakenPair | UpdatedC1] = take_recur(Key, Node, 1, C1),
-%     [TakenPair | maybe_rebalance_internal1_child1(K1, V1, UpdatedC1, C2)].
-% 
-% take_internal1_child2(Key, Node, K1, V1, C1, C2) ->
-%     [TakenPair | UpdatedC2] = take_recur(Key, Node, 2, C2),
-%     [TakenPair | maybe_rebalance_internal1_child2(K1, V1, C1, UpdatedC2)].
-% 
-% take_internal1_key1(Node, K1, V1, C1, C2) ->
-%     [[ReplacementK | ReplacementV] | UpdatedC2] = take_smallest_recur(Node, 2, C2),
-% 
-%     TakenPair = [K1 | V1],
-% 
-%     [
-%         TakenPair
-%         | maybe_rebalance_internal1_child2(
-%             ReplacementK,
-%             ReplacementV,
-%             C1,
-%             UpdatedC2
-%         )
-%     ].
-% 
-% %%%%%%%%%%%%%%%%%%%%%
-% 
-% take_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4) ->
-%     if
-%         Key < K3 ->
-%             if
-%                 Key == K1 ->
-%                     [[K1 | V1] | ?LEAF3(K2, K3, K4, V2, V3, V4)];
-%                 Key == K2 ->
-%                     [[K2 | V2] | ?LEAF3(K1, K3, K4, V1, V3, V4)];
-%                 true ->
-%                     error_badkey(Key)
-%             end;
-%         Key == K3 ->
-%             [[K3 | V3] | ?LEAF3(K1, K2, K4, V1, V2, V4)];
-%         Key == K4 ->
-%             [[K4 | V4] | ?LEAF3(K1, K2, K3, V1, V2, V3)];
-%         true ->
-%             error_badkey(Key)
-%     end.
-% 
-% take_leaf3(Key, K1, K2, K3, V1, V2, V3) ->
-%     if
-%         Key < K2 ->
-%             if
-%                 Key == K1 ->
-%                     [[K1 | V1] | ?LEAF2(K2, K3, V2, V3)];
-%                 true ->
-%                     error_badkey(Key)
-%             end;
-%         Key > K2 ->
-%             if
-%                 Key == K3 ->
-%                     [[K3 | V3] | ?LEAF2(K1, K2, V1, V2)];
-%                 true ->
-%                     error_badkey(Key)
-%             end;
-%         true ->
-%             [[K2 | V2] | ?LEAF2(K1, K3, V1, V3)]
-%     end.
-% 
-% take_leaf2(Key, Parent, Pos, K1, K2, V1, V2) ->
-%     if
-%         Key == K1 ->
-%             [[K1 | V1] | rebalance_leaf2(Parent, Pos, K2, V2)];
-%         Key == K2 ->
-%             [[K2 | V2] | rebalance_leaf2(Parent, Pos, K1, V1)];
-%         true ->
-%             error_badkey(Key)
-%     end.
-% 
-% take_leaf1(Key, K1, V1) ->
-%     if
-%         Key == K1 ->
-%             [[K1 | V1] | ?LEAF0];
-%         true ->
-%             error_badkey(Key)
-%     end.
-
-%% ------------------------------------------------------------------
 %% Internal Function Definitions: Statistics for Validation
 %% ------------------------------------------------------------------
 
@@ -4226,1206 +3176,6 @@ map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
     ).
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: Node Rebalancing after Deletion
-%% ------------------------------------------------------------------
-
-% maybe_rebalance_internal4_child1(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     case C1 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [UpdatedC1 | UpdatedC2] ->
-%                     ?INTERNAL4(K1, K2, K3, K4, Values, UpdatedC1, UpdatedC2, C3, C4, C5);
-%                 MergedC1C2 ->
-%                     RemainingValues = erlang:delete_element(1, Values),
-%                     ?INTERNAL3(K2, K3, K4, RemainingValues, MergedC1C2, C3, C4, C5)
-%             end;
-%         UpdatedC1 ->
-%             ?INTERNAL4(K1, K2, K3, K4, Values, UpdatedC1, C2, C3, C4, C5)
-%     end.
-% 
-% maybe_rebalance_internal4_child2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     case C2 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [from_left, UpdatedC1 | UpdatedC2] ->
-%                     ?INTERNAL4(K1, K2, K3, K4, Values, UpdatedC1, UpdatedC2, C3, C4, C5);
-%                 [UpdatedC2 | UpdatedC3] ->
-%                     ?INTERNAL4(K1, K2, K3, K4, Values, C1, UpdatedC2, UpdatedC3, C4, C5);
-%                 MergedC1C2 ->
-%                     RemainingValues = erlang:delete_element(1, Values),
-%                     ?INTERNAL3(K2, K3, K4, RemainingValues, MergedC1C2, C3, C4, C5)
-%             end;
-%         UpdatedC2 ->
-%             ?INTERNAL4(K1, K2, K3, K4, Values, C1, UpdatedC2, C3, C4, C5)
-%     end.
-% 
-% maybe_rebalance_internal4_child3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     case C3 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [from_left, UpdatedC2 | UpdatedC3] ->
-%                     ?INTERNAL4(K1, K2, K3, K4, Values, C1, UpdatedC2, UpdatedC3, C4, C5);
-%                 [UpdatedC3 | UpdatedC4] ->
-%                     ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, UpdatedC3, UpdatedC4, C5);
-%                 MergedC2C3 ->
-%                     RemainingValues = erlang:delete_element(2, Values),
-%                     ?INTERNAL3(K1, K3, K4, RemainingValues, C1, MergedC2C3, C4, C5)
-%             end;
-%         UpdatedC3 ->
-%             ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, UpdatedC3, C4, C5)
-%     end.
-% 
-% maybe_rebalance_internal4_child4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     case C4 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [from_left, UpdatedC3 | UpdatedC4] ->
-%                     ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, UpdatedC3, UpdatedC4, C5);
-%                 [UpdatedC4 | UpdatedC5] ->
-%                     ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, UpdatedC4, UpdatedC5);
-%                 MergedC3C4 ->
-%                     RemainingValues = erlang:delete_element(3, Values),
-%                     ?INTERNAL3(K1, K2, K4, RemainingValues, C1, C2, MergedC3C4, C5)
-%             end;
-%         UpdatedC4 ->
-%             ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, UpdatedC4, C5)
-%     end.
-% 
-% maybe_rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-%     case C5 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [UpdatedC4 | UpdatedC5] ->
-%                     ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, UpdatedC4, UpdatedC5);
-%                 MergedC4C5 ->
-%                     RemainingValues = erlang:delete_element(4, Values),
-%                     ?INTERNAL3(K1, K2, K3, RemainingValues, C1, C2, C3, MergedC4C5)
-%             end;
-%         UpdatedC5 ->
-%             ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, UpdatedC5)
-%     end.
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-% maybe_rebalance_internal3_child1(K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     case C1 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [UpdatedC1 | UpdatedC2] ->
-%                     ?INTERNAL3(K1, K2, K3, Values, UpdatedC1, UpdatedC2, C3, C4);
-%                 MergedC1C2 ->
-%                     {_, V2, V3} = Values,
-%                     ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4)
-%             end;
-%         UpdatedC1 ->
-%             ?INTERNAL3(K1, K2, K3, Values, UpdatedC1, C2, C3, C4)
-%     end.
-% 
-% maybe_rebalance_internal3_child2(K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     case C2 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [from_left, UpdatedC1 | UpdatedC2] ->
-%                     ?INTERNAL3(K1, K2, K3, Values, UpdatedC1, UpdatedC2, C3, C4);
-%                 [UpdatedC2 | UpdatedC3] ->
-%                     ?INTERNAL3(K1, K2, K3, Values, C1, UpdatedC2, UpdatedC3, C4);
-%                 MergedC1C2 ->
-%                     {_, V2, V3} = Values,
-%                     ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4)
-%             end;
-%         UpdatedC2 ->
-%             ?INTERNAL3(K1, K2, K3, Values, C1, UpdatedC2, C3, C4)
-%     end.
-% 
-% maybe_rebalance_internal3_child3(K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     case C3 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [from_left, UpdatedC2 | UpdatedC3] ->
-%                     ?INTERNAL3(K1, K2, K3, Values, C1, UpdatedC2, UpdatedC3, C4);
-%                 [UpdatedC3 | UpdatedC4] ->
-%                     ?INTERNAL3(K1, K2, K3, Values, C1, C2, UpdatedC3, UpdatedC4);
-%                 MergedC2C3 ->
-%                     {V1, _, V3} = Values,
-%                     ?INTERNAL2(K1, K3, [V1 | V3], C1, MergedC2C3, C4)
-%             end;
-%         UpdatedC3 ->
-%             ?INTERNAL3(K1, K2, K3, Values, C1, C2, UpdatedC3, C4)
-%     end.
-% 
-% maybe_rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, C4) ->
-%     case C4 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [UpdatedC3 | UpdatedC4] ->
-%                     ?INTERNAL3(K1, K2, K3, Values, C1, C2, UpdatedC3, UpdatedC4);
-%                 MergedC3C4 ->
-%                     {V1, V2, _} = Values,
-%                     ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, MergedC3C4)
-%             end;
-%         UpdatedC4 ->
-%             ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, UpdatedC4)
-%     end.
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-% maybe_rebalance_internal2_child1(Parent, Pos, K1, K2, Values, C1, C2, C3) ->
-%     case C1 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [UpdatedC1 | UpdatedC2] ->
-%                     ?INTERNAL2(K1, K2, Values, UpdatedC1, UpdatedC2, C3);
-%                 MergedC1C2 ->
-%                     RemainingK = K2,
-%                     RemainingV = tl(Values),
-%                     RemainingC1 = MergedC1C2,
-%                     RemainingC2 = C3,
-%                     rebalance_internal2(
-%                         Parent, Pos, RemainingK, RemainingV, RemainingC1, RemainingC2
-%                     )
-%             end;
-%         UpdatedC1 ->
-%             ?INTERNAL2(K1, K2, Values, UpdatedC1, C2, C3)
-%     end.
-% 
-% maybe_rebalance_internal2_child2(Parent, Pos, K1, K2, Values, C1, C2, C3) ->
-%     case C2 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [from_left, UpdatedC1 | UpdatedC2] ->
-%                     ?INTERNAL2(K1, K2, Values, UpdatedC1, UpdatedC2, C3);
-%                 [UpdatedC2 | UpdatedC3] ->
-%                     ?INTERNAL2(K1, K2, Values, C1, UpdatedC2, UpdatedC3);
-%                 MergedC1C2 ->
-%                     RemainingK = K2,
-%                     RemainingV = tl(Values),
-%                     RemainingC1 = MergedC1C2,
-%                     RemainingC2 = C3,
-%                     rebalance_internal2(
-%                         Parent, Pos, RemainingK, RemainingV, RemainingC1, RemainingC2
-%                     )
-%             end;
-%         UpdatedC2 ->
-%             ?INTERNAL2(K1, K2, Values, C1, UpdatedC2, C3)
-%     end.
-% 
-% maybe_rebalance_internal2_child3(Parent, Pos, K1, K2, Values, C1, C2, C3) ->
-%     case C3 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [UpdatedC2 | UpdatedC3] ->
-%                     ?INTERNAL2(K1, K2, Values, C1, UpdatedC2, UpdatedC3);
-%                 MergedC2C3 ->
-%                     RemainingK = K1,
-%                     RemainingV = hd(Values),
-%                     RemainingC1 = C1,
-%                     RemainingC2 = MergedC2C3,
-%                     rebalance_internal2(
-%                         Parent, Pos, RemainingK, RemainingV, RemainingC1, RemainingC2
-%                     )
-%             end;
-%         UpdatedC3 ->
-%             ?INTERNAL2(K1, K2, Values, C1, C2, UpdatedC3)
-%     end.
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-% maybe_rebalance_internal1_child1(K1, V1, C1, C2) ->
-%     case C1 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [UpdatedC1 | UpdatedC2] ->
-%                     ?INTERNAL1(K1, V1, UpdatedC1, UpdatedC2);
-%                 MergedC1C2 ->
-%                     % Height reduction, can only happen on root node
-%                     MergedC1C2
-%             end;
-%         UpdatedC1 ->
-%             ?INTERNAL1(K1, V1, UpdatedC1, C2)
-%     end.
-% 
-% maybe_rebalance_internal1_child2(K1, V1, C1, C2) ->
-%     case C2 of
-%         [rebalanced | RebalanceResult] ->
-%             case RebalanceResult of
-%                 [UpdatedC1 | UpdatedC2] ->
-%                     ?INTERNAL1(K1, V1, UpdatedC1, UpdatedC2);
-%                 MergedC1C2 ->
-%                     % Height reduction, can only happen on root node
-%                     MergedC1C2
-%             end;
-%         UpdatedC2 ->
-%             ?INTERNAL1(K1, V1, C1, UpdatedC2)
-%     end.
-% 
-% %%%%%%%%%%%%%%
-% 
-% rebalance_internal2(nil, _Pos, RemainingK, RemainingV, RemainingC1, RemainingC2) ->
-%     % INTERNAL2 becomes INTERNAl1 at the root
-%     ?INTERNAL1(RemainingK, RemainingV, RemainingC1, RemainingC2);
-% rebalance_internal2(Parent, Pos, RemainingK, RemainingV, RemainingC1, RemainingC2) ->
-%     case Pos of
-%         1 ->
-%             [
-%                 rebalanced
-%                 | rebalance_internal2_pos1(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2)
-%             ];
-%         2 ->
-%             [
-%                 rebalanced
-%                 | rebalance_internal2_pos2(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2)
-%             ];
-%         3 ->
-%             [
-%                 rebalanced
-%                 | rebalance_internal2_pos3(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2)
-%             ];
-%         4 ->
-%             [
-%                 rebalanced
-%                 | rebalance_internal2_pos4(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2)
-%             ];
-%         5 ->
-%             [
-%                 rebalanced
-%                 | rebalance_internal2_pos5(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2)
-%             ]
-%     end.
-% 
-% rebalance_internal2_pos1(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2) ->
-%     case Parent of
-%         ?INTERNAL2(ParentK1, _, ParentValues, _, ParentC2, _) ->
-%             %
-%             ParentK = ParentK1,
-%             ParentV = hd(ParentValues),
-%             RSibling = ParentC2,
-%             rebalance_internal2_from_right_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 ParentK,
-%                 ParentV,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL3(ParentK1, _, _, ParentValues, _, ParentC2, _, _) ->
-%             %
-%             ParentK = ParentK1,
-%             ParentV = element(1, ParentValues),
-%             RSibling = ParentC2,
-%             rebalance_internal2_from_right_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 ParentK,
-%                 ParentV,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL4(ParentK1, _, _, _, ParentValues, _, ParentC2, _, _, _) ->
-%             %
-%             ParentK = ParentK1,
-%             ParentV = element(1, ParentValues),
-%             RSibling = ParentC2,
-%             rebalance_internal2_from_right_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 ParentK,
-%                 ParentV,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL1(ParentK1, ParentV1, _, ParentC2) ->
-%             ParentK = ParentK1,
-%             ParentV = ParentV1,
-%             RSibling = ParentC2,
-%             rebalance_internal2_from_right_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 ParentK,
-%                 ParentV,
-%                 RSibling
-%             )
-%     end.
-% 
-% rebalance_internal2_pos2(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2) ->
-%     case Parent of
-%         ?INTERNAL2(ParentK1, _, ParentValues, ParentC1, _, ParentC3) ->
-%             %
-%             LParentK = ParentK1,
-%             LParentV = hd(ParentValues),
-%             LSibling = ParentC1,
-%             RSibling = ParentC3,
-%             %
-%             rebalance_internal2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL3(ParentK1, _, _, ParentValues, ParentC1, _, ParentC3, _) ->
-%             %
-%             LParentK = ParentK1,
-%             LParentV = element(1, ParentValues),
-%             LSibling = ParentC1,
-%             RSibling = ParentC3,
-%             %
-%             rebalance_internal2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL4(ParentK1, _, _, _, ParentValues, ParentC1, _, ParentC3, _, _) ->
-%             %
-%             LParentK = ParentK1,
-%             LParentV = element(1, ParentValues),
-%             LSibling = ParentC1,
-%             RSibling = ParentC3,
-%             %
-%             rebalance_internal2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL1(ParentK1, ParentV1, ParentC1, _) ->
-%             ParentK = ParentK1,
-%             ParentV = ParentV1,
-%             LSibling = ParentC1,
-%             rebalance_internal2_from_left_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 ParentK,
-%                 ParentV,
-%                 LSibling
-%             )
-%     end.
-% 
-% rebalance_internal2_pos3(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2) ->
-%     case Parent of
-%         ?INTERNAL2(_, ParentK2, ParentValues, _, ParentC2, _) ->
-%             %
-%             LParentK = ParentK2,
-%             LParentV = tl(ParentValues),
-%             LSibling = ParentC2,
-%             %
-%             rebalance_internal2_from_left_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 LParentK,
-%                 LParentV,
-%                 LSibling
-%             );
-%         %
-%         ?INTERNAL3(_, ParentK2, _, ParentValues, _, ParentC2, _, ParentC4) ->
-%             %
-%             LParentK = ParentK2,
-%             LParentV = element(2, ParentValues),
-%             LSibling = ParentC2,
-%             RSibling = ParentC4,
-%             %
-%             rebalance_internal2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL4(_, ParentK2, _, _, ParentValues, _, ParentC2, _, ParentC4, _) ->
-%             %
-%             LParentK = ParentK2,
-%             LParentV = element(2, ParentValues),
-%             LSibling = ParentC2,
-%             RSibling = ParentC4,
-%             %
-%             rebalance_internal2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             )
-%     end.
-% 
-% rebalance_internal2_pos4(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2) ->
-%     case Parent of
-%         ?INTERNAL3(_, _, ParentK3, ParentValues, _, _, ParentC3, _) ->
-%             %
-%             LParentK = ParentK3,
-%             LParentV = element(3, ParentValues),
-%             LSibling = ParentC3,
-%             %
-%             rebalance_internal2_from_left_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 LParentK,
-%                 LParentV,
-%                 LSibling
-%             );
-%         %
-%         ?INTERNAL4(_, _, ParentK3, _, ParentValues, _, _, ParentC3, _, ParentC5) ->
-%             %
-%             LParentK = ParentK3,
-%             LParentV = element(3, ParentValues),
-%             LSibling = ParentC3,
-%             RSibling = ParentC5,
-%             %
-%             rebalance_internal2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             )
-%     end.
-% 
-% rebalance_internal2_pos5(Parent, RemainingK, RemainingV, RemainingC1, RemainingC2) ->
-%     case Parent of
-%         ?INTERNAL4(_, _, _, ParentK4, ParentValues, _, _, _, ParentC4, _) ->
-%             %
-%             LParentK = ParentK4,
-%             LParentV = element(4, ParentValues),
-%             LSibling = ParentC4,
-%             %
-%             rebalance_internal2_from_left_sibling(
-%                 RemainingK,
-%                 RemainingV,
-%                 RemainingC1,
-%                 RemainingC2,
-%                 LParentK,
-%                 LParentV,
-%                 LSibling
-%             )
-%     end.
-% 
-% %%%%%%%%%%%%%%%%%%%%
-% 
-% rebalance_internal2_from_right_sibling(
-%     RemainingK, RemainingV, RemainingC1, RemainingC2, ParentK, ParentV, RSibling
-% ) ->
-%     case RSibling of
-%         ?INTERNAL4(RK1, RK2, RK3, RK4, RValues, RC1, RC2, RC3, RC4, RC5) ->
-%             {RV1, RV2, RV3, RV4} = RValues,
-% 
-%             MovedK = RK1,
-%             MovedV = RV1,
-%             MovedC = RC1,
-% 
-%             Rebalanced = ?INTERNAL2(
-%                 RemainingK,
-%                 MovedK,
-%                 [RemainingV | MovedV],
-%                 RemainingC1,
-%                 RemainingC2,
-%                 MovedC
-%             ),
-% 
-%             UpdatedSibling = ?INTERNAL3(
-%                 RK2,
-%                 RK3,
-%                 RK4,
-%                 {RV2, RV3, RV4},
-%                 RC2,
-%                 RC3,
-%                 RC4,
-%                 RC5
-%             ),
-%             [Rebalanced | UpdatedSibling];
-%         %
-%         %
-%         ?INTERNAL3(RK1, RK2, RK3, RValues, RC1, RC2, RC3, RC4) ->
-%             {RV1, RV2, RV3} = RValues,
-% 
-%             MovedK = RK1,
-%             MovedV = RV1,
-%             MovedC = RC1,
-% 
-%             Rebalanced = ?INTERNAL2(
-%                 RemainingK,
-%                 MovedK,
-%                 [RemainingV | MovedV],
-%                 RemainingC1,
-%                 RemainingC2,
-%                 MovedC
-%             ),
-% 
-%             UpdatedSibling = ?INTERNAL2(
-%                 RK2,
-%                 RK3,
-%                 [RV2 | RV3],
-%                 RC2,
-%                 RC3,
-%                 RC4
-%             ),
-%             [Rebalanced | UpdatedSibling];
-%         %
-%         ?INTERNAL2(RK1, RK2, RValues, RC1, RC2, RC3) ->
-%             [RV1 | RV2] = RValues,
-% 
-%             % Merge
-%             ?INTERNAL4(
-%                 RemainingK,
-%                 ParentK,
-%                 RK1,
-%                 RK2,
-%                 {RemainingV, ParentV, RV1, RV2},
-%                 RemainingC1,
-%                 RemainingC2,
-%                 RC1,
-%                 RC2,
-%                 RC3
-%             )
-%     end.
-% 
-% rebalance_internal2_from_left_sibling(
-%     RemainingK, RemainingV, RemainingC1, RemainingC2, ParentK, ParentV, LSibling
-% ) ->
-%     case LSibling of
-%         ?INTERNAL4(LK1, LK2, LK3, LK4, LValues, LC1, LC2, LC3, LC4, LC5) ->
-%             {LV1, LV2, LV3, LV4} = LValues,
-% 
-%             MovedK = LK4,
-%             MovedV = LV4,
-%             MovedC = LC5,
-% 
-%             Rebalanced = ?INTERNAL2(
-%                 MovedK,
-%                 RemainingK,
-%                 [MovedV | RemainingV],
-%                 MovedC,
-%                 RemainingC1,
-%                 RemainingC2
-%             ),
-% 
-%             UpdatedSibling = ?INTERNAL3(
-%                 LK1,
-%                 LK2,
-%                 LK3,
-%                 {LV1, LV2, LV3},
-%                 LC1,
-%                 LC2,
-%                 LC3,
-%                 LC4
-%             ),
-%             [UpdatedSibling | Rebalanced];
-%         %
-%         %
-%         ?INTERNAL3(LK1, LK2, LK3, LValues, LC1, LC2, LC3, LC4) ->
-%             {LV1, LV2, LV3} = LValues,
-% 
-%             MovedK = LK3,
-%             MovedV = LV3,
-%             MovedC = LC4,
-% 
-%             Rebalanced = ?INTERNAL2(
-%                 MovedK,
-%                 RemainingK,
-%                 [MovedV | RemainingV],
-%                 MovedC,
-%                 RemainingC1,
-%                 RemainingC2
-%             ),
-% 
-%             UpdatedSibling = ?INTERNAL2(
-%                 LK1,
-%                 LK2,
-%                 [LV1 | LV2],
-%                 LC1,
-%                 LC2,
-%                 LC3
-%             ),
-%             [UpdatedSibling | Rebalanced];
-%         %
-%         ?INTERNAL2(LK1, LK2, LValues, LC1, LC2, LC3) ->
-%             [LV1 | LV2] = LValues,
-% 
-%             % Merge
-%             ?INTERNAL4(
-%                 LK1,
-%                 LK2,
-%                 ParentK,
-%                 RemainingK,
-%                 {LV1, LV2, ParentV, RemainingV},
-%                 LC1,
-%                 LC2,
-%                 LC3,
-%                 RemainingC1,
-%                 RemainingC2
-%             )
-%     end.
-% 
-% rebalance_internal2_from_either_sibling(
-%     RemainingK,
-%     RemainingV,
-%     RemainingC1,
-%     RemainingC2,
-%     LParentK,
-%     LParentV,
-%     LSibling,
-%     RSibling
-% ) ->
-%     case LSibling of
-%         ?INTERNAL4(LK1, LK2, LK3, LK4, LValues, LC1, LC2, LC3, LC4, LC5) ->
-%             {LV1, LV2, LV3, LV4} = LValues,
-% 
-%             MovedK = LK4,
-%             MovedV = LV4,
-%             MovedC = LC5,
-% 
-%             Rebalanced = ?INTERNAL2(
-%                 MovedK,
-%                 RemainingK,
-%                 [MovedV | RemainingV],
-%                 MovedC,
-%                 RemainingC1,
-%                 RemainingC2
-%             ),
-% 
-%             UpdatedSibling = ?INTERNAL3(
-%                 LK1,
-%                 LK2,
-%                 LK3,
-%                 {LV1, LV2, LV3},
-%                 LC1,
-%                 LC2,
-%                 LC3,
-%                 LC4
-%             ),
-%             [from_left, UpdatedSibling | Rebalanced];
-%         %
-%         %
-%         %
-%         ?INTERNAL3(LK1, LK2, LK3, LValues, LC1, LC2, LC3, LC4) ->
-%             {LV1, LV2, LV3} = LValues,
-% 
-%             MovedK = LK3,
-%             MovedV = LV3,
-%             MovedC = LC4,
-% 
-%             Rebalanced = ?INTERNAL2(
-%                 MovedK,
-%                 RemainingK,
-%                 [MovedV | RemainingV],
-%                 MovedC,
-%                 RemainingC1,
-%                 RemainingC2
-%             ),
-% 
-%             UpdatedSibling = ?INTERNAL2(
-%                 LK1,
-%                 LK2,
-%                 [LV1 | LV2],
-%                 LC1,
-%                 LC2,
-%                 LC3
-%             ),
-%             [from_left, UpdatedSibling | Rebalanced];
-%         %
-%         %
-%         %
-%         ?INTERNAL2(LK1, LK2, LValues, LC1, LC2, LC3) ->
-%             %
-%             case RSibling of
-%                 ?INTERNAL4(RK1, RK2, RK3, RK4, RValues, RC1, RC2, RC3, RC4, RC5) ->
-%                     {RV1, RV2, RV3, RV4} = RValues,
-% 
-%                     MovedK = RK1,
-%                     MovedV = RV1,
-%                     MovedC = RC1,
-% 
-%                     Rebalanced = ?INTERNAL2(
-%                         RemainingK,
-%                         MovedK,
-%                         [RemainingV | MovedV],
-%                         RemainingC1,
-%                         RemainingC2,
-%                         MovedC
-%                     ),
-% 
-%                     UpdatedSibling = ?INTERNAL3(
-%                         RK2,
-%                         RK3,
-%                         RK4,
-%                         {RV2, RV3, RV4},
-%                         RC2,
-%                         RC3,
-%                         RC4,
-%                         RC5
-%                     ),
-%                     [Rebalanced | UpdatedSibling];
-%                 %
-%                 %
-%                 ?INTERNAL3(RK1, RK2, RK3, RValues, RC1, RC2, RC3, RC4) ->
-%                     {RV1, RV2, RV3} = RValues,
-% 
-%                     MovedK = RK1,
-%                     MovedV = RV1,
-%                     MovedC = RC1,
-% 
-%                     Rebalanced = ?INTERNAL2(
-%                         RemainingK,
-%                         MovedK,
-%                         [RemainingV | MovedV],
-%                         RemainingC1,
-%                         RemainingC2,
-%                         MovedC
-%                     ),
-% 
-%                     UpdatedSibling = ?INTERNAL2(
-%                         RK2,
-%                         RK3,
-%                         [RV2 | RV3],
-%                         RC2,
-%                         RC3,
-%                         RC4
-%                     ),
-%                     [Rebalanced | UpdatedSibling];
-%                 %
-%                 %
-%                 _ ->
-%                     [LV1 | LV2] = LValues,
-% 
-%                     % Merge with left (we already unpacked it)
-%                     ?INTERNAL4(
-%                         LK1,
-%                         LK2,
-%                         LParentK,
-%                         RemainingK,
-%                         {LV1, LV2, LParentV, RemainingV},
-%                         LC1,
-%                         LC2,
-%                         LC3,
-%                         RemainingC1,
-%                         RemainingC2
-%                     )
-%             end
-%     end.
-% 
-% %%%%%%%%%%%%%%%%%%%%
-% 
-% %%%%
-% 
-% rebalance_leaf2(nil, _Pos, RemainingK, RemainingV) ->
-%     % LEAF2 becomes LEAF1 at the root
-%     ?LEAF1(RemainingK, RemainingV);
-% rebalance_leaf2(Parent, Pos, RemainingK, RemainingV) ->
-%     case Pos of
-%         1 ->
-%             [rebalanced | rebalance_leaf2_pos1(Parent, RemainingK, RemainingV)];
-%         2 ->
-%             [rebalanced | rebalance_leaf2_pos2(Parent, RemainingK, RemainingV)];
-%         3 ->
-%             [rebalanced | rebalance_leaf2_pos3(Parent, RemainingK, RemainingV)];
-%         4 ->
-%             [rebalanced | rebalance_leaf2_pos4(Parent, RemainingK, RemainingV)];
-%         5 ->
-%             [rebalanced | rebalance_leaf2_pos5(Parent, RemainingK, RemainingV)]
-%     end.
-% 
-% rebalance_leaf2_pos1(Parent, RemainingK, RemainingV) ->
-%     case Parent of
-%         ?INTERNAL2(ParentK1, _, ParentValues, _, ParentC2, _) ->
-%             %
-%             ParentK = ParentK1,
-%             ParentV = hd(ParentValues),
-%             RSibling = ParentC2,
-%             rebalance_leaf2_from_right_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 ParentK,
-%                 ParentV,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL3(ParentK1, _, _, ParentValues, _, ParentC2, _, _) ->
-%             %
-%             ParentK = ParentK1,
-%             ParentV = element(1, ParentValues),
-%             RSibling = ParentC2,
-%             rebalance_leaf2_from_right_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 ParentK,
-%                 ParentV,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL4(ParentK1, _, _, _, ParentValues, _, ParentC2, _, _, _) ->
-%             %
-%             ParentK = ParentK1,
-%             ParentV = element(1, ParentValues),
-%             RSibling = ParentC2,
-%             rebalance_leaf2_from_right_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 ParentK,
-%                 ParentV,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL1(ParentK1, ParentV1, _, ParentC2) ->
-%             ParentK = ParentK1,
-%             ParentV = ParentV1,
-%             RSibling = ParentC2,
-%             rebalance_leaf2_from_right_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 ParentK,
-%                 ParentV,
-%                 RSibling
-%             )
-%     end.
-% 
-% rebalance_leaf2_pos2(Parent, RemainingK, RemainingV) ->
-%     case Parent of
-%         ?INTERNAL2(ParentK1, _, ParentValues, ParentC1, _, ParentC3) ->
-%             %
-%             LParentK = ParentK1,
-%             LParentV = hd(ParentValues),
-%             LSibling = ParentC1,
-%             RSibling = ParentC3,
-%             %
-%             rebalance_leaf2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL3(ParentK1, _, _, ParentValues, ParentC1, _, ParentC3, _) ->
-%             %
-%             LParentK = ParentK1,
-%             LParentV = element(1, ParentValues),
-%             LSibling = ParentC1,
-%             RSibling = ParentC3,
-%             %
-%             rebalance_leaf2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL4(ParentK1, _, _, _, ParentValues, ParentC1, _, ParentC3, _, _) ->
-%             %
-%             LParentK = ParentK1,
-%             LParentV = element(1, ParentValues),
-%             LSibling = ParentC1,
-%             RSibling = ParentC3,
-%             %
-%             rebalance_leaf2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL1(ParentK1, ParentV1, ParentC1, _) ->
-%             ParentK = ParentK1,
-%             ParentV = ParentV1,
-%             LSibling = ParentC1,
-%             rebalance_leaf2_from_left_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 ParentK,
-%                 ParentV,
-%                 LSibling
-%             )
-%     end.
-% 
-% rebalance_leaf2_pos3(Parent, RemainingK, RemainingV) ->
-%     case Parent of
-%         ?INTERNAL2(_, ParentK2, ParentValues, _, ParentC2, _) ->
-%             %
-%             LParentK = ParentK2,
-%             LParentV = tl(ParentValues),
-%             LSibling = ParentC2,
-%             %
-%             rebalance_leaf2_from_left_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 LParentK,
-%                 LParentV,
-%                 LSibling
-%             );
-%         %
-%         ?INTERNAL3(_, ParentK2, _, ParentValues, _, ParentC2, _, ParentC4) ->
-%             %
-%             LParentK = ParentK2,
-%             LParentV = element(2, ParentValues),
-%             LSibling = ParentC2,
-%             RSibling = ParentC4,
-%             %
-%             rebalance_leaf2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             );
-%         %
-%         ?INTERNAL4(_, ParentK2, _, _, ParentValues, _, ParentC2, _, ParentC4, _) ->
-%             %
-%             LParentK = ParentK2,
-%             LParentV = element(2, ParentValues),
-%             LSibling = ParentC2,
-%             RSibling = ParentC4,
-%             %
-%             rebalance_leaf2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             )
-%     end.
-% 
-% rebalance_leaf2_pos4(Parent, RemainingK, RemainingV) ->
-%     case Parent of
-%         ?INTERNAL3(_, _, ParentK3, ParentValues, _, _, ParentC3, _) ->
-%             %
-%             LParentK = ParentK3,
-%             LParentV = element(3, ParentValues),
-%             LSibling = ParentC3,
-%             %
-%             rebalance_leaf2_from_left_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 LParentK,
-%                 LParentV,
-%                 LSibling
-%             );
-%         %
-%         ?INTERNAL4(_, _, ParentK3, _, ParentValues, _, _, ParentC3, _, ParentC5) ->
-%             %
-%             LParentK = ParentK3,
-%             LParentV = element(3, ParentValues),
-%             LSibling = ParentC3,
-%             RSibling = ParentC5,
-%             %
-%             rebalance_leaf2_from_either_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 LParentK,
-%                 LParentV,
-%                 LSibling,
-%                 RSibling
-%             )
-%     end.
-% 
-% rebalance_leaf2_pos5(Parent, RemainingK, RemainingV) ->
-%     case Parent of
-%         ?INTERNAL4(_, _, _, ParentK4, ParentValues, _, _, _, ParentC4, _) ->
-%             %
-%             LParentK = ParentK4,
-%             LParentV = element(4, ParentValues),
-%             LSibling = ParentC4,
-%             %
-%             rebalance_leaf2_from_left_sibling(
-%                 RemainingK,
-%                 RemainingV,
-% 
-%                 LParentK,
-%                 LParentV,
-%                 LSibling
-%             )
-%     end.
-% 
-% %%%%%%%%%%%%%%%%%%%%
-% 
-% rebalance_leaf2_from_right_sibling(
-%     RemainingK, RemainingV, ParentK, ParentV, RSibling
-% ) ->
-%     case RSibling of
-%         ?LEAF4(RK1, RK2, RK3, RK4, RV1, RV2, RV3, RV4) ->
-%             MovedK = RK1,
-%             MovedV = RV1,
-% 
-%             Rebalanced = ?LEAF2(RemainingK, MovedK, RemainingV, MovedV),
-%             UpdatedSibling = ?LEAF3(RK2, RK3, RK4, RV2, RV3, RV4),
-%             [Rebalanced | UpdatedSibling];
-%         %
-%         %
-%         ?LEAF3(RK1, RK2, RK3, RV1, RV2, RV3) ->
-%             MovedK = RK1,
-%             MovedV = RV1,
-% 
-%             Rebalanced = ?LEAF2(RemainingK, MovedK, RemainingV, MovedV),
-%             UpdatedSibling = ?LEAF2(RK2, RK3, RV2, RV3),
-%             [Rebalanced | UpdatedSibling];
-%         %
-%         ?LEAF2(RK1, RK2, RV1, RV2) ->
-%             % Merge
-%             ?LEAF4(
-%                 RemainingK,
-%                 ParentK,
-%                 RK1,
-%                 RK2,
-%                 RemainingV,
-%                 ParentV,
-%                 RV1,
-%                 RV2
-%             )
-%     end.
-% 
-% rebalance_leaf2_from_left_sibling(
-%     RemainingK, RemainingV, ParentK, ParentV, LSibling
-% ) ->
-%     case LSibling of
-%         ?LEAF4(LK1, LK2, LK3, LK4, LV1, LV2, LV3, LV4) ->
-%             MovedK = LK4,
-%             MovedV = LV4,
-% 
-%             Rebalanced = ?LEAF2(MovedK, RemainingK, MovedV, RemainingV),
-%             UpdatedSibling = ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3),
-%             [UpdatedSibling | Rebalanced];
-%         %
-%         ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3) ->
-%             MovedK = LK3,
-%             MovedV = LV3,
-% 
-%             Rebalanced = ?LEAF2(MovedK, RemainingK, MovedV, RemainingV),
-%             UpdatedSibling = ?LEAF2(LK1, LK2, LV1, LV2),
-%             [UpdatedSibling | Rebalanced];
-%         %
-%         ?LEAF2(LK1, LK2, LV1, LV2) ->
-%             % Merge
-%             ?LEAF4(
-%                 LK1,
-%                 LK2,
-%                 ParentK,
-%                 RemainingK,
-%                 LV1,
-%                 LV2,
-%                 ParentV,
-%                 RemainingV
-%             )
-%     end.
-% 
-% rebalance_leaf2_from_either_sibling(
-%     RemainingK,
-%     RemainingV,
-% 
-%     LParentK,
-%     LParentV,
-%     LSibling,
-%     RSibling
-% ) ->
-%     case LSibling of
-%         ?LEAF4(LK1, LK2, LK3, LK4, LV1, LV2, LV3, LV4) ->
-%             MovedK = LK4,
-%             MovedV = LV4,
-% 
-%             Rebalanced = ?LEAF2(MovedK, RemainingK, MovedV, RemainingV),
-%             UpdatedSibling = ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3),
-%             [from_left, UpdatedSibling | Rebalanced];
-%         %
-%         ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3) ->
-%             MovedK = LK3,
-%             MovedV = LV3,
-% 
-%             Rebalanced = ?LEAF2(MovedK, RemainingK, MovedV, RemainingV),
-%             UpdatedSibling = ?LEAF2(LK1, LK2, LV1, LV2),
-%             [from_left, UpdatedSibling | Rebalanced];
-%         %
-%         ?LEAF2(LK1, LK2, LV1, LV2) ->
-%             case RSibling of
-%                 ?LEAF4(RK1, RK2, RK3, RK4, RV1, RV2, RV3, RV4) ->
-%                     MovedK = RK1,
-%                     MovedV = RV1,
-% 
-%                     Rebalanced = ?LEAF2(RemainingK, MovedK, RemainingV, MovedV),
-%                     UpdatedSibling = ?LEAF3(RK2, RK3, RK4, RV2, RV3, RV4),
-%                     [Rebalanced | UpdatedSibling];
-%                 %
-%                 %
-%                 ?LEAF3(RK1, RK2, RK3, RV1, RV2, RV3) ->
-%                     MovedK = RK1,
-%                     MovedV = RV1,
-% 
-%                     Rebalanced = ?LEAF2(RemainingK, MovedK, RemainingV, MovedV),
-%                     UpdatedSibling = ?LEAF2(RK2, RK3, RV2, RV3),
-%                     [Rebalanced | UpdatedSibling];
-%                 %
-%                 _ ->
-%                     % Merge with left (we already unpacked it)
-%                     ?LEAF4(
-%                         LK1,
-%                         LK2,
-%                         LParentK,
-%                         RemainingK,
-%                         LV1,
-%                         LV2,
-%                         LParentV,
-%                         RemainingV
-%                     )
-%             end
-%     end.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% ------------------------------------------------------------------
 %% Internal Function Definitions: Node Taking - Largest From Root
 %% ------------------------------------------------------------------
 
@@ -5806,7 +3556,7 @@ take_key_internal2_key1(K1, K2, Values, C1, C2, C3, ?DHELPER) ->
             UpdatedNode = ?INTERNAL2(ReplacementK, MovedK, [ReplacementV | MovedV], C1, UpdatedC2, UpdatedC3),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergededC2C3) ->
+        ?TAKE_MERGED_WITH_RIGHT(ReplacementPair, MergededC2C3) ->
             [ReplacementK | ReplacementV] = ReplacementPair,
             RemainingK = ReplacementK,
             RemainingV = ReplacementV,
@@ -5832,7 +3582,7 @@ take_key_internal2_key2(K1, K2, Values, C1, C2, C3, ?DHELPER) ->
             UpdatedNode = ?INTERNAL2(MovedK, ReplacementK, [MovedV | ReplacementV], UpdatedC1, UpdatedC2, C3),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(ReplacementPair, MergededC1C2) ->
+        ?TAKE_MERGED_WITH_LEFT(ReplacementPair, MergededC1C2) ->
             [ReplacementK | ReplacementV] = ReplacementPair,
             RemainingK = ReplacementK,
             RemainingV = ReplacementV,
@@ -5918,7 +3668,7 @@ take_key_internal3_key1(K1, K2, K3, Values, C1, C2, C3, C4) ->
             UpdatedNode = ?INTERNAL3(ReplacementK, MovedK, K3, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_RIGHT(ReplacementPair, MergedC2C3) ->
             [ReplacementK | ReplacementV] = ReplacementPair,
             UpdatedNode = ?INTERNAL2(ReplacementK, K3, [ReplacementV | V3], C1, MergedC2C3, C4),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -5941,7 +3691,7 @@ take_key_internal3_key2(K1, K2, K3, Values, C1, C2, C3, C4) ->
             UpdatedNode = ?INTERNAL3(K1, ReplacementK, MovedK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergedC3C4) ->
+        ?TAKE_MERGED_WITH_RIGHT(ReplacementPair, MergedC3C4) ->
             [ReplacementK | ReplacementV] = ReplacementPair,
             UpdatedNode = ?INTERNAL2(ReplacementK, K2, [ReplacementV | V2], C1, C2, MergedC3C4),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -5964,7 +3714,7 @@ take_key_internal3_key3(K1, K2, K3, Values, C1, C2, C3, C4) ->
             UpdatedNode = ?INTERNAL3(K1, MovedK, ReplacementK, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(ReplacementPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_LEFT(ReplacementPair, MergedC2C3) ->
             [ReplacementK | ReplacementV] = ReplacementPair,
             UpdatedNode = ?INTERNAL2(K1, ReplacementK, [V1 | ReplacementV], C1, MergedC2C3, C4),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6055,7 +3805,7 @@ take_key_internal4_key1(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
             UpdatedNode = ?INTERNAL4(ReplacementK, MovedK, K3, K4, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_RIGHT(ReplacementPair, MergedC2C3) ->
             [ReplacementK | ReplacementV] = ReplacementPair,
             UpdatedNode = ?INTERNAL3(ReplacementK, K3, K4, {ReplacementV, V3, V4}, C1, MergedC2C3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6078,7 +3828,7 @@ take_key_internal4_key2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
             UpdatedNode = ?INTERNAL4(K1, ReplacementK, MovedK, K4, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergedC3C4) ->
+        ?TAKE_MERGED_WITH_RIGHT(ReplacementPair, MergedC3C4) ->
             [ReplacementK | ReplacementV] = ReplacementPair,
             UpdatedNode = ?INTERNAL3(K1, ReplacementK, K4, {V1, ReplacementV, V4}, C1, C2, MergedC3C4, C5),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6101,7 +3851,7 @@ take_key_internal4_key3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
             UpdatedNode = ?INTERNAL4(K1, MovedK, ReplacementK, K4, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(ReplacementPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_LEFT(ReplacementPair, MergedC2C3) ->
             [ReplacementK | ReplacementV] = ReplacementPair,
             UpdatedNode = ?INTERNAL3(K1, ReplacementK, K4, {V1, ReplacementV, V4}, C1, MergedC2C3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6124,7 +3874,7 @@ take_key_internal4_key4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
             UpdatedNode = ?INTERNAL4(K1, K2, MovedK, ReplacementK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(ReplacementPair, MergedC3C4) ->
+        ?TAKE_MERGED_WITH_LEFT(ReplacementPair, MergedC3C4) ->
             [ReplacementK | ReplacementV] = ReplacementPair,
             UpdatedNode = ?INTERNAL3(K1, K2, ReplacementK, {V1, V2, ReplacementV}, C1, C2, MergedC3C4, C5),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6222,7 +3972,7 @@ rebalance_internal4_child1(K1, K2, K3, K4, Values, Result, C2, C3, C4, C5) ->
             UpdatedNode = ?INTERNAL4(MovedK, K2, K3, K4, UpdatedValues, UpdatedC1, UpdatedC2, C3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC1C2) ->
             UpdatedValues = erlang:delete_element(1, Values),
             UpdatedNode = ?INTERNAL3(K2, K3, K4, UpdatedValues, MergedC1C2, C3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6246,12 +3996,12 @@ rebalance_internal4_child2(K1, K2, K3, K4, Values, C1, Result, C3, C4, C5) ->
             UpdatedNode = ?INTERNAL4(K1, MovedK, K3, K4, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC1C2) ->
             UpdatedValues = erlang:delete_element(1, Values),
             UpdatedNode = ?INTERNAL3(K2, K3, K4, UpdatedValues, MergedC1C2, C3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC2C3) ->
             UpdatedValues = erlang:delete_element(2, Values),
             UpdatedNode = ?INTERNAL3(K1, K3, K4, UpdatedValues, C1, MergedC2C3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6275,12 +4025,12 @@ rebalance_internal4_child3(K1, K2, K3, K4, Values, C1, C2, Result, C4, C5) ->
             UpdatedNode = ?INTERNAL4(K1, K2, MovedK, K4, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC2C3) ->
             UpdatedValues = erlang:delete_element(2, Values),
             UpdatedNode = ?INTERNAL3(K1, K3, K4, UpdatedValues, C1, MergedC2C3, C4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC3C4) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC3C4) ->
             UpdatedValues = erlang:delete_element(3, Values),
             UpdatedNode = ?INTERNAL3(K1, K2, K4, UpdatedValues, C1, C2, MergedC3C4, C5),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6304,12 +4054,12 @@ rebalance_internal4_child4(K1, K2, K3, K4, Values, C1, C2, C3, Result, C5) ->
             UpdatedNode = ?INTERNAL4(K1, K2, K3, MovedK, UpdatedValues, C1, C2, C3, UpdatedC4, UpdatedC5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC3C4) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC3C4) ->
             UpdatedValues = erlang:delete_element(3, Values),
             UpdatedNode = ?INTERNAL3(K1, K2, K4, UpdatedValues, C1, C2, MergedC3C4, C5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC4C5) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC4C5) ->
             UpdatedValues = erlang:delete_element(4, Values),
             UpdatedNode = ?INTERNAL3(K1, K2, K3, UpdatedValues, C1, C2, C3, MergedC4C5),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6327,7 +4077,7 @@ rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, Result) ->
             UpdatedNode = ?INTERNAL4(K1, K2, K3, MovedK, UpdatedValues, C1, C2, C3, UpdatedC4, UpdatedC5),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC4C5) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC4C5) ->
             UpdatedValues = erlang:delete_element(4, Values),
             UpdatedNode = ?INTERNAL3(K1, K2, K3, UpdatedValues, C1, C2, C3, MergedC4C5),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6349,7 +4099,7 @@ rebalance_internal3_child1(K1, K2, K3, Values, Result, C2, C3, C4) ->
             UpdatedNode = ?INTERNAL3(MovedK, K2, K3, UpdatedValues, UpdatedC1, UpdatedC2, C3, C4),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC1C2) ->
             {_, V2, V3} = Values,
             UpdatedNode = ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6373,12 +4123,12 @@ rebalance_internal3_child2(K1, K2, K3, Values, C1, Result, C3, C4) ->
             UpdatedNode = ?INTERNAL3(K1, MovedK, K3, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC2C3) ->
             {V1, _, V3} = Values,
             UpdatedNode = ?INTERNAL2(K1, K3, [V1 | V3], C1, MergedC2C3, C4),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC1C2) ->
             {_, V2, V3} = Values,
             UpdatedNode = ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6402,12 +4152,12 @@ rebalance_internal3_child3(K1, K2, K3, Values, C1, C2, Result, C4) ->
             UpdatedNode = ?INTERNAL3(K1, K2, MovedK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC3C4) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC3C4) ->
             {V1, V2, _} = Values,
             UpdatedNode = ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, MergedC3C4),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC2C3) ->
             {V1, _, V3} = Values,
             UpdatedNode = ?INTERNAL2(K1, K3, [V1 | V3], C1, MergedC2C3, C4),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6425,7 +4175,7 @@ rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result) ->
             UpdatedNode = ?INTERNAL3(K1, K2, MovedK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC3C4) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC3C4) ->
             {V1, V2, _} = Values,
             UpdatedNode = ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, MergedC3C4),
             ?TAKEN(TakenPair, UpdatedNode)
@@ -6448,7 +4198,7 @@ rebalance_internal2_child1(K1, K2, Values, Result, C2, C3, ?DHELPER) ->
             UpdatedNode = ?INTERNAL2(MovedK, K2, UpdatedValues, UpdatedC1, UpdatedC2, C3),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC1C2) ->
             RemainingK = K2,
             [_ | RemainingV] = Values,
             rebalance_internal2_merged(TakenPair,
@@ -6477,7 +4227,7 @@ rebalance_internal2_child2(K1, K2, Values, C1, Result, C3, ?DHELPER) ->
             UpdatedNode = ?INTERNAL2(K1, MovedK, UpdatedValues, C1, UpdatedC2, UpdatedC3),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC1C2) ->
             RemainingK = K2,
             [_ | RemainingV] = Values,
             rebalance_internal2_merged(TakenPair,
@@ -6485,7 +4235,7 @@ rebalance_internal2_child2(K1, K2, Values, C1, Result, C3, ?DHELPER) ->
                                        RemainingK, RemainingV, 
                                        MergedC1C2, C3);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC2C3) ->
             RemainingK = K1,
             [RemainingV | _] = Values,
             rebalance_internal2_merged(TakenPair,
@@ -6507,7 +4257,7 @@ rebalance_internal2_child3(K1, K2, Values, C1, C2, Result, ?DHELPER) ->
             UpdatedNode = ?INTERNAL2(K1, MovedK, UpdatedValues, C1, UpdatedC2, UpdatedC3),
             ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC2C3) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC2C3) ->
             RemainingK = K1,
             [RemainingV | _] = Values,
             rebalance_internal2_merged(TakenPair,
@@ -6602,7 +4352,7 @@ rebalance_internal2_merged_mid(
                         {RemainingV, RParentV, RV1, RV2},
                         C1, C2, RC1, RC2, RC3
                     ),
-                    ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode)
+                    ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedNode)
             end
     end.
 
@@ -6636,7 +4386,7 @@ rebalance_internal2_merged_rightmost(TakenPair,
                             {LV1, LV2, LParentV, RemainingV},
                             LC1, LC2, LC3, C1, C2
                            ),
-            ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedNode)
+            ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedNode)
     end.
 
 rebalance_internal2_merged_leftmost(TakenPair,
@@ -6669,7 +4419,7 @@ rebalance_internal2_merged_leftmost(TakenPair,
                             {RemainingV, RParentV, RV1, RV2},
                             C1, C2, RC1, RC2, RC3
                            ),
-            ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode)
+            ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedNode)
     end.
 
 %% ------------------------------------------------------------------
@@ -6692,11 +4442,11 @@ rebalance_internal1_child1(K1, V1, Result, C2) ->
             UpdatedRoot = ?INTERNAL1(MovedK, MovedV, UpdatedC1, UpdatedC2),
             ?TAKEN(TakenPair, UpdatedRoot);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC1C2) ->
             % Height reduction
             ?TAKEN(TakenPair, MergedC1C2);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC1C2) ->
             % Height reduction
             ?TAKEN(TakenPair, MergedC1C2)
     end.
@@ -6717,58 +4467,14 @@ rebalance_internal1_child2(K1, V1, C1, Result) ->
             UpdatedRoot = ?INTERNAL1(MovedK, MovedV, UpdatedC1, UpdatedC2),
             ?TAKEN(TakenPair, UpdatedRoot);
         %
-        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedC1C2) ->
             % Height reduction
             ?TAKEN(TakenPair, MergedC1C2);
         %
-        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+        ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedC1C2) ->
             % Height reduction
             ?TAKEN(TakenPair, MergedC1C2)
     end.
-
-%%%%%%%%%%%%%%
-
-%deletion_left_sibling(Parent, Position) ->
-%    case Parent of
-%        ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
-%            Left = C2,
-%            K = K2,
-%            V = tl(Values),
-%            {Left, K, V};
-%        %
-%        ?INTERNAL3(_, _, K3, Values, _, _, C3, _) ->
-%            Left = C3,
-%            K = K3,
-%            V = element(3, Values),
-%            {Left, K, V};
-%        %
-%        ?INTERNAL4(_, _, _, K4, Values, _, _, _, C4, _) ->
-%            Left = C4,
-%            K = K4,
-%            V = element(4, Values),
-%            {Left, K, V}
-%    end;
-%deletion_left_sibling(Parent, leftmost) ->
-%    case Parent of
-%        ?INTERNAL2(_, K2, Values, _, C2, _) ->
-%            Left = C2,
-%            K = K2,
-%            V = tl(Values),
-%            {Left, K, V};
-%        %
-%        ?INTERNAL3(_, _, K3, Values, _, _, C3, _) ->
-%            Left = C3,
-%            K = K3,
-%            V = element(3, Values),
-%            {Left, K, V};
-%        %
-%        ?INTERNAL4(_, _, _, K4, Values, _, _, _, C4, _) ->
-%            Left = C4,
-%            K = K4,
-%            V = element(4, Values),
-%            {Left, K, V}
-%    end;
-%
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Rebalance Leaf 2
@@ -6813,7 +4519,7 @@ rebalance_leaf2_from_left_sibling(TakenPair, Left, ParentK, ParentV, RemainingK,
         ?LEAF2(LK1, LK2, LV1, LV2) ->
             MergedNode = ?LEAF4(LK1, LK2, ParentK, RemainingK,
                                 LV1, LV2, ParentV, RemainingV),
-            ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedNode)
+            ?TAKE_MERGED_WITH_LEFT(TakenPair, MergedNode)
     end.
 
 rebalance_leaf2_from_right_sibling(TakenPair, Right, ParentK, ParentV, RemainingK, RemainingV) ->
@@ -6835,7 +4541,7 @@ rebalance_leaf2_from_right_sibling(TakenPair, Right, ParentK, ParentV, Remaining
                             RemainingK, ParentK, RK1, RK2,
                             RemainingV, ParentV, RV1, RV2
                            ),
-            ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode)
+            ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedNode)
     end.
 
 rebalance_leaf2_from_either_sibling(TakenPair, Left, LParentK, LParentV, 
@@ -6844,13 +4550,13 @@ rebalance_leaf2_from_either_sibling(TakenPair, Left, LParentK, LParentV,
     case Right of
         ?LEAF4(RK1, RK2, RK3, RK4, RV1, RV2, RV3, RV4) ->
             MovedUp = [RK1 | RV1],
-            UpdatedLeft = ?LEAF2(RemainingK, LParentK, RemainingV, LParentV),
+            UpdatedLeft = ?LEAF2(RemainingK, RParentK, RemainingV, RParentV),
             UpdatedRight = ?LEAF3(RK2, RK3, RK4, RV2, RV3, RV4),
             ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
         %
         ?LEAF3(RK1, RK2, RK3, RV1, RV2, RV3) ->
             MovedUp = [RK1 | RV1],
-            UpdatedLeft = ?LEAF2(RemainingK, LParentK, RemainingV, LParentV),
+            UpdatedLeft = ?LEAF2(RemainingK, RParentK, RemainingV, RParentV),
             UpdatedRight = ?LEAF2(RK2, RK3, RV2, RV3),
             ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
         %
@@ -6859,24 +4565,278 @@ rebalance_leaf2_from_either_sibling(TakenPair, Left, LParentK, LParentV,
                 ?LEAF4(LK1, LK2, LK3, LK4, LV1, LV2, LV3, LV4) ->
                     MovedUp = [LK4 | LV4],
                     UpdatedLeft = ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3),
-                    UpdatedNode = ?LEAF2(RParentK, RemainingK,
-                                         RParentV, RemainingV),
+                    UpdatedNode = ?LEAF2(LParentK, RemainingK,
+                                         LParentV, RemainingV),
                     ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedNode);
                 %
                 ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3) ->
                     MovedUp = [LK3 | LV3],
                     UpdatedLeft = ?LEAF2(LK1, LK2, LV1, LV2),
-                    UpdatedNode = ?LEAF2(RParentK, RemainingK,
-                                         RParentV, RemainingV),
+                    UpdatedNode = ?LEAF2(LParentK, RemainingK,
+                                         LParentV, RemainingV),
                     ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedNode);
                 %
                 _ ->
                     % Merge with right since we already unpacked it
                     MergedNode = ?LEAF4(
-                                    RemainingK, LParentK, RK1, RK2,
-                                    RemainingV, LParentV, RV1, RV2
+                                    RemainingK, RParentK, RK1, RK2,
+                                    RemainingV, RParentV, RV1, RV2
                                    ),
-                    ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode)
+                    ?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedNode)
             end
     end.
 
+%% ------------------------------------------------------------------
+%% Unit Tests
+%% ------------------------------------------------------------------
+
+rebalance_leaf2_22_test() ->
+    Left = ?LEAF2(left_k1, left_k2, left_v1, left_v2),
+    Right = ?LEAF2(right_k1, right_k2, right_v1, right_v2),
+
+    ?assertEqual(
+       rebalance_leaf2(taken_pair, 
+                       ?DHELPER(
+                          Left, left_parent_k, left_parent_v,
+                          Right, right_parent_k, right_parent_v
+                         ),
+                       remaining_k,
+                       remaining_v),
+       %
+       %
+       ?TAKE_MERGED_WITH_RIGHT(
+          taken_pair,
+          ?LEAF4(
+             remaining_k, right_parent_k, right_k1, right_k2,
+             remaining_v, right_parent_v, right_v1, right_v2
+            )
+        )).
+
+rebalance_leaf2_23_test() ->
+    Left = ?LEAF2(left_k1, left_k2, left_v1, left_v2),
+    Right = ?LEAF3(right_k1, right_k2, right_k3, 
+                   right_v1, right_v2, right_v3),
+
+    ?assertEqual(
+       rebalance_leaf2(taken_pair, 
+                       ?DHELPER(
+                          Left, left_parent_k, left_parent_v,
+                          Right, right_parent_k, right_parent_v
+                         ),
+                       remaining_k,
+                       remaining_v),
+       %
+       %
+       ?TAKE_ROTATED_FROM_RIGHT(
+          [right_k1 | right_v1],
+          taken_pair,
+          ?LEAF2(
+             remaining_k, right_parent_k,
+             remaining_v, right_parent_v
+          ),
+          ?LEAF2(
+             right_k2, right_k3,
+             right_v2, right_v3
+            )
+        )).
+
+rebalance_leaf2_24_test() ->
+    Left = ?LEAF2(left_k1, left_k2, left_v1, left_v2),
+    Right = ?LEAF4(right_k1, right_k2, right_k3, right_k4,
+                   right_v1, right_v2, right_v3, right_v4),
+
+    ?assertEqual(
+       rebalance_leaf2(taken_pair, 
+                       ?DHELPER(
+                          Left, left_parent_k, left_parent_v,
+                          Right, right_parent_k, right_parent_v
+                         ),
+                       remaining_k,
+                       remaining_v),
+       %
+       %
+       ?TAKE_ROTATED_FROM_RIGHT(
+          [right_k1 | right_v1],
+          taken_pair,
+          ?LEAF2(
+             remaining_k, right_parent_k,
+             remaining_v, right_parent_v
+          ),
+          ?LEAF3(
+             right_k2, right_k3, right_k4,
+             right_v2, right_v3, right_v4
+            )
+        )).
+
+rebalance_leaf2_32_test() ->
+    Left = ?LEAF3(left_k1, left_k2, left_k3,
+                  left_v1, left_v2, left_v3),
+    Right = ?LEAF2(right_k1, right_k2, right_v1, right_v2),
+
+    ?assertEqual(
+       rebalance_leaf2(taken_pair, 
+                       ?DHELPER(
+                          Left, left_parent_k, left_parent_v,
+                          Right, right_parent_k, right_parent_v
+                         ),
+                       remaining_k,
+                       remaining_v),
+       %
+       %
+       ?TAKE_ROTATED_FROM_LEFT(
+          [left_k3 | left_v3],
+          taken_pair,
+          ?LEAF2(
+             left_k1, left_k2,
+             left_v1, left_v2
+            ),
+          ?LEAF2(
+             left_parent_k, remaining_k,
+             left_parent_v, remaining_v
+            )
+        )).
+
+rebalance_leaf2_33_test() ->
+    Left = ?LEAF3(left_k1, left_k2, left_k3,
+                  left_v1, left_v2, left_v3),
+    Right = ?LEAF3(right_k1, right_k2, right_k3,
+                   right_v1, right_v2, right_v3),
+
+    ?assertEqual(
+       rebalance_leaf2(taken_pair, 
+                       ?DHELPER(
+                          Left, left_parent_k, left_parent_v,
+                          Right, right_parent_k, right_parent_v
+                         ),
+                       remaining_k,
+                       remaining_v),
+       %
+       %
+       ?TAKE_ROTATED_FROM_RIGHT(
+          [right_k1 | right_v1],
+          taken_pair,
+          ?LEAF2(
+             remaining_k, right_parent_k,
+             remaining_v, right_parent_v
+          ),
+          ?LEAF2(
+             right_k2, right_k3,
+             right_v2, right_v3
+            )
+        )).
+
+rebalance_leaf2_34_test() ->
+    Left = ?LEAF3(left_k1, left_k2, left_k3,
+                  left_v1, left_v2, left_v3),
+    Right = ?LEAF4(right_k1, right_k2, right_k3, right_k4,
+                   right_v1, right_v2, right_v3, right_v4),
+
+    ?assertEqual(
+       rebalance_leaf2(taken_pair, 
+                       ?DHELPER(
+                          Left, left_parent_k, left_parent_v,
+                          Right, right_parent_k, right_parent_v
+                         ),
+                       remaining_k,
+                       remaining_v),
+       %
+       %
+       ?TAKE_ROTATED_FROM_RIGHT(
+          [right_k1 | right_v1],
+          taken_pair,
+          ?LEAF2(
+             remaining_k, right_parent_k,
+             remaining_v, right_parent_v
+          ),
+          ?LEAF3(
+             right_k2, right_k3, right_k4,
+             right_v2, right_v3, right_v4
+            )
+        )).
+
+rebalance_leaf_42_test() ->
+    Left = ?LEAF4(left_k1, left_k2, left_k3, left_k4,
+                  left_v1, left_v2, left_v3, left_v4),
+    Right = ?LEAF2(right_k1, right_k2,
+                   right_v1, right_v2),
+
+    ?assertEqual(
+       rebalance_leaf2(taken_pair, 
+                       ?DHELPER(
+                          Left, left_parent_k, left_parent_v,
+                          Right, right_parent_k, right_parent_v
+                         ),
+                       remaining_k,
+                       remaining_v),
+       %
+       %
+       ?TAKE_ROTATED_FROM_LEFT(
+          [left_k4 | left_v4],
+          taken_pair,
+          ?LEAF3(
+             left_k1, left_k2, left_k3,
+             left_v1, left_v2, left_v3
+            ),
+          ?LEAF2(
+             left_parent_k, remaining_k,
+             left_parent_v, remaining_v
+            )
+        )).
+
+rebalance_leaf_43_test() ->
+    Left = ?LEAF4(left_k1, left_k2, left_k3, left_k4,
+                  left_v1, left_v2, left_v3, left_v4),
+    Right = ?LEAF3(right_k1, right_k2, right_k3,
+                   right_v1, right_v2, right_v3),
+
+    ?assertEqual(
+       rebalance_leaf2(taken_pair, 
+                       ?DHELPER(
+                          Left, left_parent_k, left_parent_v,
+                          Right, right_parent_k, right_parent_v
+                         ),
+                       remaining_k,
+                       remaining_v),
+       %
+       %
+       ?TAKE_ROTATED_FROM_RIGHT(
+          [right_k1 | right_v1],
+          taken_pair,
+          ?LEAF2(
+             remaining_k, right_parent_k,
+             remaining_v, right_parent_v
+          ),
+          ?LEAF2(
+             right_k2, right_k3,
+             right_v2, right_v3
+            )
+        )).
+
+rebalance_leaf_44_test() ->
+    Left = ?LEAF4(left_k1, left_k2, left_k3, left_k4,
+                  left_v1, left_v2, left_v3, left_v4),
+    Right = ?LEAF4(right_k1, right_k2, right_k3, right_k4,
+                   right_v1, right_v2, right_v3, right_v4),
+
+    ?assertEqual(
+       rebalance_leaf2(taken_pair, 
+                       ?DHELPER(
+                          Left, left_parent_k, left_parent_v,
+                          Right, right_parent_k, right_parent_v
+                         ),
+                       remaining_k,
+                       remaining_v),
+       %
+       %
+       ?TAKE_ROTATED_FROM_RIGHT(
+          [right_k1 | right_v1],
+          taken_pair,
+          ?LEAF2(
+             remaining_k, right_parent_k,
+             remaining_v, right_parent_v
+          ),
+          ?LEAF3(
+             right_k2, right_k3, right_k4,
+             right_v2, right_v3, right_v4
+            )
+        )).
