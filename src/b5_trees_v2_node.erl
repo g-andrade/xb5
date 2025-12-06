@@ -109,13 +109,49 @@
 %%%
 
 -define(TAKEN(TakenPair, UpdatedNode), [TakenPair | UpdatedNode]).
--define(TAKE_MERGED(TakenPair, MergedNode), {merged, TakenPair, MergedNode}).
--define(TAKE_ROTATED(TakenPair, MergedNode, UpdatedLeft, UpdatedRight), {rotated, TakenPair, MergedNode, UpdatedLeft, UpdatedRight}).
 
+% 3 elements
+-define(TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode), {merged_from_right, TakenPair, MergedNode}).
+
+% 3 elements
+-define(TAKE_MERGED_FROM_LEFT(TakenPair, MergedNode), {merged_from_left, TakenPair, MergedNode}).
+
+% 5 elements
+-define(TAKE_ROTATED_FROM_LEFT(TakenPair, MergedNode, UpdatedLeft, UpdatedRight), {rotated_from_left, TakenPair, MergedNode, UpdatedLeft, UpdatedRight}).
+
+% 5 elements
+-define(TAKE_ROTATED_FROM_RIGHT(TakenPair, MergedNode, UpdatedLeft, UpdatedRight), {rotated_from_right, TakenPair, MergedNode, UpdatedLeft, UpdatedRight}).
+
+
+%-define(DELETION_HELPER_LEFTMOST(Right, RParentK, RParentV), {Right, RParentK, RParentV}).
+%
+%-define(DELETION_HELPER_RIGHTMOST(Right, RParentK, RParentV), {rightmost, Right, RParentK, RParentV}).
+%
+%-define(DELETION_HELPER_MID(Left, LParentK, LParentV, Right, RParentK, RParentV), 
+%        {Left, LParentK, LParentV, Right, RParentK, RParentV}).
+
+-define(DHELPER(L, LK, LV, R, RK, RV), L, LK, LV, R, RK, RV).
+
+-define(DHELPER, L, LK, LV, R, RK, RV).
+
+-define(DLEFTMOST(R, RK, RV), ?DHELPER(none, none, none, R, RK, RV)).
+
+-define(DRIGHTMOST(L, LK, LV), ?DHELPER(L, LK, LV, none, none, none)).
+
+%-define(DROOT, ?DHELPER(root_level, none, none, root_level, none, none)).
+
+-define(DSMALLEST(R, RK, RV), R, RK, RV).
+-define(DSMALLEST, R, RK, RV).
+
+-define(DLARGEST(L, LK, LV), L, LK, LV).
+-define(DLARGEST, L, LK, LV).
 
 %% ------------------------------------------------------------------
 %% Type Definitions
 %% ------------------------------------------------------------------
+
+
+
 
 -opaque t(Key, Value) :: root_only_node(Key, Value) | deep_node(Key, Value).
 %% This type represents any tree node structure.
@@ -305,7 +341,8 @@
 %% Fails with a `{badkey, Key}' exception if the key is not present.
 -spec delete(Key, t(Key, Value)) -> t(Key, Value).
 delete(Key, Node) ->
-    root_delete(Key, Node).
+    ?TAKEN(_, UpdatedNode) = root_take_key(Key, Node),
+    UpdatedNode.
 
 %% @doc Folds the tree node from left to right (smallest key to largest).
 %% Returns the final accumulator value.
@@ -531,7 +568,7 @@ smallest(Node) ->
 %% Returns `{Value, UpdatedNode}'.
 -spec take(Key, t(Key, Value)) -> {Value, t(Key, Value)}.
 take(Key, Node) ->
-    root_take(Key, Node).
+    root_take_key(Key, Node).
 
 %% @doc Removes and returns the largest key-value pair from the tree node.
 %% Fails with an `empty_tree' exception if the node is empty.
@@ -5389,7 +5426,7 @@ map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: Node Taking - Largest
+%% Internal Function Definitions: Node Taking - Largest From Root
 %% ------------------------------------------------------------------
 
 root_take_largest(Root) ->
@@ -5401,167 +5438,65 @@ root_take_largest(Root) ->
             TakenPair = [K1 | V1],
             ?TAKEN(TakenPair, ?LEAF0);
         %
+        ?LEAF0 ->
+            error_empty_tree();
+        %
         Node ->
-            take_largest_recur(nil, nil, nil, Node)
+            take_largest_recur(Node, ?DLARGEST(root_level, none, none))
     end.
 
-take_largest_recur(Left, ParentK, ParentV, Right) ->
-    case Right of
-        ?INTERNAL2(RK1, RK2, RValues, RC1, RC2, RC3) ->
-            take_largest_internal2(Left, ParentK, ParentV, RK1, RK2, RValues, RC1, RC2, RC3);
+take_largest_recur(Node, ?DLARGEST) ->
+    case Node of
+        ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
+            take_largest_internal2(K1, K2, Values, C1, C2, C3, ?DLARGEST);
         %
         %
-        ?INTERNAL3(RK1, RK2, RK3, RValues, RC1, RC2, RC3, RC4) ->
-            take_largest_internal3(RK1, RK2, RK3, RValues, RC1, RC2, RC3, RC4);
+        ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4) ->
+            take_largest_internal3(K1, K2, K3, Values, C1, C2, C3, C4);
         %
         %
-        ?INTERNAL4(RK1, RK2, RK3, RK4, RValues, RC1, RC2, RC3, RC4, RC5) ->
-            take_largest_internal4(RK1, RK2, RK3, RK4, RValues, RC1, RC2, RC3, RC4, RC5);
+        ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+            take_largest_internal4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
         %
         %
-        ?LEAF4(RK1, RK2, RK3, RK4, RV1, RV2, RV3, RV4) ->
-            TakenPair = [RK4 | RV4],
-            UpdatedRight = ?LEAF3(RK1, RK2, RK3, RV1, RV2, RV3),
-            ?TAKEN(TakenPair, UpdatedRight);
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            TakenPair = [K4 | V4],
+            UpdatedNode = ?LEAF3(K1, K2, K3, V1, V2, V3),
+            ?TAKEN(TakenPair, UpdatedNode);
         %
         %
-        ?LEAF3(RK1, RK2, RK3, RV1, RV2, RV3) ->
-            TakenPair = [RK3 | RV3],
-            UpdatedRight = ?LEAF2(RK1, RK2, RV1, RV2),
-            ?TAKEN(TakenPair, UpdatedRight);
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            TakenPair = [K3 | V3],
+            UpdatedNode = ?LEAF2(K1, K2, V1, V2),
+            ?TAKEN(TakenPair, UpdatedNode);
         %
         %
-        ?LEAF2(RK1, RK2, RV1, RV2) ->
-            TakenPair = [RK2 | RV2],
-
-            case Left of
-                ?LEAF4(LK1, LK2, LK3, LK4, LV1, LV2, LV3, LV4) ->
-                    MovedUp = [LK4 | LV4],
-                    UpdatedLeft = ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3),
-                    UpdatedRight = ?LEAF2(ParentK, RK1,
-                                          ParentV, RV1),
-                    ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
-                %
-                ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3) ->
-                    MovedUp = [LK3 | LV3],
-                    UpdatedLeft = ?LEAF2(LK1, LK2, LV1, LV2),
-                    UpdatedRight = ?LEAF2(ParentK, RK1,
-                                          ParentV, RV1),
-                    ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
-                %
-                ?LEAF2(LK1, LK2, LV1, LV2) ->
-                    MergedNode = ?LEAF4(LK1, LK2, ParentK, RK1,
-                                        LV1, LV2, ParentV, RV1),
-                    ?TAKE_MERGED(TakenPair, MergedNode);
-                %
-                nil ->
-                    % We're at the root level
-                    UpdatedRoot = ?LEAF1(RK1, RV1),
-                    ?TAKEN(TakenPair, UpdatedRoot)
-            end
+        ?LEAF2(K1, K2, V1, V2) ->
+            take_largest_leaf2(K1, K2, V1, V2, ?DLARGEST)
     end.
 
 root_take_largest_internal1(K1, V1, C1, C2) ->
-    case take_largest_recur(C1, K1, V1, C2) of
-        ?TAKEN(TakenPair, UpdatedC2) ->
-            UpdatedRoot = ?INTERNAL1(K1, V1, C2, UpdatedC2),
-            ?TAKEN(TakenPair, UpdatedRoot);
-        %
-        ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
-            [MovedK | MovedV] = MovedUp,
-            UpdatedRoot = ?INTERNAL1(MovedK, MovedV, UpdatedC1, UpdatedC2),
-            ?TAKEN(TakenPair, UpdatedRoot);
-        %
-        ?TAKE_MERGED(TakenPair, MergedC1C2) ->
-            % Height reduction
-            ?TAKEN(TakenPair, MergedC1C2)
-    end.
+    Result = take_largest_recur(C2, ?DLARGEST(C1, K1, V1)),
+    rebalance_internal1_child2(K1, V1, C1, Result).
 
-take_largest_internal2(Left, ParentK, ParentV, K1, K2, Values, C1, C2, C3) ->
-    [V1 | V2] = Values,
-
-    case take_largest_recur(C2, K2, V2, C3) of
-        ?TAKEN(TakenPair, UpdatedC3) ->
-            UpdatedRight = ?INTERNAL2(K1, K2, Values, C1, C2, UpdatedC3) ,
-            ?TAKEN(TakenPair, UpdatedRight);
-        %
-        ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedC2, UpdatedC3) ->
-            [MovedK | MovedV] = MovedUp,
-            UpdatedValues = [V1 | MovedV],
-            UpdatedRight = ?INTERNAL2(K1, MovedK, UpdatedValues, C1, UpdatedC2, UpdatedC3) ,
-            ?TAKEN(TakenPair, UpdatedRight);
-        %
-        ?TAKE_MERGED(TakenPair, MergedC2C3) ->
-            case Left of
-                ?INTERNAL2(LK1, LK2, LValues, LC1, LC2, LC3) ->
-                    [LV1 | LV2] = LValues,
-                    MergedNode = ?INTERNAL4(
-                        LK1, LK2, ParentK, K1,
-                        {LV1, LV2, ParentV, V1},
-                        LC1, LC2, LC3, C1, MergedC2C3
-                    ),
-                    ?TAKE_MERGED(TakenPair, MergedNode);
-                %
-                ?INTERNAL3(LK1, LK2, LK3, LValues, LC1, LC2, LC3, LC4) ->
-                    {LV1, LV2, LV3} = LValues,
-                    MovedUp = [LK3 | LV3],
-                    MovedC = LC4,
-                    UpdatedLeft = ?INTERNAL2(LK1, LK2, [LV1 | LV2], LC1, LC2, LC3),
-                    UpdatedRight = ?INTERNAL2(ParentK, K1, [ParentV | V1], MovedC, C1, MergedC2C3),
-                    ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
-                %
-                ?INTERNAL4(LK1, LK2, LK3, LK4, LValues, LC1, LC2, LC3, LC4, LC5) ->
-                    {LV1, LV2, LV3, LV4} = LValues,
-                    MovedUp = [LK4 | LV4],
-                    MovedC = LC5,
-                    UpdatedLeft = ?INTERNAL3(LK1, LK2, LK3, {LV1, LV2, LV3}, LC1, LC2, LC3, LC4),
-                    UpdatedRight = ?INTERNAL2(ParentK, K1, [ParentV | V1], MovedC, C1, MergedC2C3),
-                    ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
-                %
-                nil ->
-                    % We're at the root level
-                    UpdatedRoot = ?INTERNAL1(K1, V1, C1, MergedC2C3),
-                    ?TAKEN(TakenPair, UpdatedRoot)
-            end
-    end.
+take_largest_internal2(K1, K2, Values, C1, C2, C3, ?DLARGEST(Left, LParentK, LParentV)) ->
+    V2 = tl(Values),
+    Result = take_largest_recur(C3, ?DLARGEST(C2, K2, V2)),
+    rebalance_internal2_child3(K1, K2, Values, C1, C2, Result, ?DRIGHTMOST(Left, LParentK, LParentV)).
 
 take_largest_internal3(K1, K2, K3, Values, C1, C2, C3, C4) ->
-    {V1, V2, V3} = Values,
-
-    case take_largest_recur(C3, K3, V3, C4) of
-        ?TAKEN(TakenPair, UpdatedC4) ->
-            UpdatedRight = ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, UpdatedC4) ,
-            ?TAKEN(TakenPair, UpdatedRight);
-        %
-        ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedC3, UpdatedC4) ->
-            [MovedK | MovedV] = MovedUp,
-            UpdatedValues = {V1, V2, MovedV},
-            UpdatedRight = ?INTERNAL3(K1, K2, MovedK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4) ,
-            ?TAKEN(TakenPair, UpdatedRight);
-        %
-        ?TAKE_MERGED(TakenPair, MergedC3C4) ->
-            UpdatedRight = ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, MergedC3C4),
-            ?TAKEN(TakenPair, UpdatedRight)
-    end.
+    V3 = element(3, Values),
+    Result = take_largest_recur(C4, ?DLARGEST(C3, K3, V3)),
+    rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result).
 
 take_largest_internal4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-    {V1, V2, V3, V4} = Values,
+    V4 = element(4, Values),
+    Result = take_largest_recur(C5, ?DLARGEST(C4, K4, V4)),
+    rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, Result).
 
-    case take_largest_recur(C4, K4, V4, C5) of
-        ?TAKEN(TakenPair, UpdatedC5) ->
-            UpdatedRight = ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, UpdatedC5) ,
-            ?TAKEN(TakenPair, UpdatedRight);
-        %
-        ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedC4, UpdatedC5) ->
-            [MovedK | MovedV] = MovedUp,
-            UpdatedValues = {V1, V2, V3, MovedV},
-            UpdatedRight = ?INTERNAL4(K1, K2, K3, MovedK, UpdatedValues, C1, C2, C3, UpdatedC4, UpdatedC5),
-            ?TAKEN(TakenPair, UpdatedRight);
-        %
-        ?TAKE_MERGED(TakenPair, MergedC4C5) ->
-            UpdatedRight = ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, MergedC4C5),
-            ?TAKEN(TakenPair, UpdatedRight)
-    end.
+take_largest_leaf2(K1, K2, V1, V2, ?DLARGEST(Left, LParentK, LParentV)) ->
+    TakenPair = [K2 | V2],
+    rebalance_leaf2(TakenPair, ?DRIGHTMOST(Left, LParentK, LParentV), K1, V1).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Node Taking - Smallest
@@ -5576,162 +5511,1372 @@ root_take_smallest(Root) ->
             TakenPair = [K1 | V1],
             ?TAKEN(TakenPair, ?LEAF0);
         %
+        ?LEAF0 ->
+            error_empty_tree();
+        %
         Node ->
-            take_smallest_recur(Node, nil, nil, nil)
+            take_smallest_recur(Node, ?DSMALLEST(root_level, none, none))
     end.
 
-take_smallest_recur(Left, ParentK, ParentV, Right) ->
-    case Left of
-        ?INTERNAL2(LK1, LK2, LValues, LC1, LC2, LC3) ->
-            take_smallest_internal2(LK1, LK2, LValues, LC1, LC2, LC3, ParentK, ParentV, Right);
+take_smallest_recur(Node, ?DSMALLEST) ->
+    case Node of
+        ?INTERNAL2(K1, K2, Values, LC1, LC2, LC3) ->
+            take_smallest_internal2(K1, K2, Values, LC1, LC2, LC3, ?DSMALLEST);
         %
         %
-        ?INTERNAL3(LK1, LK2, LK3, LValues, LC1, LC2, LC3, LC4) ->
-            take_smallest_internal3(LK1, LK2, LK3, LValues, LC1, LC2, LC3, LC4);
+        ?INTERNAL3(K1, K2, K3, Values, LC1, LC2, LC3, LC4) ->
+            take_smallest_internal3(K1, K2, K3, Values, LC1, LC2, LC3, LC4);
         %
         %
-        ?INTERNAL4(LK1, LK2, LK3, LK4, LValues, LC1, LC2, LC3, LC4, LC5) ->
-            take_smallest_internal4(LK1, LK2, LK3, LK4, LValues, LC1, LC2, LC3, LC4, LC5);
+        ?INTERNAL4(K1, K2, K3, K4, Values, LC1, LC2, LC3, LC4, LC5) ->
+            take_smallest_internal4(K1, K2, K3, K4, Values, LC1, LC2, LC3, LC4, LC5);
         %
         %
-        ?LEAF4(LK1, LK2, LK3, LK4, LV1, LV2, LV3, LV4) ->
-            TakenPair = [LK1 | LV1],
-            UpdatedLeft = ?LEAF3(LK2, LK3, LK4, LV2, LV3, LV4),
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            TakenPair = [K1 | V1],
+            UpdatedLeft = ?LEAF3(K2, K3, K4, V2, V3, V4),
             ?TAKEN(TakenPair, UpdatedLeft);
         %
         %
-        ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3) ->
-            TakenPair = [LK1 | LV1],
-            UpdatedLeft = ?LEAF2(LK2, LK3, LV2, LV3),
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            TakenPair = [K1 | V1],
+            UpdatedLeft = ?LEAF2(K2, K3, V2, V3),
             ?TAKEN(TakenPair, UpdatedLeft);
         %
         %
-        ?LEAF2(LK1, LK2, LV1, LV2) ->
-            TakenPair = [LK1 | LV1],
-
-            case Right of
-                ?LEAF4(RK1, RK2, RK3, RK4, RV1, RV2, RV3, RV4) ->
-                    MovedUp = [RK1 | RV1],
-                    UpdatedLeft = ?LEAF2(LK2, ParentK, LV2, ParentV),
-                    UpdatedRight = ?LEAF3(RK2, RK3, RK4, RV2, RV3, RV4),
-                    ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
-                %
-                ?LEAF3(RK1, RK2, RK3, RV1, RV2, RV3) ->
-                    MovedUp = [RK1 | RV1],
-                    UpdatedLeft = ?LEAF2(LK2, ParentK, LV2, ParentV),
-                    UpdatedRight = ?LEAF2(RK2, RK3, RV2, RV3),
-                    ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
-                %
-                ?LEAF2(RK1, RK2, RV1, RV2) ->
-                    MergedNode = ?LEAF4(LK2, ParentK, RK1, RK2,
-                                        LV2, ParentV, RV1, RV2),
-                    ?TAKE_MERGED(TakenPair, MergedNode);
-                %
-                nil ->
-                    % We're at the root level
-                    UpdatedRoot = ?LEAF1(LK2, LV2),
-                    ?TAKEN(TakenPair, UpdatedRoot)
-            end
+        ?LEAF2(K1, K2, V1, V2) ->
+            take_smallest_leaf2(K1, K2, V1, V2, ?DSMALLEST)
     end.
 
 root_take_smallest_internal1(K1, V1, C1, C2) ->
-    case take_smallest_recur(C1, K1, V1, C2) of
-        ?TAKEN(TakenPair, UpdatedC1) ->
-            UpdatedRoot = ?INTERNAL1(K1, V1, UpdatedC1, C2),
-            ?TAKEN(TakenPair, UpdatedRoot);
+    Result = take_smallest_recur(C1, ?DSMALLEST(C2, K1, V1)),
+    rebalance_internal1_child1(K1, V1, Result, C2).
+
+take_smallest_internal2(K1, K2, Values, C1, C2, C3, ?DSMALLEST(Right, ParentK, ParentV)) ->
+    V1 = hd(Values),
+    Result = take_smallest_recur(C1, ?DSMALLEST(C2, K1, V1)),
+    rebalance_internal2_child1(K1, K2, Values, Result, C2, C3,
+                               ?DLEFTMOST(Right, ParentK, ParentV)).
+
+take_smallest_internal3(K1, K2, K3, Values, C1, C2, C3, C4) ->
+    V1 = element(1, Values),
+    Result = take_smallest_recur(C1, ?DSMALLEST(C2, K1, V1)),
+    rebalance_internal3_child1(K1, K2, K3, Values, Result, C2, C3, C4).
+
+take_smallest_internal4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    V1 = element(1, Values),
+    Result = take_smallest_recur(C1, ?DSMALLEST(C2, K1, V1)),
+    rebalance_internal4_child1(K1, K2, K3, K4, Values, Result, C2, C3, C4, C5).
+
+take_smallest_leaf2(K1, K2, V1, V2, ?DSMALLEST(Right, ParentK, ParentV)) ->
+    TakenPair = [K1 | V1],
+    rebalance_leaf2(TakenPair, ?DLEFTMOST(Right, ParentK, ParentV), K2, V2).
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Node Taking - General
+%% ------------------------------------------------------------------
+
+root_take_key(Key, Root) ->
+    case Root of
+        ?INTERNAL1(K1, V1, C1, C2) ->
+            root_take_key_internal1(Key, K1, V1, C1, C2);
         %
-        ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
-            [MovedK | MovedV] = MovedUp,
-            UpdatedRoot = ?INTERNAL1(MovedK, MovedV, UpdatedC1, UpdatedC2),
-            ?TAKEN(TakenPair, UpdatedRoot);
+        ?LEAF1(K1, V1) ->
+            root_take_key_leaf1(Key, K1, V1);
         %
-        ?TAKE_MERGED(TakenPair, MergedC1C2) ->
-            % Height reduction
-            ?TAKEN(TakenPair, MergedC1C2)
+        ?LEAF0 ->
+            error_badkey(Key);
+        %
+        Node ->
+            take_key_recur(Key, Node, ?DHELPER(root_level, none, none, root_level, none, none))
     end.
 
-take_smallest_internal2(Left, ParentK, ParentV, K1, K2, Values, C1, C2, C3) ->
-    [V1 | V2] = Values,
-
-    case take_smallest_recur(C2, K2, V2, C3) of
-        ?TAKEN(TakenPair, UpdatedC3) ->
-            UpdatedRight = ?INTERNAL2(K1, K2, Values, C1, C2, UpdatedC3) ,
-            ?TAKEN(TakenPair, UpdatedRight);
+take_key_recur(Key, Node, ?DHELPER) ->
+    case Node of
+        ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
+            take_key_internal2(Key, K1, K2, Values, C1, C2, C3, ?DHELPER);
         %
-        ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedC2, UpdatedC3) ->
+        %
+        ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4) ->
+            take_key_internal3(Key, K1, K2, K3, Values, C1, C2, C3, C4);
+        %
+        %
+        ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+            take_key_internal4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
+        %
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            take_key_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4);
+        %
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            take_key_leaf3(Key, K1, K2, K3, V1, V2, V3);
+        %
+        %
+        ?LEAF2(K1, K2, V1, V2) ->
+            take_key_leaf2(Key, K1, K2, V1, V2, ?DHELPER)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Node Taking - General - Internal 1
+%% ------------------------------------------------------------------
+
+root_take_key_internal1(Key, K1, V1, C1, C2) ->
+    if
+        Key < K1 ->
+            Result = take_key_recur(Key, C1, ?DLEFTMOST(C2, K1, V1)),
+            rebalance_internal1_child1(K1, V1, Result, C2);
+        %
+        Key > K1 ->
+            Result = take_key_recur(Key, C2, ?DRIGHTMOST(C1, K1, V1)),
+            rebalance_internal1_child2(K1, V1, C1, Result);
+        %
+        true ->
+            root_take_key_internal1_key1(K1, V1, C1, C2)
+    end.
+
+root_take_key_internal1_key1(K1, V1, C1, C2) ->
+    TakenPair = [K1 | V1],
+
+    % We take a replacement key from C2 as if it's at root level
+    ?TAKEN(ReplacementPair, UpdatedC2) = take_smallest_recur(C2, ?DSMALLEST(root_level, none, none)),
+
+    case UpdatedC2 of
+        ?INTERNAL1(RK1, RV1, RC1, RC2) ->
+            ?TAKEN(TakenPair, root_take_key_internal1_key1_rebalance_internal(ReplacementPair, C1, RK1, RV1, RC1, RC2));
+        %
+        ?LEAF1(RK1, RV1) ->
+            ?TAKEN(TakenPair, root_take_key_internal1_key1_rebalance_leaf(ReplacementPair, C1, RK1, RV1));
+        %
+        _ ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedRoot = ?INTERNAL1(ReplacementK, ReplacementV, C1, UpdatedC2),
+            ?TAKEN(TakenPair, UpdatedRoot)
+    end.
+
+root_take_key_internal1_key1_rebalance_internal(ReplacementPair, C1, RK1, RV1, RC1, RC2) ->
+    [ReplacementK | ReplacementV] = ReplacementPair,
+
+
+    case C1 of
+        ?INTERNAL2(LK1, LK2, LValues, LC1, LC2, LC3) ->
+            [LV1 | LV2] = LValues,
+            % Merge node, reducing tree height
+            ?INTERNAL4(
+                LK1, LK2, ReplacementK, RK1,
+                {LV1, LV2, ReplacementV, RV1},
+                LC1, LC2, LC3, RC1, RC2
+            );
+        %
+        %
+        ?INTERNAL3(LK1, LK2, LK3, LValues, LC1, LC2, LC3, LC4) ->
+            {LV1, LV2, LV3} = LValues,
+
+            MovedUpK = LK3,
+            MovedUpV = LV3,
+            MovedC = LC4,
+
+            % Move key and child
+            UpdatedC1 = ?INTERNAL2(
+                LK1, LK2,
+                [LV1 | LV2],
+                LC1, LC2, LC3
+            ),
+
+            UpdatedC2 = ?INTERNAL2(
+                ReplacementK, RK1,
+                [ReplacementV | RV1],
+                MovedC, RC1, RC2
+            ),
+
+            ?INTERNAL1(MovedUpK, MovedUpV, UpdatedC1, UpdatedC2);
+        %
+        %
+        ?INTERNAL4(LK1, LK2, LK3, LK4, LValues, LC1, LC2, LC3, LC4, LC5) ->
+            {LV1, LV2, LV3, LV4} = LValues,
+
+            MovedUpK = LK4,
+            MovedUpV = LV4,
+            MovedC = LC5,
+
+            % Move key and child
+            UpdatedC1 = ?INTERNAL3(
+                LK1, LK2, LK3,
+                {LV1, LV2, LV3},
+                LC1, LC2, LC3, LC4
+            ),
+
+            UpdatedC2 = ?INTERNAL2(
+                ReplacementK, RK1,
+                [ReplacementV | RV1],
+                MovedC, RC1, RC2
+            ),
+
+            ?INTERNAL1(MovedUpK, MovedUpV, UpdatedC1, UpdatedC2)
+    end.
+
+root_take_key_internal1_key1_rebalance_leaf(ReplacementPair, C1, RK1, RV1) ->
+    [ReplacementK | ReplacementV] = ReplacementPair,
+
+
+    case C1 of
+        ?LEAF2(LK1, LK2, LV1, LV2) ->
+            % Merge node, reducing tree height
+            ?LEAF4(LK1, LK2, ReplacementK, RK1,
+                   LV1, LV2, ReplacementV, RV1);
+        %
+        %
+        ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3) ->
+            MovedUpK = LK3,
+            MovedUpV = LV3,
+
+            % Move key
+            UpdatedC1 = ?LEAF2(LK1, LK2, LV1, LV2),
+            UpdatedC2 = ?LEAF2(ReplacementK, RK1, ReplacementV, RV1),
+
+            ?INTERNAL1(MovedUpK, MovedUpV, UpdatedC1, UpdatedC2);
+        %
+        %
+        ?LEAF4(LK1, LK2, LK3, LK4, LV1, LV2, LV3, LV4) ->
+            MovedUpK = LK4,
+            MovedUpV = LV4,
+
+            % Move key
+            UpdatedC1 = ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3),
+            UpdatedC2 = ?LEAF2(ReplacementK, RK1, ReplacementV, RV1),
+
+            ?INTERNAL1(MovedUpK, MovedUpV, UpdatedC1, UpdatedC2)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Node Taking - General - Internal 2
+%% ------------------------------------------------------------------
+
+take_key_internal2(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
+    if
+        Key > K1 ->
+            if
+                Key < K2 ->
+                    take_key_internal2_child2(Key, K1, K2, Values, C1, C2, C3, ?DHELPER);
+                Key > K2 ->
+                    take_key_internal2_child3(Key, K1, K2, Values, C1, C2, C3, ?DHELPER);
+                true ->
+                    take_key_internal2_key2(K1, K2, Values, C1, C2, C3, ?DHELPER)
+            end;
+        %
+        Key < K1 ->
+            take_key_internal2_child1(Key, K1, K2, Values, C1, C2, C3, ?DHELPER);
+        %
+        true ->
+            take_key_internal2_key1(K1, K2, Values, C1, C2, C3, ?DHELPER)
+    end.
+
+%%%
+
+take_key_internal2_child1(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
+    V1 = hd(Values),
+    Result = take_key_recur(Key, C1, ?DLEFTMOST(C2, K1, V1)),
+    rebalance_internal2_child1(K1, K2, Values, Result, C2, C3, ?DHELPER).
+
+take_key_internal2_child2(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
+    [V1 | V2] = Values,
+    Result = take_key_recur(Key, C2, ?DHELPER(C1, K1, V1, C3, K2, V2)),
+    rebalance_internal2_child2(K1, K2, Values, C1, Result, C3, ?DHELPER).
+
+take_key_internal2_child3(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
+    V2 = tl(Values),
+    Result = take_key_recur(Key, C3, ?DRIGHTMOST(C2, K2, V2)),
+    rebalance_internal2_child3(K1, K2, Values, C1, C2, Result, ?DHELPER).
+
+%%%
+
+take_key_internal2_key1(K1, K2, Values, C1, C2, C3, ?DHELPER) ->
+    [V1 | V2] = Values,
+    TakenPair = [K1 | V1],
+
+    case take_smallest_recur(C2, ?DSMALLEST(C3, K2, V2)) of
+        ?TAKEN(ReplacementPair, UpdatedC2) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL2(ReplacementK, K2, [ReplacementV | V2], C1, UpdatedC2, C3),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, ReplacementPair, UpdatedC2, UpdatedC3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedNode = ?INTERNAL2(ReplacementK, MovedK, [ReplacementV | MovedV], C1, UpdatedC2, UpdatedC3),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergededC2C3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            RemainingK = ReplacementK,
+            RemainingV = ReplacementV,
+            rebalance_internal2_merged(TakenPair,
+                                       ?DHELPER,
+                                       RemainingK, RemainingV,
+                                       C1, MergededC2C3)
+    end.
+
+take_key_internal2_key2(K1, K2, Values, C1, C2, C3, ?DHELPER) ->
+    [V1 | V2] = Values,
+    TakenPair = [K2 | V2],
+
+    case take_largest_recur(C2, ?DSMALLEST(C1, K1, V1)) of
+        ?TAKEN(ReplacementPair, UpdatedC2) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL2(K1, ReplacementK, [V1 | ReplacementV], C1, UpdatedC2, C3),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, ReplacementPair, UpdatedC1, UpdatedC2) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedNode = ?INTERNAL2(MovedK, ReplacementK, [MovedV | ReplacementV], UpdatedC1, UpdatedC2, C3),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(ReplacementPair, MergededC1C2) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            RemainingK = ReplacementK,
+            RemainingV = ReplacementV,
+            rebalance_internal2_merged(TakenPair,
+                                       ?DHELPER,
+                                       RemainingK, RemainingV,
+                                       MergededC1C2, C3)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Node Taking - General - Internal 3
+%% ------------------------------------------------------------------
+
+take_key_internal3(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    if
+        Key < K2 ->
+            if
+                Key < K1 ->
+                    take_key_internal3_child1(Key, K1, K2, K3, Values, C1, C2, C3, C4);
+                Key > K1 ->
+                    take_key_internal3_child2(Key, K1, K2, K3, Values, C1, C2, C3, C4);
+                true ->
+                    take_key_internal3_key1(K1, K2, K3, Values, C1, C2, C3, C4)
+            end;
+        %
+        Key > K2 ->
+            if
+                Key < K3 ->
+                    take_key_internal3_child3(Key, K1, K2, K3, Values, C1, C2, C3, C4);
+                Key > K3 ->
+                    take_key_internal3_child4(Key, K1, K2, K3, Values, C1, C2, C3, C4);
+                true ->
+                    take_key_internal3_key3(K1, K2, K3, Values, C1, C2, C3, C4)
+            end;
+        %
+        true ->
+            take_key_internal3_key2(K1, K2, K3, Values, C1, C2, C3, C4)
+    end.
+
+%%%
+
+take_key_internal3_child1(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    V1 = element(1, Values),
+    Result = take_key_recur(Key, C1, ?DLEFTMOST(C2, K1, V1)),
+    rebalance_internal3_child1(K1, K2, K3, Values, Result, C2, C3, C4).
+
+take_key_internal3_child2(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    {V1, V2, _} = Values,
+    Result = take_key_recur(Key, C2, ?DHELPER(C1, K1, V1, C3, K2, V2)),
+    rebalance_internal3_child2(K1, K2, K3, Values, C1, Result, C3, C4).
+
+take_key_internal3_child3(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    {_, V2, V3} = Values,
+    Result = take_key_recur(Key, C3, ?DHELPER(C2, K2, V2, C4, K3, V3)),
+    rebalance_internal3_child3(K1, K2, K3, Values, C1, C2, Result, C4).
+
+take_key_internal3_child4(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
+    V3 = element(3, Values),
+    Result = take_key_recur(Key, C4, ?DRIGHTMOST(C3, K3, V3)),
+    rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result).
+
+%    V3 = element(3, Values),
+%    DescendentHelper = ?DELETION_HELPER_RIGHTMOST(C3, K3, V3),
+%    Result = take_key_recur(C4, DescendentHelper),
+%    rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result).
+
+%%%
+
+take_key_internal3_key1(K1, K2, K3, Values, C1, C2, C3, C4) ->
+    {V1, V2, V3} = Values,
+    TakenPair = [K1 | V1],
+    
+    case take_smallest_recur(C2, ?DSMALLEST(C3, K2, V2)) of
+        ?TAKEN(ReplacementPair, UpdatedC2) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL3(ReplacementK, K2, K3, {ReplacementV, V2, V3}, C1, UpdatedC2, C3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, ReplacementPair, UpdatedC2, UpdatedC3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = {ReplacementV, MovedV, V3},
+            UpdatedNode = ?INTERNAL3(ReplacementK, MovedK, K3, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergedC2C3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL2(ReplacementK, K3, [ReplacementV | V3], C1, MergedC2C3, C4),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+take_key_internal3_key2(K1, K2, K3, Values, C1, C2, C3, C4) ->
+    {V1, V2, V3} = Values,
+    TakenPair = [K2 | V2],
+    
+    case take_smallest_recur(C3, ?DSMALLEST(C4, K3, V3)) of
+        ?TAKEN(ReplacementPair, UpdatedC3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL3(K1, ReplacementK, K3, {V1, ReplacementV, V3}, C1, C2, UpdatedC3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, ReplacementPair, UpdatedC3, UpdatedC4) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = {V1, ReplacementV, MovedV},
+            UpdatedNode = ?INTERNAL3(K1, ReplacementK, MovedK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergedC3C4) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL2(ReplacementK, K2, [ReplacementV | V2], C1, C2, MergedC3C4),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+take_key_internal3_key3(K1, K2, K3, Values, C1, C2, C3, C4) ->
+    {V1, V2, V3} = Values,
+    TakenPair = [K3 | V3],
+    
+    case take_largest_recur(C3, ?DLARGEST(C2, K2, V2)) of
+        ?TAKEN(ReplacementPair, UpdatedC3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL3(K1, ReplacementK, K3, {V1, ReplacementV, V3}, C1, C2, UpdatedC3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, ReplacementPair, UpdatedC2, UpdatedC3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = {V1, MovedV, ReplacementV},
+            UpdatedNode = ?INTERNAL3(K1, MovedK, ReplacementK, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(ReplacementPair, MergedC2C3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL2(K1, ReplacementK, [V1 | ReplacementV], C1, MergedC2C3, C4),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Node Taking - General - Internal 4
+%% ------------------------------------------------------------------
+
+take_key_internal4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    if
+        Key > K2 ->
+            if
+                Key < K4 ->
+                    if
+                        Key > K3 ->
+                            take_key_internal4_child4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
+                        Key < K3 ->
+                            take_key_internal4_child3(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
+                        true ->
+                            take_key_internal4_key3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
+                    end;
+                %
+                Key > K4 ->
+                    take_key_internal4_child5(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
+                %
+                true ->
+                    take_key_internal4_key4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
+            end;
+        %
+        Key < K2 ->
+            if
+                Key < K1 ->
+                    take_key_internal4_child1(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
+                Key > K1 ->
+                    take_key_internal4_child2(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
+                true ->
+                    take_key_internal4_key1(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
+            end;
+        %
+        true ->
+            take_key_internal4_key2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
+    end.
+
+%%%
+
+take_key_internal4_child1(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    V1 = element(1, Values),
+    Result = take_key_recur(Key, C1, ?DLEFTMOST(C2, K1, V1)),
+    rebalance_internal4_child1(K1, K2, K3, K4, Values, Result, C2, C3, C4, C5).
+
+take_key_internal4_child2(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    {V1, V2, _, _} = Values,
+    Result = take_key_recur(Key, C2, ?DHELPER(C1, K1, V1, C3, K2, V2)),
+    rebalance_internal4_child2(K1, K2, K3, K4, Values, C1, Result, C3, C4, C5).
+
+take_key_internal4_child3(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    {_, V2, V3, _} = Values,
+    Result = take_key_recur(Key, C3, ?DHELPER(C2, K2, V2, C4, K3, V3)),
+    rebalance_internal4_child3(K1, K2, K3, K4, Values, C1, C2, Result, C4, C5).
+
+take_key_internal4_child4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    {_, _, V3, V4} = Values,
+    Result = take_key_recur(Key, C4, ?DHELPER(C3, K3, V3, C5, K4, V4)),
+    rebalance_internal4_child4(K1, K2, K3, K4, Values, C1, C2, C3, Result, C5).
+
+take_key_internal4_child5(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    V4 = element(4, Values),
+    Result = take_key_recur(Key, C5, ?DRIGHTMOST(C4, K4, V4)),
+    rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, Result).
+
+%%%
+
+take_key_internal4_key1(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    {V1, V2, V3, V4} = Values,
+    TakenPair = [K1 | V1],
+    
+    case take_smallest_recur(C2, ?DSMALLEST(C3, K2, V2)) of
+        ?TAKEN(ReplacementPair, UpdatedC2) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL4(ReplacementK, K2, K3, K4, {ReplacementV, V2, V3, V4}, C1, UpdatedC2, C3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, ReplacementPair, UpdatedC2, UpdatedC3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = {ReplacementV, MovedV, V3, V4},
+            UpdatedNode = ?INTERNAL4(ReplacementK, MovedK, K3, K4, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergedC2C3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL3(ReplacementK, K3, K4, {ReplacementV, V3, V4}, C1, MergedC2C3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+take_key_internal4_key2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    {V1, V2, V3, V4} = Values,
+    TakenPair = [K2 | V2],
+    
+    case take_smallest_recur(C3, ?DSMALLEST(C4, K3, V3)) of
+        ?TAKEN(ReplacementPair, UpdatedC3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL4(K1, ReplacementK, K3, K4, {V1, ReplacementV, V3, V4}, C1, C2, UpdatedC3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, ReplacementPair, UpdatedC3, UpdatedC4) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = {V1, ReplacementV, MovedV, V4},
+            UpdatedNode = ?INTERNAL4(K1, ReplacementK, MovedK, K4, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(ReplacementPair, MergedC3C4) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL3(K1, ReplacementK, K4, {V1, ReplacementV, V4}, C1, C2, MergedC3C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+take_key_internal4_key3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    {V1, V2, V3, V4} = Values,
+    TakenPair = [K3 | V3],
+    
+    case take_largest_recur(C3, ?DLARGEST(C2, K2, V2)) of
+        ?TAKEN(ReplacementPair, UpdatedC3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL4(K1, K2, ReplacementK, K4, {V1, V2, ReplacementV, V4}, C1, C2, UpdatedC3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, ReplacementPair, UpdatedC2, UpdatedC3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = {V1, MovedV, ReplacementV, V4},
+            UpdatedNode = ?INTERNAL4(K1, MovedK, ReplacementK, K4, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(ReplacementPair, MergedC2C3) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL3(K1, ReplacementK, K4, {V1, ReplacementV, V4}, C1, MergedC2C3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+take_key_internal4_key4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+    {V1, V2, V3, V4} = Values,
+    TakenPair = [K4 | V4],
+    
+    case take_largest_recur(C4, ?DLARGEST(C3, K3, V3)) of
+        ?TAKEN(ReplacementPair, UpdatedC4) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL4(K1, K2, K3, ReplacementK, {V1, V2, V3, ReplacementV}, C1, C2, C3, UpdatedC4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, ReplacementPair, UpdatedC3, UpdatedC4) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = {V1, V2, MovedV, ReplacementV},
+            UpdatedNode = ?INTERNAL4(K1, K2, MovedK, ReplacementK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(ReplacementPair, MergedC3C4) ->
+            [ReplacementK | ReplacementV] = ReplacementPair,
+            UpdatedNode = ?INTERNAL3(K1, K2, ReplacementK, {V1, V2, ReplacementV}, C1, C2, MergedC3C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Node Taking - General - Leaves
+%% ------------------------------------------------------------------
+
+take_key_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    if
+        Key < K3 ->
+            if
+                Key == K1 ->
+                    TakenPair = [K1 | V1],
+                    ?TAKEN(TakenPair, ?LEAF3(K2, K3, K4, V2, V3, V4));
+                Key == K2 ->
+                    TakenPair = [K2 | V2],
+                    ?TAKEN(TakenPair, ?LEAF3(K1, K3, K4, V1, V3, V4));
+                true ->
+                    error_badkey(Key)
+            end;
+        %
+        Key == K3 ->
+            TakenPair = [K3 | V3],
+            ?TAKEN(TakenPair, ?LEAF3(K1, K2, K4, V1, V2, V4));
+        %
+        Key == K4 ->
+            TakenPair = [K4 | V4],
+            ?TAKEN(TakenPair, ?LEAF3(K1, K2, K3, V1, V2, V3));
+        %
+        true ->
+            error_badkey(Key)
+    end.
+
+take_key_leaf3(Key, K1, K2, K3, V1, V2, V3) ->
+    if
+        Key < K2 ->
+            if
+                Key == K1 ->
+                    TakenPair = [K1 | V1],
+                    ?TAKEN(TakenPair, ?LEAF2(K2, K3, V2, V3));
+                true ->
+                    error_badkey(Key)
+            end;
+        Key > K2 ->
+            if
+                Key == K3 ->
+                    TakenPair = [K3 | V3],
+                    ?TAKEN(TakenPair, ?LEAF2(K1, K2, V1, V2));
+                true ->
+                    error_badkey(Key)
+            end;
+        true ->
+            TakenPair = [K2 | V2],
+            ?TAKEN(TakenPair, ?LEAF2(K1, K3, V1, V3))
+    end.
+
+take_key_leaf2(Key, K1, K2, V1, V2, ?DHELPER) ->
+    if
+        Key == K1 ->
+            TakenPair = [K1 | V1],
+            rebalance_leaf2(TakenPair, ?DHELPER, K2, V2);
+
+        Key == K2 -> 
+            TakenPair = [K1 | V1],
+            rebalance_leaf2(TakenPair, ?DHELPER, K1, V1);
+
+        true ->
+            error_badkey(Key)
+    end.
+
+root_take_key_leaf1(Key, K1, V1) ->
+    if
+        Key == K1 ->
+            TakenPair = [K1 | V1],
+            ?TAKEN(TakenPair, ?LEAF0);
+        true ->
+            error_badkey(Key)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Rebalance Internal 4
+%% ------------------------------------------------------------------
+
+rebalance_internal4_child1(K1, K2, K3, K4, Values, Result, C2, C3, C4, C5) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC1) ->
+            UpdatedNode = ?INTERNAL4(K1, K2, K3, K4, Values, UpdatedC1, C2, C3, C4, C5) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(1, Values, MovedV),
+            UpdatedNode = ?INTERNAL4(MovedK, K2, K3, K4, UpdatedValues, UpdatedC1, UpdatedC2, C3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+            UpdatedValues = erlang:delete_element(1, Values),
+            UpdatedNode = ?INTERNAL3(K2, K3, K4, UpdatedValues, MergedC1C2, C3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+rebalance_internal4_child2(K1, K2, K3, K4, Values, C1, Result, C3, C4, C5) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC2) ->
+            UpdatedNode = ?INTERNAL4(K1, K2, K3, K4, Values, C1, UpdatedC2, C3, C4, C5) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(1, Values, MovedV),
+            UpdatedNode = ?INTERNAL4(MovedK, K2, K3, K4, UpdatedValues, UpdatedC1, UpdatedC2, C3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC2, UpdatedC3) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(2, Values, MovedV),
+            UpdatedNode = ?INTERNAL4(K1, MovedK, K3, K4, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+            UpdatedValues = erlang:delete_element(1, Values),
+            UpdatedNode = ?INTERNAL3(K2, K3, K4, UpdatedValues, MergedC1C2, C3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC2C3) ->
+            UpdatedValues = erlang:delete_element(2, Values),
+            UpdatedNode = ?INTERNAL3(K1, K3, K4, UpdatedValues, C1, MergedC2C3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+rebalance_internal4_child3(K1, K2, K3, K4, Values, C1, C2, Result, C4, C5) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC3) ->
+            UpdatedNode = ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, UpdatedC3, C4, C5) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC2, UpdatedC3) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(2, Values, MovedV),
+            UpdatedNode = ?INTERNAL4(K1, MovedK, K3, K4, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC3, UpdatedC4) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(3, Values, MovedV),
+            UpdatedNode = ?INTERNAL4(K1, K2, MovedK, K4, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC2C3) ->
+            UpdatedValues = erlang:delete_element(2, Values),
+            UpdatedNode = ?INTERNAL3(K1, K3, K4, UpdatedValues, C1, MergedC2C3, C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC3C4) ->
+            UpdatedValues = erlang:delete_element(3, Values),
+            UpdatedNode = ?INTERNAL3(K1, K2, K4, UpdatedValues, C1, C2, MergedC3C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+rebalance_internal4_child4(K1, K2, K3, K4, Values, C1, C2, C3, Result, C5) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC4) ->
+            UpdatedNode = ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, UpdatedC4, C5) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC3, UpdatedC4) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(3, Values, MovedV),
+            UpdatedNode = ?INTERNAL4(K1, K2, MovedK, K4, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC4, UpdatedC5) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(4, Values, MovedV),
+            UpdatedNode = ?INTERNAL4(K1, K2, K3, MovedK, UpdatedValues, C1, C2, C3, UpdatedC4, UpdatedC5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC3C4) ->
+            UpdatedValues = erlang:delete_element(3, Values),
+            UpdatedNode = ?INTERNAL3(K1, K2, K4, UpdatedValues, C1, C2, MergedC3C4, C5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC4C5) ->
+            UpdatedValues = erlang:delete_element(4, Values),
+            UpdatedNode = ?INTERNAL3(K1, K2, K3, UpdatedValues, C1, C2, C3, MergedC4C5),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, Result) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC5) ->
+            UpdatedNode = ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, UpdatedC5) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC4, UpdatedC5) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(4, Values, MovedV),
+            UpdatedNode = ?INTERNAL4(K1, K2, K3, MovedK, UpdatedValues, C1, C2, C3, UpdatedC4, UpdatedC5),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC4C5) ->
+            UpdatedValues = erlang:delete_element(4, Values),
+            UpdatedNode = ?INTERNAL3(K1, K2, K3, UpdatedValues, C1, C2, C3, MergedC4C5),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Rebalance Internal 3
+%% ------------------------------------------------------------------
+
+rebalance_internal3_child1(K1, K2, K3, Values, Result, C2, C3, C4) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC1) ->
+            UpdatedNode = ?INTERNAL3(K1, K2, K3, Values, UpdatedC1, C2, C3, C4) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(1, Values, MovedV),
+            UpdatedNode = ?INTERNAL3(MovedK, K2, K3, UpdatedValues, UpdatedC1, UpdatedC2, C3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+            {_, V2, V3} = Values,
+            UpdatedNode = ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+rebalance_internal3_child2(K1, K2, K3, Values, C1, Result, C3, C4) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC2) ->
+            UpdatedNode = ?INTERNAL3(K1, K2, K3, Values, C1, UpdatedC2, C3, C4) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(1, Values, MovedV),
+            UpdatedNode = ?INTERNAL3(MovedK, K2, K3, UpdatedValues, UpdatedC1, UpdatedC2, C3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC2, UpdatedC3) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(2, Values, MovedV),
+            UpdatedNode = ?INTERNAL3(K1, MovedK, K3, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC2C3) ->
+            {V1, _, V3} = Values,
+            UpdatedNode = ?INTERNAL2(K1, K3, [V1 | V3], C1, MergedC2C3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+            {_, V2, V3} = Values,
+            UpdatedNode = ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+rebalance_internal3_child3(K1, K2, K3, Values, C1, C2, Result, C4) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC3) ->
+            UpdatedNode = ?INTERNAL3(K1, K2, K3, Values, C1, C2, UpdatedC3, C4) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC2, UpdatedC3) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(2, Values, MovedV),
+            UpdatedNode = ?INTERNAL3(K1, MovedK, K3, UpdatedValues, C1, UpdatedC2, UpdatedC3, C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC3, UpdatedC4) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(3, Values, MovedV),
+            UpdatedNode = ?INTERNAL3(K1, K2, MovedK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC3C4) ->
+            {V1, V2, _} = Values,
+            UpdatedNode = ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, MergedC3C4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC2C3) ->
+            {V1, _, V3} = Values,
+            UpdatedNode = ?INTERNAL2(K1, K3, [V1 | V3], C1, MergedC2C3, C4),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC4) ->
+            UpdatedNode = ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, UpdatedC4) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC3, UpdatedC4) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = setelement(3, Values, MovedV),
+            UpdatedNode = ?INTERNAL3(K1, K2, MovedK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC3C4) ->
+            {V1, V2, _} = Values,
+            UpdatedNode = ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, MergedC3C4),
+            ?TAKEN(TakenPair, UpdatedNode)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Rebalance Internal 2
+%% ------------------------------------------------------------------
+
+rebalance_internal2_child1(K1, K2, Values, Result, C2, C3, ?DHELPER) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC1) ->
+            UpdatedNode = ?INTERNAL2(K1, K2, Values, UpdatedC1, C2, C3) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [_ | V2] = Values,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = [MovedV | V2],
+            UpdatedNode = ?INTERNAL2(MovedK, K2, UpdatedValues, UpdatedC1, UpdatedC2, C3),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+            RemainingK = K2,
+            [_ | RemainingV] = Values,
+            rebalance_internal2_merged(TakenPair,
+                                       ?DHELPER,
+                                       RemainingK, RemainingV, 
+                                       MergedC1C2, C3)
+    end.
+
+rebalance_internal2_child2(K1, K2, Values, C1, Result, C3, ?DHELPER) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC2) ->
+            UpdatedNode = ?INTERNAL2(K1, K2, Values, C1, UpdatedC2, C3) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [_ | V2] = Values,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = [MovedV | V2],
+            UpdatedNode = ?INTERNAL2(MovedK, K2, UpdatedValues, UpdatedC1, UpdatedC2, C3),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC2, UpdatedC3) ->
+            [V1 | _] = Values,
             [MovedK | MovedV] = MovedUp,
             UpdatedValues = [V1 | MovedV],
-            UpdatedRight = ?INTERNAL2(K1, MovedK, UpdatedValues, C1, UpdatedC2, UpdatedC3) ,
-            ?TAKEN(TakenPair, UpdatedRight);
+            UpdatedNode = ?INTERNAL2(K1, MovedK, UpdatedValues, C1, UpdatedC2, UpdatedC3),
+            ?TAKEN(TakenPair, UpdatedNode);
         %
-        ?TAKE_MERGED(TakenPair, MergedC2C3) ->
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+            RemainingK = K2,
+            [_ | RemainingV] = Values,
+            rebalance_internal2_merged(TakenPair,
+                                       ?DHELPER,
+                                       RemainingK, RemainingV, 
+                                       MergedC1C2, C3);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC2C3) ->
+            RemainingK = K1,
+            [RemainingV | _] = Values,
+            rebalance_internal2_merged(TakenPair,
+                                       ?DHELPER,
+                                       RemainingK, RemainingV, 
+                                       C1, MergedC2C3)
+    end.
+
+rebalance_internal2_child3(K1, K2, Values, C1, C2, Result, ?DHELPER) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC3) ->
+            UpdatedNode = ?INTERNAL2(K1, K2, Values, C1, C2, UpdatedC3) ,
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC2, UpdatedC3) ->
+            [V1 | _] = Values,
+            [MovedK | MovedV] = MovedUp,
+            UpdatedValues = [V1 | MovedV],
+            UpdatedNode = ?INTERNAL2(K1, MovedK, UpdatedValues, C1, UpdatedC2, UpdatedC3),
+            ?TAKEN(TakenPair, UpdatedNode);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC2C3) ->
+            RemainingK = K1,
+            [RemainingV | _] = Values,
+            rebalance_internal2_merged(TakenPair,
+                                       ?DHELPER,
+                                       RemainingK, RemainingV, 
+                                       C1, MergedC2C3)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Rebalance Internal 2 - Merge
+%% ------------------------------------------------------------------
+
+rebalance_internal2_merged(TakenPair,
+                           ?DHELPER(Left, LParentK, LParentV, Right, RParentK, RParentV),
+                           RemainingK, RemainingV, C1, C2) ->
+    if
+        Left =:= root_level orelse Right =:= root_level ->
+            ?TAKEN(TakenPair, ?INTERNAL1(RemainingK, RemainingV, C1, C2));
+        %
+        Left =/= none ->
+            if
+                Right =/= none ->
+                      rebalance_internal2_merged_mid(
+                        TakenPair,
+                        Left, LParentK, LParentV,
+                        Right, RParentK, RParentV,
+                        RemainingK, RemainingV, C1, C2);
+                %
+                true ->
+                      rebalance_internal2_merged_rightmost(
+                        TakenPair,
+                        Left, LParentK, LParentV,
+                        RemainingK, RemainingV, C1, C2)
+            end;
+        true ->
+            rebalance_internal2_merged_leftmost(
+              TakenPair,
+              Right, RParentK, RParentV,
+              RemainingK, RemainingV, C1, C2)
+    end.
+
+rebalance_internal2_merged_mid(
+  TakenPair,
+  Left, LParentK, LParentV,
+  Right, RParentK, RParentV,
+  RemainingK, RemainingV, C1, C2
+ ) ->
+    case Right of
+        ?INTERNAL4(RK1, RK2, RK3, RK4, RValues, RC1, RC2, RC3, RC4, RC5) ->
+            {RV1, RV2, RV3, RV4} = RValues,
+            MovedUp = [RK1 | RV1],
+            MovedC = RC1,
+            UpdatedNode = ?INTERNAL2(RemainingK, RParentK, [RemainingV | RParentV], C1, C2, MovedC),
+            UpdatedRight = ?INTERNAL3(RK2, RK3, RK4, {RV2, RV3, RV4}, RC2, RC3, RC4, RC5),
+            ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedNode, UpdatedRight);
+        %
+        %
+        ?INTERNAL3(RK1, RK2, RK3, RValues, RC1, RC2, RC3, RC4) ->
+            {RV1, RV2, RV3} = RValues,
+            MovedUp = [RK1 | RV1],
+            MovedC = RC1,
+            UpdatedNode = ?INTERNAL2(RemainingK, RParentK, [RemainingV | RParentV], C1, C2, MovedC),
+            UpdatedRight = ?INTERNAL2(RK2, RK3, [RV2 | RV3], RC2, RC3, RC4),
+            ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedNode, UpdatedRight);
+        %
+        %
+        ?INTERNAL2(RK1, RK2, RValues, RC1, RC2, RC3) ->
             case Left of
-                ?INTERNAL2(LK1, LK2, LValues, LC1, LC2, LC3) ->
-                    [LV1 | LV2] = LValues,
-                    MergedNode = ?INTERNAL4(
-                        LK1, LK2, ParentK, K1,
-                        {LV1, LV2, ParentV, V1},
-                        LC1, LC2, LC3, C1, MergedC2C3
-                    ),
-                    ?TAKE_MERGED(TakenPair, MergedNode);
+                ?INTERNAL4(LK1, LK2, LK3, LK4, LValues, LC1, LC2, LC3, LC4, LC5) ->
+                    {LV1, LV2, LV3, LV4} = LValues,
+                    MovedUp = [LK4 | LV4],
+                    MovedC = LC5,
+                    UpdatedLeft = ?INTERNAL3(LK1, LK2, LK3, {LV1, LV2, LV3}, LC1, LC2, LC3, LC4),
+                    UpdatedRight = ?INTERNAL2(LParentK, RemainingK, [LParentV | RemainingV], MovedC, C1, C2),
+                    ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
+                %
                 %
                 ?INTERNAL3(LK1, LK2, LK3, LValues, LC1, LC2, LC3, LC4) ->
                     {LV1, LV2, LV3} = LValues,
                     MovedUp = [LK3 | LV3],
                     MovedC = LC4,
                     UpdatedLeft = ?INTERNAL2(LK1, LK2, [LV1 | LV2], LC1, LC2, LC3),
-                    UpdatedRight = ?INTERNAL2(ParentK, K1, [ParentV | V1], MovedC, C1, MergedC2C3),
-                    ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
+                    UpdatedRight = ?INTERNAL2(LParentK, RemainingK, [LParentV | RemainingV], MovedC, C1, C2),
+                    ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
                 %
-                ?INTERNAL4(LK1, LK2, LK3, LK4, LValues, LC1, LC2, LC3, LC4, LC5) ->
-                    {LV1, LV2, LV3, LV4} = LValues,
-                    MovedUp = [LK4 | LV4],
-                    MovedC = LC5,
-                    UpdatedLeft = ?INTERNAL3(LK1, LK2, LK3, {LV1, LV2, LV3}, LC1, LC2, LC3, LC4),
-                    UpdatedRight = ?INTERNAL2(ParentK, K1, [ParentV | V1], MovedC, C1, MergedC2C3),
-                    ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
                 %
-                nil ->
-                    % We're at the root level
-                    UpdatedRoot = ?INTERNAL1(K1, V1, C1, MergedC2C3),
-                    ?TAKEN(TakenPair, UpdatedRoot)
+                _ ->
+                    % Merge with right since we already unpacked it
+                    [RV1 | RV2] = RValues,
+                    MergedNode = ?INTERNAL4(
+                        RemainingK, RParentK, RK1, RK2,
+                        {RemainingV, RParentV, RV1, RV2},
+                        C1, C2, RC1, RC2, RC3
+                    ),
+                    ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode)
             end
     end.
 
-take_smallest_internal3(K1, K2, K3, Values, C1, C2, C3, C4) ->
-    {V1, V2, V3} = Values,
-
-    case take_smallest_recur(C3, K3, V3, C4) of
-        ?TAKEN(TakenPair, UpdatedC4) ->
-            UpdatedRight = ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, UpdatedC4) ,
-            ?TAKEN(TakenPair, UpdatedRight);
+rebalance_internal2_merged_rightmost(TakenPair,
+                                     Left, LParentK, LParentV,
+                                     RemainingK, RemainingV, C1, C2) ->
+    case Left of
+        ?INTERNAL4(LK1, LK2, LK3, LK4, LValues, LC1, LC2, LC3, LC4, LC5) ->
+            {LV1, LV2, LV3, LV4} = LValues,
+            MovedUp = [LK4 | LV4],
+            MovedC = LC5,
+            UpdatedLeft = ?INTERNAL3(LK1, LK2, LK3, {LV1, LV2, LV3}, LC1, LC2, LC3, LC4),
+            UpdatedRight = ?INTERNAL2(LParentK, RemainingK, [LParentV | RemainingV], MovedC, C1, C2),
+            ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
         %
-        ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedC3, UpdatedC4) ->
-            [MovedK | MovedV] = MovedUp,
-            UpdatedValues = {V1, V2, MovedV},
-            UpdatedRight = ?INTERNAL3(K1, K2, MovedK, UpdatedValues, C1, C2, UpdatedC3, UpdatedC4) ,
-            ?TAKEN(TakenPair, UpdatedRight);
         %
-        ?TAKE_MERGED(TakenPair, MergedC3C4) ->
-            UpdatedRight = ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, MergedC3C4),
-            ?TAKEN(TakenPair, UpdatedRight)
+        ?INTERNAL3(LK1, LK2, LK3, LValues, LC1, LC2, LC3, LC4) ->
+            {LV1, LV2, LV3} = LValues,
+            MovedUp = [LK3 | LV3],
+            MovedC = LC4,
+            UpdatedLeft = ?INTERNAL2(LK1, LK2, [LV1 | LV2], LC1, LC2, LC3),
+            UpdatedRight = ?INTERNAL2(LParentK, RemainingK, [LParentV | RemainingV], MovedC, C1, C2),
+            ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
+        %
+        %
+        ?INTERNAL2(LK1, LK2, LValues, LC1, LC2, LC3) ->
+            % Merge with left
+            [LV1 | LV2] = LValues,
+            MergedNode = ?INTERNAL4(
+                            LK1, LK2, LParentK, RemainingK,
+                            {LV1, LV2, LParentV, RemainingV},
+                            LC1, LC2, LC3, C1, C2
+                           ),
+            ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedNode)
     end.
 
-take_smallest_internal4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
-    {V1, V2, V3, V4} = Values,
-
-    case take_smallest_recur(C4, K4, V4, C5) of
-        ?TAKEN(TakenPair, UpdatedC5) ->
-            UpdatedRight = ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, UpdatedC5) ,
-            ?TAKEN(TakenPair, UpdatedRight);
+rebalance_internal2_merged_leftmost(TakenPair,
+                                    Right, RParentK, RParentV,
+                                    RemainingK, RemainingV, C1, C2) ->
+    case Right of
+        ?INTERNAL4(RK1, RK2, RK3, RK4, RValues, RC1, RC2, RC3, RC4, RC5) ->
+            {RV1, RV2, RV3, RV4} = RValues,
+            MovedUp = [RK1 | RV1],
+            MovedC = RC1,
+            UpdatedNode = ?INTERNAL2(RemainingK, RParentK, [RemainingV | RParentV], C1, C2, MovedC),
+            UpdatedRight = ?INTERNAL3(RK2, RK3, RK4, {RV2, RV3, RV4}, RC2, RC3, RC4, RC5),
+            ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedNode, UpdatedRight);
         %
-        ?TAKE_ROTATED(MovedUp, TakenPair, UpdatedC4, UpdatedC5) ->
-            [MovedK | MovedV] = MovedUp,
-            UpdatedValues = {V1, V2, V3, MovedV},
-            UpdatedRight = ?INTERNAL4(K1, K2, K3, MovedK, UpdatedValues, C1, C2, C3, UpdatedC4, UpdatedC5),
-            ?TAKEN(TakenPair, UpdatedRight);
         %
-        ?TAKE_MERGED(TakenPair, MergedC4C5) ->
-            UpdatedRight = ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, MergedC4C5),
-            ?TAKEN(TakenPair, UpdatedRight)
+        ?INTERNAL3(RK1, RK2, RK3, RValues, RC1, RC2, RC3, RC4) ->
+            {RV1, RV2, RV3} = RValues,
+            MovedUp = [RK1 | RV1],
+            MovedC = RC1,
+            UpdatedNode = ?INTERNAL2(RemainingK, RParentK, [RemainingV | RParentV], C1, C2, MovedC),
+            UpdatedRight = ?INTERNAL2(RK2, RK3, [RV2 | RV3], RC2, RC3, RC4),
+            ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedNode, UpdatedRight);
+        %
+        %
+        ?INTERNAL2(RK1, RK2, RValues, RC1, RC2, RC3) ->
+            % Merge with right 
+            [RV1 | RV2] = RValues,
+            MergedNode = ?INTERNAL4(
+                            RemainingK, RParentK, RK1, RK2,
+                            {RemainingV, RParentV, RV1, RV2},
+                            C1, C2, RC1, RC2, RC3
+                           ),
+            ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode)
     end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Rebalance Internal 1
+%% ------------------------------------------------------------------
+
+rebalance_internal1_child1(K1, V1, Result, C2) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC1) ->
+            UpdatedRoot = ?INTERNAL1(K1, V1, UpdatedC1, C2),
+            ?TAKEN(TakenPair, UpdatedRoot);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedRoot = ?INTERNAL1(MovedK, MovedV, UpdatedC1, UpdatedC2),
+            ?TAKEN(TakenPair, UpdatedRoot);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedRoot = ?INTERNAL1(MovedK, MovedV, UpdatedC1, UpdatedC2),
+            ?TAKEN(TakenPair, UpdatedRoot);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+            % Height reduction
+            ?TAKEN(TakenPair, MergedC1C2);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+            % Height reduction
+            ?TAKEN(TakenPair, MergedC1C2)
+    end.
+
+rebalance_internal1_child2(K1, V1, C1, Result) ->
+    case Result of
+        ?TAKEN(TakenPair, UpdatedC2) ->
+            UpdatedRoot = ?INTERNAL1(K1, V1, C1, UpdatedC2),
+            ?TAKEN(TakenPair, UpdatedRoot);
+        %
+        ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedRoot = ?INTERNAL1(MovedK, MovedV, UpdatedC1, UpdatedC2),
+            ?TAKEN(TakenPair, UpdatedRoot);
+        %
+        ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedC1, UpdatedC2) ->
+            [MovedK | MovedV] = MovedUp,
+            UpdatedRoot = ?INTERNAL1(MovedK, MovedV, UpdatedC1, UpdatedC2),
+            ?TAKEN(TakenPair, UpdatedRoot);
+        %
+        ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedC1C2) ->
+            % Height reduction
+            ?TAKEN(TakenPair, MergedC1C2);
+        %
+        ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedC1C2) ->
+            % Height reduction
+            ?TAKEN(TakenPair, MergedC1C2)
+    end.
+
+%%%%%%%%%%%%%%
+
+%deletion_left_sibling(Parent, Position) ->
+%    case Parent of
+%        ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
+%            Left = C2,
+%            K = K2,
+%            V = tl(Values),
+%            {Left, K, V};
+%        %
+%        ?INTERNAL3(_, _, K3, Values, _, _, C3, _) ->
+%            Left = C3,
+%            K = K3,
+%            V = element(3, Values),
+%            {Left, K, V};
+%        %
+%        ?INTERNAL4(_, _, _, K4, Values, _, _, _, C4, _) ->
+%            Left = C4,
+%            K = K4,
+%            V = element(4, Values),
+%            {Left, K, V}
+%    end;
+%deletion_left_sibling(Parent, leftmost) ->
+%    case Parent of
+%        ?INTERNAL2(_, K2, Values, _, C2, _) ->
+%            Left = C2,
+%            K = K2,
+%            V = tl(Values),
+%            {Left, K, V};
+%        %
+%        ?INTERNAL3(_, _, K3, Values, _, _, C3, _) ->
+%            Left = C3,
+%            K = K3,
+%            V = element(3, Values),
+%            {Left, K, V};
+%        %
+%        ?INTERNAL4(_, _, _, K4, Values, _, _, _, C4, _) ->
+%            Left = C4,
+%            K = K4,
+%            V = element(4, Values),
+%            {Left, K, V}
+%    end;
+%
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Rebalance Leaf 2
+%% ------------------------------------------------------------------
+
+rebalance_leaf2(TakenPair, ?DHELPER(Left, LParentK, LParentV, Right, RParentK, RParentV), RemainingK, RemainingV) ->
+    if
+        Left =:= root_level orelse Right =:= root_level ->
+            ?TAKEN(TakenPair, ?LEAF1(RemainingK, RemainingV));
+        %
+        Left =/= none ->
+            if
+                Right =/= none ->
+                    rebalance_leaf2_from_either_sibling(TakenPair, 
+                                                        Left, LParentK, LParentV,
+                                                        Right, RParentK, RParentV,
+                                                        RemainingK, RemainingV);
+                true ->
+                    rebalance_leaf2_from_left_sibling(TakenPair, Left, LParentK, LParentV, RemainingK, RemainingV)
+            end;
+        %
+        true ->
+            rebalance_leaf2_from_right_sibling(TakenPair, Right, RParentK, RParentV, RemainingK, RemainingV)
+    end.
+
+rebalance_leaf2_from_left_sibling(TakenPair, Left, ParentK, ParentV, RemainingK, RemainingV) ->
+    case Left of
+        ?LEAF4(LK1, LK2, LK3, LK4, LV1, LV2, LV3, LV4) ->
+            MovedUp = [LK4 | LV4],
+            UpdatedLeft = ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3),
+            UpdatedNode = ?LEAF2(ParentK, RemainingK,
+                                 ParentV, RemainingV),
+            ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedNode);
+        %
+        ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3) ->
+            MovedUp = [LK3 | LV3],
+            UpdatedLeft = ?LEAF2(LK1, LK2, LV1, LV2),
+            UpdatedNode = ?LEAF2(ParentK, RemainingK,
+                                  ParentV, RemainingV),
+            ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedNode);
+        %
+        ?LEAF2(LK1, LK2, LV1, LV2) ->
+            MergedNode = ?LEAF4(LK1, LK2, ParentK, RemainingK,
+                                LV1, LV2, ParentV, RemainingV),
+            ?TAKE_MERGED_FROM_LEFT(TakenPair, MergedNode)
+    end.
+
+rebalance_leaf2_from_right_sibling(TakenPair, Right, ParentK, ParentV, RemainingK, RemainingV) ->
+    case Right of
+        ?LEAF4(RK1, RK2, RK3, RK4, RV1, RV2, RV3, RV4) ->
+            MovedUp = [RK1 | RV1],
+            UpdatedLeft = ?LEAF2(RemainingK, ParentK, RemainingV, ParentV),
+            UpdatedRight = ?LEAF3(RK2, RK3, RK4, RV2, RV3, RV4),
+            ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
+        %
+        ?LEAF3(RK1, RK2, RK3, RV1, RV2, RV3) ->
+            MovedUp = [RK1 | RV1],
+            UpdatedLeft = ?LEAF2(RemainingK, ParentK, RemainingV, ParentV),
+            UpdatedRight = ?LEAF2(RK2, RK3, RV2, RV3),
+            ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
+        %
+        ?LEAF2(RK1, RK2, RV1, RV2) ->
+            MergedNode = ?LEAF4(
+                            RemainingK, ParentK, RK1, RK2,
+                            RemainingV, ParentV, RV1, RV2
+                           ),
+            ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode)
+    end.
+
+rebalance_leaf2_from_either_sibling(TakenPair, Left, LParentK, LParentV, 
+                                    Right, RParentK, RParentV,
+                                    RemainingK, RemainingV) ->
+    case Right of
+        ?LEAF4(RK1, RK2, RK3, RK4, RV1, RV2, RV3, RV4) ->
+            MovedUp = [RK1 | RV1],
+            UpdatedLeft = ?LEAF2(RemainingK, LParentK, RemainingV, LParentV),
+            UpdatedRight = ?LEAF3(RK2, RK3, RK4, RV2, RV3, RV4),
+            ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
+        %
+        ?LEAF3(RK1, RK2, RK3, RV1, RV2, RV3) ->
+            MovedUp = [RK1 | RV1],
+            UpdatedLeft = ?LEAF2(RemainingK, LParentK, RemainingV, LParentV),
+            UpdatedRight = ?LEAF2(RK2, RK3, RV2, RV3),
+            ?TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight);
+        %
+        ?LEAF2(RK1, RK2, RV1, RV2) ->
+            case Left of
+                ?LEAF4(LK1, LK2, LK3, LK4, LV1, LV2, LV3, LV4) ->
+                    MovedUp = [LK4 | LV4],
+                    UpdatedLeft = ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3),
+                    UpdatedNode = ?LEAF2(RParentK, RemainingK,
+                                         RParentV, RemainingV),
+                    ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedNode);
+                %
+                ?LEAF3(LK1, LK2, LK3, LV1, LV2, LV3) ->
+                    MovedUp = [LK3 | LV3],
+                    UpdatedLeft = ?LEAF2(LK1, LK2, LV1, LV2),
+                    UpdatedNode = ?LEAF2(RParentK, RemainingK,
+                                         RParentV, RemainingV),
+                    ?TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedNode);
+                %
+                _ ->
+                    % Merge with right since we already unpacked it
+                    MergedNode = ?LEAF4(
+                                    RemainingK, LParentK, RK1, RK2,
+                                    RemainingV, LParentV, RV1, RV2
+                                   ),
+                    ?TAKE_MERGED_FROM_RIGHT(TakenPair, MergedNode)
+            end
+    end.
+
