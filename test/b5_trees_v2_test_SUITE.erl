@@ -1087,6 +1087,7 @@ test_take_all_largest(Tree, []) ->
 test_take_all(Tree, ExistentKvs, NonExistentKeys) ->
     ?assertEqual(length(ExistentKvs), b5_trees_v2:size(Tree)),
     ?assertEqual(ExistentKvs =:= [], b5_trees_v2:is_empty(Tree)),
+    ?assertEqual(lists:keysort(1, ExistentKvs), b5_trees_v2:to_list(Tree)),
 
     NonExistentSample = b5_trees_v2_test_helpers:take_random(NonExistentKeys, 20),
     lists:foreach(
@@ -1111,6 +1112,7 @@ test_take_all(Tree, ExistentKvs, NonExistentKeys) ->
 test_take_any_impl(Tree, ExistentKvs, NonExistentKeys) ->
     ?assertEqual(length(ExistentKvs), b5_trees_v2:size(Tree)),
     ?assertEqual(ExistentKvs =:= [], b5_trees_v2:is_empty(Tree)),
+    ?assertEqual(lists:keysort(1, ExistentKvs), b5_trees_v2:to_list(Tree)),
 
     NonExistentSample = b5_trees_v2_test_helpers:take_random(NonExistentKeys, 20),
     lists:foreach(
