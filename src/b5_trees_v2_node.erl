@@ -117,17 +117,17 @@
 % 3 elements
 -define(TAKE_MERGED_WITH_RIGHT(TakenPair, MergedNode), {merged_with_right, TakenPair, MergedNode}).
 
-% 3 elements
--define(TAKE_MERGED_WITH_LEFT(TakenPair, MergedNode), {merged_with_left, TakenPair, MergedNode}).
+% 2 elements
+-define(TAKE_MERGED_WITH_LEFT(TakenPair, MergedNode), {TakenPair, MergedNode}).
 
 % 5 elements
 -define(TAKE_ROTATED_FROM_LEFT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight),
     {rotated_from_left, MovedUp, TakenPair, UpdatedLeft, UpdatedRight}
 ).
 
-% 5 elements
+% 4 elements
 -define(TAKE_ROTATED_FROM_RIGHT(MovedUp, TakenPair, UpdatedLeft, UpdatedRight),
-    {rotated_from_right, MovedUp, TakenPair, UpdatedLeft, UpdatedRight}
+    {MovedUp, TakenPair, UpdatedLeft, UpdatedRight}
 ).
 
 %%%
