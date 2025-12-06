@@ -3233,25 +3233,30 @@ take_largest_recur(Node, ?DLARGEST) ->
             take_largest_leaf2(K1, K2, V1, V2, ?DLARGEST)
     end.
 
+-compile({inline, root_take_largest_internal1/4}).
 root_take_largest_internal1(K1, V1, C1, C2) ->
     Result = take_largest_recur(C2, ?DLARGEST(C1, K1, V1)),
     rebalance_internal1_child2(K1, V1, C1, Result).
 
+-compile({inline, take_largest_internal2/9}).
 take_largest_internal2(K1, K2, Values, C1, C2, C3, ?DLARGEST(Left, LParentK, LParentV)) ->
     V2 = tl(Values),
     Result = take_largest_recur(C3, ?DLARGEST(C2, K2, V2)),
     rebalance_internal2_child3(K1, K2, Values, C1, C2, Result, ?DRIGHTMOST(Left, LParentK, LParentV)).
 
+-compile({inline, take_largest_internal3/8}).
 take_largest_internal3(K1, K2, K3, Values, C1, C2, C3, C4) ->
     V3 = element(3, Values),
     Result = take_largest_recur(C4, ?DLARGEST(C3, K3, V3)),
     rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result).
 
+-compile({inline, take_largest_internal4/10}).
 take_largest_internal4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     V4 = element(4, Values),
     Result = take_largest_recur(C5, ?DLARGEST(C4, K4, V4)),
     rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, Result).
 
+-compile({inline, take_largest_leaf2/7}).
 take_largest_leaf2(K1, K2, V1, V2, ?DLARGEST(Left, LParentK, LParentV)) ->
     TakenPair = [K2 | V2],
     rebalance_leaf2(TakenPair, ?DRIGHTMOST(Left, LParentK, LParentV), K1, V1).
@@ -3306,26 +3311,31 @@ take_smallest_recur(Node, ?DSMALLEST) ->
             take_smallest_leaf2(K1, K2, V1, V2, ?DSMALLEST)
     end.
 
+-compile({inline, root_take_smallest_internal1/4}).
 root_take_smallest_internal1(K1, V1, C1, C2) ->
     Result = take_smallest_recur(C1, ?DSMALLEST(C2, K1, V1)),
     rebalance_internal1_child1(K1, V1, Result, C2).
 
+-compile({inline, take_smallest_internal2/9}).
 take_smallest_internal2(K1, K2, Values, C1, C2, C3, ?DSMALLEST(Right, ParentK, ParentV)) ->
     V1 = hd(Values),
     Result = take_smallest_recur(C1, ?DSMALLEST(C2, K1, V1)),
     rebalance_internal2_child1(K1, K2, Values, Result, C2, C3,
                                ?DLEFTMOST(Right, ParentK, ParentV)).
 
+-compile({inline, take_smallest_internal3/8}).
 take_smallest_internal3(K1, K2, K3, Values, C1, C2, C3, C4) ->
     V1 = element(1, Values),
     Result = take_smallest_recur(C1, ?DSMALLEST(C2, K1, V1)),
     rebalance_internal3_child1(K1, K2, K3, Values, Result, C2, C3, C4).
 
+-compile({inline, take_smallest_internal4/10}).
 take_smallest_internal4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     V1 = element(1, Values),
     Result = take_smallest_recur(C1, ?DSMALLEST(C2, K1, V1)),
     rebalance_internal4_child1(K1, K2, K3, K4, Values, Result, C2, C3, C4, C5).
 
+-compile({inline, take_smallest_leaf2/7}).
 take_smallest_leaf2(K1, K2, V1, V2, ?DSMALLEST(Right, ParentK, ParentV)) ->
     TakenPair = [K1 | V1],
     rebalance_leaf2(TakenPair, ?DLEFTMOST(Right, ParentK, ParentV), K2, V2).
@@ -3349,6 +3359,7 @@ root_take_key(Key, Root) ->
             take_key_recur(Key, Node, ?DHELPER(root_level, none, none, root_level, none, none))
     end.
 
+-compile({inline, take_key_recur/8}).
 take_key_recur(Key, Node, ?DHELPER) ->
     case Node of
         ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
@@ -3379,6 +3390,7 @@ take_key_recur(Key, Node, ?DHELPER) ->
 %% Internal Function Definitions: Node Taking - General - Internal 1
 %% ------------------------------------------------------------------
 
+-compile({inline, root_take_key_internal1/5}).
 root_take_key_internal1(Key, K1, V1, C1, C2) ->
     if
         Key < K1 ->
@@ -3393,6 +3405,7 @@ root_take_key_internal1(Key, K1, V1, C1, C2) ->
             root_take_key_internal1_key1(K1, V1, C1, C2)
     end.
 
+-compile({inline, root_take_key_internal1_key1/4}).
 root_take_key_internal1_key1(K1, V1, C1, C2) ->
     TakenPair = [K1 | V1],
 
@@ -3412,6 +3425,7 @@ root_take_key_internal1_key1(K1, V1, C1, C2) ->
             ?check_take(?TAKEN(TakenPair, UpdatedRoot))
     end.
 
+-compile({inline, root_take_key_internal1_key1_rebalance_internal/6}).
 root_take_key_internal1_key1_rebalance_internal(ReplacementPair, C1, RK1, RV1, RC1, RC2) ->
     [ReplacementK | ReplacementV] = ReplacementPair,
 
@@ -3473,6 +3487,7 @@ root_take_key_internal1_key1_rebalance_internal(ReplacementPair, C1, RK1, RV1, R
             ?check_node(?INTERNAL1(MovedUpK, MovedUpV, UpdatedC1, UpdatedC2))
     end.
 
+-compile({inline, root_take_key_internal1_key1_rebalance_leaf/4}).
 root_take_key_internal1_key1_rebalance_leaf(ReplacementPair, C1, RK1, RV1) ->
     [ReplacementK | ReplacementV] = ReplacementPair,
 
@@ -3511,6 +3526,7 @@ root_take_key_internal1_key1_rebalance_leaf(ReplacementPair, C1, RK1, RV1) ->
 %% Internal Function Definitions: Node Taking - General - Internal 2
 %% ------------------------------------------------------------------
 
+-compile({inline, take_key_internal2/13}).
 take_key_internal2(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
     if
         Key > K1 ->
@@ -3532,16 +3548,19 @@ take_key_internal2(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
 
 %%%
 
+-compile({inline, take_key_internal2_child1/13}).
 take_key_internal2_child1(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
     V1 = hd(Values),
     Result = take_key_recur(Key, C1, ?DLEFTMOST(C2, K1, V1)),
     rebalance_internal2_child1(K1, K2, Values, Result, C2, C3, ?DHELPER).
 
+-compile({inline, take_key_internal2_child2/13}).
 take_key_internal2_child2(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
     [V1 | V2] = Values,
     Result = take_key_recur(Key, C2, ?DHELPER(C1, K1, V1, C3, K2, V2)),
     rebalance_internal2_child2(K1, K2, Values, C1, Result, C3, ?DHELPER).
 
+-compile({inline, take_key_internal2_child3/13}).
 take_key_internal2_child3(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
     V2 = tl(Values),
     Result = take_key_recur(Key, C3, ?DRIGHTMOST(C2, K2, V2)),
@@ -3549,6 +3568,7 @@ take_key_internal2_child3(Key, K1, K2, Values, C1, C2, C3, ?DHELPER) ->
 
 %%%
 
+-compile({inline, take_key_internal2_key1/12}).
 take_key_internal2_key1(K1, K2, Values, C1, C2, C3, ?DHELPER) ->
     [V1 | V2] = Values,
     TakenPair = [K1 | V1],
@@ -3575,6 +3595,7 @@ take_key_internal2_key1(K1, K2, Values, C1, C2, C3, ?DHELPER) ->
                                        C1, MergededC2C3)
     end.
 
+-compile({inline, take_key_internal2_key2/12}).
 take_key_internal2_key2(K1, K2, Values, C1, C2, C3, ?DHELPER) ->
     [V1 | V2] = Values,
     TakenPair = [K2 | V2],
@@ -3605,6 +3626,7 @@ take_key_internal2_key2(K1, K2, Values, C1, C2, C3, ?DHELPER) ->
 %% Internal Function Definitions: Node Taking - General - Internal 3
 %% ------------------------------------------------------------------
 
+-compile({inline, take_key_internal3/9}).
 take_key_internal3(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
     if
         Key < K2 ->
@@ -3633,33 +3655,33 @@ take_key_internal3(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
 
 %%%
 
+-compile({inline, take_key_internal3_child1/9}).
 take_key_internal3_child1(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
     V1 = element(1, Values),
     Result = take_key_recur(Key, C1, ?DLEFTMOST(C2, K1, V1)),
     rebalance_internal3_child1(K1, K2, K3, Values, Result, C2, C3, C4).
 
+-compile({inline, take_key_internal3_child2/9}).
 take_key_internal3_child2(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
     {V1, V2, _} = Values,
     Result = take_key_recur(Key, C2, ?DHELPER(C1, K1, V1, C3, K2, V2)),
     rebalance_internal3_child2(K1, K2, K3, Values, C1, Result, C3, C4).
 
+-compile({inline, take_key_internal3_child3/9}).
 take_key_internal3_child3(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
     {_, V2, V3} = Values,
     Result = take_key_recur(Key, C3, ?DHELPER(C2, K2, V2, C4, K3, V3)),
     rebalance_internal3_child3(K1, K2, K3, Values, C1, C2, Result, C4).
 
+-compile({inline, take_key_internal3_child4/9}).
 take_key_internal3_child4(Key, K1, K2, K3, Values, C1, C2, C3, C4) ->
     V3 = element(3, Values),
     Result = take_key_recur(Key, C4, ?DRIGHTMOST(C3, K3, V3)),
     rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result).
 
-%    V3 = element(3, Values),
-%    DescendentHelper = ?DELETION_HELPER_RIGHTMOST(C3, K3, V3),
-%    Result = take_key_recur(C4, DescendentHelper),
-%    rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result).
-
 %%%
 
+-compile({inline, take_key_internal3_key1/8}).
 take_key_internal3_key1(K1, K2, K3, Values, C1, C2, C3, C4) ->
     {V1, V2, V3} = Values,
     TakenPair = [K1 | V1],
@@ -3683,6 +3705,7 @@ take_key_internal3_key1(K1, K2, K3, Values, C1, C2, C3, C4) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, take_key_internal3_key2/8}).
 take_key_internal3_key2(K1, K2, K3, Values, C1, C2, C3, C4) ->
     {V1, V2, V3} = Values,
     TakenPair = [K2 | V2],
@@ -3706,6 +3729,7 @@ take_key_internal3_key2(K1, K2, K3, Values, C1, C2, C3, C4) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, take_key_internal3_key3/8}).
 take_key_internal3_key3(K1, K2, K3, Values, C1, C2, C3, C4) ->
     {V1, V2, V3} = Values,
     TakenPair = [K3 | V3],
@@ -3733,6 +3757,7 @@ take_key_internal3_key3(K1, K2, K3, Values, C1, C2, C3, C4) ->
 %% Internal Function Definitions: Node Taking - General - Internal 4
 %% ------------------------------------------------------------------
 
+-compile({inline, take_key_internal4/11}).
 take_key_internal4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     if
         Key > K2 ->
@@ -3770,26 +3795,31 @@ take_key_internal4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
 
 %%%
 
+-compile({inline, take_key_internal4_child1/11}).
 take_key_internal4_child1(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     V1 = element(1, Values),
     Result = take_key_recur(Key, C1, ?DLEFTMOST(C2, K1, V1)),
     rebalance_internal4_child1(K1, K2, K3, K4, Values, Result, C2, C3, C4, C5).
 
+-compile({inline, take_key_internal4_child2/11}).
 take_key_internal4_child2(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     {V1, V2, _, _} = Values,
     Result = take_key_recur(Key, C2, ?DHELPER(C1, K1, V1, C3, K2, V2)),
     rebalance_internal4_child2(K1, K2, K3, K4, Values, C1, Result, C3, C4, C5).
 
+-compile({inline, take_key_internal4_child3/11}).
 take_key_internal4_child3(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     {_, V2, V3, _} = Values,
     Result = take_key_recur(Key, C3, ?DHELPER(C2, K2, V2, C4, K3, V3)),
     rebalance_internal4_child3(K1, K2, K3, K4, Values, C1, C2, Result, C4, C5).
 
+-compile({inline, take_key_internal4_child4/11}).
 take_key_internal4_child4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     {_, _, V3, V4} = Values,
     Result = take_key_recur(Key, C4, ?DHELPER(C3, K3, V3, C5, K4, V4)),
     rebalance_internal4_child4(K1, K2, K3, K4, Values, C1, C2, C3, Result, C5).
 
+-compile({inline, take_key_internal4_child5/11}).
 take_key_internal4_child5(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     V4 = element(4, Values),
     Result = take_key_recur(Key, C5, ?DRIGHTMOST(C4, K4, V4)),
@@ -3797,6 +3827,7 @@ take_key_internal4_child5(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
 
 %%%
 
+-compile({inline, take_key_internal4_key1/10}).
 take_key_internal4_key1(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     {V1, V2, V3, V4} = Values,
     TakenPair = [K1 | V1],
@@ -3820,6 +3851,7 @@ take_key_internal4_key1(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, take_key_internal4_key2/10}).
 take_key_internal4_key2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     {V1, V2, V3, V4} = Values,
     TakenPair = [K2 | V2],
@@ -3843,6 +3875,7 @@ take_key_internal4_key2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, take_key_internal4_key3/10}).
 take_key_internal4_key3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     {V1, V2, V3, V4} = Values,
     TakenPair = [K3 | V3],
@@ -3866,6 +3899,7 @@ take_key_internal4_key3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, take_key_internal4_key4/10}).
 take_key_internal4_key4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     {V1, V2, V3, V4} = Values,
     TakenPair = [K4 | V4],
@@ -3893,6 +3927,7 @@ take_key_internal4_key4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
 %% Internal Function Definitions: Node Taking - General - Leaves
 %% ------------------------------------------------------------------
 
+-compile({inline, take_key_leaf4/9}).
 take_key_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4) ->
     if
         Key < K3 ->
@@ -3919,6 +3954,7 @@ take_key_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4) ->
             error_badkey(Key)
     end.
 
+-compile({inline, take_key_leaf3/7}).
 take_key_leaf3(Key, K1, K2, K3, V1, V2, V3) ->
     if
         Key < K2 ->
@@ -3942,6 +3978,7 @@ take_key_leaf3(Key, K1, K2, K3, V1, V2, V3) ->
             ?TAKEN(TakenPair, ?LEAF2(K1, K3, V1, V3))
     end.
 
+-compile({inline, take_key_leaf2/11}).
 take_key_leaf2(Key, K1, K2, V1, V2, ?DHELPER) ->
     if
         Key == K1 ->
@@ -3956,6 +3993,7 @@ take_key_leaf2(Key, K1, K2, V1, V2, ?DHELPER) ->
             error_badkey(Key)
     end.
 
+-compile({inline, root_take_key_leaf1/3}).
 root_take_key_leaf1(Key, K1, V1) ->
     if
         Key == K1 ->
@@ -3969,6 +4007,7 @@ root_take_key_leaf1(Key, K1, V1) ->
 %% Internal Function Definitions: Rebalance Internal 4
 %% ------------------------------------------------------------------
 
+-compile({inline, rebalance_internal4_child1/10}).
 rebalance_internal4_child1(K1, K2, K3, K4, Values, Result, C2, C3, C4, C5) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC1) ->
@@ -3987,6 +4026,7 @@ rebalance_internal4_child1(K1, K2, K3, K4, Values, Result, C2, C3, C4, C5) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, rebalance_internal4_child2/10}).
 rebalance_internal4_child2(K1, K2, K3, K4, Values, C1, Result, C3, C4, C5) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC2) ->
@@ -4016,6 +4056,7 @@ rebalance_internal4_child2(K1, K2, K3, K4, Values, C1, Result, C3, C4, C5) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, rebalance_internal4_child3/10}).
 rebalance_internal4_child3(K1, K2, K3, K4, Values, C1, C2, Result, C4, C5) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC3) ->
@@ -4045,6 +4086,7 @@ rebalance_internal4_child3(K1, K2, K3, K4, Values, C1, C2, Result, C4, C5) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, rebalance_internal4_child4/10}).
 rebalance_internal4_child4(K1, K2, K3, K4, Values, C1, C2, C3, Result, C5) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC4) ->
@@ -4074,6 +4116,7 @@ rebalance_internal4_child4(K1, K2, K3, K4, Values, C1, C2, C3, Result, C5) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, rebalance_internal4_child5/10}).
 rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, Result) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC5) ->
@@ -4096,6 +4139,7 @@ rebalance_internal4_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, Result) ->
 %% Internal Function Definitions: Rebalance Internal 3
 %% ------------------------------------------------------------------
 
+-compile({inline, rebalance_internal3_child1/8}).
 rebalance_internal3_child1(K1, K2, K3, Values, Result, C2, C3, C4) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC1) ->
@@ -4114,6 +4158,7 @@ rebalance_internal3_child1(K1, K2, K3, Values, Result, C2, C3, C4) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, rebalance_internal3_child2/8}).
 rebalance_internal3_child2(K1, K2, K3, Values, C1, Result, C3, C4) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC2) ->
@@ -4143,6 +4188,7 @@ rebalance_internal3_child2(K1, K2, K3, Values, C1, Result, C3, C4) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, rebalance_internal3_child3/8}).
 rebalance_internal3_child3(K1, K2, K3, Values, C1, C2, Result, C4) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC3) ->
@@ -4172,6 +4218,7 @@ rebalance_internal3_child3(K1, K2, K3, Values, C1, C2, Result, C4) ->
             ?check_take(?TAKEN(TakenPair, UpdatedNode))
     end.
 
+-compile({inline, rebalance_internal3_child4/8}).
 rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC4) ->
@@ -4194,6 +4241,7 @@ rebalance_internal3_child4(K1, K2, K3, Values, C1, C2, C3, Result) ->
 %% Internal Function Definitions: Rebalance Internal 2
 %% ------------------------------------------------------------------
 
+-compile({inline, rebalance_internal2_child1/12}).
 rebalance_internal2_child1(K1, K2, Values, Result, C2, C3, ?DHELPER) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC1) ->
@@ -4216,6 +4264,7 @@ rebalance_internal2_child1(K1, K2, Values, Result, C2, C3, ?DHELPER) ->
                                        MergedC1C2, C3)
     end.
 
+-compile({inline, rebalance_internal2_child2/12}).
 rebalance_internal2_child2(K1, K2, Values, C1, Result, C3, ?DHELPER) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC2) ->
@@ -4253,6 +4302,7 @@ rebalance_internal2_child2(K1, K2, Values, C1, Result, C3, ?DHELPER) ->
                                        C1, MergedC2C3)
     end.
 
+-compile({inline, rebalance_internal2_child3/12}).
 rebalance_internal2_child3(K1, K2, Values, C1, C2, Result, ?DHELPER) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC3) ->
@@ -4279,6 +4329,7 @@ rebalance_internal2_child3(K1, K2, Values, C1, C2, Result, ?DHELPER) ->
 %% Internal Function Definitions: Rebalance Internal 2 - Merge
 %% ------------------------------------------------------------------
 
+-compile({inline, rebalance_internal2_merged/11}).
 rebalance_internal2_merged(TakenPair,
                            ?DHELPER(Left, LParentK, LParentV, Right, RParentK, RParentV),
                            RemainingK, RemainingV, C1, C2) ->
@@ -4308,6 +4359,7 @@ rebalance_internal2_merged(TakenPair,
               RemainingK, RemainingV, C1, C2)
     end.
 
+-compile({inline, rebalance_internal2_merged_mid/11}).
 rebalance_internal2_merged_mid(
   TakenPair,
   Left, LParentK, LParentV,
@@ -4365,6 +4417,7 @@ rebalance_internal2_merged_mid(
             end
     end.
 
+-compile({inline, rebalance_internal2_merged_rightmost/8}).
 rebalance_internal2_merged_rightmost(TakenPair,
                                      Left, LParentK, LParentV,
                                      RemainingK, RemainingV, C1, C2) ->
@@ -4398,6 +4451,7 @@ rebalance_internal2_merged_rightmost(TakenPair,
             ?check_take(?TAKE_MERGED_WITH_LEFT(TakenPair, MergedNode))
     end.
 
+-compile({inline, rebalance_internal2_merged_leftmost/8}).
 rebalance_internal2_merged_leftmost(TakenPair,
                                     Right, RParentK, RParentV,
                                     RemainingK, RemainingV, C1, C2) ->
@@ -4435,6 +4489,7 @@ rebalance_internal2_merged_leftmost(TakenPair,
 %% Internal Function Definitions: Rebalance Internal 1
 %% ------------------------------------------------------------------
 
+-compile({inline, rebalance_internal1_child1/4}).
 rebalance_internal1_child1(K1, V1, Result, C2) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC1) ->
@@ -4460,6 +4515,7 @@ rebalance_internal1_child1(K1, V1, Result, C2) ->
             ?check_take(?TAKEN(TakenPair, MergedC1C2))
     end.
 
+-compile({inline, rebalance_internal1_child2/4}).
 rebalance_internal1_child2(K1, V1, C1, Result) ->
     case Result of
         ?TAKEN(TakenPair, UpdatedC2) ->
@@ -4489,6 +4545,7 @@ rebalance_internal1_child2(K1, V1, C1, Result) ->
 %% Internal Function Definitions: Rebalance Leaf 2
 %% ------------------------------------------------------------------
 
+-compile({inline, rebalance_leaf2/9}).
 rebalance_leaf2(TakenPair, ?DHELPER(Left, LParentK, LParentV, Right, RParentK, RParentV), RemainingK, RemainingV) ->
     if
         Left =:= root_level orelse Right =:= root_level ->
@@ -4509,6 +4566,7 @@ rebalance_leaf2(TakenPair, ?DHELPER(Left, LParentK, LParentV, Right, RParentK, R
             rebalance_leaf2_from_right_sibling(TakenPair, Right, RParentK, RParentV, RemainingK, RemainingV)
     end.
 
+-compile({inline, rebalance_leaf2_from_left_sibling/6}).
 rebalance_leaf2_from_left_sibling(TakenPair, Left, ParentK, ParentV, RemainingK, RemainingV) ->
     case Left of
         ?LEAF4(LK1, LK2, LK3, LK4, LV1, LV2, LV3, LV4) ->
@@ -4531,6 +4589,7 @@ rebalance_leaf2_from_left_sibling(TakenPair, Left, ParentK, ParentV, RemainingK,
             ?check_take(?TAKE_MERGED_WITH_LEFT(TakenPair, MergedNode))
     end.
 
+-compile({inline, rebalance_leaf2_from_right_sibling/6}).
 rebalance_leaf2_from_right_sibling(TakenPair, Right, ParentK, ParentV, RemainingK, RemainingV) ->
     case Right of
         ?LEAF4(RK1, RK2, RK3, RK4, RV1, RV2, RV3, RV4) ->
@@ -4553,6 +4612,7 @@ rebalance_leaf2_from_right_sibling(TakenPair, Right, ParentK, ParentV, Remaining
             ?check_take(?TAKE_MERGED_WITH_RIGHT(TakenPair, MergedNode))
     end.
 
+-compile({inline, rebalance_leaf2_from_either_sibling/9}).
 rebalance_leaf2_from_either_sibling(TakenPair, Left, LParentK, LParentV, 
                                     Right, RParentK, RParentV,
                                     RemainingK, RemainingV) ->
@@ -4599,6 +4659,7 @@ rebalance_leaf2_from_either_sibling(TakenPair, Left, LParentK, LParentV,
 %% Unit Tests
 %% ------------------------------------------------------------------
 
+-ifdef(TEST).
 rebalance_leaf2_22_test() ->
     Left = ?LEAF2(left_k1, left_k2, left_v1, left_v2),
     Right = ?LEAF2(right_k1, right_k2, right_v1, right_v2),
@@ -4849,6 +4910,7 @@ rebalance_leaf_44_test() ->
              right_v2, right_v3, right_v4
             )
         )).
+-endif.
 
 %%%%%%%%%%%%%%%%
 
