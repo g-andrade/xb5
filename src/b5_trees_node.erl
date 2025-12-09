@@ -99,6 +99,36 @@
 %% * INTERNAL2 stores an improper list
 %%
 
+%%%%%%%%
+
+% 5 elements; cannot clash with any node type.
+-define(SPLIT(SplitK, SplitV, SplitL, SplitR), {split, SplitK, SplitV, SplitL, SplitR}).
+
+%%%%%%%%%
+
+% Any of the following cannot clash with either the largest leaf or internal
+% nodes, since those are a merged node.
+
+% list
+-define(MID_MERGED(MergedNode), [MergedNode]).
+-define(MID_MERGED_MATCH(MergedNode), [MergedNode | _]).
+
+% 4 elements
+-define(MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight),
+    {UpK, UpVal, UpdatedNode, UpdatedRight}
+).
+% 5 elements
+-define(MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedNode, UpdatedRight),
+    {from_left, UpK, UpVal, UpdatedNode, UpdatedRight}
+).
+
+%%%
+
+% 4 elements
+-define(ROTATED(UpK, UpVal, UpdatedLeft, UpdatedRight), {UpK, UpVal, UpdatedLeft, UpdatedRight}).
+
+-define(MERGED(MergedNode), MergedNode).
+
 %% ------------------------------------------------------------------
 %% Type Definitions
 %% ------------------------------------------------------------------
@@ -207,7 +237,6 @@
 
 %%%%%%%%%%%
 
-% Dialyzer got too smart when it reasoned this, but it is indeed true.
 -type node_after_deletion(Key, Value) ::
     node_internal3(Key, Value)
     | node_internal2(Key, Value)
@@ -246,7 +275,7 @@
     Key, Value, node_leaf2(Key, Value), node_leaf2(Key, Value)
 ).
 
--type split_result(Key, Value, SplitL, SplitR) :: {split, Key, Value, SplitL, SplitR}.
+-type split_result(Key, Value, SplitL, SplitR) :: ?SPLIT(Key, Value, SplitL, SplitR).
 
 %%%%%%%%%%%
 
@@ -260,6 +289,22 @@
 -type reverse_iter(Key, Value) :: #b5_trees_v2_reverse_iter{steps :: [iterator_step(Key, Value)]}.
 
 -type iterator_step(Key, Value) :: {Key, Value} | {Key, Value, NextChild :: deep_node(Key, Value)}.
+
+%%%%%%%%%%%
+
+-type take_result(Key, Value) :: nonempty_improper_list(
+    taken_pair(Key, Value),
+    t(Key, Value)
+).
+-export_type([take_result/2]).
+
+-type taken_pair(Key, Value) :: nonempty_improper_list(Key, Value).
+-export_type([taken_pair/2]).
+
+-type take_result_before_rebalance(Key, Value) :: nonempty_improper_list(
+    taken_pair(Key, Value),
+    node_after_deletion(Key, Value) | unbalanced_node(Key, Value)
+).
 
 %%%%%%%%%%%
 
@@ -336,7 +381,6 @@ get(Key, Node) ->
 %% The value can be evaluated eagerly or lazily based on the evaluation strategy.
 -spec insert(Key, insertion_value_eval(), insertion_value_wrap(Value), t(Key, Value)) ->
     t(Key, Value).
--dialyzer({no_underspecs, insert/4}).
 insert(Key, ValueEval, ValueWrap, ?INTERNAL1(K1, V1, C1, C2)) ->
     insert_internal1(Key, ValueEval, ValueWrap, K1, V1, C1, C2);
 insert(Key, ValueEval, ValueWrap, ?LEAF1(K1, V1)) ->
@@ -346,8 +390,9 @@ insert(Key, ValueEval, ValueWrap, ?LEAF0) ->
     ?LEAF1(Key, Value);
 insert(Key, ValueEval, ValueWrap, Root) ->
     case insert_recur(Key, ValueEval, ValueWrap, Root) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             ?INTERNAL1(SplitK, SplitV, SplitL, SplitR);
+        %
         UpdatedRoot ->
             UpdatedRoot
     end.
@@ -370,7 +415,6 @@ iterator_from(Key, Node, reversed) ->
 
 %% @doc Returns all keys in the tree node as an ordered list.
 -spec keys(t(Key, _)) -> [Key].
--dialyzer({no_underspecs, keys/1}).
 keys(?INTERNAL1(K1, _, C1, C2)) ->
     Acc2 = [K1 | keys_recur(C2, [])],
     keys_recur(C1, Acc2);
@@ -513,31 +557,26 @@ smallest(Node) ->
 %% @doc Removes and returns the value associated with the specified key.
 %% Fails with a `{badkey, Key}' exception if the key is not present.
 %% Returns `{Value, UpdatedNode}'.
--spec take(Key, t(Key, Value)) -> {Value, t(Key, Value)}.
+-spec take(Key, t(Key, Value)) -> take_result(Key, Value).
 take(Key, Node) ->
     root_take(Key, Node).
 
 %% @doc Removes and returns the largest key-value pair from the tree node.
 %% Fails with an `empty_tree' exception if the node is empty.
 %% Returns `{Key, Value, UpdatedNode}'.
--spec take_largest(t(Key, Value)) ->
-    {Key, Value, t(Key, Value)}.
-% -dialyzer({no_underspecs, take_largest/1}).
+-spec take_largest(t(Key, Value)) -> take_result(Key, Value).
 take_largest(Node) ->
     root_take_largest(Node).
 
 %% @doc Removes and returns the smallest key-value pair from the tree node.
 %% Fails with an `empty_tree' exception if the node is empty.
 %% Returns `{Key, Value, UpdatedNode}'.
--spec take_smallest(t(Key, Value)) ->
-    {Key, Value, t(Key, Value)}.
-% -dialyzer({no_underspecs, take_smallest/1}).
+-spec take_smallest(t(Key, Value)) -> take_result(Key, Value).
 take_smallest(Node) ->
     root_take_smallest(Node).
 
 %% @doc Converts the tree node into an ordered list of key-value tuples.
 -spec to_list(t(Key, Value)) -> [{Key, Value}].
--dialyzer({no_underspecs, to_list/1}).
 to_list(?INTERNAL1(K1, V1, C1, C2)) ->
     Acc2 = [{K1, V1} | to_list_recur(C2, [])],
     to_list_recur(C1, Acc2);
@@ -598,7 +637,6 @@ validate(ExpectedNrOfKeys, Root) ->
 %% @doc Returns all values in the tree node as an ordered list,
 %% sorted by their corresponding keys.
 -spec values(t(_, Value)) -> [Value].
--dialyzer({no_underspecs, values/1}).
 values(?INTERNAL1(_, V1, C1, C2)) ->
     Acc2 = [V1 | values_recur(C2, [])],
     values_recur(C1, Acc2);
@@ -894,7 +932,7 @@ insert_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, 
 -compile({inline, [insert_internal4_child1/13]}).
 insert_internal4_child1(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
             internal_split(
                 SplitK,
@@ -933,7 +971,7 @@ insert_internal4_child1(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C
 -compile({inline, [insert_internal4_child2/13]}).
 insert_internal4_child2(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
             internal_split(
                 K1,
@@ -972,7 +1010,7 @@ insert_internal4_child2(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C
 -compile({inline, [insert_internal4_child3/13]}).
 insert_internal4_child3(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
             internal_split(
                 K1,
@@ -1011,7 +1049,7 @@ insert_internal4_child3(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C
 -compile({inline, [insert_internal4_child4/13]}).
 insert_internal4_child4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     case insert_recur(Key, ValueEval, ValueWrap, C4) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
             internal_split(
                 K1,
@@ -1050,7 +1088,7 @@ insert_internal4_child4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C
 -compile({inline, [insert_internal4_child5/13]}).
 insert_internal4_child5(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     case insert_recur(Key, ValueEval, ValueWrap, C5) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             {V1, V2, V3, V4} = Values,
             internal_split(
                 K1,
@@ -1126,7 +1164,7 @@ insert_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) 
 -compile({inline, [insert_internal3_child1/11]}).
 insert_internal3_child1(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             {V1, V2, V3} = Values,
             ?INTERNAL4(
                 SplitK,
@@ -1148,7 +1186,7 @@ insert_internal3_child1(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C
 -compile({inline, [insert_internal3_child2/11]}).
 insert_internal3_child2(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             {V1, V2, V3} = Values,
             ?INTERNAL4(
                 K1,
@@ -1170,7 +1208,7 @@ insert_internal3_child2(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C
 -compile({inline, [insert_internal3_child3/11]}).
 insert_internal3_child3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             {V1, V2, V3} = Values,
             ?INTERNAL4(
                 K1,
@@ -1192,7 +1230,7 @@ insert_internal3_child3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C
 -compile({inline, [insert_internal3_child4/11]}).
 insert_internal3_child4(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4) ->
     case insert_recur(Key, ValueEval, ValueWrap, C4) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             {V1, V2, V3} = Values,
             ?INTERNAL4(
                 K1,
@@ -1236,7 +1274,7 @@ insert_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
 -compile({inline, [insert_internal2_child1/9]}).
 insert_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             [V1 | V2] = Values,
             ?INTERNAL3(
                 SplitK,
@@ -1255,7 +1293,7 @@ insert_internal2_child1(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) -
 -compile({inline, [insert_internal2_child2/9]}).
 insert_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             [V1 | V2] = Values,
             ?INTERNAL3(
                 K1,
@@ -1275,7 +1313,7 @@ insert_internal2_child2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) -
 -compile({inline, [insert_internal2_child3/9]}).
 insert_internal2_child3(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             [V1 | V2] = Values,
             ?INTERNAL3(
                 K1,
@@ -1308,7 +1346,7 @@ insert_internal1(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
 -compile({inline, [insert_internal1_child1/7]}).
 insert_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             ?INTERNAL2(
                 SplitK,
                 K1,
@@ -1329,7 +1367,7 @@ insert_internal1_child1(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
 -compile({inline, [insert_internal1_child2/7]}).
 insert_internal1_child2(Key, ValueEval, ValueWrap, K1, V1, C1, C2) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
+        ?SPLIT(SplitK, SplitV, SplitL, SplitR) ->
             ?INTERNAL2(
                 K1,
                 SplitK,
@@ -1604,7 +1642,7 @@ internal_split(K1, K2, K3, K4, K5, V1, V2, V3, V4, V5, C1, C2, C3, C4, C5, C6) -
     SplitV = V3,
     SplitL = ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3),
     SplitR = ?INTERNAL2(K4, K5, [V4 | V5], C4, C5, C6),
-    {split, SplitK, SplitV, SplitL, SplitR}.
+    ?SPLIT(SplitK, SplitV, SplitL, SplitR).
 
 -compile({inline, leaf_split/10}).
 -spec leaf_split(
@@ -1624,7 +1662,7 @@ leaf_split(K1, K2, K3, K4, K5, V1, V2, V3, V4, V5) ->
     SplitV = V3,
     SplitL = ?LEAF2(K1, K2, V1, V2),
     SplitR = ?LEAF2(K4, K5, V4, V5),
-    {split, SplitK, SplitV, SplitL, SplitR}.
+    ?SPLIT(SplitK, SplitV, SplitL, SplitR).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Node Update
@@ -2332,11 +2370,11 @@ delete_internal4_child5(K, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
 delete_internal4_key1(K2, K3, K4, PrevValues, C1, PrevC2, C3, C4, C5) ->
     [[ReplacementK | ReplacementV] | C2] = take_smallest_recur(PrevC2),
     K1 = ReplacementK,
+    V1 = ReplacementV,
+    {_, V2, V3, V4} = PrevValues,
 
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            {_, V2, V3, V4} = PrevValues,
-            V1 = ReplacementV,
             Result = rebalance_internal_from_either_sibling(
                 CK,
                 CV,
@@ -2356,8 +2394,6 @@ delete_internal4_key1(K2, K3, K4, PrevValues, C1, PrevC2, C3, C4, C5) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            {_, V2, V3, V4} = PrevValues,
-            V1 = ReplacementV,
             Result = rebalance_leaf_from_either_sibling(
                 CK,
                 CV,
@@ -2375,7 +2411,7 @@ delete_internal4_key1(K2, K3, K4, PrevValues, C1, PrevC2, C3, C4, C5) ->
         %
         %
         _ ->
-            Values = setelement(1, PrevValues, ReplacementV),
+            Values = {V1, V2, V3, V4},
             ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
     end.
 
@@ -2383,11 +2419,11 @@ delete_internal4_key1(K2, K3, K4, PrevValues, C1, PrevC2, C3, C4, C5) ->
 delete_internal4_key2(K1, K3, K4, PrevValues, C1, C2, PrevC3, C4, C5) ->
     [[ReplacementK | ReplacementV] | C3] = take_smallest_recur(PrevC3),
     K2 = ReplacementK,
+    V2 = ReplacementV,
+    {V1, _, V3, V4} = PrevValues,
 
     case C3 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            {V1, _, V3, V4} = PrevValues,
-            V2 = ReplacementV,
             Result = rebalance_internal_from_either_sibling(
                 CK,
                 CV,
@@ -2407,8 +2443,6 @@ delete_internal4_key2(K1, K3, K4, PrevValues, C1, C2, PrevC3, C4, C5) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            {V1, _, V3, V4} = PrevValues,
-            V2 = ReplacementV,
             Result = rebalance_leaf_from_either_sibling(
                 CK,
                 CV,
@@ -2426,7 +2460,7 @@ delete_internal4_key2(K1, K3, K4, PrevValues, C1, C2, PrevC3, C4, C5) ->
         %
         %
         _ ->
-            Values = setelement(2, PrevValues, ReplacementV),
+            Values = {V1, V2, V3, V4},
             ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
     end.
 
@@ -2434,11 +2468,11 @@ delete_internal4_key2(K1, K3, K4, PrevValues, C1, C2, PrevC3, C4, C5) ->
 delete_internal4_key3(K1, K2, K4, PrevValues, C1, C2, C3, PrevC4, C5) ->
     [[ReplacementK | ReplacementV] | C4] = take_smallest_recur(PrevC4),
     K3 = ReplacementK,
+    V3 = ReplacementV,
+    {V1, V2, _, V4} = PrevValues,
 
     case C4 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            {V1, V2, _, V4} = PrevValues,
-            V3 = ReplacementV,
             Result = rebalance_internal_from_either_sibling(
                 CK,
                 CV,
@@ -2458,8 +2492,6 @@ delete_internal4_key3(K1, K2, K4, PrevValues, C1, C2, C3, PrevC4, C5) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            {V1, V2, _, V4} = PrevValues,
-            V3 = ReplacementV,
             Result = rebalance_leaf_from_either_sibling(
                 CK,
                 CV,
@@ -2477,7 +2509,7 @@ delete_internal4_key3(K1, K2, K4, PrevValues, C1, C2, C3, PrevC4, C5) ->
         %
         %
         _ ->
-            Values = setelement(3, PrevValues, ReplacementV),
+            Values = {V1, V2, V3, V4},
             ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
     end.
 
@@ -2485,11 +2517,11 @@ delete_internal4_key3(K1, K2, K4, PrevValues, C1, C2, C3, PrevC4, C5) ->
 delete_internal4_key4(K1, K2, K3, PrevValues, C1, C2, C3, C4, PrevC5) ->
     [[ReplacementK | ReplacementV] | C5] = take_smallest_recur(PrevC5),
     K4 = ReplacementK,
+    V4 = ReplacementV,
+    {V1, V2, V3, _} = PrevValues,
 
     case C5 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            {V1, V2, V3, _} = PrevValues,
-            V4 = ReplacementV,
             Result = rebalance_internal_from_left_sibling(
                 CK,
                 CV,
@@ -2504,8 +2536,6 @@ delete_internal4_key4(K1, K2, K3, PrevValues, C1, C2, C3, C4, PrevC5) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            {V1, V2, V3, _} = PrevValues,
-            V4 = ReplacementV,
             Result = rebalance_leaf_from_left_sibling(
                 CK,
                 CV,
@@ -2518,7 +2548,7 @@ delete_internal4_key4(K1, K2, K3, PrevValues, C1, C2, C3, C4, PrevC5) ->
         %
         %
         _ ->
-            Values = setelement(4, PrevValues, ReplacementV),
+            Values = {V1, V2, V3, V4},
             ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
     end.
 
@@ -2560,10 +2590,10 @@ delete_internal4_rebalance_child1(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
 -compile({inline, delete_internal4_rebalance_child1_finish/10}).
 delete_internal4_rebalance_child1_finish(Result, K2, K3, K4, V2, V3, V4, C3, C4, C5) ->
     case Result of
-        {UpK, UpVal, UpdatedC1, UpdatedC2} ->
+        ?ROTATED(UpK, UpVal, UpdatedC1, UpdatedC2) ->
             ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedC1, UpdatedC2, C3, C4, C5);
         %
-        MergedC1C2 ->
+        ?MERGED(MergedC1C2) ->
             ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, MergedC1C2, C3, C4, C5)
     end.
 
@@ -2617,13 +2647,13 @@ delete_internal4_rebalance_child2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
 -compile({inline, delete_internal4_rebalance_child2_finish/13}).
 delete_internal4_rebalance_child2_finish(Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C3, C4, C5) ->
     case Result of
-        [MergedC1C2 | _] ->
+        ?MID_MERGED_MATCH(MergedC1C2) ->
             ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, MergedC1C2, C3, C4, C5);
         %
-        {UpK, UpVal, RebalancedC2, UpdatedC3} ->
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC2, UpdatedC3) ->
             ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, C1, RebalancedC2, UpdatedC3, C4, C5);
         %
-        {from_left, UpK, UpVal, UpdatedC1, RebalancedC2} ->
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC1, RebalancedC2) ->
             ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedC1, RebalancedC2, C3, C4, C5)
     end.
 
@@ -2677,13 +2707,13 @@ delete_internal4_rebalance_child3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
 -compile({inline, delete_internal4_rebalance_child3_finish/13}).
 delete_internal4_rebalance_child3_finish(Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C4, C5) ->
     case Result of
-        [MergedC2C3 | _] ->
+        ?MID_MERGED_MATCH(MergedC2C3) ->
             ?INTERNAL3(K1, K3, K4, {V1, V3, V4}, C1, MergedC2C3, C4, C5);
         %
-        {UpK, UpVal, RebalancedC3, UpdatedC4} ->
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC3, UpdatedC4) ->
             ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, C1, C2, RebalancedC3, UpdatedC4, C5);
         %
-        {from_left, UpK, UpVal, UpdatedC2, RebalancedC3} ->
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC2, RebalancedC3) ->
             ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, C1, UpdatedC2, RebalancedC3, C4, C5)
     end.
 
@@ -2737,13 +2767,13 @@ delete_internal4_rebalance_child4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
 -compile({inline, delete_internal4_rebalance_child4_finish/13}).
 delete_internal4_rebalance_child4_finish(Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C5) ->
     case Result of
-        [MergedC3C4 | _] ->
+        ?MID_MERGED_MATCH(MergedC3C4) ->
             ?INTERNAL3(K1, K2, K4, {V1, V2, V4}, C1, C2, MergedC3C4, C5);
         %
-        {UpK, UpVal, RebalancedC4, UpdatedC5} ->
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC4, UpdatedC5) ->
             ?INTERNAL4(K1, K2, K3, UpK, {V1, V2, V3, UpVal}, C1, C2, C3, RebalancedC4, UpdatedC5);
         %
-        {from_left, UpK, UpVal, UpdatedC3, RebalancedC4} ->
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC3, RebalancedC4) ->
             ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, C1, C2, UpdatedC3, RebalancedC4, C5)
     end.
 
@@ -2787,10 +2817,10 @@ delete_internal4_rebalance_child5(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
 -compile({inline, delete_internal4_rebalance_child5_finish/10}).
 delete_internal4_rebalance_child5_finish(Result, K1, K2, K3, V1, V2, V3, C1, C2, C3) ->
     case Result of
-        {UpK, UpVal, UpdatedC4, RebalancedC5} ->
+        ?ROTATED(UpK, UpVal, UpdatedC4, RebalancedC5) ->
             ?INTERNAL4(K1, K2, K3, UpK, {V1, V2, V3, UpVal}, C1, C2, C3, UpdatedC4, RebalancedC5);
         %
-        MergedC4C5 ->
+        ?MERGED(MergedC4C5) ->
             ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, MergedC4C5)
     end.
 
@@ -2891,11 +2921,11 @@ delete_internal3_child4(K, K1, K2, K3, Values, C1, C2, C3, C4) ->
 delete_internal3_key1(K2, K3, PrevValues, C1, PrevC2, C3, C4) ->
     [[ReplacementK | ReplacementV] | C2] = take_smallest_recur(PrevC2),
     K1 = ReplacementK,
+    V1 = ReplacementV,
+    {_, V2, V3} = PrevValues,
 
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            {_, V2, V3} = PrevValues,
-            V1 = ReplacementV,
             Result = rebalance_internal_from_either_sibling(
                 CK,
                 CV,
@@ -2915,8 +2945,6 @@ delete_internal3_key1(K2, K3, PrevValues, C1, PrevC2, C3, C4) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            {_, V2, V3} = PrevValues,
-            V1 = ReplacementV,
             Result = rebalance_leaf_from_either_sibling(
                 CK,
                 CV,
@@ -2934,7 +2962,7 @@ delete_internal3_key1(K2, K3, PrevValues, C1, PrevC2, C3, C4) ->
         %
         %
         _ ->
-            Values = setelement(1, PrevValues, ReplacementV),
+            Values = {V1, V2, V3},
             ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)
     end.
 
@@ -2942,11 +2970,11 @@ delete_internal3_key1(K2, K3, PrevValues, C1, PrevC2, C3, C4) ->
 delete_internal3_key2(K1, K3, PrevValues, C1, C2, PrevC3, C4) ->
     [[ReplacementK | ReplacementV] | C3] = take_smallest_recur(PrevC3),
     K2 = ReplacementK,
+    V2 = ReplacementV,
+    {V1, _, V3} = PrevValues,
 
     case C3 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            {V1, _, V3} = PrevValues,
-            V2 = ReplacementV,
             Result = rebalance_internal_from_either_sibling(
                 CK,
                 CV,
@@ -2966,8 +2994,6 @@ delete_internal3_key2(K1, K3, PrevValues, C1, C2, PrevC3, C4) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            {V1, _, V3} = PrevValues,
-            V2 = ReplacementV,
             Result = rebalance_leaf_from_either_sibling(
                 CK,
                 CV,
@@ -2985,7 +3011,7 @@ delete_internal3_key2(K1, K3, PrevValues, C1, C2, PrevC3, C4) ->
         %
         %
         _ ->
-            Values = setelement(2, PrevValues, ReplacementV),
+            Values = {V1, V2, V3},
             ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)
     end.
 
@@ -2993,11 +3019,11 @@ delete_internal3_key2(K1, K3, PrevValues, C1, C2, PrevC3, C4) ->
 delete_internal3_key3(K1, K2, PrevValues, C1, C2, C3, PrevC4) ->
     [[ReplacementK | ReplacementV] | C4] = take_smallest_recur(PrevC4),
     K3 = ReplacementK,
+    V3 = ReplacementV,
+    {V1, V2, _} = PrevValues,
 
     case C4 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            {V1, V2, _} = PrevValues,
-            V3 = ReplacementV,
             Result = rebalance_internal_from_left_sibling(
                 CK,
                 CV,
@@ -3012,8 +3038,6 @@ delete_internal3_key3(K1, K2, PrevValues, C1, C2, C3, PrevC4) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            {V1, V2, _} = PrevValues,
-            V3 = ReplacementV,
             Result = rebalance_leaf_from_left_sibling(
                 CK,
                 CV,
@@ -3026,7 +3050,7 @@ delete_internal3_key3(K1, K2, PrevValues, C1, C2, C3, PrevC4) ->
         %
         %
         _ ->
-            Values = setelement(3, PrevValues, ReplacementV),
+            Values = {V1, V2, V3},
             ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)
     end.
 
@@ -3068,10 +3092,10 @@ delete_internal3_rebalance_child1(K1, K2, K3, Values, C1, C2, C3, C4) ->
 -compile({inline, delete_internal3_rebalance_child1_finish/7}).
 delete_internal3_rebalance_child1_finish(Result, K2, K3, V2, V3, C3, C4) ->
     case Result of
-        {UpK, UpVal, UpdatedC1, UpdatedC2} ->
+        ?ROTATED(UpK, UpVal, UpdatedC1, UpdatedC2) ->
             ?INTERNAL3(UpK, K2, K3, {UpVal, V2, V3}, UpdatedC1, UpdatedC2, C3, C4);
         %
-        MergedC1C2 ->
+        ?MERGED(MergedC1C2) ->
             ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4)
     end.
 
@@ -3125,13 +3149,13 @@ delete_internal3_rebalance_child2(K1, K2, K3, Values, C1, C2, C3, C4) ->
 -compile({inline, delete_internal3_rebalance_child2_finish/10}).
 delete_internal3_rebalance_child2_finish(Result, K1, K2, K3, V1, V2, V3, C1, C3, C4) ->
     case Result of
-        [MergedC1C2 | _] ->
+        ?MID_MERGED_MATCH(MergedC1C2) ->
             ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4);
         %
-        {UpK, UpVal, RebalancedC2, UpdatedC3} ->
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC2, UpdatedC3) ->
             ?INTERNAL3(K1, UpK, K3, {V1, UpVal, V3}, C1, RebalancedC2, UpdatedC3, C4);
         %
-        {from_left, UpK, UpVal, UpdatedC1, RebalancedC2} ->
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC1, RebalancedC2) ->
             ?INTERNAL3(UpK, K2, K3, {UpVal, V2, V3}, UpdatedC1, RebalancedC2, C3, C4)
     end.
 
@@ -3185,13 +3209,13 @@ delete_internal3_rebalance_child3(K1, K2, K3, Values, C1, C2, C3, C4) ->
 -compile({inline, delete_internal3_rebalance_child3_finish/10}).
 delete_internal3_rebalance_child3_finish(Result, K1, K2, K3, V1, V2, V3, C1, C2, C4) ->
     case Result of
-        [MergedC2C3 | _] ->
+        ?MID_MERGED_MATCH(MergedC2C3) ->
             ?INTERNAL2(K1, K3, [V1 | V3], C1, MergedC2C3, C4);
         %
-        {UpK, UpVal, RebalancedC3, UpdatedC4} ->
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC3, UpdatedC4) ->
             ?INTERNAL3(K1, K2, UpK, {V1, V2, UpVal}, C1, C2, RebalancedC3, UpdatedC4);
         %
-        {from_left, UpK, UpVal, UpdatedC2, RebalancedC3} ->
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC2, RebalancedC3) ->
             ?INTERNAL3(K1, UpK, K3, {V1, UpVal, V3}, C1, UpdatedC2, RebalancedC3, C4)
     end.
 
@@ -3235,10 +3259,10 @@ delete_internal3_rebalance_child4(K1, K2, K3, Values, C1, C2, C3, C4) ->
 -compile({inline, delete_internal3_rebalance_child4_finish/7}).
 delete_internal3_rebalance_child4_finish(Result, K1, K2, V1, V2, C1, C2) ->
     case Result of
-        {UpK, UpVal, UpdatedC3, RebalancedC4} ->
+        ?ROTATED(UpK, UpVal, UpdatedC3, RebalancedC4) ->
             ?INTERNAL3(K1, K2, UpK, {V1, V2, UpVal}, C1, C2, UpdatedC3, RebalancedC4);
         %
-        MergedC3C4 ->
+        ?MERGED(MergedC3C4) ->
             ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, MergedC3C4)
     end.
 
@@ -3429,10 +3453,10 @@ delete_internal2_rebalance_child1(K1, K2, Values, C1, C2, C3) ->
 -compile({inline, delete_internal2_rebalance_child1_finish/4}).
 delete_internal2_rebalance_child1_finish(Result, K2, V2, C3) ->
     case Result of
-        {UpK, UpVal, UpdatedC1, UpdatedC2} ->
+        ?ROTATED(UpK, UpVal, UpdatedC1, UpdatedC2) ->
             ?INTERNAL2(UpK, K2, [UpVal | V2], UpdatedC1, UpdatedC2, C3);
         %
-        MergedC1C2 ->
+        ?MERGED(MergedC1C2) ->
             ?INTERNAL1(K2, V2, MergedC1C2, C3)
     end.
 
@@ -3486,13 +3510,13 @@ delete_internal2_rebalance_child2(K1, K2, Values, C1, C2, C3) ->
 -compile({inline, delete_internal2_rebalance_child2_finish/7}).
 delete_internal2_rebalance_child2_finish(Result, K1, K2, V1, V2, C1, C3) ->
     case Result of
-        [MergedC1C2 | _] ->
+        ?MID_MERGED_MATCH(MergedC1C2) ->
             ?INTERNAL1(K2, V2, MergedC1C2, C3);
         %
-        {UpK, UpVal, RebalancedC2, UpdatedC3} ->
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC2, UpdatedC3) ->
             ?INTERNAL2(K1, UpK, [V1 | UpVal], C1, RebalancedC2, UpdatedC3);
         %
-        {from_left, UpK, UpVal, UpdatedC1, RebalancedC2} ->
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC1, RebalancedC2) ->
             ?INTERNAL2(UpK, K2, [UpVal | V2], UpdatedC1, RebalancedC2, C3)
     end.
 
@@ -3536,10 +3560,10 @@ delete_internal2_rebalance_child3(K1, K2, Values, C1, C2, C3) ->
 -compile({inline, delete_internal2_rebalance_child3_finish/4}).
 delete_internal2_rebalance_child3_finish(Result, K1, V1, C1) ->
     case Result of
-        {UpK, UpVal, UpdatedC2, RebalancedC3} ->
+        ?ROTATED(UpK, UpVal, UpdatedC2, RebalancedC3) ->
             ?INTERNAL2(K1, UpK, [V1 | UpVal], C1, UpdatedC2, RebalancedC3);
         %
-        MergedC2C3 ->
+        ?MERGED(MergedC2C3) ->
             ?INTERNAL1(K1, V1, C1, MergedC2C3)
     end.
 
@@ -3661,10 +3685,10 @@ delete_internal1_rebalance_child2(K1, V1, C1, C2) ->
 
 delete_internal1_rebalance_finish(Result) ->
     case Result of
-        {UpK, UpVal, UpdatedC1, UpdatedC2} ->
+        ?ROTATED(UpK, UpVal, UpdatedC1, UpdatedC2) ->
             ?INTERNAL1(UpK, UpVal, UpdatedC1, UpdatedC2);
         %
-        MergedC1C2 ->
+        ?MERGED(MergedC1C2) ->
             % This can only happen on root - height is reduced
             MergedC1C2
     end.
@@ -3750,6 +3774,7 @@ delete_leaf1(K, K1) ->
 %% Internal Function Definitions: Node Taking - Smallest
 %% ------------------------------------------------------------------
 
+-spec root_take_smallest(non_empty_node(Key, Value)) -> take_result(Key, Value).
 -compile({inline, root_take_smallest/1}).
 root_take_smallest(?INTERNAL1(K1, V1, C1, C2)) ->
     [TakenPair | UpdatedC1] = take_smallest_recur(C1),
@@ -3770,6 +3795,7 @@ root_take_smallest(?LEAF0) ->
 root_take_smallest(Node) ->
     take_smallest_recur(Node).
 
+-spec take_smallest_recur(deep_node(Key, Value)) -> take_result_before_rebalance(Key, Value).
 take_smallest_recur(?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
     [TakenPair | UpdatedC1] = take_smallest_recur(C1),
 
@@ -3829,6 +3855,7 @@ take_smallest_recur(?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
 %% Internal Function Definitions: Node Taking - Largest
 %% ------------------------------------------------------------------
 
+-spec root_take_largest(non_empty_node(Key, Value)) -> take_result(Key, Value).
 -compile({inline, root_take_largest/1}).
 root_take_largest(?INTERNAL1(K1, V1, C1, C2)) ->
     [TakenPair | UpdatedC2] = take_largest_recur(C2),
@@ -3849,6 +3876,7 @@ root_take_largest(?LEAF0) ->
 root_take_largest(Node) ->
     take_largest_recur(Node).
 
+-spec take_largest_recur(deep_node(Key, Value)) -> take_result_before_rebalance(Key, Value).
 take_largest_recur(?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
     [TakenPair | UpdatedC3] = take_largest_recur(C3),
 
@@ -3908,9 +3936,7 @@ take_largest_recur(?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
 %% Internal Function Definitions: Node Taking - Key
 %% ------------------------------------------------------------------
 
-%-spec root_take(Key, non_empty_node(Key, Value)) ->
-%    {{Key, Value}, node_after_deletion(Key, Value)}.
--compile({inline, root_take/2}).
+-spec root_take(Key, non_empty_node(Key, Value)) -> take_result(Key, Value).
 root_take(K, ?INTERNAL1(K1, V1, C1, C2)) ->
     take_internal1(K, K1, V1, C1, C2);
 root_take(K, ?LEAF1(K1, V1)) ->
@@ -3920,8 +3946,7 @@ root_take(K, ?LEAF0) ->
 root_take(K, Root) ->
     take_recur(K, Root).
 
-%-spec take_recur(Key | nil, deep_node(Key, Value)) ->
-%    {{Key, Value}, node_after_deletion(Key, Value) | unbalanced_node(Key, Value)}.
+-spec take_recur(Key, deep_node(Key, Value)) -> take_result_before_rebalance(Key, Value).
 take_recur(K, ?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
     take_internal2(K, K1, K2, Values, C1, C2, C3);
 take_recur(K, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
@@ -4621,7 +4646,6 @@ foldr_recur(Fun, Acc, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
 %% ------------------------------------------------------------------
 
 -spec iterator_steps_l(t(Key, Value)) -> [iterator_step(Key, Value)].
--dialyzer({no_underspecs, iterator_steps_l/1}).
 iterator_steps_l(?INTERNAL1(K1, V1, C1, C2)) ->
     iterator_steps_l_recur(C1, [{K1, V1, C2}]);
 iterator_steps_l(?LEAF1(K1, V1)) ->
@@ -4899,7 +4923,6 @@ iterator_steps_l_from_recur_leaf2(Key, K1, K2, V1, V2, Acc) ->
 %% ------------------------------------------------------------------
 
 -spec iterator_steps_r(t(Key, Value)) -> [iterator_step(Key, Value)].
--dialyzer({no_underspecs, iterator_steps_r/1}).
 iterator_steps_r(?INTERNAL1(K1, V1, C1, C2)) ->
     iterator_steps_r_recur(C2, [{K1, V1, C1}]);
 iterator_steps_r(?LEAF1(K1, V1)) ->
@@ -4913,20 +4936,25 @@ iterator_steps_r(Node) ->
     [iterator_step(Key, Value), ...].
 iterator_steps_r_recur(Node, Acc) ->
     case Node of
+        ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3) ->
+            iterator_steps_r_recur(C3, [{K2, V2, C2}, {K1, V1, C1} | Acc]);
+        %
+        ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4) ->
+            iterator_steps_r_recur(C4, [{K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc]);
+        %
         ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5) ->
             iterator_steps_r_recur(C5, [
                 {K4, V4, C4}, {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc
             ]);
-        ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4) ->
-            iterator_steps_r_recur(C4, [{K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc]);
-        ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3) ->
-            iterator_steps_r_recur(C3, [{K2, V2, C2}, {K1, V1, C1} | Acc]);
-        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-            [{K4, V4}, {K3, V3}, {K2, V2}, {K1, V1} | Acc];
+        %
+        ?LEAF2(K1, K2, V1, V2) ->
+            [{K2, V2}, {K1, V1} | Acc];
+        %
         ?LEAF3(K1, K2, K3, V1, V2, V3) ->
             [{K3, V3}, {K2, V2}, {K1, V1} | Acc];
-        ?LEAF2(K1, K2, V1, V2) ->
-            [{K2, V2}, {K1, V1} | Acc]
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            [{K4, V4}, {K3, V3}, {K2, V2}, {K1, V1} | Acc]
     end.
 
 %% ------------------------------------------------------------------
@@ -4957,84 +4985,161 @@ iterator_steps_r_from(Key, Node) ->
 
 -spec iterator_steps_r_from_recur(Key, deep_node(Key, Value), [iterator_step(Key, Value)]) ->
     [iterator_step(Key, Value)].
-iterator_steps_r_from_recur(
-    Key, ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5), Acc
-) ->
+iterator_steps_r_from_recur(Key, Node, Acc) ->
+    case Node of
+        ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
+            iterator_steps_r_from_recur_internal2(Key, K1, K2, Values, C1, C2, C3, Acc);
+        %
+        ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4) ->
+            iterator_steps_r_from_recur_internal3(Key, K1, K2, K3, Values, C1, C2, C3, C4, Acc);
+        %
+        ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+            iterator_steps_r_from_recur_internal4(
+                Key,
+                K1,
+                K2,
+                K3,
+                K4,
+                Values,
+                C1,
+                C2,
+                C3,
+                C4,
+                C5,
+                Acc
+            );
+        %
+        ?LEAF2(K1, K2, V1, V2) ->
+            iterator_steps_r_from_recur_leaf2(Key, K1, K2, V1, V2, Acc);
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            iterator_steps_r_from_recur_leaf3(Key, K1, K2, K3, V1, V2, V3, Acc);
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            iterator_steps_r_from_recur_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4, Acc)
+    end.
+
+%%%
+
+-compile({inline, iterator_steps_r_from_recur_internal4/12}).
+iterator_steps_r_from_recur_internal4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5, Acc) ->
     if
         Key > K2 ->
             if
                 Key > K3 ->
                     if
                         Key > K4 ->
+                            {V1, V2, V3, V4} = Values,
                             iterator_steps_r_from_recur(Key, C5, [
                                 {K4, V4, C4}, {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc
                             ]);
+                        %
                         Key < K4 ->
+                            {V1, V2, V3, _} = Values,
                             iterator_steps_r_from_recur(Key, C4, [
                                 {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc
                             ]);
+                        %
                         true ->
+                            {V1, V2, V3, V4} = Values,
                             [{K4, V4, C4}, {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc]
                     end;
+                %
                 Key < K3 ->
+                    {V1, V2, _, _} = Values,
                     iterator_steps_r_from_recur(Key, C3, [{K2, V2, C2}, {K1, V1, C1} | Acc]);
+                %
                 true ->
+                    {V1, V2, V3, _} = Values,
                     [{K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc]
             end;
+        %
         Key < K2 ->
             if
                 Key > K1 ->
+                    V1 = element(1, Values),
                     iterator_steps_r_from_recur(Key, C2, [{K1, V1, C1} | Acc]);
+                %
                 Key < K1 ->
                     iterator_steps_r_from_recur(Key, C1, Acc);
+                %
                 true ->
+                    V1 = element(1, Values),
                     [{K1, V1, C1} | Acc]
             end;
+        %
         true ->
+            {V1, V2, _, _} = Values,
             [{K2, V2, C2}, {K1, V1, C1} | Acc]
-    end;
-iterator_steps_r_from_recur(Key, ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4), Acc) ->
+    end.
+
+-compile({inline, iterator_steps_r_from_recur_internal3/10}).
+iterator_steps_r_from_recur_internal3(Key, K1, K2, K3, Values, C1, C2, C3, C4, Acc) ->
     if
         Key > K2 ->
             if
                 Key > K3 ->
+                    {V1, V2, V3} = Values,
                     iterator_steps_r_from_recur(Key, C4, [
                         {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc
                     ]);
+                %
                 Key < K3 ->
+                    {V1, V2, _} = Values,
                     iterator_steps_r_from_recur(Key, C3, [{K2, V2, C2}, {K1, V1, C1} | Acc]);
+                %
                 true ->
+                    {V1, V2, V3} = Values,
                     [{K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc]
             end;
+        %
         Key < K2 ->
             if
                 Key > K1 ->
+                    V1 = element(1, Values),
                     iterator_steps_r_from_recur(Key, C2, [{K1, V1, C1} | Acc]);
+                %
                 Key < K1 ->
                     iterator_steps_r_from_recur(Key, C1, Acc);
+                %
                 true ->
+                    V1 = element(1, Values),
                     [{K1, V1, C1} | Acc]
             end;
+        %
         true ->
+            {V1, V2, _} = Values,
             [{K2, V2, C2}, {K1, V1, C1} | Acc]
-    end;
-iterator_steps_r_from_recur(Key, ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3), Acc) ->
+    end.
+
+-compile({inline, iterator_steps_r_from_recur_internal2/8}).
+iterator_steps_r_from_recur_internal2(Key, K1, K2, Values, C1, C2, C3, Acc) ->
     if
         Key > K1 ->
             if
                 Key > K2 ->
+                    [V1 | V2] = Values,
                     iterator_steps_r_from_recur(Key, C3, [{K2, V2, C2}, {K1, V1, C1} | Acc]);
+                %
                 Key < K2 ->
+                    V1 = hd(Values),
                     iterator_steps_r_from_recur(Key, C2, [{K1, V1, C1} | Acc]);
+                %
                 true ->
+                    [V1 | V2] = Values,
                     [{K2, V2, C2}, {K1, V1, C1} | Acc]
             end;
+        %
         Key < K1 ->
             iterator_steps_r_from_recur(Key, C1, Acc);
+        %
         true ->
+            V1 = hd(Values),
             [{K1, V1, C1} | Acc]
-    end;
-iterator_steps_r_from_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), Acc) ->
+    end.
+
+-compile({inline, iterator_steps_r_from_recur_leaf4/10}).
+iterator_steps_r_from_recur_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4, Acc) ->
     if
         Key < K2 ->
             if
@@ -5043,33 +5148,45 @@ iterator_steps_r_from_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), Acc) ->
                 true ->
                     [{K1, V1} | Acc]
             end;
+        %
         Key < K3 ->
             [{K2, V2}, {K1, V1} | Acc];
+        %
         Key < K4 ->
             [{K3, V3}, {K2, V2}, {K1, V1} | Acc];
+        %
         true ->
             [{K4, V4}, {K3, V3}, {K2, V2}, {K1, V1} | Acc]
-    end;
-iterator_steps_r_from_recur(Key, ?LEAF3(K1, K2, K3, V1, V2, V3), Acc) ->
+    end.
+
+-compile({inline, iterator_steps_r_from_recur_leaf3/8}).
+iterator_steps_r_from_recur_leaf3(Key, K1, K2, K3, V1, V2, V3, Acc) ->
     if
         Key < K2 ->
             if
                 Key < K1 ->
                     Acc;
+                %
                 true ->
                     [{K1, V1} | Acc]
             end;
+        %
         Key < K3 ->
             [{K2, V2}, {K1, V1} | Acc];
+        %
         true ->
             [{K3, V3}, {K2, V2}, {K1, V1} | Acc]
-    end;
-iterator_steps_r_from_recur(Key, ?LEAF2(K1, K2, V1, V2), Acc) ->
+    end.
+
+-compile({inline, iterator_steps_r_from_recur_leaf2/6}).
+iterator_steps_r_from_recur_leaf2(Key, K1, K2, V1, V2, Acc) ->
     if
         Key < K1 ->
             Acc;
+        %
         Key < K2 ->
             [{K1, V1} | Acc];
+        %
         true ->
             [{K2, V2}, {K1, V1} | Acc]
     end.
@@ -5079,28 +5196,27 @@ iterator_steps_r_from_recur(Key, ?LEAF2(K1, K2, V1, V2), Acc) ->
 %% ------------------------------------------------------------------
 
 -spec keys_recur(deep_node(Key, _), [Key]) -> [Key, ...].
--dialyzer({no_underspecs, keys_recur/2}).
+keys_recur(?INTERNAL2(K1, K2, _, C1, C2, C3), Acc) ->
+    Acc2 = [K2 | keys_recur(C3, Acc)],
+    Acc3 = [K1 | keys_recur(C2, Acc2)],
+    keys_recur(C1, Acc3);
+keys_recur(?INTERNAL3(K1, K2, K3, _, C1, C2, C3, C4), Acc) ->
+    Acc2 = [K3 | keys_recur(C4, Acc)],
+    Acc3 = [K2 | keys_recur(C3, Acc2)],
+    Acc4 = [K1 | keys_recur(C2, Acc3)],
+    keys_recur(C1, Acc4);
 keys_recur(?INTERNAL4(K1, K2, K3, K4, _, C1, C2, C3, C4, C5), Acc) ->
     Acc2 = [K4 | keys_recur(C5, Acc)],
     Acc3 = [K3 | keys_recur(C4, Acc2)],
     Acc4 = [K2 | keys_recur(C3, Acc3)],
     Acc5 = [K1 | keys_recur(C2, Acc4)],
     keys_recur(C1, Acc5);
-keys_recur(?INTERNAL3(K1, K2, K3, _, C1, C2, C3, C4), Acc) ->
-    Acc2 = [K3 | keys_recur(C4, Acc)],
-    Acc3 = [K2 | keys_recur(C3, Acc2)],
-    Acc4 = [K1 | keys_recur(C2, Acc3)],
-    keys_recur(C1, Acc4);
-keys_recur(?INTERNAL2(K1, K2, _, C1, C2, C3), Acc) ->
-    Acc2 = [K2 | keys_recur(C3, Acc)],
-    Acc3 = [K1 | keys_recur(C2, Acc2)],
-    keys_recur(C1, Acc3);
-keys_recur(?LEAF4(K1, K2, K3, K4, _, _, _, _), Acc) ->
-    [K1, K2, K3, K4 | Acc];
+keys_recur(?LEAF2(K1, K2, _, _), Acc) ->
+    [K1, K2 | Acc];
 keys_recur(?LEAF3(K1, K2, K3, _, _, _), Acc) ->
     [K1, K2, K3 | Acc];
-keys_recur(?LEAF2(K1, K2, _, _), Acc) ->
-    [K1, K2 | Acc].
+keys_recur(?LEAF4(K1, K2, K3, K4, _, _, _, _), Acc) ->
+    [K1, K2, K3, K4 | Acc].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: values/1
@@ -5108,27 +5224,27 @@ keys_recur(?LEAF2(K1, K2, _, _), Acc) ->
 
 -spec values_recur(deep_node(_, Value), [Value]) -> [Value, ...].
 -dialyzer({no_underspecs, values_recur/2}).
+values_recur(?INTERNAL2(_, _, [V1 | V2], C1, C2, C3), Acc) ->
+    Acc2 = [V2 | values_recur(C3, Acc)],
+    Acc3 = [V1 | values_recur(C2, Acc2)],
+    values_recur(C1, Acc3);
+values_recur(?INTERNAL3(_, _, _, {V1, V2, V3}, C1, C2, C3, C4), Acc) ->
+    Acc2 = [V3 | values_recur(C4, Acc)],
+    Acc3 = [V2 | values_recur(C3, Acc2)],
+    Acc4 = [V1 | values_recur(C2, Acc3)],
+    values_recur(C1, Acc4);
 values_recur(?INTERNAL4(_, _, _, _, {V1, V2, V3, V4}, C1, C2, C3, C4, C5), Acc) ->
     Acc2 = [V4 | values_recur(C5, Acc)],
     Acc3 = [V3 | values_recur(C4, Acc2)],
     Acc4 = [V2 | values_recur(C3, Acc3)],
     Acc5 = [V1 | values_recur(C2, Acc4)],
     values_recur(C1, Acc5);
-values_recur(?INTERNAL3(_, _, _, {V1, V2, V3}, C1, C2, C3, C4), Acc) ->
-    Acc2 = [V3 | values_recur(C4, Acc)],
-    Acc3 = [V2 | values_recur(C3, Acc2)],
-    Acc4 = [V1 | values_recur(C2, Acc3)],
-    values_recur(C1, Acc4);
-values_recur(?INTERNAL2(_, _, [V1 | V2], C1, C2, C3), Acc) ->
-    Acc2 = [V2 | values_recur(C3, Acc)],
-    Acc3 = [V1 | values_recur(C2, Acc2)],
-    values_recur(C1, Acc3);
-values_recur(?LEAF4(_, _, _, _, V1, V2, V3, V4), Acc) ->
-    [V1, V2, V3, V4 | Acc];
+values_recur(?LEAF2(_, _, V1, V2), Acc) ->
+    [V1, V2 | Acc];
 values_recur(?LEAF3(_, _, _, V1, V2, V3), Acc) ->
     [V1, V2, V3 | Acc];
-values_recur(?LEAF2(_, _, V1, V2), Acc) ->
-    [V1, V2 | Acc].
+values_recur(?LEAF4(_, _, _, _, V1, V2, V3, V4), Acc) ->
+    [V1, V2, V3, V4 | Acc].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: to_list/1
@@ -5136,62 +5252,62 @@ values_recur(?LEAF2(_, _, V1, V2), Acc) ->
 
 -spec to_list_recur(deep_node(Key, Value), [{Key, Value}]) -> [{Key, Value}, ...].
 -dialyzer({no_underspecs, to_list_recur/2}).
+to_list_recur(?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3), Acc) ->
+    Acc2 = [{K2, V2} | to_list_recur(C3, Acc)],
+    Acc3 = [{K1, V1} | to_list_recur(C2, Acc2)],
+    to_list_recur(C1, Acc3);
+to_list_recur(?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4), Acc) ->
+    Acc2 = [{K3, V3} | to_list_recur(C4, Acc)],
+    Acc3 = [{K2, V2} | to_list_recur(C3, Acc2)],
+    Acc4 = [{K1, V1} | to_list_recur(C2, Acc3)],
+    to_list_recur(C1, Acc4);
 to_list_recur(?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5), Acc) ->
     Acc2 = [{K4, V4} | to_list_recur(C5, Acc)],
     Acc3 = [{K3, V3} | to_list_recur(C4, Acc2)],
     Acc4 = [{K2, V2} | to_list_recur(C3, Acc3)],
     Acc5 = [{K1, V1} | to_list_recur(C2, Acc4)],
     to_list_recur(C1, Acc5);
-to_list_recur(?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4), Acc) ->
-    Acc2 = [{K3, V3} | to_list_recur(C4, Acc)],
-    Acc3 = [{K2, V2} | to_list_recur(C3, Acc2)],
-    Acc4 = [{K1, V1} | to_list_recur(C2, Acc3)],
-    to_list_recur(C1, Acc4);
-to_list_recur(?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3), Acc) ->
-    Acc2 = [{K2, V2} | to_list_recur(C3, Acc)],
-    Acc3 = [{K1, V1} | to_list_recur(C2, Acc2)],
-    to_list_recur(C1, Acc3);
-to_list_recur(?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), Acc) ->
-    [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Acc];
+to_list_recur(?LEAF2(K1, K2, V1, V2), Acc) ->
+    [{K1, V1}, {K2, V2} | Acc];
 to_list_recur(?LEAF3(K1, K2, K3, V1, V2, V3), Acc) ->
     [{K1, V1}, {K2, V2}, {K3, V3} | Acc];
-to_list_recur(?LEAF2(K1, K2, V1, V2), Acc) ->
-    [{K1, V1}, {K2, V2} | Acc].
+to_list_recur(?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), Acc) ->
+    [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Acc].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: largest/1
 %% ------------------------------------------------------------------
 
 -spec largest_recur(deep_node(Key, Value)) -> {Key, Value}.
-largest_recur(?INTERNAL4(_, _, _, _, _, _, _, _, _, C5)) ->
-    largest_recur(C5);
-largest_recur(?INTERNAL3(_, _, _, _, _, _, _, C4)) ->
-    largest_recur(C4);
 largest_recur(?INTERNAL2(_, _, _, _, _, C3)) ->
     largest_recur(C3);
-largest_recur(?LEAF4(_, _, _, K4, _, _, _, V4)) ->
-    {K4, V4};
+largest_recur(?INTERNAL3(_, _, _, _, _, _, _, C4)) ->
+    largest_recur(C4);
+largest_recur(?INTERNAL4(_, _, _, _, _, _, _, _, _, C5)) ->
+    largest_recur(C5);
+largest_recur(?LEAF2(_, K2, _, V2)) ->
+    {K2, V2};
 largest_recur(?LEAF3(_, _, K3, _, _, V3)) ->
     {K3, V3};
-largest_recur(?LEAF2(_, K2, _, V2)) ->
-    {K2, V2}.
+largest_recur(?LEAF4(_, _, _, K4, _, _, _, V4)) ->
+    {K4, V4}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: smallest/1
 %% ------------------------------------------------------------------
 
 -spec smallest_recur(deep_node(Key, Value)) -> {Key, Value}.
-smallest_recur(?INTERNAL4(_, _, _, _, _, C1, _, _, _, _)) ->
+smallest_recur(?INTERNAL2(_, _, _, C1, _, _)) ->
     smallest_recur(C1);
 smallest_recur(?INTERNAL3(_, _, _, _, C1, _, _, _)) ->
     smallest_recur(C1);
-smallest_recur(?INTERNAL2(_, _, _, C1, _, _)) ->
+smallest_recur(?INTERNAL4(_, _, _, _, _, C1, _, _, _, _)) ->
     smallest_recur(C1);
-smallest_recur(?LEAF4(K1, _, _, _, V1, _, _, _)) ->
+smallest_recur(?LEAF2(K1, _, V1, _)) ->
     {K1, V1};
 smallest_recur(?LEAF3(K1, _, _, V1, _, _)) ->
     {K1, V1};
-smallest_recur(?LEAF2(K1, _, V1, _)) ->
+smallest_recur(?LEAF4(K1, _, _, _, V1, _, _, _)) ->
     {K1, V1}.
 
 %% ------------------------------------------------------------------
@@ -5199,6 +5315,50 @@ smallest_recur(?LEAF2(K1, _, V1, _)) ->
 %% ------------------------------------------------------------------
 
 -spec larger_recur(Key, deep_node(Key, Value)) -> {Key, Value} | none.
+larger_recur(Key, ?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
+    case Key < K2 of
+        true ->
+            case Key < K1 of
+                true ->
+                    case larger_recur(Key, C1) of
+                        none -> {K1, hd(Values)};
+                        Pair -> Pair
+                    end;
+                _ ->
+                    case larger_recur(Key, C2) of
+                        none -> {K2, tl(Values)};
+                        Pair -> Pair
+                    end
+            end;
+        _ ->
+            larger_recur(Key, C3)
+    end;
+larger_recur(Key, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
+    case Key < K2 of
+        true ->
+            case Key < K1 of
+                true ->
+                    case larger_recur(Key, C1) of
+                        none -> {K1, element(1, Values)};
+                        Pair -> Pair
+                    end;
+                _ ->
+                    case larger_recur(Key, C2) of
+                        none -> {K2, element(2, Values)};
+                        Pair -> Pair
+                    end
+            end;
+        _ ->
+            case Key < K3 of
+                true ->
+                    case larger_recur(Key, C3) of
+                        none -> {K3, element(3, Values)};
+                        Pair -> Pair
+                    end;
+                _ ->
+                    larger_recur(Key, C4)
+            end
+    end;
 larger_recur(Key, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
     case Key < K2 of
         true ->
@@ -5233,49 +5393,34 @@ larger_recur(Key, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
                     end
             end
     end;
-larger_recur(Key, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
+larger_recur(Key, ?LEAF2(K1, K2, V1, V2)) ->
     case Key < K2 of
         true ->
             case Key < K1 of
                 true ->
-                    case larger_recur(Key, C1) of
-                        none -> {K1, element(1, Values)};
-                        Pair -> Pair
-                    end;
+                    {K1, V1};
                 _ ->
-                    case larger_recur(Key, C2) of
-                        none -> {K2, element(2, Values)};
-                        Pair -> Pair
-                    end
+                    {K2, V2}
+            end;
+        _ ->
+            none
+    end;
+larger_recur(Key, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
+    case Key < K2 of
+        true ->
+            case Key < K1 of
+                true ->
+                    {K1, V1};
+                _ ->
+                    {K2, V2}
             end;
         _ ->
             case Key < K3 of
                 true ->
-                    case larger_recur(Key, C3) of
-                        none -> {K3, element(3, Values)};
-                        Pair -> Pair
-                    end;
+                    {K3, V3};
                 _ ->
-                    larger_recur(Key, C4)
+                    none
             end
-    end;
-larger_recur(Key, ?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
-    case Key < K2 of
-        true ->
-            case Key < K1 of
-                true ->
-                    case larger_recur(Key, C1) of
-                        none -> {K1, hd(Values)};
-                        Pair -> Pair
-                    end;
-                _ ->
-                    case larger_recur(Key, C2) of
-                        none -> {K2, tl(Values)};
-                        Pair -> Pair
-                    end
-            end;
-        _ ->
-            larger_recur(Key, C3)
     end;
 larger_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
     case Key < K2 of
@@ -5298,35 +5443,6 @@ larger_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
                             none
                     end
             end
-    end;
-larger_recur(Key, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
-    case Key < K2 of
-        true ->
-            case Key < K1 of
-                true ->
-                    {K1, V1};
-                _ ->
-                    {K2, V2}
-            end;
-        _ ->
-            case Key < K3 of
-                true ->
-                    {K3, V3};
-                _ ->
-                    none
-            end
-    end;
-larger_recur(Key, ?LEAF2(K1, K2, V1, V2)) ->
-    case Key < K2 of
-        true ->
-            case Key < K1 of
-                true ->
-                    {K1, V1};
-                _ ->
-                    {K2, V2}
-            end;
-        _ ->
-            none
     end.
 
 %% ------------------------------------------------------------------
@@ -5336,6 +5452,26 @@ larger_recur(Key, ?LEAF2(K1, K2, V1, V2)) ->
 -spec map_recur(fun((Key, Value) -> MappedValue), deep_node(Key, Value)) ->
     deep_node(Key, MappedValue).
 -dialyzer({no_underspecs, map_recur/2}).
+map_recur(Fun, ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3)) ->
+    ?INTERNAL2(
+        K1,
+        K2,
+        [Fun(K1, V1) | Fun(K2, V2)],
+        map_recur(Fun, C1),
+        map_recur(Fun, C2),
+        map_recur(Fun, C3)
+    );
+map_recur(Fun, ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4)) ->
+    ?INTERNAL3(
+        K1,
+        K2,
+        K3,
+        {Fun(K1, V1), Fun(K2, V2), Fun(K3, V3)},
+        map_recur(Fun, C1),
+        map_recur(Fun, C2),
+        map_recur(Fun, C3),
+        map_recur(Fun, C4)
+    );
 map_recur(Fun, ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5)) ->
     ?INTERNAL4(
         K1,
@@ -5349,25 +5485,21 @@ map_recur(Fun, ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5))
         map_recur(Fun, C4),
         map_recur(Fun, C5)
     );
-map_recur(Fun, ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4)) ->
-    ?INTERNAL3(
+map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
+    ?LEAF2(
+        K1,
+        K2,
+        Fun(K1, V1),
+        Fun(K2, V2)
+    );
+map_recur(Fun, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
+    ?LEAF3(
         K1,
         K2,
         K3,
-        {Fun(K1, V1), Fun(K2, V2), Fun(K3, V3)},
-        map_recur(Fun, C1),
-        map_recur(Fun, C2),
-        map_recur(Fun, C3),
-        map_recur(Fun, C4)
-    );
-map_recur(Fun, ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3)) ->
-    ?INTERNAL2(
-        K1,
-        K2,
-        [Fun(K1, V1) | Fun(K2, V2)],
-        map_recur(Fun, C1),
-        map_recur(Fun, C2),
-        map_recur(Fun, C3)
+        Fun(K1, V1),
+        Fun(K2, V2),
+        Fun(K3, V3)
     );
 map_recur(Fun, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
     ?LEAF4(
@@ -5379,22 +5511,6 @@ map_recur(Fun, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
         Fun(K2, V2),
         Fun(K3, V3),
         Fun(K4, V4)
-    );
-map_recur(Fun, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
-    ?LEAF3(
-        K1,
-        K2,
-        K3,
-        Fun(K1, V1),
-        Fun(K2, V2),
-        Fun(K3, V3)
-    );
-map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
-    ?LEAF2(
-        K1,
-        K2,
-        Fun(K1, V1),
-        Fun(K2, V2)
     ).
 
 %% ------------------------------------------------------------------
@@ -5402,6 +5518,50 @@ map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
 %% ------------------------------------------------------------------
 
 -spec smaller_recur(Key, deep_node(Key, Value)) -> {Key, Value} | none.
+smaller_recur(Key, ?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
+    case Key > K1 of
+        true ->
+            case Key > K2 of
+                true ->
+                    case smaller_recur(Key, C3) of
+                        none -> {K2, tl(Values)};
+                        Pair -> Pair
+                    end;
+                _ ->
+                    case smaller_recur(Key, C2) of
+                        none -> {K1, hd(Values)};
+                        Pair -> Pair
+                    end
+            end;
+        _ ->
+            smaller_recur(Key, C1)
+    end;
+smaller_recur(Key, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
+    case Key > K2 of
+        true ->
+            case Key > K3 of
+                true ->
+                    case smaller_recur(Key, C4) of
+                        none -> {K3, element(3, Values)};
+                        Pair -> Pair
+                    end;
+                _ ->
+                    case smaller_recur(Key, C3) of
+                        none -> {K2, element(2, Values)};
+                        Pair -> Pair
+                    end
+            end;
+        _ ->
+            case Key > K1 of
+                true ->
+                    case smaller_recur(Key, C2) of
+                        none -> {K1, element(1, Values)};
+                        Pair -> Pair
+                    end;
+                _ ->
+                    smaller_recur(Key, C1)
+            end
+    end;
 smaller_recur(Key, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
     case Key > K2 of
         true ->
@@ -5436,49 +5596,34 @@ smaller_recur(Key, ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
                     smaller_recur(Key, C1)
             end
     end;
-smaller_recur(Key, ?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4)) ->
-    case Key > K2 of
-        true ->
-            case Key > K3 of
-                true ->
-                    case smaller_recur(Key, C4) of
-                        none -> {K3, element(3, Values)};
-                        Pair -> Pair
-                    end;
-                _ ->
-                    case smaller_recur(Key, C3) of
-                        none -> {K2, element(2, Values)};
-                        Pair -> Pair
-                    end
-            end;
-        _ ->
-            case Key > K1 of
-                true ->
-                    case smaller_recur(Key, C2) of
-                        none -> {K1, element(1, Values)};
-                        Pair -> Pair
-                    end;
-                _ ->
-                    smaller_recur(Key, C1)
-            end
-    end;
-smaller_recur(Key, ?INTERNAL2(K1, K2, Values, C1, C2, C3)) ->
+smaller_recur(Key, ?LEAF2(K1, K2, V1, V2)) ->
     case Key > K1 of
         true ->
             case Key > K2 of
                 true ->
-                    case smaller_recur(Key, C3) of
-                        none -> {K2, tl(Values)};
-                        Pair -> Pair
-                    end;
+                    {K2, V2};
                 _ ->
-                    case smaller_recur(Key, C2) of
-                        none -> {K1, hd(Values)};
-                        Pair -> Pair
-                    end
+                    {K1, V1}
             end;
         _ ->
-            smaller_recur(Key, C1)
+            none
+    end;
+smaller_recur(Key, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
+    case Key > K2 of
+        true ->
+            case Key > K3 of
+                true ->
+                    {K3, V3};
+                _ ->
+                    {K2, V2}
+            end;
+        _ ->
+            case Key > K1 of
+                true ->
+                    {K1, V1};
+                _ ->
+                    none
+            end
     end;
 smaller_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
     case Key > K2 of
@@ -5501,35 +5646,6 @@ smaller_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
                 _ ->
                     none
             end
-    end;
-smaller_recur(Key, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
-    case Key > K2 of
-        true ->
-            case Key > K3 of
-                true ->
-                    {K3, V3};
-                _ ->
-                    {K2, V2}
-            end;
-        _ ->
-            case Key > K1 of
-                true ->
-                    {K1, V1};
-                _ ->
-                    none
-            end
-    end;
-smaller_recur(Key, ?LEAF2(K1, K2, V1, V2)) ->
-    case Key > K1 of
-        true ->
-            case Key > K2 of
-                true ->
-                    {K2, V2};
-                _ ->
-                    {K1, V1}
-            end;
-        _ ->
-            none
     end.
 
 %% ------------------------------------------------------------------
@@ -5584,7 +5700,7 @@ rebalance_internal_from_right_sibling(CKey, CValue, CLeft, CRight, ParentK, Pare
                 C4
             ),
 
-            {UpK, UpVal, UpdatedNode, UpdatedRight};
+            ?ROTATED(UpK, UpVal, UpdatedNode, UpdatedRight);
         %
         %
         %
@@ -5615,7 +5731,7 @@ rebalance_internal_from_right_sibling(CKey, CValue, CLeft, CRight, ParentK, Pare
                 C5
             ),
 
-            {UpK, UpVal, UpdatedNode, UpdatedRight}
+            ?ROTATED(UpK, UpVal, UpdatedNode, UpdatedRight)
         %
         %
     end.
@@ -5645,7 +5761,7 @@ rebalance_leaf_from_right_sibling(CKey, CValue, ParentK, ParentV, Right) ->
             UpdatedNode = ?LEAF2(CKey, ParentK, CValue, ParentV),
             UpdatedRight = ?LEAF2(K2, K3, V2, V3),
 
-            {UpK, UpVal, UpdatedNode, UpdatedRight};
+            ?ROTATED(UpK, UpVal, UpdatedNode, UpdatedRight);
         %
         %
         ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
@@ -5655,7 +5771,7 @@ rebalance_leaf_from_right_sibling(CKey, CValue, ParentK, ParentV, Right) ->
             UpdatedNode = ?LEAF2(CKey, ParentK, CValue, ParentV),
             UpdatedRight = ?LEAF3(K2, K3, K4, V2, V3, V4),
 
-            {UpK, UpVal, UpdatedNode, UpdatedRight}
+            ?ROTATED(UpK, UpVal, UpdatedNode, UpdatedRight)
         %
         %
     end.
@@ -5720,7 +5836,7 @@ rebalance_internal_from_left_sibling(
                 C3
             ),
 
-            {UpK, UpVal, UpdatedLeft, UpdatedNode};
+            ?ROTATED(UpK, UpVal, UpdatedLeft, UpdatedNode);
         %
         %
         %
@@ -5751,7 +5867,7 @@ rebalance_internal_from_left_sibling(
                 C4
             ),
 
-            {UpK, UpVal, UpdatedLeft, UpdatedNode}
+            ?ROTATED(UpK, UpVal, UpdatedLeft, UpdatedNode)
         %
         %
     end.
@@ -5787,7 +5903,7 @@ rebalance_leaf_from_left_sibling(
             UpdatedNode = ?LEAF2(ParentK, CKey, ParentV, CValue),
             UpdatedLeft = ?LEAF2(K1, K2, V1, V2),
 
-            {UpK, UpVal, UpdatedLeft, UpdatedNode};
+            ?ROTATED(UpK, UpVal, UpdatedLeft, UpdatedNode);
         %
         %
         ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
@@ -5797,7 +5913,7 @@ rebalance_leaf_from_left_sibling(
             UpdatedNode = ?LEAF2(ParentK, CKey, ParentV, CValue),
             UpdatedLeft = ?LEAF3(K1, K2, K3, V1, V2, V3),
 
-            {UpK, UpVal, UpdatedLeft, UpdatedNode}
+            ?ROTATED(UpK, UpVal, UpdatedLeft, UpdatedNode)
     end.
 
 %% ------------------------------------------------------------------
@@ -5847,7 +5963,7 @@ rebalance_internal_from_either_sibling(
                         C4
                     ),
 
-                    {UpK, UpVal, UpdatedNode, UpdatedRight};
+                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
                 %
                 %
                 ?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
@@ -5877,7 +5993,7 @@ rebalance_internal_from_either_sibling(
                         C5
                     ),
 
-                    {UpK, UpVal, UpdatedNode, UpdatedRight};
+                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
                 %
                 %
                 _ ->
@@ -5897,7 +6013,7 @@ rebalance_internal_from_either_sibling(
                         CRight
                     ),
 
-                    [MergedNode]
+                    ?MID_MERGED(MergedNode)
             end;
         %
         %
@@ -5928,7 +6044,7 @@ rebalance_internal_from_either_sibling(
                 C3
             ),
 
-            {from_left, UpK, UpVal, UpdatedLeft, UpdatedNode};
+            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode);
         %
         %
         %
@@ -5960,7 +6076,7 @@ rebalance_internal_from_either_sibling(
                 C4
             ),
 
-            {from_left, UpK, UpVal, UpdatedLeft, UpdatedNode}
+            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode)
     end.
 
 % -compile({inline, rebalance_leaf_from_either_sibling/8}).
@@ -5984,7 +6100,7 @@ rebalance_leaf_from_either_sibling(
                     UpdatedNode = ?LEAF2(CKey, RParentK, CValue, RParentV),
                     UpdatedRight = ?LEAF3(K2, K3, K4, V2, V3, V4),
 
-                    {UpK, UpVal, UpdatedNode, UpdatedRight};
+                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
                 %
                 %
                 ?LEAF3(K1, K2, K3, V1, V2, V3) ->
@@ -5994,7 +6110,7 @@ rebalance_leaf_from_either_sibling(
                     UpdatedNode = ?LEAF2(CKey, RParentK, CValue, RParentV),
                     UpdatedRight = ?LEAF2(K2, K3, V2, V3),
 
-                    {UpK, UpVal, UpdatedNode, UpdatedRight};
+                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
                 %
                 %
                 _ ->
@@ -6010,7 +6126,7 @@ rebalance_leaf_from_either_sibling(
                         CValue
                     ),
 
-                    [MergedNode]
+                    ?MID_MERGED(MergedNode)
             end;
         %
         %
@@ -6022,7 +6138,7 @@ rebalance_leaf_from_either_sibling(
             UpdatedNode = ?LEAF2(LParentK, CKey, LParentV, CValue),
             UpdatedLeft = ?LEAF3(K1, K2, K3, V1, V2, V3),
 
-            {from_left, UpK, UpVal, UpdatedLeft, UpdatedNode};
+            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode);
         %
         %
         %
@@ -6033,5 +6149,5 @@ rebalance_leaf_from_either_sibling(
             UpdatedNode = ?LEAF2(LParentK, CKey, LParentV, CValue),
             UpdatedLeft = ?LEAF2(K1, K2, V1, V2),
 
-            {from_left, UpK, UpVal, UpdatedLeft, UpdatedNode}
+            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode)
     end.
