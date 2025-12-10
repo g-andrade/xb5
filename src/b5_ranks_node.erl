@@ -32,6 +32,9 @@
     map/2,
     new/0,
     next/1,
+    nth/2,
+    % range/3,
+    rank/2,
     smaller/2,
     smallest/1,
     take/2,
@@ -139,6 +142,10 @@
 
 % -define(check_node(Node), check_node(?LINE, Node)).
 -define(check_node(Node), Node).
+
+% TODO continue from here
+
+-define(RANGE_ACC(Amount, Pairs), [Amount | Pairs]).
 
 %% ------------------------------------------------------------------
 %% Type Definitions
@@ -314,16 +321,16 @@
 %%%%%%%%%%%
 
 -type take_result(Key, Value) :: nonempty_improper_list(
-    taken_pair(Key, Value),
+    kv_pair(Key, Value),
     t(Key, Value)
 ).
 -export_type([take_result/2]).
 
--type taken_pair(Key, Value) :: nonempty_improper_list(Key, Value).
--export_type([taken_pair/2]).
+-type kv_pair(Key, Value) :: nonempty_improper_list(Key, Value).
+-export_type([kv_pair/2]).
 
 -type take_result_before_rebalance(Key, Value) :: nonempty_improper_list(
-    taken_pair(Key, Value),
+    kv_pair(Key, Value),
     node_after_deletion(Key, Value) | unbalanced_node(Key, Value)
 ).
 
@@ -520,6 +527,15 @@ next(#b5_ranks_v2_reverse_iter{steps = Steps} = Iter) ->
             none
     end.
 
+%% TODO document
+-spec nth(pos_integer(), t(Key, Value)) -> kv_pair(Key, Value).
+nth(N, ?INTERNAL1(K1, V1, S1, C1, C2)) ->
+    nth_internal1(N, K1, V1, S1, C1, C2);
+nth(N, ?LEAF1(K1, V1)) ->
+    nth_leaf1(N, K1, V1);
+nth(N, Node) ->
+    nth_recur(N, Node).
+
 %% @doc Maps a function over all key-value pairs in the tree node.
 %% Returns a new tree node with the same keys and transformed values.
 -spec map(fun((Key, Value) -> MappedValue), t(Key, Value)) -> t(Key, MappedValue).
@@ -538,6 +554,25 @@ map(_, ?LEAF0) ->
     ?LEAF0;
 map(Fun, Node) ->
     map_recur(Fun, Node).
+
+%% TODO document
+%-spec nth(pos_integer(), pos_integer(), t(Key, Value)) -> kv_pair(Key, Value).
+%range(M, RevLen, ?IMTERMAL1(K1, V1, S1, C1, C2)) ->
+%    range_internal1(M, RevLen, K1, V1, S1, C1, C2);
+%range(M, _, ?LEAF1(K1, V1)) ->
+%    range_leaf1(M, K1, V1);
+%range(M, Mode) ->
+%    range_recur(M, Mode).
+
+%% TODO document
+rank(Key, ?INTERNAL1(K1, V1, S1, C1, C2)) ->
+    rank_internal1(Key, 0, K1, V1, S1, C1, C2);
+rank(Key, ?LEAF1(K1, V1)) ->
+    rank_leaf1(Key, 0, K1, V1);
+rank(Key, ?LEAF0) ->
+    error_badkey(Key);
+rank(Key, Node) ->
+    rank_recur(Key, 0, Node).
 
 %% @doc Returns the largest key-value pair where the key is smaller than the given key.
 %% Returns `none' if no such key exists.
@@ -852,6 +887,343 @@ get_leaf1(Key, K1, V1) ->
     if
         Key == K1 ->
             V1;
+        true ->
+            error_badkey(Key)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Nth
+%% ------------------------------------------------------------------
+
+-spec nth_recur(N, deep_node(N, Value)) -> Value.
+nth_recur(N, ?INTERNAL2(K1, K2, Values, S1, S2, C1, C2, C3)) ->
+    nth_internal2(N, K1, K2, Values, S1, S2, C1, C2, C3);
+nth_recur(N, ?INTERNAL3(K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4)) ->
+    nth_internal3(N, K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4);
+nth_recur(N, ?INTERNAL4(K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5)) ->
+    nth_internal4(N, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5);
+nth_recur(N, ?LEAF2(K1, K2, V1, V2)) ->
+    nth_leaf2(N, K1, K2, V1, V2);
+nth_recur(N, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
+    nth_leaf3(N, K1, K2, K3, V1, V2, V3);
+nth_recur(N, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
+    nth_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4).
+
+-compile({inline, [nth_internal4/15]}).
+nth_internal4(N, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5) ->
+    Pos1 = S1 + 1,
+
+    if
+        N > Pos1 ->
+            Pos3 = Pos1 + S2 + S3 + 2,
+
+            if
+                N < Pos3 ->
+                    Pos2 = Pos1 + S2 + 1,
+
+                    if
+                        N < Pos2 ->
+                            nth_recur(N - Pos1, C2);
+                        N > Pos2 ->
+                            nth_recur(N - Pos2, C3);
+                        true ->
+                            [K2 | element(2, Values)]
+                    end;
+                %
+                N > Pos3 ->
+                    Pos4 = Pos3 + S4 + 1,
+
+                    if
+                        N < Pos4 ->
+                            nth_recur(N - Pos3, C4);
+                        N > Pos4 ->
+                            nth_recur(N - Pos4, C5);
+                        true ->
+                            [K4 | element(4, Values)]
+                    end;
+                %
+                true ->
+                    [K3 | element(3, Values)]
+            end;
+        %
+        N < Pos1 ->
+            nth_recur(N, C1);
+        %
+        true ->
+            [K1 | element(1, Values)]
+    end.
+
+-compile({inline, [nth_internal3/12]}).
+nth_internal3(N, K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4) ->
+    Pos2 = S1 + S2 + 2,
+
+    if
+        N > Pos2 ->
+            Pos3 = Pos2 + S3 + 1,
+
+            if
+                N < Pos3 ->
+                    nth_recur(N - Pos2, C3);
+                N > Pos3 ->
+                    nth_recur(N - Pos3, C4);
+                true ->
+                    [K3 | element(3, Values)]
+            end;
+        %
+        N < Pos2 ->
+            Pos1 = S1 + 1,
+
+            if
+                N < Pos1 ->
+                    nth_recur(N, C1);
+                N > Pos1 ->
+                    nth_recur(N - Pos1, C2);
+                true ->
+                    [K1 | element(1, Values)]
+            end;
+        %
+        true ->
+            [K2 | element(2, Values)]
+    end.
+
+-compile({inline, [nth_internal2/9]}).
+nth_internal2(N, K1, K2, Values, S1, S2, C1, C2, C3) ->
+    Pos1 = S1 + 1,
+
+    if
+        N > Pos1 ->
+            Pos2 = Pos1 + S2 + 1,
+            if
+                N < Pos2 ->
+                    nth_recur(N - Pos1, C2);
+                N > Pos2 ->
+                    nth_recur(N - Pos2, C3);
+                true ->
+                    [K2 | tl(Values)]
+            end;
+        %
+        N < Pos1 ->
+            nth_recur(N, C1);
+        %
+        true ->
+            [K1 | hd(Values)]
+    end.
+
+-compile({inline, [nth_internal1/6]}).
+nth_internal1(N, K1, V1, S1, C1, C2) ->
+    Pos1 = S1 + 1,
+
+    if
+        N < Pos1 ->
+            nth_recur(N, C1);
+        %
+        N > Pos1 ->
+            nth_recur(N - Pos1, C2);
+        %
+        true ->
+            [K1 | V1]
+    end.
+
+-compile({inline, [nth_leaf4/9]}).
+nth_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    case N of
+        1 -> [K1 | V1];
+        2 -> [K2 | V2];
+        3 -> [K3 | V3];
+        4 -> [K4 | V4]
+    end.
+
+-compile({inline, [nth_leaf3/7]}).
+nth_leaf3(N, K1, K2, K3, V1, V2, V3) ->
+    case N of
+        1 -> [K1 | V1];
+        2 -> [K2 | V2];
+        3 -> [K3 | V3]
+    end.
+
+-compile({inline, [nth_leaf2/5]}).
+nth_leaf2(N, K1, K2, V1, V2) ->
+    case N of
+        1 -> [K1 | V1];
+        2 -> [K2 | V2]
+    end.
+
+-compile({inline, [nth_leaf1/3]}).
+nth_leaf1(N, K1, V1) ->
+    case N of
+        1 -> [K1 | V1]
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: range
+%% ------------------------------------------------------------------
+
+% TODO continue from here
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Rank
+%% ------------------------------------------------------------------
+
+-spec rank_recur(Key, non_neg_integer(), deep_node(Key, Value)) -> Value.
+rank_recur(Key, MinN, ?INTERNAL2(K1, K2, Values, S1, S2, C1, C2, C3)) ->
+    rank_internal2(Key, MinN, K1, K2, Values, S1, S2, C1, C2, C3);
+rank_recur(Key, MinN, ?INTERNAL3(K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4)) ->
+    rank_internal3(Key, MinN, K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4);
+rank_recur(Key, MinN, ?INTERNAL4(K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5)) ->
+    rank_internal4(Key, MinN, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5);
+rank_recur(Key, MinN, ?LEAF2(K1, K2, V1, V2)) ->
+    rank_leaf2(Key, MinN, K1, K2, V1, V2);
+rank_recur(Key, MinN, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
+    rank_leaf3(Key, MinN, K1, K2, K3, V1, V2, V3);
+rank_recur(Key, MinN, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
+    rank_leaf4(Key, MinN, K1, K2, K3, K4, V1, V2, V3, V4).
+
+-compile({inline, [rank_internal4/16]}).
+rank_internal4(Key, MinN, K1, K2, K3, K4, Values, S1, S2, S3, S4, C1, C2, C3, C4, C5) ->
+    if
+        Key > K2 ->
+            if
+                Key < K4 ->
+                    if
+                        Key > K3 ->
+                            rank_recur(Key, MinN + S1 + S2 + S3 + 3, C4);
+                        Key < K3 ->
+                            rank_recur(Key, MinN + S1 + S2 + 2, C3);
+                        true ->
+                            [MinN + S1 + S2 + S3 + 3 | element(3, Values)]
+                    end;
+                Key > K4 ->
+                    rank_recur(Key, MinN + S1 + S2 + S3 + S4 + 4, C5);
+                true ->
+                    [MinN + S1 + S2 + S3 + S4 + 4 | element(4, Values)]
+            end;
+        Key < K2 ->
+            if
+                Key > K1 ->
+                    rank_recur(Key, MinN + S1 + 1, C2);
+                Key < K1 ->
+                    rank_recur(Key, MinN, C1);
+                true ->
+                    [MinN + S1 + 1 | element(1, Values)]
+            end;
+        true ->
+            [MinN + S1 + S2 + 2 | element(2, Values)]
+    end.
+
+-compile({inline, [rank_internal3/13]}).
+rank_internal3(Key, MinN, K1, K2, K3, Values, S1, S2, S3, C1, C2, C3, C4) ->
+    if
+        Key > K2 ->
+            if
+                Key < K3 ->
+                    rank_recur(Key, MinN + S1 + S2 + 2, C3);
+                Key > K3 ->
+                    rank_recur(Key, MinN + S1 + S2 + S3 + 3, C4);
+                true ->
+                    [MinN + S1 + S2 + S3 + 3 | element(3, Values)]
+            end;
+        Key < K2 ->
+            if
+                Key > K1 ->
+                    rank_recur(Key, MinN + S1 + 1, C2);
+                Key < K1 ->
+                    rank_recur(Key, MinN, C1);
+                true ->
+                    [MinN + S1 + 1 | element(1, Values)]
+            end;
+        true ->
+            [MinN + S1 + S2 + 2 | element(2, Values)]
+    end.
+
+-compile({inline, [rank_internal2/10]}).
+rank_internal2(Key, MinN, K1, K2, Values, S1, S2, C1, C2, C3) ->
+    if
+        Key > K1 ->
+            if
+                Key < K2 ->
+                    rank_recur(Key, MinN + S1 + 1, C2);
+                Key > K2 ->
+                    rank_recur(Key, MinN + S1 + S2 + 2, C3);
+                true ->
+                    [MinN + S1 + S2 + 2 | tl(Values)]
+            end;
+        Key < K1 ->
+            rank_recur(Key, MinN, C1);
+        true ->
+            [MinN + S1 + 1 | hd(Values)]
+    end.
+
+-compile({inline, [rank_internal1/7]}).
+rank_internal1(Key, MinN, K1, V1, S1, C1, C2) ->
+    if
+        Key < K1 ->
+            rank_recur(Key, MinN, C1);
+        Key > K1 ->
+            rank_recur(Key, MinN + S1 + 1, C2);
+        true ->
+            [MinN + S1 + 1 | V1]
+    end.
+
+-compile({inline, [rank_leaf4/10]}).
+rank_leaf4(Key, MinN, K1, K2, K3, K4, V1, V2, V3, V4) ->
+    if
+        Key > K2 ->
+            if
+                Key == K3 ->
+                    [MinN + 3 | V3];
+                Key == K4 ->
+                    [MinN + 4 | V4];
+                true ->
+                    error_badkey(Key)
+            end;
+        Key < K2 ->
+            if
+                Key == K1 ->
+                    [MinN + 1 | V1];
+                true ->
+                    error_badkey(Key)
+            end;
+        true ->
+            [MinN + 2 | V2]
+    end.
+
+-compile({inline, [rank_leaf3/8]}).
+rank_leaf3(Key, MinN, K1, K2, K3, V1, V2, V3) ->
+    if
+        Key < K2 ->
+            if
+                Key == K1 ->
+                    [MinN + 1 | V1];
+                true ->
+                    error_badkey(Key)
+            end;
+        Key > K2 ->
+            if
+                Key == K3 ->
+                    [MinN + 3 | V3];
+                true ->
+                    error_badkey(Key)
+            end;
+        true ->
+            [MinN + 2 | V2]
+    end.
+
+-compile({inline, [rank_leaf2/6]}).
+rank_leaf2(Key, MinN, K1, K2, V1, V2) ->
+    if
+        Key == K2 ->
+            [MinN + 2 | V2];
+        Key == K1 ->
+            [MinN + 1 | V1];
+        true ->
+            error_badkey(Key)
+    end.
+
+-compile({inline, [rank_leaf1/4]}).
+rank_leaf1(Key, MinN, K1, V1) ->
+    if
+        Key == K1 ->
+            [MinN + 1 | V1];
         true ->
             error_badkey(Key)
     end.

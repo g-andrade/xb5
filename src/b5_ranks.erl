@@ -27,6 +27,9 @@
     map/2,
     new/0,
     next/1,
+    nth/2,
+    range/3,
+    rank/2,
     size/1,
     smaller/2,
     smallest/1,
@@ -65,6 +68,7 @@
     map/2,
     new/0,
     next/1,
+    nth/2,
     size/1,
     smaller/2,
     smallest/1,
@@ -391,11 +395,45 @@ Returns `{Key, Value, NewIter}` or `none` if no more entries remain.
 next(Iter) ->
     b5_ranks_node:next(Iter).
 
+%% TODO document
+nth(N, #b5_ranks{size = Size, root = Root}) ->
+    % TODO negative values of N?
+    case not is_integer(N) orelse N < 1 orelse N > Size of
+        true ->
+            error({badarg, N});
+        %
+        _ ->
+            b5_ranks_node:nth(N, Root)
+    end.
+
 -if(?OTP_RELEASE >= 27).
 -doc "Returns the number of nodes in the tree.".
 -endif.
 -spec size(Tree) -> non_neg_integer() when Tree :: tree(_, _).
 size(#b5_ranks{size = Size}) -> Size.
+
+%% TODO document
+range(N, Len, #b5_ranks{size = Size, root = Root}) ->
+    % TODO negative values of N?
+    if
+        not is_integer(N) orelse N < 1 orelse N > Size ->
+            error({badarg, N});
+        %
+        not is_integer(Len) orelse Len < 0 ->
+            error({badarg, Len});
+        %
+        Len =:= 0 ->
+            [];
+        %
+        true ->
+            M = min(Size, N + Len - 1),
+            RevLen = M - N + 1,
+            b5_ranks_node:range(M, RevLen, Root)
+    end.
+
+%% TODO document
+rank(Key, #b5_ranks{root = Root}) ->
+    b5_ranks_node:rank(Key, Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc """
