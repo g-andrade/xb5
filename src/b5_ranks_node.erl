@@ -1,3 +1,6 @@
+% vim: set redrawtime=10000:
+% ^ FIXME
+
 %% @doc Low-level API for working directly with B-tree nodes.
 %%
 %% This module provides a lower-level interface to B-tree operations that work
@@ -3269,11 +3272,13 @@ delete_internal4_key1(K2, K3, K4, PrevValues, O1, O2, O3, O4, C1, PrevC2, C3, C4
     V1 = ReplacementV,
     {_, V2, V3, V4} = PrevValues,
     UpdatedO2 = O2 - 1,
+    UpdatedO3 = O3 - 1,
+    UpdatedO4 = O4 - 1,
 
     case C2 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO2 - O1,
+                UpdatedO2,
                 CK,
                 CV,
                 CLO,
@@ -3282,6 +3287,7 @@ delete_internal4_key1(K2, K3, K4, PrevValues, O1, O2, O3, O4, C1, PrevC2, C3, C4
                 %
                 K1,
                 V1,
+                0,
                 O1,
                 C1,
                 %
@@ -3303,8 +3309,8 @@ delete_internal4_key1(K2, K3, K4, PrevValues, O1, O2, O3, O4, C1, PrevC2, C3, C4
                 %
                 O1,
                 UpdatedO2,
-                O3,
-                O4,
+                UpdatedO3,
+                UpdatedO4,
                 %
                 C1,
                 C3,
@@ -3340,8 +3346,8 @@ delete_internal4_key1(K2, K3, K4, PrevValues, O1, O2, O3, O4, C1, PrevC2, C3, C4
                 %
                 O1,
                 UpdatedO2,
-                O3,
-                O4,
+                UpdatedO3,
+                UpdatedO4,
                 %
                 C1,
                 C3,
@@ -3362,8 +3368,8 @@ delete_internal4_key1(K2, K3, K4, PrevValues, O1, O2, O3, O4, C1, PrevC2, C3, C4
                     %
                     O1,
                     UpdatedO2,
-                    O3,
-                    O4,
+                    UpdatedO3,
+                    UpdatedO4,
                     %
                     C1,
                     C2,
@@ -3381,11 +3387,12 @@ delete_internal4_key2(K1, K3, K4, PrevValues, O1, O2, O3, O4, C1, C2, PrevC3, C4
     V2 = ReplacementV,
     {V1, _, V3, V4} = PrevValues,
     UpdatedO3 = O3 - 1,
+    UpdatedO4 = O4 - 1,
 
     case C3 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO3 - O2,
+                UpdatedO3,
                 CK,
                 CV,
                 CLO,
@@ -3394,7 +3401,8 @@ delete_internal4_key2(K1, K3, K4, PrevValues, O1, O2, O3, O4, C1, C2, PrevC3, C4
                 %
                 K2,
                 V2,
-                O2 - O1,
+                O1,
+                O2,
                 C2,
                 %
                 K3,
@@ -3416,7 +3424,7 @@ delete_internal4_key2(K1, K3, K4, PrevValues, O1, O2, O3, O4, C1, C2, PrevC3, C4
                 O1,
                 O2,
                 UpdatedO3,
-                O4,
+                UpdatedO4,
                 %
                 C1,
                 C2,
@@ -3451,7 +3459,7 @@ delete_internal4_key2(K1, K3, K4, PrevValues, O1, O2, O3, O4, C1, C2, PrevC3, C4
                 O1,
                 O2,
                 UpdatedO3,
-                O4,
+                UpdatedO4,
                 %
                 C1,
                 C2,
@@ -3473,7 +3481,7 @@ delete_internal4_key2(K1, K3, K4, PrevValues, O1, O2, O3, O4, C1, C2, PrevC3, C4
                     O1,
                     O2,
                     UpdatedO3,
-                    O4,
+                    UpdatedO4,
                     %
                     C1,
                     C2,
@@ -3495,7 +3503,7 @@ delete_internal4_key3(K1, K2, K4, PrevValues, O1, O2, O3, O4, C1, C2, C3, PrevC4
     case C4 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO4 - O3,
+                UpdatedO4,
                 CK,
                 CV,
                 CLO,
@@ -3504,7 +3512,8 @@ delete_internal4_key3(K1, K2, K4, PrevValues, O1, O2, O3, O4, C1, C2, C3, PrevC4
                 %
                 K3,
                 V3,
-                O3 - O2,
+                O2,
+                O3,
                 C3,
                 %
                 K4,
@@ -3603,7 +3612,7 @@ delete_internal4_key4(K1, K2, K3, PrevValues, O1, O2, O3, O4, C1, C2, C3, C4, Pr
 
     case C5 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(
+            Result = rebalance_rightmost_internal(
                 CK,
                 CV,
                 CLO,
@@ -3612,7 +3621,7 @@ delete_internal4_key4(K1, K2, K3, PrevValues, O1, O2, O3, O4, C1, C2, C3, C4, Pr
                 %
                 K4,
                 V4,
-                O4,
+                O4 - O3,
                 C4
             ),
 
@@ -3637,7 +3646,7 @@ delete_internal4_key4(K1, K2, K3, PrevValues, O1, O2, O3, O4, C1, C2, C3, C4, Pr
         %
         %
         ?LEAF1(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(
+            Result = rebalance_rightmost_leaf(
                 CK,
                 CV,
                 K4,
@@ -3702,7 +3711,8 @@ delete_internal4_rebalance_child1(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             {V1, V2, V3, V4} = Values,
 
-            Result = rebalance_internal_from_right_sibling(
+            Result = rebalance_leftmost_internal(
+                UpdatedO1,
                 CK,
                 CV,
                 CLO,
@@ -3711,7 +3721,6 @@ delete_internal4_rebalance_child1(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
                 %
                 K1,
                 V1,
-                UpdatedO1,
                 C2
             ),
 
@@ -3737,7 +3746,7 @@ delete_internal4_rebalance_child1(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
         ?LEAF1(CK, CV) ->
             {V1, V2, V3, V4} = Values,
 
-            Result = rebalance_leaf_from_right_sibling(
+            Result = rebalance_leftmost_leaf(
                 CK,
                 CV,
                 K1,
@@ -3785,7 +3794,7 @@ delete_internal4_rebalance_child1_finish(
                     {UpVal, V2, V3, V4},
                     %
                     O1 + MovedSize,
-                    O2 - MovedSize,
+                    O2,
                     O3,
                     O4,
                     %
@@ -3805,7 +3814,7 @@ delete_internal4_rebalance_child1_finish(
                     K4,
                     {V2, V3, V4},
                     %
-                    O1 + O2 + 1,
+                    O2,
                     O3,
                     O4,
                     %
@@ -3829,7 +3838,7 @@ delete_internal4_rebalance_child2(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             {V1, V2, V3, V4} = Values,
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO2 - O1,
+                UpdatedO2,
                 CK,
                 CV,
                 CLO,
@@ -3838,6 +3847,7 @@ delete_internal4_rebalance_child2(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
                 %
                 K1,
                 V1,
+                0,
                 O1,
                 C1,
                 %
@@ -3923,7 +3933,7 @@ delete_internal4_rebalance_child2_finish(
                 K4,
                 {V2, V3, V4},
                 %
-                O1 + O2 + 1,
+                O2,
                 O3,
                 O4,
                 %
@@ -3944,7 +3954,7 @@ delete_internal4_rebalance_child2_finish(
                     %
                     O1,
                     O2 + MovedSize,
-                    O3 - MovedSize,
+                    O3,
                     O4,
                     %
                     C1,
@@ -3965,7 +3975,7 @@ delete_internal4_rebalance_child2_finish(
                     {UpVal, V2, V3, V4},
                     %
                     O1 - MovedSize,
-                    O2 + MovedSize,
+                    O2,
                     O3,
                     O4,
                     %
@@ -3989,7 +3999,7 @@ delete_internal4_rebalance_child3(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             {V1, V2, V3, V4} = Values,
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO3 - O2,
+                UpdatedO3,
                 CK,
                 CV,
                 CLO,
@@ -3998,7 +4008,8 @@ delete_internal4_rebalance_child3(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
                 %
                 K2,
                 V2,
-                O2 - O1,
+                O1,
+                O2,
                 C2,
                 %
                 K3,
@@ -4102,7 +4113,7 @@ delete_internal4_rebalance_child3_finish(
                     {V1, V3, V4},
                     %
                     O1,
-                    O2 + O3 + 1,
+                    O3,
                     O4,
                     %
                     C1,
@@ -4124,7 +4135,7 @@ delete_internal4_rebalance_child3_finish(
                     O1,
                     O2,
                     O3 + MovedSize,
-                    O4 - MovedSize,
+                    O4,
                     %
                     C1,
                     C2,
@@ -4145,7 +4156,7 @@ delete_internal4_rebalance_child3_finish(
                     %
                     O1,
                     O2 - MovedSize,
-                    O3 + MovedSize,
+                    O3,
                     O4,
                     %
                     C1,
@@ -4167,7 +4178,7 @@ delete_internal4_rebalance_child4(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             {V1, V2, V3, V4} = Values,
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO4 - O3,
+                UpdatedO4,
                 CK,
                 CV,
                 CLO,
@@ -4176,7 +4187,8 @@ delete_internal4_rebalance_child4(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
                 %
                 K3,
                 V3,
-                O3 - O2,
+                O2,
+                O3,
                 C3,
                 %
                 K4,
@@ -4281,7 +4293,7 @@ delete_internal4_rebalance_child4_finish(
                     %
                     O1,
                     O2,
-                    O3 + O4 + 1,
+                    O4,
                     %
                     C1,
                     C2,
@@ -4324,7 +4336,7 @@ delete_internal4_rebalance_child4_finish(
                     O1,
                     O2,
                     O3 - MovedSize,
-                    O4 + MovedSize,
+                    O4,
                     %
                     C1,
                     C2,
@@ -4342,7 +4354,7 @@ delete_internal4_rebalance_child5(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
     case C5 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             {V1, V2, V3, V4} = Values,
-            Result = rebalance_internal_from_left_sibling(
+            Result = rebalance_rightmost_internal(
                 CK,
                 CV,
                 CLO,
@@ -4351,7 +4363,7 @@ delete_internal4_rebalance_child5(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
                 %
                 K4,
                 V4,
-                O4,
+                O4 - O3,
                 C4
             ),
 
@@ -4377,7 +4389,7 @@ delete_internal4_rebalance_child5(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
         %
         ?LEAF1(CK, CV) ->
             {V1, V2, V3, V4} = Values,
-            Result = rebalance_leaf_from_left_sibling(
+            Result = rebalance_rightmost_leaf(
                 CK,
                 CV,
                 K4,
@@ -4573,7 +4585,7 @@ delete_internal3_key1(K2, K3, PrevValues, O1, O2, O3, C1, PrevC2, C3, C4) ->
     case C2 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO2 - O1,
+                UpdatedO2 ,
                 CK,
                 CV,
                 CLO,
@@ -4582,6 +4594,7 @@ delete_internal3_key1(K2, K3, PrevValues, O1, O2, O3, C1, PrevC2, C3, C4) ->
                 %
                 K1,
                 V1,
+                0,
                 O1,
                 C1,
                 %
@@ -4672,7 +4685,7 @@ delete_internal3_key2(K1, K3, PrevValues, O1, O2, O3, C1, C2, PrevC3, C4) ->
     case C3 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO3 - O2,
+                UpdatedO3,
                 CK,
                 CV,
                 CLO,
@@ -4681,7 +4694,8 @@ delete_internal3_key2(K1, K3, PrevValues, O1, O2, O3, C1, C2, PrevC3, C4) ->
                 %
                 K2,
                 V2,
-                O2 - O1,
+                O1,
+                O2,
                 C2,
                 %
                 K3,
@@ -4769,7 +4783,7 @@ delete_internal3_key3(K1, K2, PrevValues, O1, O2, O3, C1, C2, C3, PrevC4) ->
 
     case C4 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(
+            Result = rebalance_rightmost_internal(
                 CK,
                 CV,
                 CLO,
@@ -4778,7 +4792,7 @@ delete_internal3_key3(K1, K2, PrevValues, O1, O2, O3, C1, C2, C3, PrevC4) ->
                 %
                 K3,
                 V3,
-                O3,
+                O3 - O2,
                 C3
             ),
 
@@ -4799,7 +4813,7 @@ delete_internal3_key3(K1, K2, PrevValues, O1, O2, O3, C1, C2, C3, PrevC4) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(
+            Result = rebalance_rightmost_leaf(
                 CK,
                 CV,
                 K3,
@@ -4855,7 +4869,8 @@ delete_internal3_rebalance_child1(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
     case C1 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             {V1, V2, V3} = Values,
-            Result = rebalance_internal_from_right_sibling(
+            Result = rebalance_leftmost_internal(
+                UpdatedO1,
                 CK,
                 CV,
                 CLO,
@@ -4864,7 +4879,6 @@ delete_internal3_rebalance_child1(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
                 %
                 K1,
                 V1,
-                UpdatedO1,
                 C2
             ),
 
@@ -4885,7 +4899,7 @@ delete_internal3_rebalance_child1(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
         %
         ?LEAF1(CK, CV) ->
             {V1, V2, V3} = Values,
-            Result = rebalance_leaf_from_right_sibling(
+            Result = rebalance_leftmost_leaf(
                 CK,
                 CV,
                 K1,
@@ -4923,7 +4937,7 @@ delete_internal3_rebalance_child1_finish(Result, K2, K3, V2, V3, O1, O2, O3, C3,
                 {UpVal, V2, V3},
                 %
                 O1 + MovedSize,
-                O2 - MovedSize,
+                O2,
                 O3,
                 %
                 UpdatedC1,
@@ -4939,7 +4953,7 @@ delete_internal3_rebalance_child1_finish(Result, K2, K3, V2, V3, O1, O2, O3, C3,
                     K3,
                     [V2 | V3],
                     %
-                    O1 + O2 + 1,
+                    O2,
                     O3,
                     %
                     MergedC1C2,
@@ -4960,7 +4974,7 @@ delete_internal3_rebalance_child2(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             {V1, V2, V3} = Values,
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO2 - O1,
+                UpdatedO2,
                 CK,
                 CV,
                 CLO,
@@ -4969,6 +4983,7 @@ delete_internal3_rebalance_child2(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
                 %
                 K1,
                 V1,
+                0,
                 O1,
                 C1,
                 %
@@ -5058,7 +5073,7 @@ delete_internal3_rebalance_child2_finish(Result, K1, K2, K3, V1, V2, V3, O1, O2,
                     K3,
                     [V2 | V3],
                     %
-                    O1 + O2 + 1,
+                    O2,
                     O3,
                     %
                     MergedC1C2,
@@ -5077,7 +5092,7 @@ delete_internal3_rebalance_child2_finish(Result, K1, K2, K3, V1, V2, V3, O1, O2,
                     %
                     O1,
                     O2 + MovedSize,
-                    O3 - MovedSize,
+                    O3,
                     %
                     C1,
                     RebalancedC2,
@@ -5095,7 +5110,7 @@ delete_internal3_rebalance_child2_finish(Result, K1, K2, K3, V1, V2, V3, O1, O2,
                     {UpVal, V2, V3},
                     %
                     O1 - MovedSize,
-                    O2 + MovedSize,
+                    O2,
                     O3,
                     %
                     UpdatedC1,
@@ -5116,7 +5131,7 @@ delete_internal3_rebalance_child3(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             {V1, V2, V3} = Values,
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO3 - O2,
+                UpdatedO3,
                 CK,
                 CV,
                 CLO,
@@ -5125,7 +5140,8 @@ delete_internal3_rebalance_child3(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
                 %
                 K2,
                 V2,
-                O2 - O1,
+                O1,
+                O2,
                 C2,
                 %
                 K3,
@@ -5215,7 +5231,7 @@ delete_internal3_rebalance_child3_finish(Result, K1, K2, K3, V1, V2, V3, O1, O2,
                     [V1 | V3],
                     %
                     O1,
-                    O2 + O3 + 1,
+                    O3,
                     %
                     C1,
                     MergedC2C3,
@@ -5252,7 +5268,7 @@ delete_internal3_rebalance_child3_finish(Result, K1, K2, K3, V1, V2, V3, O1, O2,
                     %
                     O1,
                     O2 - MovedSize,
-                    O3 + MovedSize,
+                    O3,
                     %
                     C1,
                     UpdatedC2,
@@ -5269,7 +5285,7 @@ delete_internal3_rebalance_child4(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
     case C4 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             {V1, V2, V3} = Values,
-            Result = rebalance_internal_from_left_sibling(
+            Result = rebalance_rightmost_internal(
                 CK,
                 CV,
                 CLO,
@@ -5278,7 +5294,7 @@ delete_internal3_rebalance_child4(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
                 %
                 K3,
                 V3,
-                O3,
+                O3 - O2,
                 C3
             ),
 
@@ -5287,7 +5303,7 @@ delete_internal3_rebalance_child4(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
         %
         ?LEAF1(CK, CV) ->
             {V1, V2, V3} = Values,
-            Result = rebalance_leaf_from_left_sibling(
+            Result = rebalance_rightmost_leaf(
                 CK,
                 CV,
                 K3,
@@ -5437,7 +5453,7 @@ delete_internal2_key1(K2, Values, O1, O2, C1, PrevC2, C3) ->
     case C2 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO2 - O1,
+                UpdatedO2,
                 CK,
                 CV,
                 CLO,
@@ -5446,6 +5462,7 @@ delete_internal2_key1(K2, Values, O1, O2, C1, PrevC2, C3) ->
                 %
                 K1,
                 V1,
+                0,
                 O1,
                 C1,
                 %
@@ -5522,7 +5539,7 @@ delete_internal2_key2(K1, Values, O1, O2, C1, C2, PrevC3) ->
 
     case C3 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(
+            Result = rebalance_rightmost_internal(
                 CK,
                 CV,
                 CLO,
@@ -5531,7 +5548,7 @@ delete_internal2_key2(K1, Values, O1, O2, C1, C2, PrevC3) ->
                 %
                 K2,
                 V2,
-                O2,
+                O2 - O1,
                 C2
             ),
 
@@ -5548,7 +5565,7 @@ delete_internal2_key2(K1, Values, O1, O2, C1, C2, PrevC3) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(
+            Result = rebalance_rightmost_leaf(
                 CK,
                 CV,
                 K2,
@@ -5595,7 +5612,8 @@ delete_internal2_rebalance_child1(K1, K2, Values, O1, O2, C1, C2, C3) ->
     case C1 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             [V1 | V2] = Values,
-            Result = rebalance_internal_from_right_sibling(
+            Result = rebalance_leftmost_internal(
+                UpdatedO1,
                 CK,
                 CV,
                 CLO,
@@ -5604,7 +5622,6 @@ delete_internal2_rebalance_child1(K1, K2, Values, O1, O2, C1, C2, C3) ->
                 %
                 K1,
                 V1,
-                UpdatedO1,
                 C2
             ),
 
@@ -5612,7 +5629,7 @@ delete_internal2_rebalance_child1(K1, K2, Values, O1, O2, C1, C2, C3) ->
         %
         ?LEAF1(CK, CV) ->
             [V1 | V2] = Values,
-            Result = rebalance_leaf_from_right_sibling(
+            Result = rebalance_leftmost_leaf(
                 CK,
                 CV,
                 K1,
@@ -5637,7 +5654,7 @@ delete_internal2_rebalance_child1_finish(Result, K2, V2, O1, O2, C3) ->
                     [UpVal | V2],
                     %
                     O1 + MovedSize,
-                    O2 - MovedSize,
+                    O2,
                     %
                     UpdatedC1,
                     UpdatedC2,
@@ -5651,7 +5668,7 @@ delete_internal2_rebalance_child1_finish(Result, K2, V2, O1, O2, C3) ->
                     K2,
                     V2,
                     %
-                    O1 + O2 + 1,
+                    O2,
                     %
                     MergedC1C2,
                     C3
@@ -5669,7 +5686,7 @@ delete_internal2_rebalance_child2(K1, K2, Values, O1, O2, C1, C2, C3) ->
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             [V1 | V2] = Values,
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO2 - O1,
+                UpdatedO2,
                 CK,
                 CV,
                 CLO,
@@ -5678,6 +5695,7 @@ delete_internal2_rebalance_child2(K1, K2, Values, O1, O2, C1, C2, C3) ->
                 %
                 K1,
                 V1,
+                0,
                 O1,
                 C1,
                 %
@@ -5742,7 +5760,7 @@ delete_internal2_rebalance_child2_finish(Result, K1, K2, V1, V2, O1, O2, C1, C3)
                     K2,
                     V2,
                     %
-                    O1 + O2 + 1,
+                    O2,
                     %
                     MergedC1C2,
                     C3
@@ -5773,7 +5791,7 @@ delete_internal2_rebalance_child2_finish(Result, K1, K2, V1, V2, O1, O2, C1, C3)
                     [UpVal | V2],
                     %
                     O1 - MovedSize,
-                    O2 + MovedSize,
+                    O2,
                     %
                     UpdatedC1,
                     RebalancedC2,
@@ -5789,7 +5807,7 @@ delete_internal2_rebalance_child3(K1, K2, Values, O1, O2, C1, C2, C3) ->
     case C3 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             [V1 | V2] = Values,
-            Result = rebalance_internal_from_left_sibling(
+            Result = rebalance_rightmost_internal(
                 CK,
                 CV,
                 CLO,
@@ -5798,7 +5816,7 @@ delete_internal2_rebalance_child3(K1, K2, Values, O1, O2, C1, C2, C3) ->
                 %
                 K2,
                 V2,
-                O2,
+                O2 - O1,
                 C2
             ),
 
@@ -5807,7 +5825,7 @@ delete_internal2_rebalance_child3(K1, K2, Values, O1, O2, C1, C2, C3) ->
         %
         ?LEAF1(CK, CV) ->
             [V1 | V2] = Values,
-            Result = rebalance_leaf_from_left_sibling(
+            Result = rebalance_rightmost_leaf(
                 CK,
                 CV,
                 K2,
@@ -5916,7 +5934,8 @@ delete_internal1_rebalance_child1(K1, V1, O1, C1, C2) ->
 
     case C1 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
-            Result = rebalance_internal_from_right_sibling(
+            Result = rebalance_leftmost_internal(
+                UpdatedO1,
                 CK,
                 CV,
                 CLO,
@@ -5925,14 +5944,13 @@ delete_internal1_rebalance_child1(K1, V1, O1, C1, C2) ->
                 %
                 K1,
                 V1,
-                UpdatedO1,
                 C2
             ),
 
             delete_internal1_rebalance_child1_finish(Result, UpdatedO1);
         %
         ?LEAF1(CK, CV) ->
-            Result = rebalance_leaf_from_right_sibling(
+            Result = rebalance_leftmost_leaf(
                 CK,
                 CV,
                 K1,
@@ -5960,7 +5978,7 @@ delete_internal1_rebalance_child1_finish(Result, O1) ->
 delete_internal1_rebalance_child2(K1, V1, O1, C1, C2) ->
     case C2 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(
+            Result = rebalance_rightmost_internal(
                 CK,
                 CV,
                 CLO,
@@ -5977,7 +5995,7 @@ delete_internal1_rebalance_child2(K1, V1, O1, C1, C2) ->
         %
         %
         ?LEAF1(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(
+            Result = rebalance_rightmost_leaf(
                 CK,
                 CV,
                 K1,
@@ -8067,16 +8085,18 @@ smaller_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
 %% Internal Function Definitions: Rebalance a node from its right sibling
 %% ------------------------------------------------------------------
 
-%-compile({inline, rebalance_internal_from_right_sibling/7}).
-rebalance_internal_from_right_sibling(
-    CKey, CValue, CLeftOffset, CLeft, CRight, ParentK, ParentV, RightOffset, Right
+%-compile({inline, rebalance_leftmost_internal/7}).
+rebalance_leftmost_internal(
+    CSizePlusOne, CKey, CValue, CLeftOffset, CLeft, CRight, ParentK, ParentV, Right
 ) ->
+    _ = ?check_node(Right),
+
     case Right of
         ?INTERNAL2(K1, K2, Values, O1, O2, C1, C2, C3) ->
             [V1 | V2] = Values,
 
             MergedNodeO1 = CLeftOffset,
-            MergedNodeO2 = RightOffset - CLeftOffset,
+            MergedNodeO2 = CSizePlusOne,
             MergedNodeO3 = MergedNodeO2 + O1,
             MergedNodeO4 = MergedNodeO2 + O2,
 
@@ -8113,7 +8133,7 @@ rebalance_internal_from_right_sibling(
             MovedC = C1,
 
             UpdatedNodeO1 = CLeftOffset,
-            UpdatedNodeO2 = RightOffset - CLeftOffset,
+            UpdatedNodeO2 = CSizePlusOne,
 
             UpdatedNode = ?check_node(
                 ?INTERNAL2(
@@ -8158,7 +8178,7 @@ rebalance_internal_from_right_sibling(
             MovedC = C1,
 
             UpdatedNodeO1 = CLeftOffset,
-            UpdatedNodeO2 = RightOffset - CLeftOffset,
+            UpdatedNodeO2 = CSizePlusOne,
 
             UpdatedNode = ?check_node(
                 ?INTERNAL2(
@@ -8199,8 +8219,8 @@ rebalance_internal_from_right_sibling(
         %
     end.
 
-%-compile({inline, rebalance_leaf_from_right_sibling/5}).
-rebalance_leaf_from_right_sibling(CKey, CValue, ParentK, ParentV, Right) ->
+%-compile({inline, rebalance_leftmost_leaf/5}).
+rebalance_leftmost_leaf(CKey, CValue, ParentK, ParentV, Right) ->
     case Right of
         ?LEAF2(K1, K2, V1, V2) ->
             MergedNode = ?LEAF4(
@@ -8245,8 +8265,8 @@ rebalance_leaf_from_right_sibling(CKey, CValue, ParentK, ParentV, Right) ->
 %% Internal Function Definitions: Rebalance a node from its left sibling
 %% ------------------------------------------------------------------
 
-%-compile({inline, rebalance_internal_from_left_sibling/7}).
-rebalance_internal_from_left_sibling(
+%-compile({inline, rebalance_rightmost_internal/7}).
+rebalance_rightmost_internal(
     CKey,
     CValue,
     CLeftOffset,
@@ -8255,12 +8275,19 @@ rebalance_internal_from_left_sibling(
     %
     ParentK,
     ParentV,
-    LeftOffsetFromPrevious,
+    LeftSizePlusOne,
     Left
 ) ->
+    _ = ?check_node(Left),
+
     case Left of
         ?INTERNAL2(LK1, LK2, LValues, LO1, LO2, LC1, LC2, LC3) ->
             [LV1 | LV2] = LValues,
+
+            MergedNodeO1 = LO1,
+            MergedNodeO2 = LO2,
+            MergedNodeO3 = LeftSizePlusOne,
+            MergedNodeO4 = MergedNodeO3 + CLeftOffset,
 
             MergedNode = ?check_node(
                 ?INTERNAL4(
@@ -8270,10 +8297,10 @@ rebalance_internal_from_left_sibling(
                     CKey,
                     {LV1, LV2, ParentV, CValue},
                     %
-                    LO1,
-                    LO2,
-                    LeftOffsetFromPrevious,
-                    LeftOffsetFromPrevious + CLeftOffset,
+                    MergedNodeO1,
+                    MergedNodeO2,
+                    MergedNodeO3,
+                    MergedNodeO4,
                     %
                     LC1,
                     LC2,
@@ -8294,7 +8321,7 @@ rebalance_internal_from_left_sibling(
             UpVal = V3,
             MovedC = C4,
 
-            UpdatedNodeO1 = MovedSize = LeftOffsetFromPrevious - O3,
+            UpdatedNodeO1 = MovedSize = LeftSizePlusOne - O3,
             UpdatedNodeO2 = UpdatedNodeO1 + CLeftOffset,
 
             UpdatedNode = ?check_node(
@@ -8338,7 +8365,7 @@ rebalance_internal_from_left_sibling(
             UpVal = V4,
             MovedC = C5,
 
-            UpdatedNodeO1 = MovedSize = LeftOffsetFromPrevious - O4,
+            UpdatedNodeO1 = MovedSize = LeftSizePlusOne - O4,
             UpdatedNodeO2 = UpdatedNodeO1 + CLeftOffset,
 
             UpdatedNode = ?check_node(
@@ -8379,8 +8406,8 @@ rebalance_internal_from_left_sibling(
         %
     end.
 
-%-compile({inline, rebalance_leaf_from_left_sibling/5}).
-rebalance_leaf_from_left_sibling(
+%-compile({inline, rebalance_rightmost_leaf/5}).
+rebalance_rightmost_leaf(
     CKey,
     CValue,
     ParentK,
@@ -8431,7 +8458,7 @@ rebalance_leaf_from_left_sibling(
 
 %-compile({inline, rebalance_internal_from_either_sibling/10}).
 rebalance_internal_from_either_sibling(
-    COffsetFromPrevious,
+    COffset,
     CKey,
     CValue,
     CLeftOffset,
@@ -8440,14 +8467,17 @@ rebalance_internal_from_either_sibling(
     %
     LParentK,
     LParentV,
-    LeftOffsetFromPrevious,
+    LeftLeftOffset,
+    LeftOffset,
     Left,
     %
     RParentK,
     RParentV,
-    RightOffsetFromPrevious,
     Right
 ) ->
+    _ = ?check_node(Left),
+    _ = ?check_node(Right),
+
     case Left of
         ?INTERNAL2(LK1, LK2, LValues, LO1, LO2, LC1, LC2, LC3) ->
             %
@@ -8460,13 +8490,10 @@ rebalance_internal_from_either_sibling(
                     UpVal = V1,
                     MovedC = C1,
 
-                    % TODO continue from here, offset calculations are wrong.
-                    % Consult:
-                    % * rebalance_internal_from_right_sibling
-                    % * rebalance_internal_from_left_sibling
+                    CSizePlusOne = COffset - LeftOffset,
 
                     UpdatedNodeO1 = CLeftOffset,
-                    UpdatedNodeO2 = COffsetFromPrevious - CLeftOffset,
+                    UpdatedNodeO2 = CSizePlusOne,
 
                     UpdatedNode = ?check_node(
                         ?INTERNAL2(
@@ -8509,8 +8536,10 @@ rebalance_internal_from_either_sibling(
                     UpVal = V1,
                     MovedC = C1,
 
+                    CSizePlusOne = COffset - LeftOffset,
+
                     UpdatedNodeO1 = CLeftOffset,
-                    UpdatedNodeO2 = COffsetFromPrevious - CLeftOffset,
+                    UpdatedNodeO2 = CSizePlusOne,
 
                     UpdatedNode = ?check_node(
                         ?INTERNAL2(
@@ -8555,7 +8584,7 @@ rebalance_internal_from_either_sibling(
 
                     MergedNodeO1 = LO1,
                     MergedNodeO2 = LO2,
-                    MergedNodeO3 = LeftOffsetFromPrevious - LO2,
+                    MergedNodeO3 = COffset - LeftOffset,
                     MergedNodeO4 = MergedNodeO3 + CLeftOffset,
 
                     MergedNode = ?INTERNAL4(
@@ -8590,7 +8619,9 @@ rebalance_internal_from_either_sibling(
             UpVal = V3,
             MovedC = C4,
 
-            UpdatedNodeO1 = MovedSize = (LeftOffsetFromPrevious - O3),
+            LeftSizePlusOne = LeftOffset - LeftLeftOffset,
+
+            UpdatedNodeO1 = MovedSize = (LeftSizePlusOne - O3),
             UpdatedNodeO2 = UpdatedNodeO1 + CLeftOffset,
 
             UpdatedNode = ?check_node(
@@ -8635,9 +8666,10 @@ rebalance_internal_from_either_sibling(
             UpVal = V4,
             MovedC = C5,
 
-            UpdatedNodeO1 = MovedSize = (LeftOffsetFromPrevious - O4),
-            UpdatedNodeO2 = UpdatedNodeO1 + CLeftOffset,
+            LeftSizePlusOne = LeftOffset - LeftLeftOffset,
 
+            UpdatedNodeO1 = MovedSize = (LeftSizePlusOne - O4),
+            UpdatedNodeO2 = UpdatedNodeO1 + CLeftOffset,
 
             UpdatedNode = ?check_node(
                 ?INTERNAL2(
@@ -8755,13 +8787,23 @@ rebalance_leaf_from_either_sibling(
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 check_node(Line, ?INTERNAL1(_, _, O1, C1, _) = Node) ->
-    check_sizes(Line, Node, [{s1, O1, C1}]);
+    S1 = O1 - 1,
+    check_sizes(Line, Node, [{s1, S1, C1}]);
 check_node(Line, ?INTERNAL2(_, _, _, O1, O2, C1, C2, _) = Node) ->
-    check_sizes(Line, Node, [{s1, O1, C1}, {s2, O2, C2}]);
+    S1 = O1 - 1,
+    S2 = O2 - O1 - 1,
+    check_sizes(Line, Node, [{s1, S1, C1}, {s2, S2, C2}]);
 check_node(Line, ?INTERNAL3(_, _, _, _, O1, O2, O3, C1, C2, C3, _) = Node) ->
-    check_sizes(Line, Node, [{s1, O1, C1}, {s2, O2, C2}, {s3, O3, C3}]);
+    S1 = O1 - 1,
+    S2 = O2 - O1 - 1,
+    S3 = O3 - O2 - 1,
+    check_sizes(Line, Node, [{s1, S1, C1}, {s2, S2, C2}, {s3, S3, C3}]);
 check_node(Line, ?INTERNAL4(_, _, _, _, _, O1, O2, O3, O4, C1, C2, C3, C4, _) = Node) ->
-    check_sizes(Line, Node, [{s1, O1, C1}, {s2, O2, C2}, {s3, O3, C3}, {s4, O4, C4}]);
+    S1 = O1 - 1,
+    S2 = O2 - O1 - 1,
+    S3 = O3 - O2 - 1,
+    S4 = O4 - O3 - 1,
+    check_sizes(Line, Node, [{s1, S1, C1}, {s2, S2, C2}, {s3, S3, C3}, {s4, S4, C4}]);
 check_node(_, ?LEAF4(_, _, _, _, _, _, _, _) = Node) ->
     Node;
 check_node(_, ?LEAF3(_, _, _, _, _, _) = Node) ->
