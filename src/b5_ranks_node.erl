@@ -8082,7 +8082,7 @@ smaller_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
 %% Internal Function Definitions: Rebalance a node from its right sibling
 %% ------------------------------------------------------------------
 
-%-compile({inline, rebalance_leftmost_internal/7}).
+-compile({inline, rebalance_leftmost_internal/9}).
 rebalance_leftmost_internal(
     CSizePlusOne, CKey, CValue, CLeftOffset, CLeft, CRight, ParentK, ParentV, Right
 ) ->
@@ -8262,7 +8262,7 @@ rebalance_leftmost_leaf(CKey, CValue, ParentK, ParentV, Right) ->
 %% Internal Function Definitions: Rebalance a node from its left sibling
 %% ------------------------------------------------------------------
 
-%-compile({inline, rebalance_rightmost_internal/7}).
+-compile({inline, rebalance_rightmost_internal/9}).
 rebalance_rightmost_internal(
     CKey,
     CValue,
@@ -8453,7 +8453,7 @@ rebalance_rightmost_leaf(
 %% Internal Function Definitions: Rebalance a node from either left/right sibling
 %% ------------------------------------------------------------------
 
-%-compile({inline, rebalance_internal_from_either_sibling/10}).
+-compile({inline, rebalance_internal_from_either_sibling/14}).
 rebalance_internal_from_either_sibling(
     COffset,
     CKey,
