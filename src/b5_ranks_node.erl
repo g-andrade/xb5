@@ -1106,7 +1106,7 @@ rank_internal3(Key, LowerBound, K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4) 
         Key < K2 ->
             if
                 Key > K1 ->
-                    rank_recur(Key, LowerBound + O1 , C2);
+                    rank_recur(Key, LowerBound + O1, C2);
                 Key < K1 ->
                     rank_recur(Key, LowerBound, C1);
                 true ->
@@ -1122,7 +1122,7 @@ rank_internal2(Key, LowerBound, K1, K2, Values, O1, O2, C1, C2, C3) ->
         Key > K1 ->
             if
                 Key < K2 ->
-                    rank_recur(Key, LowerBound + O1 , C2);
+                    rank_recur(Key, LowerBound + O1, C2);
                 Key > K2 ->
                     rank_recur(Key, LowerBound + O2, C3);
                 true ->
@@ -3753,7 +3753,22 @@ delete_internal4_rebalance_child1(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
         %
         _ ->
             ?check_node(
-                ?INTERNAL4(K1, K2, K3, K4, Values, UpdatedO1, UpdatedO2, UpdatedO3, UpdatedO4, C1, C2, C3, C4, C5)
+                ?INTERNAL4(
+                    K1,
+                    K2,
+                    K3,
+                    K4,
+                    Values,
+                    UpdatedO1,
+                    UpdatedO2,
+                    UpdatedO3,
+                    UpdatedO4,
+                    C1,
+                    C2,
+                    C3,
+                    C4,
+                    C5
+                )
             )
     end.
 
@@ -3895,7 +3910,9 @@ delete_internal4_rebalance_child2(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2
         %
         _ ->
             ?check_node(
-                ?INTERNAL4(K1, K2, K3, K4, Values, O1, UpdatedO2, UpdatedO3, UpdatedO4, C1, C2, C3, C4, C5)
+                ?INTERNAL4(
+                    K1, K2, K3, K4, Values, O1, UpdatedO2, UpdatedO3, UpdatedO4, C1, C2, C3, C4, C5
+                )
             )
     end.
 
@@ -4563,7 +4580,7 @@ delete_internal3_key1(K2, K3, PrevValues, O1, O2, O3, C1, PrevC2, C3, C4) ->
     case C2 of
         ?INTERNAL1(CK, CV, CLO, CL, CR) ->
             Result = rebalance_internal_from_either_sibling(
-                UpdatedO2 ,
+                UpdatedO2,
                 CK,
                 CV,
                 CLO,
@@ -4901,7 +4918,9 @@ delete_internal3_rebalance_child1(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4
             );
         %
         _ ->
-            ?check_node(?INTERNAL3(K1, K2, K3, Values, UpdatedO1, UpdatedO2, UpdatedO3, C1, C2, C3, C4))
+            ?check_node(
+                ?INTERNAL3(K1, K2, K3, Values, UpdatedO1, UpdatedO2, UpdatedO3, C1, C2, C3, C4)
+            )
     end.
 
 -compile({inline, delete_internal3_rebalance_child1_finish/10}).
@@ -8565,24 +8584,26 @@ rebalance_internal_from_either_sibling(
                     MergedNodeO3 = LeftOffset - LeftLeftOffset,
                     MergedNodeO4 = MergedNodeO3 + CLeftOffset,
 
-                    MergedNode = ?check_node(?INTERNAL4(
-                        LK1,
-                        LK2,
-                        LParentK,
-                        CKey,
-                        {LV1, LV2, LParentV, CValue},
-                        %
-                        MergedNodeO1,
-                        MergedNodeO2,
-                        MergedNodeO3,
-                        MergedNodeO4,
-                        %
-                        LC1,
-                        LC2,
-                        LC3,
-                        CLeft,
-                        CRight
-                    )),
+                    MergedNode = ?check_node(
+                        ?INTERNAL4(
+                            LK1,
+                            LK2,
+                            LParentK,
+                            CKey,
+                            {LV1, LV2, LParentV, CValue},
+                            %
+                            MergedNodeO1,
+                            MergedNodeO2,
+                            MergedNodeO3,
+                            MergedNodeO4,
+                            %
+                            LC1,
+                            LC2,
+                            LC3,
+                            CLeft,
+                            CRight
+                        )
+                    ),
 
                     ?MID_MERGED(MergedNode)
             end;

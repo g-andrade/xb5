@@ -156,7 +156,6 @@ for_each_tree_iteration(TreeSize, TestFun) ->
 for_each_tree_iteration_recur(0, _, _) ->
     ok;
 for_each_tree_iteration_recur(N, TreeSize, TestFun) when N > 0 ->
-
     {ExistentMap, NonExistentKeys} = generate_kvs(TreeSize, undefined),
 
     Tree = b5_ranks:from_list(shuffled_list(maps:to_list(ExistentMap))),
@@ -170,6 +169,6 @@ for_each_tree_iteration_recur(N, TreeSize, TestFun) when N > 0 ->
     for_each_tree_iteration_recur(N - 1, TreeSize, TestFun).
 
 shuffled_list(List) ->
-    WithWeights = lists:map(fun (Element) -> [rand:uniform() | Element] end, List),
+    WithWeights = lists:map(fun(Element) -> [rand:uniform() | Element] end, List),
     Shuffled = lists:sort(WithWeights),
-    lists:map(fun ([_Weight | Element]) -> Element end, Shuffled).
+    lists:map(fun([_Weight | Element]) -> Element end, Shuffled).
