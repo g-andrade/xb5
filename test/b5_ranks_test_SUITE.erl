@@ -919,9 +919,9 @@ test_delete_each(Tree, ExistentMap, NonExistentKeys) ->
             Tree2 = b5_ranks:delete(DeleteKey, Tree),
 
             ?assertEqual(ExpectedListAfter, b5_ranks:to_list(Tree2)),
+            ?assertMatch({ok, _}, b5_ranks:validate(Tree2)),
             ?assertEqual(maps:size(ExistentMap) - 1, b5_ranks:size(Tree2)),
             ?assertEqual(maps:size(ExistentMap) =:= 1, b5_ranks:is_empty(Tree2)),
-            ?assertMatch({ok, _}, b5_ranks:validate(Tree2)),
 
             ?assertError({badkey, Key}, b5_ranks:delete(Key, Tree2)),
 

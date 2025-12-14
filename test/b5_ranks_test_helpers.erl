@@ -16,6 +16,13 @@
 ]).
 
 %% ------------------------------------------------------------------
+%% Macro Definitions
+%% ------------------------------------------------------------------
+
+%-define(ITERATIONS_FOR_EACH_TREE, 100).
+-define(ITERATIONS_FOR_EACH_TREE, 3).
+
+%% ------------------------------------------------------------------
 %% Tweaks
 %% ------------------------------------------------------------------
 
@@ -122,13 +129,7 @@ generate_kvs_impl(0, [{PrevK, _} | _] = ExistentAcc, NonExistentAcc) ->
 for_each_tree(TreeSizes, TestFun) ->
     lists:foreach(
         fun(TreeSize) ->
-            {ExistentMap, NonExistentKeys} = generate_kvs(TreeSize, undefined),
-            Tree = b5_ranks:from_list(maps:to_list(ExistentMap)),
-            case b5_ranks:validate(Tree) of
-                {ok, _} -> ok;
-                Error -> error({validation_failed, Error, TreeSize})
-            end,
-            TestFun(Tree, ExistentMap, NonExistentKeys)
+            for_each_tree_iteration(TreeSize, TestFun)
         end,
         TreeSizes
     ).
@@ -144,3 +145,31 @@ error_not_to_be_called(_) ->
 -spec error_not_to_be_called(term(), term()) -> no_return().
 error_not_to_be_called(_, _) ->
     error(not_to_be_called).
+
+%% ------------------------------------------------------------------
+%% Internal
+%% ------------------------------------------------------------------
+
+for_each_tree_iteration(TreeSize, TestFun) ->
+    for_each_tree_iteration_recur(?ITERATIONS_FOR_EACH_TREE, TreeSize, TestFun).
+
+for_each_tree_iteration_recur(0, _, _) ->
+    ok;
+for_each_tree_iteration_recur(N, TreeSize, TestFun) when N > 0 ->
+
+    {ExistentMap, NonExistentKeys} = generate_kvs(TreeSize, undefined),
+
+    Tree = b5_ranks:from_list(shuffled_list(maps:to_list(ExistentMap))),
+    case b5_ranks:validate(Tree) of
+        {ok, _} -> ok;
+        Error -> error({validation_failed, Error, TreeSize})
+    end,
+
+    TestFun(Tree, ExistentMap, NonExistentKeys),
+
+    for_each_tree_iteration_recur(N - 1, TreeSize, TestFun).
+
+shuffled_list(List) ->
+    WithWeights = lists:map(fun (Element) -> [rand:uniform() | Element] end, List),
+    Shuffled = lists:sort(WithWeights),
+    lists:map(fun ([_Weight | Element]) -> Element end, Shuffled).
