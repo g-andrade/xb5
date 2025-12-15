@@ -7606,21 +7606,6 @@ keys_in_node_type(leaf1) -> 1.
 -spec foldl_recur(fun((Key, Value, Acc1) -> Acc2), Acc0, deep_node(Key, Value)) -> AccN when
     AccN :: Acc2, Acc2 :: Acc1, Acc1 :: Acc0.
 -dialyzer({no_underspecs, foldl_recur/3}).
-foldl_recur(Fun, Acc, ?INTERNAL2(K1, K2, [V1 | V2], _, _, C1, C2, C3)) ->
-    Acc2 = Fun(K1, V1, foldl_recur(Fun, Acc, C1)),
-    Acc3 = Fun(K2, V2, foldl_recur(Fun, Acc2, C2)),
-    foldl_recur(Fun, Acc3, C3);
-foldl_recur(Fun, Acc, ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, _, _, _, C1, C2, C3, C4)) ->
-    Acc2 = Fun(K1, V1, foldl_recur(Fun, Acc, C1)),
-    Acc3 = Fun(K2, V2, foldl_recur(Fun, Acc2, C2)),
-    Acc4 = Fun(K3, V3, foldl_recur(Fun, Acc3, C3)),
-    foldl_recur(Fun, Acc4, C4);
-foldl_recur(Fun, Acc, ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, _, _, _, _, C1, C2, C3, C4, C5)) ->
-    Acc2 = Fun(K1, V1, foldl_recur(Fun, Acc, C1)),
-    Acc3 = Fun(K2, V2, foldl_recur(Fun, Acc2, C2)),
-    Acc4 = Fun(K3, V3, foldl_recur(Fun, Acc3, C3)),
-    Acc5 = Fun(K4, V4, foldl_recur(Fun, Acc4, C4)),
-    foldl_recur(Fun, Acc5, C5);
 foldl_recur(Fun, Acc, ?LEAF2(K1, K2, V1, V2)) ->
     Acc2 = Fun(K1, V1, Acc),
     Acc3 = Fun(K2, V2, Acc2),
@@ -7635,26 +7620,26 @@ foldl_recur(Fun, Acc, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
     Acc3 = Fun(K2, V2, Acc2),
     Acc4 = Fun(K3, V3, Acc3),
     Acc5 = Fun(K4, V4, Acc4),
-    Acc5.
+    Acc5;
+foldl_recur(Fun, Acc, ?INTERNAL2(K1, K2, [V1 | V2], _, _, C1, C2, C3)) ->
+    Acc2 = Fun(K1, V1, foldl_recur(Fun, Acc, C1)),
+    Acc3 = Fun(K2, V2, foldl_recur(Fun, Acc2, C2)),
+    foldl_recur(Fun, Acc3, C3);
+foldl_recur(Fun, Acc, ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, _, _, _, C1, C2, C3, C4)) ->
+    Acc2 = Fun(K1, V1, foldl_recur(Fun, Acc, C1)),
+    Acc3 = Fun(K2, V2, foldl_recur(Fun, Acc2, C2)),
+    Acc4 = Fun(K3, V3, foldl_recur(Fun, Acc3, C3)),
+    foldl_recur(Fun, Acc4, C4);
+foldl_recur(Fun, Acc, ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, _, _, _, _, C1, C2, C3, C4, C5)) ->
+    Acc2 = Fun(K1, V1, foldl_recur(Fun, Acc, C1)),
+    Acc3 = Fun(K2, V2, foldl_recur(Fun, Acc2, C2)),
+    Acc4 = Fun(K3, V3, foldl_recur(Fun, Acc3, C3)),
+    Acc5 = Fun(K4, V4, foldl_recur(Fun, Acc4, C4)),
+    foldl_recur(Fun, Acc5, C5).
 
 -spec foldr_recur(fun((Key, Value, Acc1) -> Acc2), Acc0, deep_node(Key, Value)) -> AccN when
     AccN :: Acc2, Acc2 :: Acc1, Acc1 :: Acc0.
 -dialyzer({no_underspecs, foldr_recur/3}).
-foldr_recur(Fun, Acc, ?INTERNAL2(K1, K2, [V1 | V2], _, _, C1, C2, C3)) ->
-    Acc2 = Fun(K2, V2, foldr_recur(Fun, Acc, C3)),
-    Acc3 = Fun(K1, V1, foldr_recur(Fun, Acc2, C2)),
-    foldr_recur(Fun, Acc3, C1);
-foldr_recur(Fun, Acc, ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, _, _, _, C1, C2, C3, C4)) ->
-    Acc2 = Fun(K3, V3, foldr_recur(Fun, Acc, C4)),
-    Acc3 = Fun(K2, V2, foldr_recur(Fun, Acc2, C3)),
-    Acc4 = Fun(K1, V1, foldr_recur(Fun, Acc3, C2)),
-    foldr_recur(Fun, Acc4, C1);
-foldr_recur(Fun, Acc, ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, _, _, _, _, C1, C2, C3, C4, C5)) ->
-    Acc2 = Fun(K4, V4, foldr_recur(Fun, Acc, C5)),
-    Acc3 = Fun(K3, V3, foldr_recur(Fun, Acc2, C4)),
-    Acc4 = Fun(K2, V2, foldr_recur(Fun, Acc3, C3)),
-    Acc5 = Fun(K1, V1, foldr_recur(Fun, Acc4, C2)),
-    foldr_recur(Fun, Acc5, C1);
 foldr_recur(Fun, Acc, ?LEAF2(K1, K2, V1, V2)) ->
     Acc2 = Fun(K2, V2, Acc),
     Acc3 = Fun(K1, V1, Acc2),
@@ -7669,7 +7654,22 @@ foldr_recur(Fun, Acc, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
     Acc3 = Fun(K3, V3, Acc2),
     Acc4 = Fun(K2, V2, Acc3),
     Acc5 = Fun(K1, V1, Acc4),
-    Acc5.
+    Acc5;
+foldr_recur(Fun, Acc, ?INTERNAL2(K1, K2, [V1 | V2], _, _, C1, C2, C3)) ->
+    Acc2 = Fun(K2, V2, foldr_recur(Fun, Acc, C3)),
+    Acc3 = Fun(K1, V1, foldr_recur(Fun, Acc2, C2)),
+    foldr_recur(Fun, Acc3, C1);
+foldr_recur(Fun, Acc, ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, _, _, _, C1, C2, C3, C4)) ->
+    Acc2 = Fun(K3, V3, foldr_recur(Fun, Acc, C4)),
+    Acc3 = Fun(K2, V2, foldr_recur(Fun, Acc2, C3)),
+    Acc4 = Fun(K1, V1, foldr_recur(Fun, Acc3, C2)),
+    foldr_recur(Fun, Acc4, C1);
+foldr_recur(Fun, Acc, ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, _, _, _, _, C1, C2, C3, C4, C5)) ->
+    Acc2 = Fun(K4, V4, foldr_recur(Fun, Acc, C5)),
+    Acc3 = Fun(K3, V3, foldr_recur(Fun, Acc2, C4)),
+    Acc4 = Fun(K2, V2, foldr_recur(Fun, Acc3, C3)),
+    Acc5 = Fun(K1, V1, foldr_recur(Fun, Acc4, C2)),
+    foldr_recur(Fun, Acc5, C1).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Iterator next
@@ -7719,6 +7719,15 @@ iterator_steps_l(Node) ->
     [iterator_step(Key, Value), ...].
 iterator_steps_l_recur(Node, Acc) ->
     case Node of
+        ?LEAF2(K1, K2, V1, V2) ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2) | Acc];
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3) | Acc];
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc];
+        %
         ?INTERNAL2(K1, K2, [V1 | V2], _, _, C1, C2, C3) ->
             iterator_steps_l_recur(C1, [?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3 | Acc]);
         %
@@ -7738,16 +7747,7 @@ iterator_steps_l_recur(Node, Acc) ->
                 ?ITER_KV(K4, V4),
                 C5
                 | Acc
-            ]);
-        %
-        ?LEAF2(K1, K2, V1, V2) ->
-            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2) | Acc];
-        %
-        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3) | Acc];
-        %
-        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc]
+            ])
     end.
 
 %% ------------------------------------------------------------------
@@ -8031,6 +8031,30 @@ iterator_steps_r(Node) ->
     [iterator_step(Key, Value), ...].
 iterator_steps_r_recur(Node, Acc) ->
     case Node of
+        ?LEAF2(K1, K2, V1, V2) ->
+            [
+                ?ITER_KV(K2, V2),
+                ?ITER_KV(K1, V1)
+                | Acc
+            ];
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            [
+                ?ITER_KV(K3, V3),
+                ?ITER_KV(K2, V2),
+                ?ITER_KV(K1, V1)
+                | Acc
+            ];
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            [
+                ?ITER_KV(K4, V4),
+                ?ITER_KV(K3, V3),
+                ?ITER_KV(K2, V2),
+                ?ITER_KV(K1, V1)
+                | Acc
+            ];
+        %
         ?INTERNAL2(K1, K2, [V1 | V2], _, _, C1, C2, C3) ->
             Acc2 = [
                 ?ITER_KV(K2, V2),
@@ -8065,31 +8089,7 @@ iterator_steps_r_recur(Node, Acc) ->
                 C1
                 | Acc
             ],
-            iterator_steps_r_recur(C5, Acc2);
-        %
-        ?LEAF2(K1, K2, V1, V2) ->
-            [
-                ?ITER_KV(K2, V2),
-                ?ITER_KV(K1, V1)
-                | Acc
-            ];
-        %
-        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-            [
-                ?ITER_KV(K3, V3),
-                ?ITER_KV(K2, V2),
-                ?ITER_KV(K1, V1)
-                | Acc
-            ];
-        %
-        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-            [
-                ?ITER_KV(K4, V4),
-                ?ITER_KV(K3, V3),
-                ?ITER_KV(K2, V2),
-                ?ITER_KV(K1, V1)
-                | Acc
-            ]
+            iterator_steps_r_recur(C5, Acc2)
     end.
 
 %% ------------------------------------------------------------------
@@ -8361,6 +8361,12 @@ iterator_steps_r_from_recur_leaf2(Key, K1, K2, V1, V2, Acc) ->
 %% ------------------------------------------------------------------
 
 -spec keys_recur(deep_node(Key, _), [Key]) -> [Key, ...].
+keys_recur(?LEAF2(K1, K2, _, _), Acc) ->
+    [K1, K2 | Acc];
+keys_recur(?LEAF3(K1, K2, K3, _, _, _), Acc) ->
+    [K1, K2, K3 | Acc];
+keys_recur(?LEAF4(K1, K2, K3, K4, _, _, _, _), Acc) ->
+    [K1, K2, K3, K4 | Acc];
 keys_recur(?INTERNAL2(K1, K2, _, _, _, C1, C2, C3), Acc) ->
     Acc2 = [K2 | keys_recur(C3, Acc)],
     Acc3 = [K1 | keys_recur(C2, Acc2)],
@@ -8375,13 +8381,7 @@ keys_recur(?INTERNAL4(K1, K2, K3, K4, _, _, _, _, _, C1, C2, C3, C4, C5), Acc) -
     Acc3 = [K3 | keys_recur(C4, Acc2)],
     Acc4 = [K2 | keys_recur(C3, Acc3)],
     Acc5 = [K1 | keys_recur(C2, Acc4)],
-    keys_recur(C1, Acc5);
-keys_recur(?LEAF2(K1, K2, _, _), Acc) ->
-    [K1, K2 | Acc];
-keys_recur(?LEAF3(K1, K2, K3, _, _, _), Acc) ->
-    [K1, K2, K3 | Acc];
-keys_recur(?LEAF4(K1, K2, K3, K4, _, _, _, _), Acc) ->
-    [K1, K2, K3, K4 | Acc].
+    keys_recur(C1, Acc5).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: values/1
@@ -8389,6 +8389,12 @@ keys_recur(?LEAF4(K1, K2, K3, K4, _, _, _, _), Acc) ->
 
 -spec values_recur(deep_node(_, Value), [Value]) -> [Value, ...].
 -dialyzer({no_underspecs, values_recur/2}).
+values_recur(?LEAF2(_, _, V1, V2), Acc) ->
+    [V1, V2 | Acc];
+values_recur(?LEAF3(_, _, _, V1, V2, V3), Acc) ->
+    [V1, V2, V3 | Acc];
+values_recur(?LEAF4(_, _, _, _, V1, V2, V3, V4), Acc) ->
+    [V1, V2, V3, V4 | Acc];
 values_recur(?INTERNAL2(_, _, [V1 | V2], _, _, C1, C2, C3), Acc) ->
     Acc2 = [V2 | values_recur(C3, Acc)],
     Acc3 = [V1 | values_recur(C2, Acc2)],
@@ -8403,13 +8409,7 @@ values_recur(?INTERNAL4(_, _, _, _, {V1, V2, V3, V4}, _, _, _, _, C1, C2, C3, C4
     Acc3 = [V3 | values_recur(C4, Acc2)],
     Acc4 = [V2 | values_recur(C3, Acc3)],
     Acc5 = [V1 | values_recur(C2, Acc4)],
-    values_recur(C1, Acc5);
-values_recur(?LEAF2(_, _, V1, V2), Acc) ->
-    [V1, V2 | Acc];
-values_recur(?LEAF3(_, _, _, V1, V2, V3), Acc) ->
-    [V1, V2, V3 | Acc];
-values_recur(?LEAF4(_, _, _, _, V1, V2, V3, V4), Acc) ->
-    [V1, V2, V3, V4 | Acc].
+    values_recur(C1, Acc5).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: to_list/1
@@ -8417,6 +8417,12 @@ values_recur(?LEAF4(_, _, _, _, V1, V2, V3, V4), Acc) ->
 
 -spec to_list_recur(deep_node(Key, Value), [{Key, Value}]) -> [{Key, Value}, ...].
 -dialyzer({no_underspecs, to_list_recur/2}).
+to_list_recur(?LEAF2(K1, K2, V1, V2), Acc) ->
+    [{K1, V1}, {K2, V2} | Acc];
+to_list_recur(?LEAF3(K1, K2, K3, V1, V2, V3), Acc) ->
+    [{K1, V1}, {K2, V2}, {K3, V3} | Acc];
+to_list_recur(?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), Acc) ->
+    [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Acc];
 to_list_recur(?INTERNAL2(K1, K2, [V1 | V2], _, _, C1, C2, C3), Acc) ->
     Acc2 = [{K2, V2} | to_list_recur(C3, Acc)],
     Acc3 = [{K1, V1} | to_list_recur(C2, Acc2)],
@@ -8431,13 +8437,7 @@ to_list_recur(?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, _, _, _, _, C1, C2, C
     Acc3 = [{K3, V3} | to_list_recur(C4, Acc2)],
     Acc4 = [{K2, V2} | to_list_recur(C3, Acc3)],
     Acc5 = [{K1, V1} | to_list_recur(C2, Acc4)],
-    to_list_recur(C1, Acc5);
-to_list_recur(?LEAF2(K1, K2, V1, V2), Acc) ->
-    [{K1, V1}, {K2, V2} | Acc];
-to_list_recur(?LEAF3(K1, K2, K3, V1, V2, V3), Acc) ->
-    [{K1, V1}, {K2, V2}, {K3, V3} | Acc];
-to_list_recur(?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), Acc) ->
-    [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Acc].
+    to_list_recur(C1, Acc5).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: largest/1
@@ -8617,6 +8617,33 @@ larger_recur(Key, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
 -spec map_recur(fun((Key, Value) -> MappedValue), deep_node(Key, Value)) ->
     deep_node(Key, MappedValue).
 -dialyzer({no_underspecs, map_recur/2}).
+map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
+    ?LEAF2(
+        K1,
+        K2,
+        Fun(K1, V1),
+        Fun(K2, V2)
+    );
+map_recur(Fun, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
+    ?LEAF3(
+        K1,
+        K2,
+        K3,
+        Fun(K1, V1),
+        Fun(K2, V2),
+        Fun(K3, V3)
+    );
+map_recur(Fun, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
+    ?LEAF4(
+        K1,
+        K2,
+        K3,
+        K4,
+        Fun(K1, V1),
+        Fun(K2, V2),
+        Fun(K3, V3),
+        Fun(K4, V4)
+    );
 map_recur(Fun, ?INTERNAL2(K1, K2, [V1 | V2], O1, O2, C1, C2, C3)) ->
     ?INTERNAL2(
         K1,
@@ -8658,33 +8685,6 @@ map_recur(Fun, ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, O1, O2, O3, O4, C1, 
         map_recur(Fun, C3),
         map_recur(Fun, C4),
         map_recur(Fun, C5)
-    );
-map_recur(Fun, ?LEAF2(K1, K2, V1, V2)) ->
-    ?LEAF2(
-        K1,
-        K2,
-        Fun(K1, V1),
-        Fun(K2, V2)
-    );
-map_recur(Fun, ?LEAF3(K1, K2, K3, V1, V2, V3)) ->
-    ?LEAF3(
-        K1,
-        K2,
-        K3,
-        Fun(K1, V1),
-        Fun(K2, V2),
-        Fun(K3, V3)
-    );
-map_recur(Fun, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
-    ?LEAF4(
-        K1,
-        K2,
-        K3,
-        K4,
-        Fun(K1, V1),
-        Fun(K2, V2),
-        Fun(K3, V3),
-        Fun(K4, V4)
     ).
 
 %% ------------------------------------------------------------------
