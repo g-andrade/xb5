@@ -4741,15 +4741,6 @@ iterator_steps_l_from(Key, Node) ->
     [iterator_step(Key, Value)].
 iterator_steps_l_from_recur(Key, Node, Acc) ->
     case Node of
-        ?LEAF2(K1, K2, V1, V2) ->
-            iterator_steps_l_from_recur_leaf2(Key, K1, K2, V1, V2, Acc);
-        %
-        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-            iterator_steps_l_from_recur_leaf3(Key, K1, K2, K3, V1, V2, V3, Acc);
-        %
-        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-            iterator_steps_l_from_recur_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4, Acc);
-        %
         ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
             iterator_steps_l_from_recur_internal2(Key, K1, K2, Values, C1, C2, C3, Acc);
         %
@@ -4770,7 +4761,16 @@ iterator_steps_l_from_recur(Key, Node, Acc) ->
                 C4,
                 C5,
                 Acc
-            )
+            );
+        %
+        ?LEAF2(K1, K2, V1, V2) ->
+            iterator_steps_l_from_recur_leaf2(Key, K1, K2, V1, V2, Acc);
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            iterator_steps_l_from_recur_leaf3(Key, K1, K2, K3, V1, V2, V3, Acc);
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            iterator_steps_l_from_recur_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4, Acc)
     end.
 
 %%%
@@ -5083,15 +5083,6 @@ iterator_steps_r_from(Key, Node) ->
     [iterator_step(Key, Value)].
 iterator_steps_r_from_recur(Key, Node, Acc) ->
     case Node of
-        ?LEAF2(K1, K2, V1, V2) ->
-            iterator_steps_r_from_recur_leaf2(Key, K1, K2, V1, V2, Acc);
-        %
-        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-            iterator_steps_r_from_recur_leaf3(Key, K1, K2, K3, V1, V2, V3, Acc);
-        %
-        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-            iterator_steps_r_from_recur_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4, Acc);
-        %
         ?INTERNAL2(K1, K2, Values, C1, C2, C3) ->
             iterator_steps_r_from_recur_internal2(Key, K1, K2, Values, C1, C2, C3, Acc);
         %
@@ -5112,7 +5103,16 @@ iterator_steps_r_from_recur(Key, Node, Acc) ->
                 C4,
                 C5,
                 Acc
-            )
+            );
+        %
+        ?LEAF2(K1, K2, V1, V2) ->
+            iterator_steps_r_from_recur_leaf2(Key, K1, K2, V1, V2, Acc);
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            iterator_steps_r_from_recur_leaf3(Key, K1, K2, K3, V1, V2, V3, Acc);
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            iterator_steps_r_from_recur_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4, Acc)
     end.
 
 %%%
