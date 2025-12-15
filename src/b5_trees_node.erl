@@ -5329,14 +5329,20 @@ keys_recur(?LEAF3(K1, K2, K3, _, _, _), Acc) ->
 keys_recur(?LEAF4(K1, K2, K3, K4, _, _, _, _), Acc) ->
     [K1, K2, K3, K4 | Acc];
 keys_recur(?INTERNAL2(K1, K2, _, C1, C2, C3), Acc) ->
-    keys_recur(C1, [K1 | keys_recur(C2, [K2 | keys_recur(C3, Acc)])]);
+    Acc2 = [K2 | keys_recur(C3, Acc)],
+    Acc3 = [K1 | keys_recur(C2, Acc2)],
+    keys_recur(C1, Acc3);
 keys_recur(?INTERNAL3(K1, K2, K3, _, C1, C2, C3, C4), Acc) ->
-    keys_recur(C1, [K1 | keys_recur(C2, [K2 | keys_recur(C3, [K3 | keys_recur(C4, Acc)])])]);
+    Acc2 = [K3 | keys_recur(C4, Acc)],
+    Acc3 = [K2 | keys_recur(C3, Acc2)],
+    Acc4 = [K1 | keys_recur(C2, Acc3)],
+    keys_recur(C1, Acc4);
 keys_recur(?INTERNAL4(K1, K2, K3, K4, _, C1, C2, C3, C4, C5), Acc) ->
-    keys_recur(C1, [
-        K1
-        | keys_recur(C2, [K2 | keys_recur(C3, [K3 | keys_recur(C4, [K4 | keys_recur(C5, Acc)])])])
-    ]).
+    Acc2 = [K4 | keys_recur(C5, Acc)],
+    Acc3 = [K3 | keys_recur(C4, Acc2)],
+    Acc4 = [K2 | keys_recur(C3, Acc3)],
+    Acc5 = [K1 | keys_recur(C2, Acc4)],
+    keys_recur(C1, Acc5).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: values/1
