@@ -4632,12 +4632,12 @@ next(Head, Tail) ->
             UpdatedIter = Tail,
             {Key, Value, UpdatedIter};
         %
-        reverse ->
+        reversed ->
             next_reverse(Tail);
         %
         NextChildOrdered ->
             Acc = Tail,
-            [NewHead | NewTail] = iterator_steps_l_from(NextChildOrdered, Acc),
+            [NewHead | NewTail] = iterator_steps_l_recur(NextChildOrdered, Acc),
             ?ITER_KV(Key, Value) = NewHead,
 
             UpdatedIter = NewTail,
@@ -4648,15 +4648,15 @@ next(Head, Tail) ->
 next_reverse([Head | Tail]) ->
     case Head of
         ?ITER_KV(Key, Value) ->
-            UpdatedIter = [reverse | Tail],
+            UpdatedIter = [reversed | Tail],
             {Key, Value, UpdatedIter};
         %
         NextChildReversed ->
             Acc = Tail,
-            [NewHead | NewTail] = iterator_steps_r_from(NextChildReversed, Acc),
+            [NewHead | NewTail] = iterator_steps_r_recur(NextChildReversed, Acc),
             ?ITER_KV(Key, Value) = NewHead,
 
-            UpdatedIter = [reverse | NewTail],
+            UpdatedIter = [reversed | NewTail],
             {Key, Value, UpdatedIter}
     end;
 next_reverse([]) ->
