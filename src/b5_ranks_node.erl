@@ -30,6 +30,7 @@
     is_defined/2,
     iterator/2,
     iterator_from/3,
+    iterator_from_nth/3,
     keys/1,
     larger/2,
     largest/1,
@@ -459,6 +460,12 @@ iterator_from(Key, Node, ordered) ->
     iterator_steps_l_from(Key, Node);
 iterator_from(Key, Node, reversed) ->
     [reversed | iterator_steps_r_from(Key, Node)].
+
+% TODO document
+iterator_from_nth(N, Node, ordered) ->
+    iterator_steps_l_from_nth(N, Node);
+iterator_from_nth(N, Node, reversed) ->
+    [reversed | iterator_steps_r_from_nth(N, Node)].
 
 %% @doc Returns all keys in the tree node as an ordered list.
 -spec keys(t(Key, _)) -> [Key].
@@ -1017,7 +1024,7 @@ get_ranked_leaf1(Key, LB, K1, V1) ->
 %% Internal Function Definitions: Nth
 %% ------------------------------------------------------------------
 
--spec nth_recur(N, deep_node(N, Value)) -> Value.
+-spec nth_recur(N, deep_node(_, Value)) -> Value when N :: rank().
 nth_recur(N, ?INTERNAL2(K1, K2, Values, O1, O2, C1, C2, C3)) ->
     nth_internal2(N, K1, K2, Values, O1, O2, C1, C2, C3);
 nth_recur(N, ?INTERNAL3(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4)) ->
@@ -6853,7 +6860,8 @@ take_ranked_leaf1(K, LB, K1, V1) ->
 %% Internal Function Definitions: Node Taking - Nth
 %% ------------------------------------------------------------------
 
--spec root_take_nth(N, non_empty_node(N, Value)) -> take_result(ranked_v(Value), N, Value).
+-spec root_take_nth(rank(), non_empty_node(Key, Value)) ->
+    take_result(kv_pair(Key, Value), Key, Value).
 -compile({inline, root_take_nth/2}).
 root_take_nth(N, Node) ->
     case Node of
@@ -6870,8 +6878,8 @@ root_take_nth(N, Node) ->
             take_nth_recur(N, Root)
     end.
 
--spec take_nth_recur(N, deep_node(N, Value)) ->
-    take_result_before_rebalance(ranked_v(Value), N, Value).
+-spec take_nth_recur(rank(), deep_node(Key, Value)) ->
+    take_result_before_rebalance(kv_pair(Key, Value), Key, Value).
 take_nth_recur(N, Node) ->
     case Node of
         ?INTERNAL2(K1, K2, Values, O1, O2, C1, C2, C3) ->
@@ -8021,6 +8029,267 @@ iterator_steps_l_from_recur_leaf2(Key, K1, K2, V1, V2, Acc) ->
     end.
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: Iterator steps, ordered from Nth
+%% ------------------------------------------------------------------
+
+-spec iterator_steps_l_from_nth(rank(), t(Key, Value)) -> [iterator_step(Key, Value)].
+iterator_steps_l_from_nth(N, ?INTERNAL1(K1, V1, O1, C1, C2)) ->
+    if
+        N < O1 ->
+            iterator_steps_l_from_nth_recur(N, C1, [?ITER_KV(K1, V1), C2]);
+        N > O1 ->
+            iterator_steps_l_from_nth_recur(N - O1, C2, []);
+        true ->
+            [?ITER_KV(K1, V1), C2]
+    end;
+iterator_steps_l_from_nth(N, ?LEAF1(K1, V1)) ->
+    case N of
+        1 ->
+            [?ITER_KV(K1, V1)]
+    end;
+iterator_steps_l_from_nth(_, ?LEAF0) ->
+    [];
+iterator_steps_l_from_nth(N, Node) ->
+    iterator_steps_l_from_nth_recur(N, Node, []).
+
+-spec iterator_steps_l_from_nth_recur(rank(), deep_node(Key, Value), [iterator_step(Key, Value)]) ->
+    [iterator_step(Key, Value)].
+iterator_steps_l_from_nth_recur(N, Node, Acc) ->
+    case Node of
+        ?INTERNAL2(K1, K2, Values, O1, O2, C1, C2, C3) ->
+            iterator_steps_l_from_nth_recur_internal2(N, K1, K2, Values, O1, O2, C1, C2, C3, Acc);
+        %
+        ?INTERNAL3(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4) ->
+            iterator_steps_l_from_nth_recur_internal3(
+                N, K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4, Acc
+            );
+        %
+        ?INTERNAL4(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2, C3, C4, C5) ->
+            iterator_steps_l_from_nth_recur_internal4(
+                N,
+                K1,
+                K2,
+                K3,
+                K4,
+                Values,
+                O1,
+                O2,
+                O3,
+                O4,
+                C1,
+                C2,
+                C3,
+                C4,
+                C5,
+                Acc
+            );
+        %
+        ?LEAF2(K1, K2, V1, V2) ->
+            iterator_steps_l_from_nth_recur_leaf2(N, K1, K2, V1, V2, Acc);
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            iterator_steps_l_from_nth_recur_leaf3(N, K1, K2, K3, V1, V2, V3, Acc);
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            iterator_steps_l_from_nth_recur_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4, Acc)
+    end.
+
+%%%
+
+-compile({inline, iterator_steps_l_from_nth_recur_internal4/16}).
+iterator_steps_l_from_nth_recur_internal4(
+    N, K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2, C3, C4, C5, Acc
+) ->
+    Pos2 = O1 + O2,
+
+    if
+        N < Pos2 ->
+            if
+                N < O1 ->
+                    {V1, V2, V3, V4} = Values,
+                    iterator_steps_l_from_nth_recur(N, C1, [
+                        ?ITER_KV(K1, V1),
+                        C2,
+                        ?ITER_KV(K2, V2),
+                        C3,
+                        ?ITER_KV(K3, V3),
+                        C4,
+                        ?ITER_KV(K4, V4),
+                        C5
+                        | Acc
+                    ]);
+                %
+                N > O1 ->
+                    {_, V2, V3, V4} = Values,
+                    iterator_steps_l_from_nth_recur(N - O1, C2, [
+                        ?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4, ?ITER_KV(K4, V4), C5 | Acc
+                    ]);
+                %
+                true ->
+                    {V1, V2, V3, V4} = Values,
+                    [
+                        ?ITER_KV(K1, V1),
+                        C2,
+                        ?ITER_KV(K2, V2),
+                        C3,
+                        ?ITER_KV(K3, V3),
+                        C4,
+                        ?ITER_KV(K4, V4),
+                        C5
+                        | Acc
+                    ]
+            end;
+        %
+        N > Pos2 ->
+            Pos3 = Pos2 + O3,
+
+            if
+                N < Pos3 ->
+                    {_, _, V3, V4} = Values,
+                    iterator_steps_l_from_nth_recur(N - Pos2, C3, [
+                        ?ITER_KV(K3, V3), C4, ?ITER_KV(K4, V4), C5 | Acc
+                    ]);
+                %
+                N > Pos3 ->
+                    Pos4 = Pos3 + O4,
+
+                    if
+                        N < Pos4 ->
+                            V4 = element(4, Values),
+                            iterator_steps_l_from_nth_recur(N - Pos3, C4, [
+                                ?ITER_KV(K4, V4), C5 | Acc
+                            ]);
+                        N > Pos4 ->
+                            iterator_steps_l_from_nth_recur(N - Pos4, C5, Acc);
+                        true ->
+                            V4 = element(4, Values),
+                            [?ITER_KV(K4, V4), C5 | Acc]
+                    end;
+                %
+                true ->
+                    {_, _, V3, V4} = Values,
+                    [?ITER_KV(K3, V3), C4, ?ITER_KV(K4, V4), C5 | Acc]
+            end;
+        %
+        true ->
+            {_, V2, V3, V4} = Values,
+            [?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4, ?ITER_KV(K4, V4), C5 | Acc]
+    end.
+
+-compile({inline, iterator_steps_l_from_nth_recur_internal3/13}).
+iterator_steps_l_from_nth_recur_internal3(N, K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4, Acc) ->
+    Pos2 = O1 + O2,
+
+    if
+        N < Pos2 ->
+            if
+                N < O1 ->
+                    {V1, V2, V3} = Values,
+                    iterator_steps_l_from_nth_recur(N, C1, [
+                        ?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4 | Acc
+                    ]);
+                %
+                N > O1 ->
+                    {_, V2, V3} = Values,
+                    iterator_steps_l_from_nth_recur(N - O1, C2, [
+                        ?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4 | Acc
+                    ]);
+                %
+                true ->
+                    {V1, V2, V3} = Values,
+                    [?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4 | Acc]
+            end;
+        %
+        N > Pos2 ->
+            Pos3 = Pos2 + O3,
+
+            if
+                N < Pos3 ->
+                    V3 = element(3, Values),
+                    iterator_steps_l_from_nth_recur(N - Pos2, C3, [?ITER_KV(K3, V3), C4 | Acc]);
+                %
+                N > Pos3 ->
+                    iterator_steps_l_from_nth_recur(N - Pos3, C4, Acc);
+                %
+                true ->
+                    V3 = element(3, Values),
+                    [?ITER_KV(K3, V3), C4 | Acc]
+            end;
+        %
+        true ->
+            {_, V2, V3} = Values,
+            [?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4 | Acc]
+    end.
+
+-compile({inline, iterator_steps_l_from_nth_recur_internal2/10}).
+iterator_steps_l_from_nth_recur_internal2(N, K1, K2, Values, O1, O2, C1, C2, C3, Acc) ->
+    if
+        N > O1 ->
+            Pos2 = O1 + O2,
+            if
+                N < Pos2 ->
+                    V2 = tl(Values),
+                    iterator_steps_l_from_nth_recur(N - O1, C2, [?ITER_KV(K2, V2), C3 | Acc]);
+                %
+                N > Pos2 ->
+                    iterator_steps_l_from_nth_recur(N - Pos2, C3, Acc);
+                %
+                true ->
+                    V2 = tl(Values),
+                    [?ITER_KV(K2, V2), C3 | Acc]
+            end;
+        %
+        N < O1 ->
+            [V1 | V2] = Values,
+            iterator_steps_l_from_nth_recur(N, C1, [
+                ?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3 | Acc
+            ]);
+        %
+        true ->
+            [V1 | V2] = Values,
+            [?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3 | Acc]
+    end.
+
+-compile({inline, iterator_steps_l_from_nth_recur_leaf4/10}).
+iterator_steps_l_from_nth_recur_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4, Acc) ->
+    case N of
+        1 ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc];
+        %
+        2 ->
+            [?ITER_KV(K2, V2), ?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc];
+        %
+        3 ->
+            [?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc];
+        %
+        4 ->
+            [?ITER_KV(K4, V4) | Acc]
+    end.
+
+-compile({inline, iterator_steps_l_from_nth_recur_leaf3/8}).
+iterator_steps_l_from_nth_recur_leaf3(N, K1, K2, K3, V1, V2, V3, Acc) ->
+    case N of
+        1 ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3) | Acc];
+        %
+        2 ->
+            [?ITER_KV(K2, V2), ?ITER_KV(K3, V3) | Acc];
+        %
+        3 ->
+            [?ITER_KV(K3, V3) | Acc]
+    end.
+
+-compile({inline, iterator_steps_l_from_nth_recur_leaf2/6}).
+iterator_steps_l_from_nth_recur_leaf2(N, K1, K2, V1, V2, Acc) ->
+    case N of
+        1 ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2) | Acc];
+        %
+        2 ->
+            [?ITER_KV(K2, V2) | Acc]
+    end.
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: Iterator steps, reversed
 %% ------------------------------------------------------------------
 
@@ -8362,6 +8631,269 @@ iterator_steps_r_from_recur_leaf2(Key, K1, K2, V1, V2, Acc) ->
         %
         true ->
             [?ITER_KV(K2, V2), ?ITER_KV(K1, V1) | Acc]
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Iterator steps, reversed from Nth
+%% ------------------------------------------------------------------
+
+-spec iterator_steps_r_from_nth(rank(), t(Key, Value)) -> [iterator_step(Key, Value)].
+iterator_steps_r_from_nth(N, ?LEAF1(K1, V1)) ->
+    case N of
+        1 ->
+            [?ITER_KV(K1, V1)]
+    end;
+iterator_steps_r_from_nth(N, ?INTERNAL1(K1, V1, O1, C1, C2)) ->
+    if
+        N > O1 ->
+            iterator_steps_r_from_nth_recur(N - O1, C2, [?ITER_KV(K1, V1), C1]);
+        N < O1 ->
+            iterator_steps_r_from_nth_recur(N, C1, []);
+        true ->
+            [?ITER_KV(K1, V1), C1]
+    end;
+iterator_steps_r_from_nth(_, ?LEAF0) ->
+    [];
+iterator_steps_r_from_nth(N, Node) ->
+    iterator_steps_r_from_nth_recur(N, Node, []).
+
+-spec iterator_steps_r_from_nth_recur(rank(), deep_node(Key, Value), [iterator_step(Key, Value)]) ->
+    [iterator_step(Key, Value)].
+iterator_steps_r_from_nth_recur(N, Node, Acc) ->
+    case Node of
+        ?INTERNAL2(K1, K2, Values, O1, O2, C1, C2, C3) ->
+            iterator_steps_r_from_nth_recur_internal2(N, K1, K2, Values, O1, O2, C1, C2, C3, Acc);
+        %
+        ?INTERNAL3(K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4) ->
+            iterator_steps_r_from_nth_recur_internal3(
+                N, K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4, Acc
+            );
+        %
+        ?INTERNAL4(K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2, C3, C4, C5) ->
+            iterator_steps_r_from_nth_recur_internal4(
+                N,
+                K1,
+                K2,
+                K3,
+                K4,
+                Values,
+                O1,
+                O2,
+                O3,
+                O4,
+                C1,
+                C2,
+                C3,
+                C4,
+                C5,
+                Acc
+            );
+        %
+        ?LEAF2(K1, K2, V1, V2) ->
+            iterator_steps_r_from_nth_recur_leaf2(N, K1, K2, V1, V2, Acc);
+        %
+        ?LEAF3(K1, K2, K3, V1, V2, V3) ->
+            iterator_steps_r_from_nth_recur_leaf3(N, K1, K2, K3, V1, V2, V3, Acc);
+        %
+        ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            iterator_steps_r_from_nth_recur_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4, Acc)
+    end.
+
+%%%
+
+-compile({inline, iterator_steps_r_from_nth_recur_internal4/16}).
+iterator_steps_r_from_nth_recur_internal4(
+    N, K1, K2, K3, K4, Values, O1, O2, O3, O4, C1, C2, C3, C4, C5, Acc
+) ->
+    Pos2 = O1 + O2,
+
+    if
+        N > Pos2 ->
+            Pos3 = Pos2 + O3,
+
+            if
+                N < Pos3 ->
+                    {V1, V2, _, _} = Values,
+                    iterator_steps_r_from_nth_recur(N - Pos2, C3, [
+                        ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc
+                    ]);
+                %
+                N > Pos3 ->
+                    Pos4 = Pos3 + O4,
+
+                    if
+                        N < Pos4 ->
+                            {V1, V2, V3, _} = Values,
+                            iterator_steps_r_from_nth_recur(N - Pos3, C4, [
+                                ?ITER_KV(K3, V3),
+                                C3,
+                                ?ITER_KV(K2, V2),
+                                C2,
+                                ?ITER_KV(K1, V1),
+                                C1
+                                | Acc
+                            ]);
+                        %
+                        N > Pos4 ->
+                            {V1, V2, V3, V4} = Values,
+                            iterator_steps_r_from_nth_recur(N - Pos4, C5, [
+                                ?ITER_KV(K4, V4),
+                                C4,
+                                ?ITER_KV(K3, V3),
+                                C3,
+                                ?ITER_KV(K2, V2),
+                                C2,
+                                ?ITER_KV(K1, V1),
+                                C1
+                                | Acc
+                            ]);
+                        true ->
+                            {V1, V2, V3, V4} = Values,
+                            [
+                                ?ITER_KV(K4, V4),
+                                C4,
+                                ?ITER_KV(K3, V3),
+                                C3,
+                                ?ITER_KV(K2, V2),
+                                C2,
+                                ?ITER_KV(K1, V1),
+                                C1
+                                | Acc
+                            ]
+                    end;
+                %
+                true ->
+                    {V1, V2, V3, _} = Values,
+                    [?ITER_KV(K3, V3), C3, ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
+            end;
+        %
+        N < Pos2 ->
+            if
+                N < O1 ->
+                    iterator_steps_r_from_nth_recur(N, C1, Acc);
+                N > O1 ->
+                    V1 = element(1, Values),
+                    iterator_steps_r_from_nth_recur(N - O1, C2, [?ITER_KV(K1, V1), C1 | Acc]);
+                true ->
+                    V1 = element(1, Values),
+                    [?ITER_KV(K1, V1), C1 | Acc]
+            end;
+        %
+        true ->
+            {V1, V2, _, _} = Values,
+            [?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
+    end.
+
+-compile({inline, iterator_steps_r_from_nth_recur_internal3/13}).
+iterator_steps_r_from_nth_recur_internal3(N, K1, K2, K3, Values, O1, O2, O3, C1, C2, C3, C4, Acc) ->
+    Pos2 = O1 + O2,
+
+    if
+        N > Pos2 ->
+            Pos3 = Pos2 + O3,
+
+            if
+                N < Pos3 ->
+                    {V1, V2, _} = Values,
+                    iterator_steps_r_from_nth_recur(N - Pos2, C3, [
+                        ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc
+                    ]);
+                %
+                N > Pos3 ->
+                    {V1, V2, V3} = Values,
+                    iterator_steps_r_from_nth_recur(N - Pos3, C4, [
+                        ?ITER_KV(K3, V3), C3, ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc
+                    ]);
+                true ->
+                    {V1, V2, V3} = Values,
+                    [?ITER_KV(K3, V3), C3, ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
+            end;
+        %
+        N < Pos2 ->
+            if
+                N < O1 ->
+                    iterator_steps_r_from_nth_recur(N, C1, Acc);
+                %
+                N > O1 ->
+                    V1 = element(1, Values),
+                    iterator_steps_r_from_nth_recur(N, C2, [?ITER_KV(K1, V1), C1 | Acc]);
+                %
+                true ->
+                    V1 = element(1, Values),
+                    [?ITER_KV(K1, V1), C1 | Acc]
+            end;
+        %
+        true ->
+            {V1, V2, _} = Values,
+            [?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
+    end.
+
+-compile({inline, iterator_steps_r_from_nth_recur_internal2/10}).
+iterator_steps_r_from_nth_recur_internal2(N, K1, K2, Values, O1, O2, C1, C2, C3, Acc) ->
+    if
+        N > O1 ->
+            Pos2 = O1 + O2,
+            if
+                N < Pos2 ->
+                    V1 = hd(Values),
+                    iterator_steps_r_from_nth_recur(N - O1, C2, [?ITER_KV(K1, V1), C1 | Acc]);
+                %
+                N > Pos2 ->
+                    [V1 | V2] = Values,
+                    iterator_steps_r_from_nth_recur(N - Pos2, C3, [
+                        ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc
+                    ]);
+                %
+                true ->
+                    [V1 | V2] = Values,
+                    [?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
+            end;
+        %
+        N < O1 ->
+            iterator_steps_r_from_nth_recur(N, C1, Acc);
+        %
+        true ->
+            V1 = hd(Values),
+            [?ITER_KV(K1, V1), C1 | Acc]
+    end.
+
+-compile({inline, iterator_steps_r_from_nth_recur_leaf4/10}).
+iterator_steps_r_from_nth_recur_leaf4(N, K1, K2, K3, K4, V1, V2, V3, V4, Acc) ->
+    case N of
+        1 ->
+            [?ITER_KV(K1, V1) | Acc];
+        %
+        2 ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2) | Acc];
+        %
+        3 ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3) | Acc];
+        %
+        4 ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc]
+    end.
+
+-compile({inline, iterator_steps_r_from_nth_recur_leaf3/8}).
+iterator_steps_r_from_nth_recur_leaf3(N, K1, K2, K3, V1, V2, V3, Acc) ->
+    case N of
+        1 ->
+            [?ITER_KV(K1, V1) | Acc];
+        %
+        2 ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2) | Acc];
+        %
+        3 ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3) | Acc]
+    end.
+
+-compile({inline, iterator_steps_r_from_nth_recur_leaf2/6}).
+iterator_steps_r_from_nth_recur_leaf2(N, K1, K2, V1, V2, Acc) ->
+    case N of
+        1 ->
+            [?ITER_KV(K1, V1) | Acc];
+        %
+        2 ->
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2) | Acc]
     end.
 
 %% ------------------------------------------------------------------

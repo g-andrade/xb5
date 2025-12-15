@@ -21,6 +21,8 @@
     iterator/2,
     iterator_from/2,
     iterator_from/3,
+    iterator_from_nth/2,
+    iterator_from_nth/3,
     keys/1,
     larger/2,
     largest/1,
@@ -325,6 +327,22 @@ than or equal to `Key`, using `next/1`.
 
 iterator_from(Key, #b5_ranks{root = Root}, Order) ->
     b5_ranks_node:iterator_from(Key, Root, Order).
+
+% TODO document
+iterator_from_nth(N, Tree) ->
+    iterator_from_nth(N, Tree, ordered).
+
+% TODO document
+iterator_from_nth(N, #b5_ranks{size = Size, root = Root}, Order) ->
+    % TODO negative values of N?
+    case not is_integer(N) orelse N < 1 orelse N > Size of
+        true ->
+            % TODO should we error out? An out of range key in `iterator_from' doesn't.
+            error({badarg, N});
+        %
+        _ ->
+            b5_ranks_node:iterator_from_nth(N, Root, Order)
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc "Returns the keys in `Tree` as an ordered list.".
