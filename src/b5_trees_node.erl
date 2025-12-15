@@ -127,7 +127,12 @@
 % 4 elements
 -define(ROTATED(UpK, UpVal, UpdatedLeft, UpdatedRight), {UpK, UpVal, UpdatedLeft, UpdatedRight}).
 
--define(MERGED(MergedNode), MergedNode).
+-define(MERGED(MergedNode), (MergedNode)).
+
+%%%%%%%
+
+% Cannot collide with any node definition
+-define(ITER_KV(Key, Value), [Key | Value]).
 
 %% ------------------------------------------------------------------
 %% Type Definitions
@@ -282,11 +287,11 @@
 -opaque iter(Key, Value) :: forward_iter(Key, Value) | reverse_iter(Key, Value).
 -export_type([iter/2]).
 
--record(b5_trees_v2_forward_iter, {steps}).
--type forward_iter(Key, Value) :: #b5_trees_v2_forward_iter{steps :: [iterator_step(Key, Value)]}.
+-record(b5_trees_forward_iter, {steps}).
+-type forward_iter(Key, Value) :: #b5_trees_forward_iter{steps :: [iterator_step(Key, Value)]}.
 
--record(b5_trees_v2_reverse_iter, {steps}).
--type reverse_iter(Key, Value) :: #b5_trees_v2_reverse_iter{steps :: [iterator_step(Key, Value)]}.
+-record(b5_trees_reverse_iter, {steps}).
+-type reverse_iter(Key, Value) :: #b5_trees_reverse_iter{steps :: [iterator_step(Key, Value)]}.
 
 -type iterator_step(Key, Value) :: {Key, Value} | {Key, Value, NextChild :: deep_node(Key, Value)}.
 
@@ -401,17 +406,17 @@ insert(Key, ValueEval, ValueWrap, Root) ->
 %% Can iterate in `ordered' (ascending) or `reversed' (descending) direction.
 -spec iterator(t(Key, Value), ordered | reversed) -> iter(Key, Value).
 iterator(Node, ordered) ->
-    #b5_trees_v2_forward_iter{steps = iterator_steps_l(Node)};
+    #b5_trees_forward_iter{steps = iterator_steps_l(Node)};
 iterator(Node, reversed) ->
-    #b5_trees_v2_reverse_iter{steps = iterator_steps_r(Node)}.
+    #b5_trees_reverse_iter{steps = iterator_steps_r(Node)}.
 
 %% @doc Creates an iterator starting from the first key >= the specified key.
 %% Can iterate in `ordered' (ascending) or `reversed' (descending) direction.
 -spec iterator_from(Key, t(Key, Value), ordered | reversed) -> iter(Key, Value).
 iterator_from(Key, Node, ordered) ->
-    #b5_trees_v2_forward_iter{steps = iterator_steps_l_from(Key, Node)};
+    #b5_trees_forward_iter{steps = iterator_steps_l_from(Key, Node)};
 iterator_from(Key, Node, reversed) ->
-    #b5_trees_v2_reverse_iter{steps = iterator_steps_r_from(Key, Node)}.
+    #b5_trees_reverse_iter{steps = iterator_steps_r_from(Key, Node)}.
 
 %% @doc Returns all keys in the tree node as an ordered list.
 -spec keys(t(Key, _)) -> [Key].
@@ -472,32 +477,10 @@ new() ->
 %% @doc Returns the next key-value pair from an iterator.
 %% Returns `{Key, Value, NewIter}' or `none' if no more entries remain.
 -spec next(iter(Key, Value)) -> {Key, Value, iter(Key, Value)} | none.
-next(#b5_trees_v2_forward_iter{steps = Steps} = Iter) ->
-    case Steps of
-        [{Key, Value} | NextSteps] ->
-            UpdatedIter = Iter#b5_trees_v2_forward_iter{steps = NextSteps},
-            {Key, Value, UpdatedIter};
-        [{Key, Value, NextChild} | NextNextSteps] ->
-            UpdatedIter = Iter#b5_trees_v2_forward_iter{
-                steps = iterator_steps_l_recur(NextChild, NextNextSteps)
-            },
-            {Key, Value, UpdatedIter};
-        [] ->
-            none
-    end;
-next(#b5_trees_v2_reverse_iter{steps = Steps} = Iter) ->
-    case Steps of
-        [{Key, Value} | NextSteps] ->
-            UpdatedIter = Iter#b5_trees_v2_reverse_iter{steps = NextSteps},
-            {Key, Value, UpdatedIter};
-        [{Key, Value, NextChild} | NextNextSteps] ->
-            UpdatedIter = Iter#b5_trees_v2_reverse_iter{
-                steps = iterator_steps_r_recur(NextChild, NextNextSteps)
-            },
-            {Key, Value, UpdatedIter};
-        [] ->
-            none
-    end.
+next(#b5_trees_forward_iter{steps = Steps}) ->
+    next_ordered(Steps);
+next(#b5_trees_reverse_iter{steps = Steps}) ->
+    next_reversed(Steps).
 
 %% @doc Maps a function over all key-value pairs in the tree node.
 %% Returns a new tree node with the same keys and transformed values.
@@ -4642,14 +4625,44 @@ foldr_recur(Fun, Acc, ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4)) ->
     Acc5.
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: Iterator next
+%% ------------------------------------------------------------------
+
+next_ordered([Step | Acc]) ->
+    case Step of
+        ?ITER_KV(Key, Value) ->
+            UpdatedIter = #b5_trees_forward_iter{steps = Acc},
+            {Key, Value, UpdatedIter};
+        %
+        NextChild ->
+            Acc2 = iterator_steps_l_recur(NextChild, Acc),
+            next_ordered(Acc2)
+    end;
+next_ordered([]) ->
+    none.
+
+next_reversed([Step | Acc]) ->
+    case Step of
+        ?ITER_KV(Key, Value) ->
+            UpdatedIter = #b5_trees_reverse_iter{steps = Acc},
+            {Key, Value, UpdatedIter};
+        %
+        NextChild ->
+            Acc2 = iterator_steps_r_recur(NextChild, Acc),
+            next_reversed(Acc2)
+    end;
+next_reversed([]) ->
+    none.
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: Iterator steps, ordered
 %% ------------------------------------------------------------------
 
 -spec iterator_steps_l(t(Key, Value)) -> [iterator_step(Key, Value)].
 iterator_steps_l(?INTERNAL1(K1, V1, C1, C2)) ->
-    iterator_steps_l_recur(C1, [{K1, V1, C2}]);
+    iterator_steps_l_recur(C1, [?ITER_KV(K1, V1), C2]);
 iterator_steps_l(?LEAF1(K1, V1)) ->
-    [{K1, V1}];
+    [?ITER_KV(K1, V1)];
 iterator_steps_l(?LEAF0) ->
     [];
 iterator_steps_l(Node) ->
@@ -4660,24 +4673,34 @@ iterator_steps_l(Node) ->
 iterator_steps_l_recur(Node, Acc) ->
     case Node of
         ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3) ->
-            iterator_steps_l_recur(C1, [{K1, V1, C2}, {K2, V2, C3} | Acc]);
+            iterator_steps_l_recur(C1, [?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3 | Acc]);
         %
         ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4) ->
-            iterator_steps_l_recur(C1, [{K1, V1, C2}, {K2, V2, C3}, {K3, V3, C4} | Acc]);
+            iterator_steps_l_recur(C1, [
+                ?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4 | Acc
+            ]);
         %
         ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5) ->
             iterator_steps_l_recur(C1, [
-                {K1, V1, C2}, {K2, V2, C3}, {K3, V3, C4}, {K4, V4, C5} | Acc
+                ?ITER_KV(K1, V1),
+                C2,
+                ?ITER_KV(K2, V2),
+                C3,
+                ?ITER_KV(K3, V3),
+                C4,
+                ?ITER_KV(K4, V4),
+                C5
+                | Acc
             ]);
         %
         ?LEAF2(K1, K2, V1, V2) ->
-            [{K1, V1}, {K2, V2} | Acc];
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2) | Acc];
         %
         ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-            [{K1, V1}, {K2, V2}, {K3, V3} | Acc];
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3) | Acc];
         %
         ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-            [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Acc]
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc]
     end.
 
 %% ------------------------------------------------------------------
@@ -4688,18 +4711,18 @@ iterator_steps_l_recur(Node, Acc) ->
 iterator_steps_l_from(Key, ?INTERNAL1(K1, V1, C1, C2)) ->
     if
         Key < K1 ->
-            iterator_steps_l_from_recur(Key, C1, [{K1, V1, C2}]);
+            iterator_steps_l_from_recur(Key, C1, [?ITER_KV(K1, V1), C2]);
         Key > K1 ->
             iterator_steps_l_from_recur(Key, C2, []);
         true ->
-            [{K1, V1, C2}]
+            [?ITER_KV(K1, V1), C2]
     end;
 iterator_steps_l_from(Key, ?LEAF1(K1, V1)) ->
     if
         Key > K1 ->
             [];
         true ->
-            [{K1, V1}]
+            [?ITER_KV(K1, V1)]
     end;
 iterator_steps_l_from(_, ?LEAF0) ->
     [];
@@ -4752,46 +4775,66 @@ iterator_steps_l_from_recur_internal4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C
                 Key < K1 ->
                     {V1, V2, V3, V4} = Values,
                     iterator_steps_l_from_recur(Key, C1, [
-                        {K1, V1, C2}, {K2, V2, C3}, {K3, V3, C4}, {K4, V4, C5} | Acc
+                        ?ITER_KV(K1, V1),
+                        C2,
+                        ?ITER_KV(K2, V2),
+                        C3,
+                        ?ITER_KV(K3, V3),
+                        C4,
+                        ?ITER_KV(K4, V4),
+                        C5
+                        | Acc
                     ]);
                 %
                 Key > K1 ->
                     {_, V2, V3, V4} = Values,
                     iterator_steps_l_from_recur(Key, C2, [
-                        {K2, V2, C3}, {K3, V3, C4}, {K4, V4, C5} | Acc
+                        ?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4, ?ITER_KV(K4, V4), C5 | Acc
                     ]);
                 %
                 true ->
                     {V1, V2, V3, V4} = Values,
-                    [{K1, V1, C2}, {K2, V2, C3}, {K3, V3, C4}, {K4, V4, C5} | Acc]
+                    [
+                        ?ITER_KV(K1, V1),
+                        C2,
+                        ?ITER_KV(K2, V2),
+                        C3,
+                        ?ITER_KV(K3, V3),
+                        C4,
+                        ?ITER_KV(K4, V4),
+                        C5
+                        | Acc
+                    ]
             end;
         %
         Key > K2 ->
             if
                 Key < K3 ->
                     {_, _, V3, V4} = Values,
-                    iterator_steps_l_from_recur(Key, C3, [{K3, V3, C4}, {K4, V4, C5} | Acc]);
+                    iterator_steps_l_from_recur(Key, C3, [
+                        ?ITER_KV(K3, V3), C4, ?ITER_KV(K4, V4), C5 | Acc
+                    ]);
                 %
                 Key > K3 ->
                     if
                         Key < K4 ->
                             V4 = element(4, Values),
-                            iterator_steps_l_from_recur(Key, C4, [{K4, V4, C5} | Acc]);
+                            iterator_steps_l_from_recur(Key, C4, [?ITER_KV(K4, V4), C5 | Acc]);
                         Key > K4 ->
                             iterator_steps_l_from_recur(Key, C5, Acc);
                         true ->
                             V4 = element(4, Values),
-                            [{K4, V4, C5} | Acc]
+                            [?ITER_KV(K4, V4), C5 | Acc]
                     end;
                 %
                 true ->
                     {_, _, V3, V4} = Values,
-                    [{K3, V3, C4}, {K4, V4, C5} | Acc]
+                    [?ITER_KV(K3, V3), C4, ?ITER_KV(K4, V4), C5 | Acc]
             end;
         %
         true ->
             {_, V2, V3, V4} = Values,
-            [{K2, V2, C3}, {K3, V3, C4}, {K4, V4, C5} | Acc]
+            [?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4, ?ITER_KV(K4, V4), C5 | Acc]
     end.
 
 -compile({inline, iterator_steps_l_from_recur_internal3/10}).
@@ -4802,35 +4845,37 @@ iterator_steps_l_from_recur_internal3(Key, K1, K2, K3, Values, C1, C2, C3, C4, A
                 Key < K1 ->
                     {V1, V2, V3} = Values,
                     iterator_steps_l_from_recur(Key, C1, [
-                        {K1, V1, C2}, {K2, V2, C3}, {K3, V3, C4} | Acc
+                        ?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4 | Acc
                     ]);
                 %
                 Key > K1 ->
                     {_, V2, V3} = Values,
-                    iterator_steps_l_from_recur(Key, C2, [{K2, V2, C3}, {K3, V3, C4} | Acc]);
+                    iterator_steps_l_from_recur(Key, C2, [
+                        ?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4 | Acc
+                    ]);
                 %
                 true ->
                     {V1, V2, V3} = Values,
-                    [{K1, V1, C2}, {K2, V2, C3}, {K3, V3, C4} | Acc]
+                    [?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4 | Acc]
             end;
         %
         Key > K2 ->
             if
                 Key < K3 ->
                     V3 = element(3, Values),
-                    iterator_steps_l_from_recur(Key, C3, [{K3, V3, C4} | Acc]);
+                    iterator_steps_l_from_recur(Key, C3, [?ITER_KV(K3, V3), C4 | Acc]);
                 %
                 Key > K3 ->
                     iterator_steps_l_from_recur(Key, C4, Acc);
                 %
                 true ->
                     V3 = element(3, Values),
-                    [{K3, V3, C4} | Acc]
+                    [?ITER_KV(K3, V3), C4 | Acc]
             end;
         %
         true ->
             {_, V2, V3} = Values,
-            [{K2, V2, C3}, {K3, V3, C4} | Acc]
+            [?ITER_KV(K2, V2), C3, ?ITER_KV(K3, V3), C4 | Acc]
     end.
 
 -compile({inline, iterator_steps_l_from_recur_internal2/8}).
@@ -4840,15 +4885,17 @@ iterator_steps_l_from_recur_internal2(Key, K1, K2, Values, C1, C2, C3, Acc) ->
             if
                 Key < K1 ->
                     [V1 | V2] = Values,
-                    iterator_steps_l_from_recur(Key, C1, [{K1, V1, C2}, {K2, V2, C3} | Acc]);
+                    iterator_steps_l_from_recur(Key, C1, [
+                        ?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3 | Acc
+                    ]);
                 %
                 Key > K1 ->
                     V2 = tl(Values),
-                    iterator_steps_l_from_recur(Key, C2, [{K2, V2, C3} | Acc]);
+                    iterator_steps_l_from_recur(Key, C2, [?ITER_KV(K2, V2), C3 | Acc]);
                 %
                 true ->
                     [V1 | V2] = Values,
-                    [{K1, V1, C2}, {K2, V2, C3} | Acc]
+                    [?ITER_KV(K1, V1), C2, ?ITER_KV(K2, V2), C3 | Acc]
             end;
         %
         Key > K2 ->
@@ -4856,7 +4903,7 @@ iterator_steps_l_from_recur_internal2(Key, K1, K2, Values, C1, C2, C3, Acc) ->
         %
         true ->
             V2 = tl(Values),
-            [{K2, V2, C3} | Acc]
+            [?ITER_KV(K2, V2), C3 | Acc]
     end.
 
 -compile({inline, iterator_steps_l_from_recur_leaf4/10}).
@@ -4869,19 +4916,19 @@ iterator_steps_l_from_recur_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4, Acc) ->
                         Key > K4 ->
                             Acc;
                         true ->
-                            [{K4, V4} | Acc]
+                            [?ITER_KV(K4, V4) | Acc]
                     end;
                 %
                 true ->
-                    [{K3, V3}, {K4, V4} | Acc]
+                    [?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc]
             end;
         true ->
             if
                 Key > K1 ->
-                    [{K2, V2}, {K3, V3}, {K4, V4} | Acc];
+                    [?ITER_KV(K2, V2), ?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc];
                 %
                 true ->
-                    [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Acc]
+                    [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3), ?ITER_KV(K4, V4) | Acc]
             end
     end.
 
@@ -4893,15 +4940,15 @@ iterator_steps_l_from_recur_leaf3(Key, K1, K2, K3, V1, V2, V3, Acc) ->
                 Key > K3 ->
                     Acc;
                 true ->
-                    [{K3, V3} | Acc]
+                    [?ITER_KV(K3, V3) | Acc]
             end;
         %
         true ->
             if
                 Key > K1 ->
-                    [{K2, V2}, {K3, V3} | Acc];
+                    [?ITER_KV(K2, V2), ?ITER_KV(K3, V3) | Acc];
                 true ->
-                    [{K1, V1}, {K2, V2}, {K3, V3} | Acc]
+                    [?ITER_KV(K1, V1), ?ITER_KV(K2, V2), ?ITER_KV(K3, V3) | Acc]
             end
     end.
 
@@ -4912,10 +4959,10 @@ iterator_steps_l_from_recur_leaf2(Key, K1, K2, V1, V2, Acc) ->
             Acc;
         %
         Key > K1 ->
-            [{K2, V2} | Acc];
+            [?ITER_KV(K2, V2) | Acc];
         %
         true ->
-            [{K1, V1}, {K2, V2} | Acc]
+            [?ITER_KV(K1, V1), ?ITER_KV(K2, V2) | Acc]
     end.
 
 %% ------------------------------------------------------------------
@@ -4924,9 +4971,10 @@ iterator_steps_l_from_recur_leaf2(Key, K1, K2, V1, V2, Acc) ->
 
 -spec iterator_steps_r(t(Key, Value)) -> [iterator_step(Key, Value)].
 iterator_steps_r(?INTERNAL1(K1, V1, C1, C2)) ->
-    iterator_steps_r_recur(C2, [{K1, V1, C1}]);
+    Acc0 = [?ITER_KV(K1, V1), C1],
+    iterator_steps_r_recur(C2, Acc0);
 iterator_steps_r(?LEAF1(K1, V1)) ->
-    [{K1, V1}];
+    [?ITER_KV(K1, V1)];
 iterator_steps_r(?LEAF0) ->
     [];
 iterator_steps_r(Node) ->
@@ -4937,24 +4985,64 @@ iterator_steps_r(Node) ->
 iterator_steps_r_recur(Node, Acc) ->
     case Node of
         ?INTERNAL2(K1, K2, [V1 | V2], C1, C2, C3) ->
-            iterator_steps_r_recur(C3, [{K2, V2, C2}, {K1, V1, C1} | Acc]);
+            Acc2 = [
+                ?ITER_KV(K2, V2),
+                C2,
+                ?ITER_KV(K1, V1),
+                C1
+                | Acc
+            ],
+            iterator_steps_r_recur(C3, Acc2);
         %
         ?INTERNAL3(K1, K2, K3, {V1, V2, V3}, C1, C2, C3, C4) ->
-            iterator_steps_r_recur(C4, [{K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc]);
+            Acc2 = [
+                ?ITER_KV(K3, V3),
+                C3,
+                ?ITER_KV(K2, V2),
+                C2,
+                ?ITER_KV(K1, V1),
+                C1
+                | Acc
+            ],
+            iterator_steps_r_recur(C4, Acc2);
         %
         ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, C1, C2, C3, C4, C5) ->
-            iterator_steps_r_recur(C5, [
-                {K4, V4, C4}, {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc
-            ]);
+            Acc2 = [
+                ?ITER_KV(K4, V4),
+                C4,
+                ?ITER_KV(K3, V3),
+                C3,
+                ?ITER_KV(K2, V2),
+                C2,
+                ?ITER_KV(K1, V1),
+                C1
+                | Acc
+            ],
+            iterator_steps_r_recur(C5, Acc2);
         %
         ?LEAF2(K1, K2, V1, V2) ->
-            [{K2, V2}, {K1, V1} | Acc];
+            [
+                ?ITER_KV(K2, V2),
+                ?ITER_KV(K1, V1)
+                | Acc
+            ];
         %
         ?LEAF3(K1, K2, K3, V1, V2, V3) ->
-            [{K3, V3}, {K2, V2}, {K1, V1} | Acc];
+            [
+                ?ITER_KV(K3, V3),
+                ?ITER_KV(K2, V2),
+                ?ITER_KV(K1, V1)
+                | Acc
+            ];
         %
         ?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) ->
-            [{K4, V4}, {K3, V3}, {K2, V2}, {K1, V1} | Acc]
+            [
+                ?ITER_KV(K4, V4),
+                ?ITER_KV(K3, V3),
+                ?ITER_KV(K2, V2),
+                ?ITER_KV(K1, V1)
+                | Acc
+            ]
     end.
 
 %% ------------------------------------------------------------------
@@ -4967,16 +5055,16 @@ iterator_steps_r_from(Key, ?LEAF1(K1, V1)) ->
         Key < K1 ->
             [];
         true ->
-            [{K1, V1}]
+            [?ITER_KV(K1, V1)]
     end;
 iterator_steps_r_from(Key, ?INTERNAL1(K1, V1, C1, C2)) ->
     if
         Key > K1 ->
-            iterator_steps_r_from_recur(Key, C2, [{K1, V1, C1}]);
+            iterator_steps_r_from_recur(Key, C2, [?ITER_KV(K1, V1), C1]);
         Key < K1 ->
             iterator_steps_r_from_recur(Key, C1, []);
         true ->
-            [{K1, V1, C1}]
+            [?ITER_KV(K1, V1), C1]
     end;
 iterator_steps_r_from(_, ?LEAF0) ->
     [];
@@ -5031,46 +5119,72 @@ iterator_steps_r_from_recur_internal4(Key, K1, K2, K3, K4, Values, C1, C2, C3, C
                         Key > K4 ->
                             {V1, V2, V3, V4} = Values,
                             iterator_steps_r_from_recur(Key, C5, [
-                                {K4, V4, C4}, {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc
+                                ?ITER_KV(K4, V4),
+                                C4,
+                                ?ITER_KV(K3, V3),
+                                C3,
+                                ?ITER_KV(K2, V2),
+                                C2,
+                                ?ITER_KV(K1, V1),
+                                C1
+                                | Acc
                             ]);
                         %
                         Key < K4 ->
                             {V1, V2, V3, _} = Values,
                             iterator_steps_r_from_recur(Key, C4, [
-                                {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc
+                                ?ITER_KV(K3, V3),
+                                C3,
+                                ?ITER_KV(K2, V2),
+                                C2,
+                                ?ITER_KV(K1, V1),
+                                C1
+                                | Acc
                             ]);
                         %
                         true ->
                             {V1, V2, V3, V4} = Values,
-                            [{K4, V4, C4}, {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc]
+                            [
+                                ?ITER_KV(K4, V4),
+                                C4,
+                                ?ITER_KV(K3, V3),
+                                C3,
+                                ?ITER_KV(K2, V2),
+                                C2,
+                                ?ITER_KV(K1, V1),
+                                C1
+                                | Acc
+                            ]
                     end;
                 %
                 Key < K3 ->
                     {V1, V2, _, _} = Values,
-                    iterator_steps_r_from_recur(Key, C3, [{K2, V2, C2}, {K1, V1, C1} | Acc]);
+                    iterator_steps_r_from_recur(Key, C3, [
+                        ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc
+                    ]);
                 %
                 true ->
                     {V1, V2, V3, _} = Values,
-                    [{K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc]
+                    [?ITER_KV(K3, V3), C3, ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
             end;
         %
         Key < K2 ->
             if
                 Key > K1 ->
                     V1 = element(1, Values),
-                    iterator_steps_r_from_recur(Key, C2, [{K1, V1, C1} | Acc]);
+                    iterator_steps_r_from_recur(Key, C2, [?ITER_KV(K1, V1), C1 | Acc]);
                 %
                 Key < K1 ->
                     iterator_steps_r_from_recur(Key, C1, Acc);
                 %
                 true ->
                     V1 = element(1, Values),
-                    [{K1, V1, C1} | Acc]
+                    [?ITER_KV(K1, V1), C1 | Acc]
             end;
         %
         true ->
             {V1, V2, _, _} = Values,
-            [{K2, V2, C2}, {K1, V1, C1} | Acc]
+            [?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
     end.
 
 -compile({inline, iterator_steps_r_from_recur_internal3/10}).
@@ -5081,35 +5195,37 @@ iterator_steps_r_from_recur_internal3(Key, K1, K2, K3, Values, C1, C2, C3, C4, A
                 Key > K3 ->
                     {V1, V2, V3} = Values,
                     iterator_steps_r_from_recur(Key, C4, [
-                        {K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc
+                        ?ITER_KV(K3, V3), C3, ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc
                     ]);
                 %
                 Key < K3 ->
                     {V1, V2, _} = Values,
-                    iterator_steps_r_from_recur(Key, C3, [{K2, V2, C2}, {K1, V1, C1} | Acc]);
+                    iterator_steps_r_from_recur(Key, C3, [
+                        ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc
+                    ]);
                 %
                 true ->
                     {V1, V2, V3} = Values,
-                    [{K3, V3, C3}, {K2, V2, C2}, {K1, V1, C1} | Acc]
+                    [?ITER_KV(K3, V3), C3, ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
             end;
         %
         Key < K2 ->
             if
                 Key > K1 ->
                     V1 = element(1, Values),
-                    iterator_steps_r_from_recur(Key, C2, [{K1, V1, C1} | Acc]);
+                    iterator_steps_r_from_recur(Key, C2, [?ITER_KV(K1, V1), C1 | Acc]);
                 %
                 Key < K1 ->
                     iterator_steps_r_from_recur(Key, C1, Acc);
                 %
                 true ->
                     V1 = element(1, Values),
-                    [{K1, V1, C1} | Acc]
+                    [?ITER_KV(K1, V1), C1 | Acc]
             end;
         %
         true ->
             {V1, V2, _} = Values,
-            [{K2, V2, C2}, {K1, V1, C1} | Acc]
+            [?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
     end.
 
 -compile({inline, iterator_steps_r_from_recur_internal2/8}).
@@ -5119,15 +5235,17 @@ iterator_steps_r_from_recur_internal2(Key, K1, K2, Values, C1, C2, C3, Acc) ->
             if
                 Key > K2 ->
                     [V1 | V2] = Values,
-                    iterator_steps_r_from_recur(Key, C3, [{K2, V2, C2}, {K1, V1, C1} | Acc]);
+                    iterator_steps_r_from_recur(Key, C3, [
+                        ?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc
+                    ]);
                 %
                 Key < K2 ->
                     V1 = hd(Values),
-                    iterator_steps_r_from_recur(Key, C2, [{K1, V1, C1} | Acc]);
+                    iterator_steps_r_from_recur(Key, C2, [?ITER_KV(K1, V1), C1 | Acc]);
                 %
                 true ->
                     [V1 | V2] = Values,
-                    [{K2, V2, C2}, {K1, V1, C1} | Acc]
+                    [?ITER_KV(K2, V2), C2, ?ITER_KV(K1, V1), C1 | Acc]
             end;
         %
         Key < K1 ->
@@ -5135,7 +5253,7 @@ iterator_steps_r_from_recur_internal2(Key, K1, K2, Values, C1, C2, C3, Acc) ->
         %
         true ->
             V1 = hd(Values),
-            [{K1, V1, C1} | Acc]
+            [?ITER_KV(K1, V1), C1 | Acc]
     end.
 
 -compile({inline, iterator_steps_r_from_recur_leaf4/10}).
@@ -5146,17 +5264,17 @@ iterator_steps_r_from_recur_leaf4(Key, K1, K2, K3, K4, V1, V2, V3, V4, Acc) ->
                 Key < K1 ->
                     Acc;
                 true ->
-                    [{K1, V1} | Acc]
+                    [?ITER_KV(K1, V1) | Acc]
             end;
         %
         Key < K3 ->
-            [{K2, V2}, {K1, V1} | Acc];
+            [?ITER_KV(K2, V2), ?ITER_KV(K1, V1) | Acc];
         %
         Key < K4 ->
-            [{K3, V3}, {K2, V2}, {K1, V1} | Acc];
+            [?ITER_KV(K3, V3), ?ITER_KV(K2, V2), ?ITER_KV(K1, V1) | Acc];
         %
         true ->
-            [{K4, V4}, {K3, V3}, {K2, V2}, {K1, V1} | Acc]
+            [?ITER_KV(K4, V4), ?ITER_KV(K3, V3), ?ITER_KV(K2, V2), ?ITER_KV(K1, V1) | Acc]
     end.
 
 -compile({inline, iterator_steps_r_from_recur_leaf3/8}).
@@ -5168,14 +5286,14 @@ iterator_steps_r_from_recur_leaf3(Key, K1, K2, K3, V1, V2, V3, Acc) ->
                     Acc;
                 %
                 true ->
-                    [{K1, V1} | Acc]
+                    [?ITER_KV(K1, V1) | Acc]
             end;
         %
         Key < K3 ->
-            [{K2, V2}, {K1, V1} | Acc];
+            [?ITER_KV(K2, V2), ?ITER_KV(K1, V1) | Acc];
         %
         true ->
-            [{K3, V3}, {K2, V2}, {K1, V1} | Acc]
+            [?ITER_KV(K3, V3), ?ITER_KV(K2, V2), ?ITER_KV(K1, V1) | Acc]
     end.
 
 -compile({inline, iterator_steps_r_from_recur_leaf2/6}).
@@ -5185,10 +5303,10 @@ iterator_steps_r_from_recur_leaf2(Key, K1, K2, V1, V2, Acc) ->
             Acc;
         %
         Key < K2 ->
-            [{K1, V1} | Acc];
+            [?ITER_KV(K1, V1) | Acc];
         %
         true ->
-            [{K2, V2}, {K1, V1} | Acc]
+            [?ITER_KV(K2, V2), ?ITER_KV(K1, V1) | Acc]
     end.
 
 %% ------------------------------------------------------------------
