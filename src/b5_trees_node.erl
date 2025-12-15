@@ -288,23 +288,23 @@
 -export_type([iter/2]).
 
 -type forward_iter(Key, Value) :: [iterator_step(Key, Value)].
--type reverse_iter(Key, Value) :: nonempty_improper_list(reverse, [iterator_step(Key, Value)]).
+-type reverse_iter(Key, Value) :: nonempty_improper_list(reversed, [iterator_step(Key, Value)]).
 
--type iterator_step(Key, Value) :: {Key, Value} | {Key, Value, NextChild :: deep_node(Key, Value)}.
+-type iterator_step(Key, Value) :: kv_pair(Key, Value) | deep_node(Key, Value).
 
 %%%%%%%%%%%
 
 -type take_result(Key, Value) :: nonempty_improper_list(
-    taken_pair(Key, Value),
+    kv_pair(Key, Value),
     t(Key, Value)
 ).
 -export_type([take_result/2]).
 
--type taken_pair(Key, Value) :: nonempty_improper_list(Key, Value).
--export_type([taken_pair/2]).
+-type kv_pair(Key, Value) :: nonempty_improper_list(Key, Value).
+-export_type([kv_pair/2]).
 
 -type take_result_before_rebalance(Key, Value) :: nonempty_improper_list(
-    taken_pair(Key, Value),
+    kv_pair(Key, Value),
     node_after_deletion(Key, Value) | unbalanced_node(Key, Value)
 ).
 
@@ -4633,7 +4633,7 @@ next(Head, Tail) ->
             {Key, Value, UpdatedIter};
         %
         reversed ->
-            next_reverse(Tail);
+            next_reversed(Tail);
         %
         NextChildOrdered ->
             Acc = Tail,
@@ -4644,8 +4644,8 @@ next(Head, Tail) ->
             {Key, Value, UpdatedIter}
     end.
 
--compile({inline, next_reverse/1}).
-next_reverse([Head | Tail]) ->
+-compile({inline, next_reversed/1}).
+next_reversed([Head | Tail]) ->
     case Head of
         ?ITER_KV(Key, Value) ->
             UpdatedIter = [reversed | Tail],
@@ -4659,7 +4659,7 @@ next_reverse([Head | Tail]) ->
             UpdatedIter = [reversed | NewTail],
             {Key, Value, UpdatedIter}
     end;
-next_reverse([]) ->
+next_reversed([]) ->
     none.
 
 %% ------------------------------------------------------------------
@@ -5329,20 +5329,14 @@ keys_recur(?LEAF3(K1, K2, K3, _, _, _), Acc) ->
 keys_recur(?LEAF4(K1, K2, K3, K4, _, _, _, _), Acc) ->
     [K1, K2, K3, K4 | Acc];
 keys_recur(?INTERNAL2(K1, K2, _, C1, C2, C3), Acc) ->
-    Acc2 = [K2 | keys_recur(C3, Acc)],
-    Acc3 = [K1 | keys_recur(C2, Acc2)],
-    keys_recur(C1, Acc3);
+    keys_recur(C1, [K1 | keys_recur(C2, [K2 | keys_recur(C3, Acc)])]);
 keys_recur(?INTERNAL3(K1, K2, K3, _, C1, C2, C3, C4), Acc) ->
-    Acc2 = [K3 | keys_recur(C4, Acc)],
-    Acc3 = [K2 | keys_recur(C3, Acc2)],
-    Acc4 = [K1 | keys_recur(C2, Acc3)],
-    keys_recur(C1, Acc4);
+    keys_recur(C1, [K1 | keys_recur(C2, [K2 | keys_recur(C3, [K3 | keys_recur(C4, Acc)])])]);
 keys_recur(?INTERNAL4(K1, K2, K3, K4, _, C1, C2, C3, C4, C5), Acc) ->
-    Acc2 = [K4 | keys_recur(C5, Acc)],
-    Acc3 = [K3 | keys_recur(C4, Acc2)],
-    Acc4 = [K2 | keys_recur(C3, Acc3)],
-    Acc5 = [K1 | keys_recur(C2, Acc4)],
-    keys_recur(C1, Acc5).
+    keys_recur(C1, [
+        K1
+        | keys_recur(C2, [K2 | keys_recur(C3, [K3 | keys_recur(C4, [K4 | keys_recur(C5, Acc)])])])
+    ]).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: values/1
