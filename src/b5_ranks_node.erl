@@ -315,13 +315,10 @@
 -opaque iter(Key, Value) :: forward_iter(Key, Value) | reverse_iter(Key, Value).
 -export_type([iter/2]).
 
--record(b5_ranks_forward_iter, {steps}).
--type forward_iter(Key, Value) :: #b5_ranks_forward_iter{steps :: [iterator_step(Key, Value)]}.
+-type forward_iter(Key, Value) :: [iterator_step(Key, Value)].
+-type reverse_iter(Key, Value) :: nonempty_improper_list(reversed, iterator_step(Key, Value)).
 
--record(b5_ranks_reverse_iter, {steps}).
--type reverse_iter(Key, Value) :: #b5_ranks_reverse_iter{steps :: [iterator_step(Key, Value)]}.
-
--type iterator_step(Key, Value) :: {Key, Value} | {Key, Value, NextChild :: deep_node(Key, Value)}.
+-type iterator_step(Key, Value) :: kv_pair(Key, Value) | deep_node(Key, Value).
 
 %%%%%%%%%%%
 
@@ -451,17 +448,17 @@ is_defined(Key, Node) ->
 %% Can iterate in `ordered' (ascending) or `reversed' (descending) direction.
 -spec iterator(t(Key, Value), ordered | reversed) -> iter(Key, Value).
 iterator(Node, ordered) ->
-    #b5_ranks_forward_iter{steps = iterator_steps_l(Node)};
+    iterator_steps_l(Node);
 iterator(Node, reversed) ->
-    #b5_ranks_reverse_iter{steps = iterator_steps_r(Node)}.
+    [reversed | iterator_steps_r(Node)].
 
 %% @doc Creates an iterator starting from the first key >= the specified key.
 %% Can iterate in `ordered' (ascending) or `reversed' (descending) direction.
 -spec iterator_from(Key, t(Key, Value), ordered | reversed) -> iter(Key, Value).
 iterator_from(Key, Node, ordered) ->
-    #b5_ranks_forward_iter{steps = iterator_steps_l_from(Key, Node)};
+    iterator_steps_l_from(Key, Node);
 iterator_from(Key, Node, reversed) ->
-    #b5_ranks_reverse_iter{steps = iterator_steps_r_from(Key, Node)}.
+    [reversed | iterator_steps_r_from(Key, Node)].
 
 %% @doc Returns all keys in the tree node as an ordered list.
 -spec keys(t(Key, _)) -> [Key].
@@ -522,10 +519,10 @@ new() ->
 %% @doc Returns the next key-value pair from an iterator.
 %% Returns `{Key, Value, NewIter}' or `none' if no more entries remain.
 -spec next(iter(Key, Value)) -> {Key, Value, iter(Key, Value)} | none.
-next(#b5_ranks_forward_iter{steps = Steps}) ->
-    next_ordered(Steps);
-next(#b5_ranks_reverse_iter{steps = Steps}) ->
-    next_reversed(Steps).
+next([Head | Tail]) ->
+    next(Head, Tail);
+next([]) ->
+    none.
 
 %% TODO document
 -spec nth(pos_integer(), t(Key, Value)) -> kv_pair(Key, Value).
@@ -7675,28 +7672,39 @@ foldr_recur(Fun, Acc, ?INTERNAL4(K1, K2, K3, K4, {V1, V2, V3, V4}, _, _, _, _, C
 %% Internal Function Definitions: Iterator next
 %% ------------------------------------------------------------------
 
-next_ordered([Step | Acc]) ->
-    case Step of
+-compile({inline, next/2}).
+next(Head, Tail) ->
+    case Head of
         ?ITER_KV(Key, Value) ->
-            UpdatedIter = #b5_ranks_forward_iter{steps = Acc},
+            UpdatedIter = Tail,
             {Key, Value, UpdatedIter};
         %
-        NextChild ->
-            Acc2 = iterator_steps_l_recur(NextChild, Acc),
-            next_ordered(Acc2)
-    end;
-next_ordered([]) ->
-    none.
+        reversed ->
+            next_reversed(Tail);
+        %
+        NextChildOrdered ->
+            Acc = Tail,
+            [NewHead | NewTail] = iterator_steps_l_recur(NextChildOrdered, Acc),
+            ?ITER_KV(Key, Value) = NewHead,
 
-next_reversed([Step | Acc]) ->
-    case Step of
+            UpdatedIter = NewTail,
+            {Key, Value, UpdatedIter}
+    end.
+
+-compile({inline, next_reversed/1}).
+next_reversed([Head | Tail]) ->
+    case Head of
         ?ITER_KV(Key, Value) ->
-            UpdatedIter = #b5_ranks_reverse_iter{steps = Acc},
+            UpdatedIter = [reversed | Tail],
             {Key, Value, UpdatedIter};
         %
-        NextChild ->
-            Acc2 = iterator_steps_r_recur(NextChild, Acc),
-            next_reversed(Acc2)
+        NextChildReversed ->
+            Acc = Tail,
+            [NewHead | NewTail] = iterator_steps_r_recur(NextChildReversed, Acc),
+            ?ITER_KV(Key, Value) = NewHead,
+
+            UpdatedIter = [reversed | NewTail],
+            {Key, Value, UpdatedIter}
     end;
 next_reversed([]) ->
     none.
