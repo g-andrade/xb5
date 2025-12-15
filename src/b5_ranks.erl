@@ -12,6 +12,7 @@
     foldr/3,
     from_list/1,
     get/2,
+    get_ranked/2,
     insert/3,
     insert_with/3,
     is_defined/2,
@@ -29,13 +30,15 @@
     next/1,
     nth/2,
     range/3,
-    rank/2,
     size/1,
     smaller/2,
     smallest/1,
     take/2,
     take_any/2,
     take_largest/1,
+    take_nth/2,
+    take_ranked/2,
+    take_ranked_any/2,
     take_smallest/1,
     to_list/1,
     update/3,
@@ -53,6 +56,7 @@
     foldr/3,
     from_list/1,
     get/2,
+    get_ranked/2,
     insert/3,
     insert_with/3,
     is_defined/2,
@@ -200,7 +204,13 @@ Retrieves the value stored with `Key` in `Tree`. The call fails with a
 -endif.
 -spec get(Key, Tree) -> Value when Key :: term(), Tree :: tree(Key, Value).
 get(Key, #b5_ranks{root = Root}) ->
-    b5_ranks_node:get(Key, Root).
+    [_Rank | Value] = b5_ranks_node:get_ranked(Key, Root),
+    Value.
+
+%% TODO document
+get_ranked(Key, #b5_ranks{root = Root}) ->
+    [Rank | Value] = b5_ranks_node:get_ranked(Key, Root),
+    {Rank, Value}.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -243,14 +253,8 @@ insert_with(Key, Fun, #b5_ranks{size = Size, root = Root} = Tree) ->
 -doc "Returns `true` if `Key` is present in `Tree`, otherwise `false`.".
 -endif.
 -spec is_defined(Key, tree(Key, _)) -> boolean().
-is_defined(Key, Tree) ->
-    try get(Key, Tree) of
-        _ ->
-            true
-    catch
-        error:{badkey, K} when K =:= Key ->
-            false
-    end.
+is_defined(Key, #b5_ranks{root = Root}) ->
+    b5_ranks_node:is_defined(Key, Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc "Returns `true` if `Tree` is an empty tree, otherwise `false`.".
@@ -403,7 +407,8 @@ nth(N, #b5_ranks{size = Size, root = Root}) ->
             error({badarg, N});
         %
         _ ->
-            b5_ranks_node:nth(N, Root)
+            [Key | Value] = b5_ranks_node:nth(N, Root),
+            {Key, Value}
     end.
 
 -if(?OTP_RELEASE >= 27).
@@ -430,10 +435,6 @@ range(N, Len, #b5_ranks{size = Size, root = Root}) ->
             RevLen = M - N + 1,
             b5_ranks_node:range(M, RevLen, Root)
     end.
-
-%% TODO document
-rank(Key, #b5_ranks{root = Root}) ->
-    b5_ranks_node:rank(Key, Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -467,10 +468,10 @@ key is not present in the tree.
     Tree2 :: tree(Key, Value).
 
 take(Key, #b5_ranks{size = Size, root = Root} = Tree) ->
-    [TakenPair | UpdatedRoot] = b5_ranks_node:take(Key, Root),
+    [TakenPair | UpdatedRoot] = b5_ranks_node:take_ranked(Key, Root),
     UpdatedTree = Tree#b5_ranks{size = Size - 1, root = UpdatedRoot},
 
-    [_ | Value] = TakenPair,
+    [_Rank | Value] = TakenPair,
     {Value, UpdatedTree}.
 
 -if(?OTP_RELEASE >= 27).
@@ -510,6 +511,39 @@ take_largest(#b5_ranks{size = Size, root = Root} = Tree) ->
 
     [Key | Value] = TakenPair,
     {Key, Value, UpdatedTree}.
+
+% TODO document
+take_nth(N, #b5_ranks{size = Size, root = Root} = Tree) ->
+    % TODO negative values of N?
+    % TODO optimize for smallest and largest?
+    case not is_integer(N) orelse N < 1 orelse N > Size of
+        true ->
+            error({badarg, N});
+        %
+        _ ->
+            [TakenPair | UpdatedRoot] = b5_ranks_node:take_nth(N, Root),
+            UpdatedTree = Tree#b5_ranks{size = Size - 1, root = UpdatedRoot},
+
+            [Key | Value] = TakenPair,
+            {Key, Value, UpdatedTree}
+    end.
+
+% TODO document
+take_ranked(Key, #b5_ranks{size = Size, root = Root} = Tree) ->
+    [TakenPair | UpdatedRoot] = b5_ranks_node:take_ranked(Key, Root),
+    UpdatedTree = Tree#b5_ranks{size = Size - 1, root = UpdatedRoot},
+
+    [Rank | Value] = TakenPair,
+    {Rank, Value, UpdatedTree}.
+
+% TODO document
+take_ranked_any(Key, Tree) ->
+    try
+        take_ranked(Key, Tree)
+    catch
+        error:{badkey, K} when K =:= Key ->
+            error
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
