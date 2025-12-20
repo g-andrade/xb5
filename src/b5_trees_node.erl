@@ -64,7 +64,7 @@
 
 % 6 elements
 -define(INTERNAL2(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
--define(INTERNAL2_MATCH(K1, K2, Values, C1, C2, C3), {K1, K2, [_|_] = Values, C1, C2, C3}).
+-define(INTERNAL2_MATCH(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
 
 % 4 elements
 -define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
