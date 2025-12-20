@@ -8,7 +8,7 @@ defmodule Generator do
   ## API
 
   def run(btree_order, mode) do
-    depth_flattening = 2
+    depth_flattening = 1
     max_root_keys = min_child_leaf_keys(btree_order, depth_flattening) - 1
     max_keys = max_keys(btree_order, depth_flattening)
 
@@ -116,12 +116,7 @@ defmodule Generator do
     kv_args_str = Enum.join(kv_args, ", ")
     wrapped_str = macro_wrap(wrap_type, kv_args)
 
-    maybe_macro_args =
-      if kv_args === [] do
-        ""
-      else
-        "(#{kv_args_str})"
-      end
+    maybe_macro_args = maybe_macro_args(kv_args_str)
 
     """
     % #{length(kv_args)} elements
@@ -166,6 +161,14 @@ defmodule Generator do
     end
   end
 
+  defp maybe_macro_args(kv_args_str) do
+      if kv_args_str === "" do
+        ""
+      else
+        "(#{kv_args_str})"
+      end
+  end
+
   defp kv_args(nr_of_keys) do
     key_args(nr_of_keys) ++ value_args(nr_of_keys)
   end
@@ -182,7 +185,7 @@ defmodule Generator do
 
   defp get_root_definitions(max_root_keys) do
     [
-      Enum.map_join(1..max_root_keys//1, ";", &get_definition("get_root", &1)),
+      Enum.map_join(0..max_root_keys//1, ";", &get_definition("get_root", &1)),
       ";",
       fallback_definition("get_root", "get", ["Key", "Node"]),
       "."
@@ -204,8 +207,11 @@ defmodule Generator do
 
     indexed_key_args = Enum.with_index(key_args)
 
+    kv_args_str = Enum.join(kv_args, ", ")
+    maybe_macro_args = maybe_macro_args(kv_args_str)
+
     """
-    #{name}(Key, #{match_name}(#{kv_args |> Enum.join(", ")})) ->
+    #{name}(Key, #{match_name}#{maybe_macro_args}) ->
       #{generate_exact_search("Key", indexed_key_args, &handle_get_definition(&1, &2, value_args))}
     """
   end
@@ -219,7 +225,7 @@ defmodule Generator do
 
   defp insert_root_definitions(max_root_keys, max_keys) do
     [
-      Enum.map_join(1..max_root_keys//1, ";", &insert_definition("insert_root", &1, max_keys)),
+      Enum.map_join(0..max_root_keys//1, ";", &insert_definition("insert_root", &1, max_keys)),
       ";",
       fallback_definition("insert_root", "insert", ["Key", "ValueEval", "ValueWrap", "Node"]),
       "."
@@ -241,8 +247,11 @@ defmodule Generator do
 
     indexed_key_args = Enum.with_index(key_args)
 
+    kv_args_str = Enum.join(kv_args, ", ")
+    maybe_macro_args = maybe_macro_args(kv_args_str)
+
     """
-    #{name}(Key, ValueEval, ValueWrap, #{match_name}(#{kv_args |> Enum.join(", ")})) ->
+    #{name}(Key, ValueEval, ValueWrap, #{match_name}#{maybe_macro_args}) ->
       #{generate_gap_search("Key", indexed_key_args, &handle_insert_definition(&1, key_args, value_args, max_keys))}
     """
   end
@@ -251,6 +260,8 @@ defmodule Generator do
     expanded_keys = List.insert_at(key_args, k_index, "Key")
     expanded_values = List.insert_at(value_args, k_index, "Value")
     new_size = length(expanded_keys)
+
+    # TODO continue from here, some insert cases are wrong, I think it's the gap search
 
     if new_size > max_keys do
       mid_index = div(max_keys, 2)
@@ -280,7 +291,7 @@ defmodule Generator do
 
   defp update_root_definitions(max_root_keys) do
     [
-      Enum.map_join(1..max_root_keys//1, ";", &update_definition("update_root", &1)),
+      Enum.map_join(0..max_root_keys//1, ";", &update_definition("update_root", &1)),
       ";",
       fallback_definition("update_root", "update", ["Key", "ValueEval", "ValueWrap", "Node"]),
       "."
@@ -302,11 +313,19 @@ defmodule Generator do
 
     indexed_key_args = Enum.with_index(key_args)
 
+    kv_args_str = Enum.join(kv_args, ", ")
+    maybe_macro_args = maybe_macro_args(kv_args_str)
+
+    maybe_unused = maybe_unused(kv_args)
+
     """
-    #{name}(Key, ValueEval, ValueWrap, #{match_name}(#{kv_args |> Enum.join(", ")})) ->
+    #{name}(Key, #{maybe_unused}ValueEval, #{maybe_unused}ValueWrap, #{match_name}#{maybe_macro_args}) ->
       #{generate_exact_search("Key", indexed_key_args, &handle_update_definition(&1, &2, key_args, value_args))}
     """
   end
+
+  defp maybe_unused([]), do: "_"
+  defp maybe_unused([_|_]), do: ""
 
   defp handle_update_definition(_old_k, k_index, key_args, value_args) do
     updated_keys = List.replace_at(key_args, k_index, "Key")
@@ -325,6 +344,9 @@ defmodule Generator do
 
   defp generate_exact_search(target_k, indexed_key_args, handler_fun) do
     case indexed_key_args do
+      [] ->
+        "error({badkey, #{target_k}})"
+
       [pair_a] ->
         generate_exact_search1(target_k, pair_a, handler_fun)
 
