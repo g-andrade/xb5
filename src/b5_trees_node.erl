@@ -52,7 +52,7 @@
 % Nodes are tuples (for the most part), with different node types
 % having different sizes. Size alone is not enough to differentiate
 % between some node types, so we need to add tags.
-%
+% FIXME update
 % After a few hundred keys, the approx average distribution of node types
 % stabilises as follows:
 % * INTERNAL2: 13%
@@ -89,6 +89,8 @@
 % 9 elements
 -define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {leaf4, K1, K2, K3, K4, V1, V2, V3, V4}).
 -define(LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4), {_, K1, K2, K3, K4, V1, V2, V3, V4}).
+
+%%%
 
 % 5 elements
 -define(INTERNAL1(K1, V1, C1, C2), {internal1, K1, V1, C1, C2}).
