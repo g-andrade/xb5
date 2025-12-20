@@ -839,7 +839,9 @@ insert_recur(Key, ValueEval, ValueWrap, ?INTERNAL2_MATCH(K1, K2, Values, C1, C2,
     insert_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
 insert_recur(Key, ValueEval, ValueWrap, ?INTERNAL3_MATCH(K1, K2, K3, Values, C1, C2, C3, C4)) ->
     insert_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4);
-insert_recur(Key, ValueEval, ValueWrap, ?INTERNAL4_MATCH(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
+insert_recur(
+    Key, ValueEval, ValueWrap, ?INTERNAL4_MATCH(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
+) ->
     insert_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
 insert_recur(Key, ValueEval, ValueWrap, ?LEAF2_MATCH(K1, K2, V1, V2)) ->
     insert_leaf2(Key, ValueEval, ValueWrap, K1, K2, V1, V2);
@@ -1669,7 +1671,9 @@ update_recur(Key, ValueEval, ValueWrap, ?INTERNAL2_MATCH(K1, K2, Values, C1, C2,
     update_internal2(Key, ValueEval, ValueWrap, K1, K2, Values, C1, C2, C3);
 update_recur(Key, ValueEval, ValueWrap, ?INTERNAL3_MATCH(K1, K2, K3, Values, C1, C2, C3, C4)) ->
     update_internal3(Key, ValueEval, ValueWrap, K1, K2, K3, Values, C1, C2, C3, C4);
-update_recur(Key, ValueEval, ValueWrap, ?INTERNAL4_MATCH(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)) ->
+update_recur(
+    Key, ValueEval, ValueWrap, ?INTERNAL4_MATCH(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5)
+) ->
     update_internal4(Key, ValueEval, ValueWrap, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5);
 update_recur(Key, ValueEval, ValueWrap, ?LEAF2_MATCH(K1, K2, V1, V2)) ->
     update_leaf2(Key, ValueEval, ValueWrap, K1, K2, V1, V2);
