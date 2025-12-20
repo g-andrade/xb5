@@ -70,33 +70,33 @@
 -define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
 -define(LEAF2_MATCH(K1, K2, V1, V2), {K1, K2, V1, V2}).
 
-% 14 elements (8 required)
--define(INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4), {internal3, pad, pad, pad, pad, pad, K1, K2, K3, Values, C1, C2, C3, C4}).
--define(INTERNAL3_MATCH(K1, K2, K3, Values, C1, C2, C3, C4), {internal3, _, _, _, _, _, K1, K2, K3, Values, C1, C2, C3, C4}).
+% 8 elements
+-define(INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4), {K1, K2, K3, Values, C1, C2, C3, C4}).
+-define(INTERNAL3_MATCH(K1, K2, K3, Values, C1, C2, C3, C4), {K1, K2, K3, Values, C1, C2, C3, C4}).
 
 % 7 elements
 -define(LEAF3(K1, K2, K3, V1, V2, V3), {leaf3, K1, K2, K3, V1, V2, V3}).
 -define(LEAF3_MATCH(K1, K2, K3, V1, V2, V3), {_, K1, K2, K3, V1, V2, V3}).
 
-% 14 elements (10 required)
+% 10 elements
 -define(INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5),
-    {internal4, pad, pad, pad, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5}
+    {K1, K2, K3, K4, Values, C1, C2, C3, C4, C5}
 ).
 -define(INTERNAL4_MATCH(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5),
-    {internal4, _, _, _, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5}
+    {K1, K2, K3, K4, Values, C1, C2, C3, C4, C5}
 ).
 
-% 8 elements
--define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {K1, K2, K3, K4, V1, V2, V3, V4}).
--define(LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4), {K1, K2, K3, K4, V1, V2, V3, V4}).
+% 9 elements
+-define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {leaf4, K1, K2, K3, K4, V1, V2, V3, V4}).
+-define(LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4), {_, K1, K2, K3, K4, V1, V2, V3, V4}).
 
 % 5 elements
 -define(INTERNAL1(K1, V1, C1, C2), {internal1, K1, V1, C1, C2}).
 -define(INTERNAL1_MATCH(K1, V1, C1, C2), {_, K1, V1, C1, C2}).
 
 % 2 elements
--define(LEAF1(K1, V1), {K1, V1}).
--define(LEAF1_MATCH(K1, V1), {K1, V1}).
+-define(LEAF1(K1, V1), [K1 | V1]).
+-define(LEAF1_MATCH(K1, V1), [K1 | V1]).
 
 % empty root
 -define(LEAF0, leaf0).
