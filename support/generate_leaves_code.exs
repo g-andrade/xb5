@@ -18,9 +18,6 @@ defmodule Generator do
     insert_root_definitions = insert_root_definitions(max_root_keys, max_keys)
     insert_definitions = insert_definitions(max_root_keys, max_keys)
 
-    update_root_definitions = update_root_definitions(max_root_keys)
-    update_definitions = update_definitions(max_root_keys, max_keys)
-
     template = 
     """
     -module(b5_leaves).
@@ -33,9 +30,7 @@ defmodule Generator do
       get_root/2,
       get/2,
       insert_root/4,
-      insert/4,
-      update_root/4,
-      update/4
+      insert/4
     ]).
 
     %% ------------------------------------------------------------------
@@ -56,19 +51,12 @@ defmodule Generator do
 
     #{insert_definitions}
 
-    #{update_root_definitions}
-
-    #{update_definitions}
-
     %% ------------------------------------------------------------------
     %% Internal Function Definitions
     %% ------------------------------------------------------------------
 
     eval_insert_value(eager, Value) -> Value;
     eval_insert_value(lazy, Fun) -> Fun().
-
-    eval_update_value(eager, Value, _) -> Value;
-    eval_update_value(lazy, Fun, PrevValue) -> Fun(PrevValue).
     """
 
     case mode do
@@ -274,51 +262,6 @@ defmodule Generator do
       #{macro_build_name(new_size)}(#{expanded_kv_str})
       """
     end
-  end
-
-  #### Update
-
-  defp update_root_definitions(max_root_keys) do
-    [
-      Enum.map_join(1..max_root_keys//1, ";", &update_definition("update_root", &1)),
-      ";",
-      fallback_definition("update_root", "update", ["Key", "ValueEval", "ValueWrap", "Node"]),
-      "."
-    ]
-  end
-
-  defp update_definitions(max_root_keys, max_keys) do
-    [
-      Enum.map_join((max_root_keys + 1)..max_keys//1, ";", &update_definition("update", &1)),
-      "."
-    ]
-  end
-
-  defp update_definition(name, nr_of_keys) do
-    match_name = macro_match_name(nr_of_keys)
-    key_args = key_args(nr_of_keys)
-    value_args = value_args(nr_of_keys)
-    kv_args = key_args ++ value_args
-
-    indexed_key_args = Enum.with_index(key_args)
-
-    """
-    #{name}(Key, ValueEval, ValueWrap, #{match_name}(#{kv_args |> Enum.join(", ")})) ->
-      #{generate_exact_search("Key", indexed_key_args, &handle_update_definition(&1, &2, key_args, value_args))}
-    """
-  end
-
-  defp handle_update_definition(_old_k, k_index, key_args, value_args) do
-    updated_keys = List.replace_at(key_args, k_index, "Key")
-    updated_values = List.replace_at(value_args, k_index, "Value")
-    size = length(updated_keys)
-
-    updated_kv_args = Enum.join(updated_keys ++ updated_values, ", ")
-
-    """
-    Value = eval_update_value(ValueEval, ValueWrap, V1),
-    #{macro_build_name(size)}(#{updated_kv_args})
-    """
   end
 
   ## exact search
