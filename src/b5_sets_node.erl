@@ -22,68 +22,43 @@
 -module(b5_sets_node).
 
 -export([
-%    delete/2,
-%    foldl/3,
-%    foldr/3,
-%    get/2,
-%    insert/4,
-%    iterator/2,
-%    iterator_from/3,
-%    keys/1,
-%    larger/2,
-%    largest/1,
-%    map/2,
-%    new/0,
-%    next/1,
-%    smaller/2,
-%    smallest/1,
-%    take/2,
-%    take_largest/1,
-%    take_smallest/1,
-%    to_list/1,
-%    update/4,
-%    validate/2,
-%    values/1
-]).
-
--export([
-	 %  from_list/1,
-        insert/2,
-	 %  is_disjoint/2,
-	 %  take_smallest/1,
-	 %  union/1,
-         %  add/2,
-         %  balance/1,
-         %  delete/2,
-         %  delete_any/2,
-         %  difference/2,
-         %  empty/0,
-         %  filter/2,
-         %  filtermap/2,
-         %  fold/3,
-         %  from_ordset/1,
-         %  intersection/1,
-         %  intersection/2,
-         %  is_empty/1,
-         %  is_equal/2,
-         %  is_member/2,
-         %  is_set/1,
-         %  is_subset/2,
-         %  iterator/1,
-         %  iterator/2,
-         %  iterator_from/2,
-         %  iterator_from/3,
-         %  larger/2,
-         %  largest/1,
-         %  map/2,
-         %  next/1,
-         %  singleton/1,
-         %  size/1,
-         %  smaller/2,
-         %  smallest/1,
-         %  take_largest/1,
-         %  to_list/1,
-         %  union/2
+    % add/2,
+    % balance/1,
+    % delete/2,
+    % delete_any/2,
+    % difference/2,
+    % empty/0,
+    % filter/2,
+    % filtermap/2,
+    % fold/3,
+    % from_list/1,
+    % from_ordset/1,
+    insert/2,
+    % intersection/1,
+    % intersection/2,
+    % is_disjoint/2,
+    % is_empty/1,
+    % is_equal/2,
+    is_member/2,
+    % is_set/1,
+    % is_subset/2,
+    % iterator/1,
+    % iterator/2,
+    % iterator_from/2,
+    % iterator_from/3,
+    % larger/2,
+    % largest/1,
+    % map/2,
+    % next/1,
+    % singleton/1,
+    % size/1,
+    % smaller/2,
+    % smallest/1,
+    % take_largest/1,
+    % take_smallest/1,
+    % to_list/1,
+    % union/1,
+    % union/2
          new/0 % FIXME
         ]).
 
@@ -426,6 +401,15 @@ insert(Elem, Root) ->
             UpdatedRoot
     end.
 
+is_member(Elem, ?INTERNAL1_MATCH_ALL) ->
+    is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+is_member(Elem, ?LEAF1_MATCH_ALL) ->
+    is_member_LEAF1(Elem, ?LEAF1_ARGS);
+is_member(Elem, ?LEAF0_MATCH_ALL) ->
+    ?LEAF1(Elem);
+is_member(Elem, Root) ->
+    is_member_recur(Elem, Root).
+
 new() ->
     ?LEAF0.
 
@@ -438,7 +422,7 @@ error_key_exists(Elem) ->
     error({key_exists, Elem}).
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: Insert
+%% Internal Function Definitions: insert/2
 %% ------------------------------------------------------------------
 
 insert_recur(Elem, Node) ->
@@ -683,7 +667,7 @@ insert_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
     if
         Elem > E1 ->
             %
-            if 
+            if
                 Elem < E2 ->
                     insert_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS);
                 %
@@ -919,7 +903,7 @@ insert_LEAF2(Elem, ?LEAF2_ARGS) ->
     if
         Elem > E1 ->
             %
-            if 
+            if
                 Elem < E2 ->
                     insert_LEAF2_POS2(Elem, ?LEAF2_ARGS);
                 %
@@ -1002,3 +986,204 @@ split_leaf(
     SplitR = ?LEAF2(E4, E5),
 
     ?SPLIT(SplitE, SplitL, SplitR).
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: is_member/2
+%% ------------------------------------------------------------------
+
+is_member_recur(Elem, Node) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            is_member_LEAF2(Elem, ?LEAF2_ARGS);
+        %
+        ?LEAF3_MATCH_ALL ->
+            is_member_LEAF3(Elem, ?LEAF3_ARGS);
+        %
+        ?LEAF4_MATCH_ALL ->
+            is_member_LEAF4(Elem, ?LEAF4_ARGS)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, is_member_INTERNAL4/?INTERNAL4_ARITY_P1}).
+is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
+    if
+        Elem > E2 ->
+            %
+            if
+                Elem < E4 ->
+                    %
+                    if
+                        Elem > E3 ->
+                            is_member_recur(Elem, C4);
+                        %
+                        Elem < E3 ->
+                            is_member_recur(Elem, C3);
+                        %
+                        true ->
+                            true
+                    end;
+                %
+                Elem > E4 ->
+                    is_member_recur(Elem, C5);
+                %
+                true ->
+                    true
+            end;
+        %
+        Elem < E2 ->
+            %
+            if
+                Elem < E1 ->
+                    is_member_recur(Elem, C1);
+                %
+                Elem > E1 ->
+                    is_member_recur(Elem, C2);
+                %
+                true ->
+                    true
+            end;
+        %
+        true ->
+            true
+    end.
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, is_member_INTERNAL3/?INTERNAL3_ARITY_P1}).
+is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
+    if
+        Elem < E2 ->
+            %
+            if
+                Elem < E1 ->
+                    is_member_recur(Elem, C1);
+                %
+                Elem > E1 ->
+                    is_member_recur(Elem, C2);
+                %
+                true ->
+                    true
+            end;
+        %
+        Elem > E2 ->
+            %
+            if
+                Elem < E3 ->
+                    is_member_recur(Elem, C3);
+                %
+                Elem > E3 ->
+                    is_member_recur(Elem, C4);
+                %
+                true ->
+                    true
+            end;
+        %
+        true ->
+            true
+    end.
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, is_member_INTERNAL2/?INTERNAL2_ARITY_P1}).
+is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
+    if
+        Elem > E1 ->
+            %
+            if
+                Elem < E2 ->
+                    is_member_recur(Elem, C2);
+                %
+                Elem > E2 ->
+                    is_member_recur(Elem, C3);
+                %
+                true ->
+                    true
+            end;
+        %
+        Elem < E1 ->
+            is_member_recur(Elem, C1);
+        %
+        true ->
+            true
+    end.
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, is_member_INTERNAL1/?INTERNAL1_ARITY_P1}).
+is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+    if
+        Elem < E1 ->
+            is_member_recur(Elem, C1);
+        %
+        Elem > E1 ->
+            is_member_recur(Elem, C2);
+        %
+        true ->
+            true
+    end.
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, is_member_LEAF4/?LEAF4_ARITY_P1}).
+is_member_LEAF4(Elem, ?LEAF4_ARGS) ->
+    if
+        Elem > E2 ->
+            Elem == E3 orelse Elem == E4;
+        %
+        true ->
+            Elem == E2 orelse Elem == E1
+    end.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, is_member_LEAF3/?LEAF3_ARITY_P1}).
+is_member_LEAF3(Elem, ?LEAF3_ARGS) ->
+    if
+        Elem < E2 ->
+            Elem == E1;
+        %
+        Elem > E2 ->
+            Elem == E3;
+        %
+        true ->
+            true
+    end.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, is_member_LEAF2/?LEAF2_ARITY_P1}).
+is_member_LEAF2(Elem, ?LEAF2_ARGS) ->
+    Elem == E1 orelse Elem == E2.
+
+%%
+%% ?LEAF1
+%%
+
+-compile({inline, is_member_LEAF1/?LEAF1_ARITY_P1}).
+is_member_LEAF1(Elem, ?LEAF1_ARGS) ->
+    Elem == E1.
