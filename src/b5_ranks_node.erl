@@ -6871,9 +6871,6 @@ root_take_nth(N, Node) ->
         ?LEAF1(K1, V1) ->
             take_nth_leaf1(N, K1, V1);
         %
-        ?LEAF0 ->
-            error({badkey, N});
-        %
         Root ->
             take_nth_recur(N, Root)
     end.
