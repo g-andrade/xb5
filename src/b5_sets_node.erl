@@ -22,22 +22,15 @@
 -module(b5_sets_node).
 
 -export([
-    % add/2,
-    % balance/1,
     delete/2,
-    % delete_any/2,
     % difference/2,
-    % empty/0,
     % filter/2,
     % filtermap/2,
     % fold/3,
-    % from_list/1,
-    % from_ordset/1,
     insert/2,
     % intersection/1,
     % intersection/2,
     % is_disjoint/2,
-    % is_empty/1,
     % is_equal/2,
     is_member/2,
     % is_set/1,
@@ -47,13 +40,13 @@
     % iterator_from/2,
     % iterator_from/3,
     % larger/2,
-    % largest/1,
+    largest/1,
     % map/2,
     % next/1,
     % singleton/1,
     % size/1,
     % smaller/2,
-    % smallest/1,
+    smallest/1,
     take_largest/1,
     take_smallest/1,
     % to_list/1,
@@ -517,8 +510,26 @@ is_member(Elem, ?LEAF0_MATCH_ALL) ->
 is_member(Elem, Root) ->
     is_member_recur(Elem, Root).
 
+largest(?INTERNAL1_MATCH(_, _, C2)) ->
+    largest_recur(C2);
+largest(?LEAF1_MATCH(E1)) ->
+    E1;
+largest(?LEAF0_MATCH) ->
+    error_empty_set();
+largest(Root) ->
+    largest_recur(Root).
+
 new() ->
     ?LEAF0.
+
+smallest(?INTERNAL1_MATCH(_, C1, _)) ->
+    smallest_recur(C1);
+smallest(?LEAF1_MATCH(E1)) ->
+    E1;
+smallest(?LEAF0_MATCH) ->
+    error_empty_set();
+smallest(Root) ->
+    smallest_recur(Root).
 
 take_largest(?INTERNAL1_MATCH_ALL) ->
     take_largest_INTERNAL1(?INTERNAL1_ARGS);
@@ -1791,6 +1802,58 @@ is_member_LEAF2(Elem, ?LEAF2_ARGS) ->
 -compile({inline, is_member_LEAF1 / ?LEAF1_ARITY_P1}).
 is_member_LEAF1(Elem, ?LEAF1_ARGS) ->
     Elem == E1.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: largest/1
+%% ------------------------------------------------------------------
+
+largest_recur(Node) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH(_, _, _, _, C3) ->
+            largest_recur(C3);
+        %
+        ?INTERNAL3_MATCH(_, _, _, _, _, _, C4) ->
+            largest_recur(C4);
+        %
+        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, C5) ->
+            largest_recur(C5);
+        %
+        ?LEAF2_MATCH(_, E2) ->
+            E2;
+        %
+        ?LEAF3_MATCH(_, _, E3) ->
+            E3;
+        %
+        ?LEAF4_MATCH(_, _, _, E4) ->
+            E4
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: smallest/1
+%% ------------------------------------------------------------------
+
+smallest_recur(Node) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH(_, _, C1, _, _) ->
+            smallest_recur(C1);
+        %
+        ?INTERNAL3_MATCH(_, _, _, C1, _, _, _) ->
+            smallest_recur(C1);
+        %
+        ?INTERNAL4_MATCH(_, _, _, _, C1, _, _, _, _) ->
+            smallest_recur(C1);
+        %
+        ?LEAF2_MATCH(E1, _) ->
+            E1;
+        %
+        ?LEAF3_MATCH(E1, _, _) ->
+            E1;
+        %
+        ?LEAF4_MATCH(E1, _, _, _) ->
+            E1
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: take_largest/2
