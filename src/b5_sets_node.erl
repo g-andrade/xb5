@@ -31,19 +31,16 @@
     % intersection/1,
     intersection/2,
     is_disjoint/4,
-    % is_equal/2,
+    is_equal/2,
     is_member/2,
-    % is_set/1,
     is_subset/2,
     iterator/2,
     iterator_from/3,
     % larger/2,
     largest/1,
-    % map/2,
+    map/2,
     new/0,
     next/1,
-    % singleton/1,
-    % size/1,
     % smaller/2,
     smallest/1,
     take_largest/1,
@@ -542,6 +539,11 @@ is_disjoint(Root1, Size1, Root2, Size2) ->
             is_disjoint_root(Root2, Root1)
     end.
 
+is_equal(Root1, Root2) ->
+    Iter1 = fwd_iterator(Root1),
+    Iter2 = fwd_iterator(Root2),
+    is_equal_recur(Iter1, Iter2).
+
 is_member(Elem, ?INTERNAL1_MATCH_ALL) ->
     is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 is_member(Elem, ?LEAF1_MATCH_ALL) ->
@@ -572,6 +574,11 @@ largest(?LEAF0_MATCH) ->
     error_empty_set();
 largest(Root) ->
     largest_recur(Root).
+
+map(Fun, Node) ->
+    Count = 0,
+    Acc = [Count | new()],
+    map_root(Fun, Node, Acc).
 
 new() ->
     ?LEAF0.
@@ -1788,6 +1795,37 @@ is_disjoint_recur(Elem, Next, Root2, MaxElem) ->
     end.
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: is_equal/2
+%% ------------------------------------------------------------------
+
+is_equal_recur([Head1 | Tail1], Iter2) ->
+    case Head1 of
+        ?ITER_ELEM(Elem1) ->
+            Next1 = Tail1,
+            is_equal_recur(Elem1, Next1, Iter2);
+        %
+        Node1 ->
+            [?ITER_ELEM(Elem1) | Next1] = fwd_iterator_recur(Node1, Tail1),
+            is_equal_recur(Elem1, Next1, Iter2)
+    end;
+is_equal_recur([], []) ->
+    true.
+
+is_equal_recur(Elem1, Next1, [Head2 | Tail2]) ->
+    case Head2 of
+        ?ITER_ELEM(Elem2) ->
+            Next2 = Tail2,
+            is_equal_recur(Elem1, Next1, Elem2, Next2);
+        %
+        Node2 ->
+            [?ITER_ELEM(Elem2) | Next2] = fwd_iterator_recur(Node2, Tail2),
+            is_equal_recur(Elem1, Next1, Elem2, Next2)
+    end.
+
+is_equal_recur(Elem1, Next1, Elem2, Next2) ->
+    (Elem1 == Elem2) andalso is_equal_recur(Next1, Next2).
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: is_member/2
 %% ------------------------------------------------------------------
 
@@ -1989,6 +2027,7 @@ is_member_LEAF1(Elem, ?LEAF1_ARGS) ->
 %% Internal Function Definitions: is_subset/2
 %% ------------------------------------------------------------------
 
+% TODO we don't need an iterator for this
 is_subset_recur([Head | Tail], Root2) ->
     case Head of
         ?ITER_ELEM(Elem) ->
@@ -2418,6 +2457,93 @@ largest_recur(Node) ->
         %
         ?LEAF4_MATCH(_, _, _, E4) ->
             E4
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: map/2
+%% ------------------------------------------------------------------
+
+map_root(Fun, Node, Acc) ->
+    case Node of
+        ?INTERNAL1_MATCH_ALL ->
+            Acc2 = map_recur(Fun, C1, Acc),
+            Acc3 = map_elem(Fun, E1, Acc2),
+
+            _Acc4 = map_recur(Fun, C2, Acc3);
+        %
+        ?LEAF1_MATCH_ALL ->
+            _Acc2 = map_elem(Fun, E1, Acc);
+        %
+        ?LEAF0 ->
+            Acc;
+        %
+        _ ->
+            map_recur(Fun, Node, Acc)
+    end.
+
+map_recur(Fun, Node, Acc) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            Acc2 = map_elem(Fun, E1, Acc),
+            _Acc3 = map_elem(Fun, E2, Acc2);
+        %
+        ?LEAF3_MATCH_ALL ->
+            Acc2 = map_elem(Fun, E1, Acc),
+            Acc3 = map_elem(Fun, E2, Acc2),
+            _Acc4 = map_elem(Fun, E3, Acc3);
+        %
+        ?LEAF4_MATCH_ALL ->
+            Acc2 = map_elem(Fun, E1, Acc),
+            Acc3 = map_elem(Fun, E2, Acc2),
+            Acc4 = map_elem(Fun, E3, Acc3),
+            _Acc5 = map_elem(Fun, E4, Acc4);
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            Acc2 = map_recur(Fun, C1, Acc),
+            Acc3 = map_elem(Fun, E1, Acc2),
+
+            Acc4 = map_recur(Fun, C2, Acc3),
+            Acc5 = map_elem(Fun, E2, Acc4),
+
+            _Acc6 = map_recur(Fun, C3, Acc5);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Acc2 = map_recur(Fun, C1, Acc),
+            Acc3 = map_elem(Fun, E1, Acc2),
+
+            Acc4 = map_recur(Fun, C2, Acc3),
+            Acc5 = map_elem(Fun, E2, Acc4),
+
+            Acc6 = map_recur(Fun, C3, Acc5),
+            Acc7 = map_elem(Fun, E3, Acc6),
+
+            _Acc8 = map_recur(Fun, C4, Acc7);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Acc2 = map_recur(Fun, C1, Acc),
+            Acc3 = map_elem(Fun, E1, Acc2),
+
+            Acc4 = map_recur(Fun, C2, Acc3),
+            Acc5 = map_elem(Fun, E2, Acc4),
+
+            Acc6 = map_recur(Fun, C3, Acc5),
+            Acc7 = map_elem(Fun, E3, Acc6),
+
+            Acc8 = map_recur(Fun, C4, Acc7),
+            Acc9 = map_elem(Fun, E4, Acc8),
+
+            _Acc10 = map_recur(Fun, C5, Acc9)
+    end.
+
+map_elem(Fun, Elem, [Count | Root] = Acc) ->
+    Mapped = Fun(Elem),
+
+    try insert(Mapped, Root) of
+        UpdatedRoot ->
+            [Count + 1 | UpdatedRoot]
+    catch
+        error:{key_exists, K} when K =:= Mapped ->
+            Acc
     end.
 
 %% ------------------------------------------------------------------
