@@ -24,11 +24,11 @@
 -export([
     delete/2,
     difference/2,
-    % filter/2,
-    % filtermap/2,
-    % fold/3,
+    does_root_look_legit/2,
+    filter/2,
+    filtermap/2,
+    fold/3,
     insert/2,
-    % intersection/1,
     intersection/2,
     is_disjoint/4,
     is_equal/2,
@@ -45,8 +45,7 @@
     smallest/1,
     take_largest/1,
     take_smallest/1,
-    % to_list/1,
-    % union/1,
+    to_list/1,
     union/4
 ]).
 
@@ -494,11 +493,63 @@ difference(Root1, Root2) ->
         MinElem ->
             MaxElem = largest(Root1),
             Iter = iterator_from(MinElem, Root2, ordered),
-            difference_recur(Iter, Root1, RemovedCount, MaxElem)
+            difference_recur(Iter, MaxElem, RemovedCount, Root1)
     catch
         error:empty_set ->
             [RemovedCount | Root1]
     end.
+
+does_root_look_legit(Root, 0) ->
+    Root =:= ?LEAF0;
+does_root_look_legit(Root, Size) when is_integer(Size) ->
+    case Root of
+        ?INTERNAL4(_, _, _, _, _, _, _, _, _) ->
+            Size >= 14;
+        %
+        ?INTERNAL3(_, _, _, _, _, _, _) ->
+            Size >= 11;
+        %
+        ?INTERNAL2(_, _, _, _, _) ->
+            Size >= 8;
+        %
+        ?INTERNAL1(_, _, _) ->
+            Size >= 5;
+        %
+        ?LEAF4(_, _, _, _) ->
+            Size =:= 4;
+        %
+        ?LEAF3(_, _, _) ->
+            Size =:= 3;
+        %
+        ?LEAF2(_, _) ->
+            Size =:= 2;
+        %
+        ?LEAF1(_) ->
+            Size =:= 1
+    end;
+does_root_look_legit(_, _) ->
+    false.
+
+filter(Fun, Root) ->
+    Count = 0,
+    Filtered = new(),
+    filter_root(Fun, Root, Count, Filtered).
+
+filtermap(Fun, Root) ->
+    Count = 0,
+    Filtered = new(),
+    filtermap_root(Fun, Root, Count, Filtered).
+
+fold(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
+    Acc2 = fold_recur(Fun, Acc, C1),
+    Acc3 = Fun(E1, Acc2),
+    fold_recur(Fun, Acc3, C2);
+fold(Fun, Acc, ?LEAF1_MATCH_ALL) ->
+    Fun(E1, Acc);
+fold(_Fun, Acc, ?LEAF0_MATCH_ALL) ->
+    Acc;
+fold(Fun, Acc, Root) ->
+    fold_recur(Fun, Acc, Root).
 
 insert(Elem, ?INTERNAL1_MATCH_ALL) ->
     insert_INTERNAL1(Elem, ?INTERNAL1_ARGS);
@@ -614,6 +665,17 @@ take_smallest(?LEAF0_MATCH_ALL) ->
     error_empty_set();
 take_smallest(Root) ->
     take_smallest_recur(Root).
+
+to_list(?INTERNAL1_MATCH_ALL) ->
+    Acc2 = to_list_recur(C2, []),
+    Acc3 = [E1 | Acc2],
+    to_list_recur(C1, Acc3);
+to_list(?LEAF1_MATCH_ALL) ->
+    [E1];
+to_list(?LEAF0_MATCH_ALL) ->
+    [];
+to_list(Root) ->
+    to_list_recur(Root, []).
 
 union(Root1, Size1, Root2, Size2) ->
     case Size1 > Size2 of
@@ -1019,35 +1081,428 @@ delete_LEAF1(Elem, ?LEAF1_ARGS) ->
 %% Internal Function Definitions: difference/2
 %% ------------------------------------------------------------------
 
-difference_recur([Head | Tail], Root, RemovedCount, MaxElem) ->
-    case Head of
-        ?ITER_ELEM(Elem) ->
-            Next = Tail,
-            difference_recur(Elem, Next, Root, RemovedCount, MaxElem);
-        %
-        Node ->
-            [?ITER_ELEM(Elem) | Next] = fwd_iterator_recur(Node, Tail),
-            difference_recur(Elem, Next, Root, RemovedCount, MaxElem)
-    end;
-difference_recur([], Root, RemovedCount, _MaxElem) ->
-    [RemovedCount | Root].
+difference_recur([Head | Next], MaxElem, Count, Root) ->
+    difference_recur(Head, Next, MaxElem, Count, Root);
+difference_recur([], _MaxElem, Count, Root) ->
+    [Count | Root].
 
-difference_recur(Elem, Next, Root, RemovedCount, MaxElem) ->
+-compile({inline, difference_recur/5}).
+difference_recur(?ITER_ELEM(Elem), Next, MaxElem, Count, Root) ->
+    %
+    % ITER_ELEM was accumulated when building the iterator. It will almost
+    % always come from internal nodes (25% of total), which makes it a good
+    % periodic check for MaxElem (without doing it for every element).
+    %
     try delete(Elem, Root) of
         UpdatedRoot ->
-            UpdatedCount = RemovedCount + 1,
-            difference_recur(Next, UpdatedRoot, UpdatedCount, MaxElem)
+            difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
     catch
         error:{badkey, K} when K =:= Elem ->
             %
             case Elem =< MaxElem of
                 true ->
-                    difference_recur(Next, Root, RemovedCount, MaxElem);
-                %
+                    difference_recur(Next, MaxElem, Count, Root);
                 _ ->
-                    % No more elements can be removed, no point in continuing
-                    [RemovedCount | Root]
+                    % No more elements can be removed
+                    [Count | Root]
             end
+    end;
+difference_recur(Node, Next, MaxElem, Count, Root) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            difference_batch2(E1, E2, Next, MaxElem, Count, Root);
+        %
+        ?LEAF3_MATCH_ALL ->
+            difference_batch3(E1, E2, E3, Next, MaxElem, Count, Root);
+        %
+        ?LEAF4_MATCH_ALL ->
+            difference_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root);
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
+            [Count3 | Root3] = difference_recur(C2, [], MaxElem, Count2, Root2),
+            [Count4 | Root4] = difference_recur(C3, [], MaxElem, Count3, Root3),
+
+            difference_batch2(E1, E2, Next, MaxElem, Count4, Root4);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
+            [Count3 | Root3] = difference_recur(C2, [], MaxElem, Count2, Root2),
+            [Count4 | Root4] = difference_recur(C3, [], MaxElem, Count3, Root3),
+            [Count5 | Root5] = difference_recur(C4, [], MaxElem, Count4, Root4),
+
+            difference_batch3(E1, E2, E3, Next, MaxElem, Count5, Root5);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
+            [Count3 | Root3] = difference_recur(C2, [], MaxElem, Count2, Root2),
+            [Count4 | Root4] = difference_recur(C3, [], MaxElem, Count3, Root3),
+            [Count5 | Root5] = difference_recur(C4, [], MaxElem, Count4, Root4),
+            [Count6 | Root6] = difference_recur(C5, [], MaxElem, Count5, Root5),
+
+            difference_batch4(E1, E2, E3, E4, Next, MaxElem, Count6, Root6)
+    end.
+
+%% INTERNAL4 and LEAF4
+
+-compile({inline, difference_batch4/8}).
+difference_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root) ->
+    % INTERNAL4 + LEAF4 nodes make up about 20% of internal nodes. When we run
+    % into either, it means a node not previously encountered when building the
+    % `iterator_from'.
+    %
+    % Therefore, they're a good period check for MaxElem.
+
+    try delete(E1, Root) of
+        UpdatedRoot ->
+            difference_batch3(E2, E3, E4, Next, MaxElem, Count + 1, UpdatedRoot)
+    catch
+        error:{badkey, K} when K =:= E1 ->
+            case E1 =< MaxElem of
+                true ->
+                    difference_batch3(E2, E3, E4, Next, MaxElem, Count, Root);
+                _ ->
+                    % No point in continuing, no more elements can be removed
+                    [Count | Root]
+            end
+    end.
+
+%% INTERNAL3 and LEAF3
+
+-compile({inline, difference_batch3/7}).
+difference_batch3(E1, E2, E3, Next, MaxElem, Count, Root) ->
+    try delete(E1, Root) of
+        UpdatedRoot ->
+            difference_batch2(E2, E3, Next, MaxElem, Count + 1, UpdatedRoot)
+    catch
+        error:{badkey, K} when K =:= E1 ->
+            difference_batch2(E2, E3, Next, MaxElem, Count, Root)
+    end.
+
+%% INTERNAL2 and LEAF2
+
+-compile({inline, difference_batch2/6}).
+difference_batch2(E1, E2, Next, MaxElem, Count, Root) ->
+    try delete(E1, Root) of
+        UpdatedRoot ->
+            difference_batch2_E2(E2, Next, MaxElem, Count + 1, UpdatedRoot)
+    catch
+        error:{badkey, K} when K =:= E1 ->
+            difference_batch2_E2(E2, Next, MaxElem, Count, Root)
+    end.
+
+-compile({inline, difference_batch2_E2/5}).
+difference_batch2_E2(E2, Next, MaxElem, Count, Root) ->
+    try delete(E2, Root) of
+        UpdatedRoot ->
+            difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
+    catch
+        error:{badkey, K} when K =:= E2 ->
+            difference_recur(Next, MaxElem, Count, Root)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: filter/2
+%% ------------------------------------------------------------------
+
+filter_root(Fun, Root, Count, Filtered) ->
+    case Root of
+        ?INTERNAL1_MATCH_ALL ->
+            [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
+            [Count3 | Filtered3] = filter_single_element(Fun, E1, Count2, Filtered2),
+            filter_recur(Fun, C2, Count3, Filtered3);
+        %
+        ?LEAF1_MATCH_ALL ->
+            filter_single_element(Fun, E1, Count, Filtered);
+        %
+        ?LEAF0 ->
+            [Count | Filtered];
+        %
+        _ ->
+            filter_recur(Fun, Root, Count, Filtered)
+    end.
+
+filter_recur(Fun, Node, Count, Filtered) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            filter_batch2(Fun, E1, E2, Count, Filtered);
+        %
+        ?LEAF3_MATCH_ALL ->
+            filter_batch3(Fun, E1, E2, E3, Count, Filtered);
+        %
+        ?LEAF4_MATCH_ALL ->
+            filter_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
+            [Count3 | Filtered3] = filter_recur(Fun, C2, Count2, Filtered2),
+            [Count4 | Filtered4] = filter_recur(Fun, C3, Count3, Filtered3),
+
+            filter_batch2(Fun, E1, E2, Count4, Filtered4);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
+            [Count3 | Filtered3] = filter_recur(Fun, C2, Count2, Filtered2),
+            [Count4 | Filtered4] = filter_recur(Fun, C3, Count3, Filtered3),
+            [Count5 | Filtered5] = filter_recur(Fun, C4, Count4, Filtered4),
+
+            filter_batch3(Fun, E1, E2, E3, Count5, Filtered5);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
+            [Count3 | Filtered3] = filter_recur(Fun, C2, Count2, Filtered2),
+            [Count4 | Filtered4] = filter_recur(Fun, C3, Count3, Filtered3),
+            [Count5 | Filtered5] = filter_recur(Fun, C4, Count4, Filtered4),
+            [Count6 | Filtered6] = filter_recur(Fun, C5, Count5, Filtered5),
+
+            filter_batch4(Fun, E1, E2, E3, E4, Count6, Filtered6)
+    end.
+
+%% INTERNAL4 and LEAF4
+
+-compile({inline, filter_batch4/7}).
+filter_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
+    case Fun(E1) of
+        true ->
+            filter_batch3(Fun, E2, E3, E4, Count + 1, insert(E1, Filtered));
+        %
+        false ->
+            filter_batch3(Fun, E2, E3, E4, Count, Filtered)
+    end.
+
+%% INTERNAL3 and LEAF3
+
+-compile({inline, filter_batch3/6}).
+filter_batch3(Fun, E1, E2, E3, Count, Filtered) ->
+    case Fun(E1) of
+        true ->
+            filter_batch2(Fun, E2, E3, Count + 1, insert(E1, Filtered));
+        %
+        false ->
+            filter_batch2(Fun, E2, E3, Count, Filtered)
+    end.
+
+%% INTERNAL2 and LEAF2
+
+-compile({inline, filter_batch2/5}).
+filter_batch2(Fun, E1, E2, Count, Filtered) ->
+    case Fun(E1) of
+        true ->
+            filter_single_element(Fun, E2, Count + 1, insert(E1, Filtered));
+        %
+        false ->
+            filter_single_element(Fun, E2, Count, Filtered)
+    end.
+
+%% INTERNAL1 and LEAF1
+
+-compile({inline, filter_single_element/4}).
+filter_single_element(Fun, E1, Count, Filtered) ->
+    case Fun(E1) of
+        true ->
+            [Count + 1 | insert(E1, Filtered)];
+        %
+        false ->
+            [Count | Filtered]
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: filtermap/2
+%% ------------------------------------------------------------------
+
+filtermap_root(Fun, Root, Count, Filtered) ->
+    case Root of
+        ?INTERNAL1_MATCH_ALL ->
+            [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
+            [Count3 | Filtered3] = filtermap_single_element(Fun, E1, Count2, Filtered2),
+            filtermap_recur(Fun, C2, Count3, Filtered3);
+        %
+        ?LEAF1_MATCH_ALL ->
+            filtermap_single_element(Fun, E1, Count, Filtered);
+        %
+        ?LEAF0 ->
+            [Count | Filtered];
+        %
+        _ ->
+            filtermap_recur(Fun, Root, Count, Filtered)
+    end.
+
+filtermap_recur(Fun, Node, Count, Filtered) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            filtermap_batch2(Fun, E1, E2, Count, Filtered);
+        %
+        ?LEAF3_MATCH_ALL ->
+            filtermap_batch3(Fun, E1, E2, E3, Count, Filtered);
+        %
+        ?LEAF4_MATCH_ALL ->
+            filtermap_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
+            [Count3 | Filtered3] = filtermap_recur(Fun, C2, Count2, Filtered2),
+            [Count4 | Filtered4] = filtermap_recur(Fun, C3, Count3, Filtered3),
+
+            filtermap_batch2(Fun, E1, E2, Count4, Filtered4);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
+            [Count3 | Filtered3] = filtermap_recur(Fun, C2, Count2, Filtered2),
+            [Count4 | Filtered4] = filtermap_recur(Fun, C3, Count3, Filtered3),
+            [Count5 | Filtered5] = filtermap_recur(Fun, C4, Count4, Filtered4),
+
+            filtermap_batch3(Fun, E1, E2, E3, Count5, Filtered5);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
+            [Count3 | Filtered3] = filtermap_recur(Fun, C2, Count2, Filtered2),
+            [Count4 | Filtered4] = filtermap_recur(Fun, C3, Count3, Filtered3),
+            [Count5 | Filtered5] = filtermap_recur(Fun, C4, Count4, Filtered4),
+            [Count6 | Filtered6] = filtermap_recur(Fun, C5, Count5, Filtered5),
+
+            filtermap_batch4(Fun, E1, E2, E3, E4, Count6, Filtered6)
+    end.
+
+%% INTERNAL4 and LEAF4
+
+-compile({inline, filtermap_batch4/7}).
+filtermap_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
+    case Fun(E1) of
+        {true, MappedE1} ->
+            try insert(MappedE1, Filtered) of
+                UpFiltered ->
+                    filtermap_batch3(Fun, E2, E3, E4, Count + 1, UpFiltered)
+            catch
+                error:{key_exists, K} when K =:= MappedE1 ->
+                    filtermap_batch3(Fun, E2, E3, E4, Count, Filtered)
+            end;
+        %
+        true ->
+            try insert(E1, Filtered) of
+                UpFiltered ->
+                    filtermap_batch3(Fun, E2, E3, E4, Count + 1, UpFiltered)
+            catch
+                error:{key_exists, K} when K =:= E1 ->
+                    filtermap_batch3(Fun, E2, E3, E4, Count, Filtered)
+            end;
+        %
+        false ->
+            filtermap_batch3(Fun, E2, E3, E4, Count, Filtered)
+    end.
+
+%% INTERNAL3 and LEAF3
+
+-compile({inline, filtermap_batch3/6}).
+filtermap_batch3(Fun, E1, E2, E3, Count, Filtered) ->
+    case Fun(E1) of
+        {true, MappedE1} ->
+            try insert(MappedE1, Filtered) of
+                UpFiltered ->
+                    filtermap_batch2(Fun, E2, E3, Count + 1, UpFiltered)
+            catch
+                error:{key_exists, K} when K =:= MappedE1 ->
+                    filtermap_batch2(Fun, E2, E3, Count, Filtered)
+            end;
+        %
+        true ->
+            try insert(E1, Filtered) of
+                UpFiltered ->
+                    filtermap_batch2(Fun, E2, E3, Count + 1, UpFiltered)
+            catch
+                error:{key_exists, K} when K =:= E1 ->
+                    filtermap_batch2(Fun, E2, E3, Count, Filtered)
+            end;
+        %
+        false ->
+            filtermap_batch2(Fun, E2, E3, Count, Filtered)
+    end.
+
+%% INTERNAL2 and LEAF2
+
+-compile({inline, filtermap_batch2/5}).
+filtermap_batch2(Fun, E1, E2, Count, Filtered) ->
+    case Fun(E1) of
+        {true, MappedE1} ->
+            try insert(MappedE1, Filtered) of
+                UpFiltered ->
+                    filtermap_single_element(Fun, E2, Count + 1, UpFiltered)
+            catch
+                error:{key_exists, K} when K =:= MappedE1 ->
+                    filtermap_single_element(Fun, E2, Count, Filtered)
+            end;
+        %
+        true ->
+            try insert(E1, Filtered) of
+                UpFiltered ->
+                    filtermap_single_element(Fun, E2, Count + 1, UpFiltered)
+            catch
+                error:{key_exists, K} when K =:= E1 ->
+                    filtermap_single_element(Fun, E2, Count, Filtered)
+            end;
+        %
+        false ->
+            filtermap_single_element(Fun, E2, Count, Filtered)
+    end.
+
+%% INTERNAL1 and LEAF1
+
+-compile({inline, filtermap_single_element/4}).
+filtermap_single_element(Fun, E1, Count, Filtered) ->
+    case Fun(E1) of
+        {true, MappedE1} ->
+            try insert(MappedE1, Filtered) of
+                UpFiltered ->
+                    [Count + 1 | UpFiltered]
+            catch
+                error:{key_exists, K} when K =:= MappedE1 ->
+                    [Count | Filtered]
+            end;
+        %
+        true ->
+            try insert(E1, Filtered) of
+                UpFiltered ->
+                    [Count + 1 | UpFiltered]
+            catch
+                error:{key_exists, K} when K =:= E1 ->
+                    [Count | Filtered]
+            end;
+        %
+        false ->
+            [Count | Filtered]
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: fold/3
+%% ------------------------------------------------------------------
+
+fold_recur(Fun, Acc, Node) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            Fun(E2, Fun(E1, Acc));
+        %
+        ?LEAF3_MATCH_ALL ->
+            Fun(E3, Fun(E2, Fun(E1, Acc)));
+        %
+        ?LEAF4_MATCH_ALL ->
+            Fun(E4, Fun(E3, Fun(E2, Fun(E1, Acc))));
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            Acc2 = fold_recur(Fun, Acc, C1),
+            Acc3 = fold_recur(Fun, Fun(E1, Acc2), C2),
+            _Acc4 = fold_recur(Fun, Fun(E2, Acc3), C3);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Acc2 = fold_recur(Fun, Acc, C1),
+            Acc3 = fold_recur(Fun, Fun(E1, Acc2), C2),
+            Acc4 = fold_recur(Fun, Fun(E2, Acc3), C3),
+            _Acc5 = fold_recur(Fun, Fun(E3, Acc4), C4);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Acc2 = fold_recur(Fun, Acc, C1),
+            Acc3 = fold_recur(Fun, Fun(E1, Acc2), C2),
+            Acc4 = fold_recur(Fun, Fun(E2, Acc3), C3),
+            Acc5 = fold_recur(Fun, Fun(E3, Acc4), C4),
+            _Acc6 = fold_recur(Fun, Fun(E4, Acc5), C5)
     end.
 
 %% ------------------------------------------------------------------
@@ -1056,7 +1511,6 @@ difference_recur(Elem, Next, Root, RemovedCount, MaxElem) ->
 
 insert_recur(Elem, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             insert_INTERNAL2(Elem, ?INTERNAL2_ARGS);
         %
@@ -1996,16 +2450,9 @@ is_member_LEAF4(Elem, ?LEAF4_ARGS) ->
 
 -compile({inline, is_member_LEAF3 / ?LEAF3_ARITY_P1}).
 is_member_LEAF3(Elem, ?LEAF3_ARGS) ->
-    if
-        Elem < E2 ->
-            Elem == E1;
-        %
-        Elem > E2 ->
-            Elem == E3;
-        %
-        true ->
-            true
-    end.
+    (Elem == E1 orelse
+        Elem == E2 orelse
+        Elem == E3).
 
 %%
 %% ?LEAF2
@@ -2796,142 +3243,142 @@ take_smallest_LEAF1(?LEAF1_ARGS) ->
     ?TAKEN(E1, ?LEAF0).
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: to_list/1
+%% ------------------------------------------------------------------
+
+to_list_recur(Node, Acc) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            [E1, E2 | Acc];
+        %
+        ?LEAF3_MATCH_ALL ->
+            [E1, E2, E3 | Acc];
+        %
+        ?LEAF4_MATCH_ALL ->
+            [E1, E2, E3, E4 | Acc];
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            Acc2 = to_list_recur(C3, Acc),
+            Acc3 = to_list_recur(C2, [E2 | Acc2]),
+            _Acc4 = to_list_recur(C1, [E1 | Acc3]);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Acc2 = to_list_recur(C4, Acc),
+            Acc3 = to_list_recur(C3, [E3 | Acc2]),
+            Acc4 = to_list_recur(C2, [E2 | Acc3]),
+            _Acc5 = to_list_recur(C1, [E1 | Acc4]);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Acc2 = to_list_recur(C5, Acc),
+            Acc3 = to_list_recur(C4, [E4 | Acc2]),
+            Acc4 = to_list_recur(C3, [E3 | Acc3]),
+            Acc5 = to_list_recur(C2, [E2 | Acc4]),
+            _Acc6 = to_list_recur(C1, [E1 | Acc5])
+    end.
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: union/2
 %% ------------------------------------------------------------------
 
-union_root(Root1, Size1, Root2) ->
-    Acc = [Size1 | Root1],
-    Target = Root2,
-
+union_root(Root, Size, Target) ->
     case Target of
         ?INTERNAL1_MATCH_ALL ->
-            union_INTERNAL1(?INTERNAL1_ARGS, Acc);
+            [Size2 | Root2] = union_recur(C1, Size, Root),
+            [Size3 | Root3] = union_recur(C2, Size2, Root2),
+            union_single_element(E1, Size3, Root3);
         %
         ?LEAF1_MATCH_ALL ->
-            union_LEAF1(?LEAF1_ARGS, Acc);
+            union_single_element(E1, Size, Root);
         %
         ?LEAF0 ->
-            Acc;
+            [Size | Root];
         %
         _ ->
-            union_recur(Target, Acc)
+            union_recur(Target, Size, Root)
     end.
 
-union_recur(Node, Acc) ->
+union_recur(Node, Size, Root) ->
     case Node of
         ?LEAF2_MATCH_ALL ->
-            union_LEAF2(?LEAF2_ARGS, Acc);
+            union_batch2(E1, E2, Size, Root);
         %
         ?LEAF3_MATCH_ALL ->
-            union_LEAF3(?LEAF3_ARGS, Acc);
+            union_batch3(E1, E2, E3, Size, Root);
         %
         ?LEAF4_MATCH_ALL ->
-            union_LEAF4(?LEAF4_ARGS, Acc);
+            union_batch4(E1, E2, E3, E4, Size, Root);
         %
         ?INTERNAL2_MATCH_ALL ->
-            union_INTERNAL2(?INTERNAL2_ARGS, Acc);
+            [Size2 | Root2] = union_recur(C1, Size, Root),
+            [Size3 | Root3] = union_recur(C2, Size2, Root2),
+            [Size4 | Root4] = union_recur(C3, Size3, Root3),
+
+            union_batch2(E1, E2, Size4, Root4);
         %
         ?INTERNAL3_MATCH_ALL ->
-            union_INTERNAL3(?INTERNAL3_ARGS, Acc);
+            [Size2 | Root2] = union_recur(C1, Size, Root),
+            [Size3 | Root3] = union_recur(C2, Size2, Root2),
+            [Size4 | Root4] = union_recur(C3, Size3, Root3),
+            [Size5 | Root5] = union_recur(C4, Size4, Root4),
+
+            union_batch3(E1, E2, E3, Size5, Root5);
         %
         ?INTERNAL4_MATCH_ALL ->
-            union_INTERNAL4(?INTERNAL4_ARGS, Acc)
+            [Size2 | Root2] = union_recur(C1, Size, Root),
+            [Size3 | Root3] = union_recur(C2, Size2, Root2),
+            [Size4 | Root4] = union_recur(C3, Size3, Root3),
+            [Size5 | Root5] = union_recur(C4, Size4, Root4),
+            [Size6 | Root6] = union_recur(C5, Size5, Root5),
+
+            union_batch4(E1, E2, E3, E4, Size6, Root6)
     end.
 
-%% INTERNAL4
+%% INTERNAL4 and LEAF4
 
--compile({inline, union_INTERNAL4 / ?INTERNAL4_ARITY_P1}).
-union_INTERNAL4(?INTERNAL4_ARGS, Acc) ->
-    Acc2 = union_recur(C1, Acc),
-    Acc3 = union_elem(E1, Acc2),
-
-    Acc4 = union_recur(C2, Acc3),
-    Acc5 = union_elem(E2, Acc4),
-
-    Acc6 = union_recur(C3, Acc5),
-    Acc7 = union_elem(E3, Acc6),
-
-    Acc8 = union_recur(C4, Acc7),
-    Acc9 = union_elem(E4, Acc8),
-
-    union_recur(C5, Acc9).
-
-%% INTERNAL3
-
--compile({inline, union_INTERNAL3 / ?INTERNAL3_ARITY_P1}).
-union_INTERNAL3(?INTERNAL3_ARGS, Acc) ->
-    Acc2 = union_recur(C1, Acc),
-    Acc3 = union_elem(E1, Acc2),
-
-    Acc4 = union_recur(C2, Acc3),
-    Acc5 = union_elem(E2, Acc4),
-
-    Acc6 = union_recur(C3, Acc5),
-    Acc7 = union_elem(E3, Acc6),
-
-    union_recur(C4, Acc7).
-
-%% INTERNAL2
-
--compile({inline, union_INTERNAL2 / ?INTERNAL2_ARITY_P1}).
-union_INTERNAL2(?INTERNAL2_ARGS, Acc) ->
-    Acc2 = union_recur(C1, Acc),
-    Acc3 = union_elem(E1, Acc2),
-
-    Acc4 = union_recur(C2, Acc3),
-    Acc5 = union_elem(E2, Acc4),
-
-    union_recur(C3, Acc5).
-
-%% INTERNAL1
-
--compile({inline, union_INTERNAL1 / ?INTERNAL1_ARITY_P1}).
-union_INTERNAL1(?INTERNAL1_ARGS, Acc) ->
-    Acc2 = union_recur(C1, Acc),
-    Acc3 = union_elem(E1, Acc2),
-
-    union_recur(C2, Acc3).
-
-%% LEAF4
-
--compile({inline, union_LEAF4 / ?LEAF4_ARITY_P1}).
-union_LEAF4(?LEAF4_ARGS, Acc) ->
-    Acc2 = union_elem(E1, Acc),
-    Acc3 = union_elem(E2, Acc2),
-    Acc4 = union_elem(E3, Acc3),
-    union_elem(E4, Acc4).
-
-%% LEAF3
-
--compile({inline, union_LEAF3 / ?LEAF3_ARITY_P1}).
-union_LEAF3(?LEAF3_ARGS, Acc) ->
-    Acc2 = union_elem(E1, Acc),
-    Acc3 = union_elem(E2, Acc2),
-    union_elem(E3, Acc3).
-
-%% LEAF2
-
--compile({inline, union_LEAF2 / ?LEAF2_ARITY_P1}).
-union_LEAF2(?LEAF2_ARGS, Acc) ->
-    Acc2 = union_elem(E1, Acc),
-    union_elem(E2, Acc2).
-
-%% LEAF1
-
--compile({inline, union_LEAF1 / ?LEAF1_ARITY_P1}).
-union_LEAF1(?LEAF1_ARGS, Acc) ->
-    union_elem(E1, Acc).
-
-%% Individual elements
-
--compile({inline, union_elem/2}).
-union_elem(Elem, [Count | Root] = Acc) ->
-    try insert(Elem, Root) of
+-compile({inline, union_batch4/6}).
+union_batch4(E1, E2, E3, E4, Size, Root) ->
+    try insert(E1, Root) of
         UpdatedRoot ->
-            [Count + 1 | UpdatedRoot]
+            union_batch3(E2, E3, E4, Size + 1, UpdatedRoot)
     catch
-        error:{key_exists, K} when K =:= Elem ->
-            Acc
+        error:{key_exists, K} when K =:= E1 ->
+            union_batch3(E2, E3, E4, Size, Root)
+    end.
+
+%% INTERNAL3 and LEAF3
+
+-compile({inline, union_batch3/5}).
+union_batch3(E1, E2, E3, Size, Root) ->
+    try insert(E1, Root) of
+        UpdatedRoot ->
+            union_batch2(E2, E3, Size + 1, UpdatedRoot)
+    catch
+        error:{key_exists, K} when K =:= E1 ->
+            union_batch2(E2, E3, Size, Root)
+    end.
+
+%% INTERNAL2 and LEAF2
+
+-compile({inline, union_batch2/4}).
+union_batch2(E1, E2, Size, Root) ->
+    try insert(E1, Root) of
+        UpdatedRoot ->
+            union_single_element(E2, Size + 1, UpdatedRoot)
+    catch
+        error:{key_exists, K} when K =:= E1 ->
+            union_single_element(E2, Size, Root)
+    end.
+
+%% INTERNAL2 and LEAF2
+
+-compile({inline, union_single_element/3}).
+union_single_element(E1, Size, Root) ->
+    try insert(E1, Root) of
+        UpdatedRoot ->
+            [Size + 1 | UpdatedRoot]
+    catch
+        error:{key_exists, K} when K =:= E1 ->
+            [Size | Root]
     end.
 
 %% ------------------------------------------------------------------
