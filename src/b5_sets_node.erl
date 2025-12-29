@@ -525,7 +525,10 @@ does_root_look_legit(Root, Size) when is_integer(Size) ->
             Size =:= 2;
         %
         ?LEAF1(_) ->
-            Size =:= 1
+            Size =:= 1;
+        %
+        _ ->
+            false
     end;
 does_root_look_legit(_, _) ->
     false.
@@ -2178,6 +2181,7 @@ intersection_recur([HeadA | TailA], IterB, Root, Count) ->
 intersection_recur([], _IterB, Root, Count) ->
     [Count | Root].
 
+-compile({intersection_iterA/5}).
 intersection_iterA(HeadA, TailA, IterB, Root, Count) ->
     case HeadA of
         ?ITER_ELEM(ElemA) ->
@@ -2206,6 +2210,7 @@ intersection_iterB(ElemA, NextA, [HeadB | TailB], Root, Count) ->
 intersection_iterB(_ElemA, _NextA, [], Root, Count) ->
     [Count | Root].
 
+-compile({intersection_iterB/6}).
 intersection_iterB(ElemA, NextA, HeadB, TailB, Root, Count) ->
     case HeadB of
         ?ITER_ELEM(ElemB) ->
@@ -2229,6 +2234,7 @@ intersection_iterB(ElemA, NextA, HeadB, TailB, Root, Count) ->
             intersection_iterB(ElemA, NextA, NewHeadB, NewTailB, Root, Count)
     end.
 
+-compile({intersection_intersect/6}).
 intersection_intersect(ElemA, NextA, ElemB, NextB, Root, Count) ->
     if
         ElemA < ElemB ->
@@ -2251,37 +2257,38 @@ is_disjoint_root(Root1, Root2) ->
     MinElem = smallest(Root2),
     MaxElem = largest(Root2),
     Iter = bound_fwd_iterator(MinElem, Root1),
-    is_disjoint_iter(Iter, Root2, MaxElem).
+    is_disjoint_recur(Iter, Root2, MaxElem).
 
-is_disjoint_iter([Head | Tail], Root2, MaxElem) ->
+is_disjoint_recur([Head | Tail], Root2, MaxElem) ->
     is_disjoint_iter(Head, Tail, Root2, MaxElem);
-is_disjoint_iter([], _Root2, _MaxElem) ->
+is_disjoint_recur([], _Root2, _MaxElem) ->
     true.
 
+-compile({inline, is_disjoint_iter/4}).
 is_disjoint_iter(Head, Tail, Root2, MaxElem) ->
     case Head of
         ?ITER_ELEM(Elem) ->
             Next = Tail,
-            is_disjoint_recur(Elem, Next, Root2, MaxElem);
+            is_disjoint_check(Elem, Next, Root2, MaxElem);
         %
         ?LEAF2(Elem, E2) ->
             Next = [?ITER_ELEM(E2) | Tail],
-            is_disjoint_recur(Elem, Next, Root2, MaxElem);
+            is_disjoint_check(Elem, Next, Root2, MaxElem);
         %
         ?LEAF3(Elem, E2, E3) ->
             Next = [?ITER_ELEM(E2), ?ITER_ELEM(E3) | Tail],
-            is_disjoint_recur(Elem, Next, Root2, MaxElem);
+            is_disjoint_check(Elem, Next, Root2, MaxElem);
         %
         ?LEAF4(Elem, E2, E3, E4) ->
             Next = [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Tail],
-            is_disjoint_recur(Elem, Next, Root2, MaxElem);
+            is_disjoint_check(Elem, Next, Root2, MaxElem);
         %
         Node ->
             [NewHead | NewTail] = fwd_iterator_recur(Node, Tail),
-            is_disj
-            is_disjoint_recur(Elem, Next, Root2, MaxElem)
-    end;
-is_disjoint_recur(Elem, Next, Root2, MaxElem) ->
+            is_disjoint_iter(NewHead, NewTail, Root2, MaxElem)
+    end.
+
+is_disjoint_check(Elem, Next, Root2, MaxElem) ->
     case is_member(Elem, Root2) of
         true ->
             false;
@@ -2298,54 +2305,63 @@ is_disjoint_recur(Elem, Next, Root2, MaxElem) ->
 %% ------------------------------------------------------------------
 
 is_equal_recur([HeadA | TailA], IterB) ->
-    case HeadA of
-        ?ITER_ELEM(ElemA) ->
-            NextA = TailA,
-            is_equal_recur(ElemA, NextA, IterB);
-        %
-        ?LEAF2(ElemA, E2) ->
-            NextA = [?ITER_ELEM(E2) | TailA],
-            is_equal_recur(ElemA, NextA, IterB);
-        %
-        ?LEAF3(ElemA, E2, E3) ->
-            NextA = [?ITER_ELEM(E2), ?ITER_ELEM(E3) | TailA],
-            is_equal_recur(ElemA, NextA, IterB);
-        %
-        ?LEAF4(ElemA, E2, E3, E4) ->
-            NextA = [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | TailA],
-            is_equal_recur(ElemA, NextA, IterB);
-        %
-        NodeA ->
-            [?ITER_ELEM(ElemA) | NextA] = fwd_iterator_recur(NodeA, TailA),
-            is_equal_recur(ElemA, NextA, IterB)
-    end;
+    is_equal_iterA(HeadA, TailA, IterB);
 is_equal_recur([], []) ->
     true.
 
-is_equal_recur(ElemA, NextA, [HeadB | TailB]) ->
+-compile({is_equal_iterA/3}).
+is_equal_iterA(HeadA, TailA, IterB) ->
+    case HeadA of
+        ?ITER_ELEM(ElemA) ->
+            NextA = TailA,
+            is_equal_iterB(ElemA, NextA, IterB);
+        %
+        ?LEAF2(ElemA, E2) ->
+            NextA = [?ITER_ELEM(E2) | TailA],
+            is_equal_iterB(ElemA, NextA, IterB);
+        %
+        ?LEAF3(ElemA, E2, E3) ->
+            NextA = [?ITER_ELEM(E2), ?ITER_ELEM(E3) | TailA],
+            is_equal_iterB(ElemA, NextA, IterB);
+        %
+        ?LEAF4(ElemA, E2, E3, E4) ->
+            NextA = [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | TailA],
+            is_equal_iterB(ElemA, NextA, IterB);
+        %
+        NodeA ->
+            [NewHeadA | NewTailA] = fwd_iterator_recur(NodeA, TailA),
+            is_equal_iterA(NewHeadA, NewTailA, IterB)
+    end.
+
+is_equal_iterB(ElemA, NextA, [HeadB | TailB]) ->
+    is_equal_iterB(ElemA, NextA, HeadB, TailB).
+
+-compile({is_equal_iterB/4}).
+is_equal_iterB(ElemA, NextA, HeadB, TailB) ->
     case HeadB of
         ?ITER_ELEM(ElemB) ->
             NextB = TailB,
-            is_equal_recur(ElemA, NextA, ElemB, NextB);
+            is_equal_check(ElemA, NextA, ElemB, NextB);
         %
         ?LEAF2(ElemB, E2) ->
             NextB = [?ITER_ELEM(E2) | TailB],
-            is_equal_recur(ElemA, NextA, ElemB, NextB);
+            is_equal_check(ElemA, NextA, ElemB, NextB);
         %
         ?LEAF3(ElemB, E2, E3) ->
             NextB = [?ITER_ELEM(E2), ?ITER_ELEM(E3) | TailB],
-            is_equal_recur(ElemA, NextA, ElemB, NextB);
+            is_equal_check(ElemA, NextA, ElemB, NextB);
         %
         ?LEAF4(ElemB, E2, E3, E4) ->
             NextB = [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | TailB],
-            is_equal_recur(ElemA, NextA, ElemB, NextB);
+            is_equal_check(ElemA, NextA, ElemB, NextB);
         %
         NodeB ->
-            [?ITER_ELEM(ElemB) | NextB] = fwd_iterator_recur(NodeB, TailB),
-            is_equal_recur(ElemA, NextA, ElemB, NextB)
+            [NewHeadB | NewTailB] = fwd_iterator_recur(NodeB, TailB),
+            is_equal_iterB(ElemA, NextA, NewHeadB, NewTailB)
     end.
 
-is_equal_recur(ElemA, NextA, ElemB, NextB) ->
+-compile({is_equal_check/4}).
+is_equal_check(ElemA, NextA, ElemB, NextB) ->
     (ElemA == ElemB) andalso is_equal_recur(NextA, NextB).
 
 %% ------------------------------------------------------------------
@@ -2544,31 +2560,36 @@ is_member_LEAF1(Elem, ?LEAF1_ARGS) ->
 %% ------------------------------------------------------------------
 
 is_subset_recur([Head | Tail], Root2) ->
-    case Head of
-        ?ITER_ELEM(Elem) ->
-            Next = Tail,
-            is_subset_recur(Elem, Next, Root2);
-        %
-        ?LEAF2(Elem, E2) ->
-            Next = [?ITER_ELEM(E2) | Tail],
-            is_subset_recur(Elem, Next, Root2);
-        %
-        ?LEAF3(Elem, E2, E3) ->
-            Next = [?ITER_ELEM(E2), ?ITER_ELEM(E3) | Tail],
-            is_subset_recur(Elem, Next, Root2);
-        %
-        ?LEAF4(Elem, E2, E3, E4) ->
-            Next = [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Tail],
-            is_subset_recur(Elem, Next, Root2);
-        %
-        Node ->
-            [?ITER_ELEM(Elem) | Next] = fwd_iterator_recur(Node, Tail),
-            is_subset_recur(Elem, Next, Root2)
-    end;
+    is_subset_iter(Head, Tail, Root2);
 is_subset_recur([], _Root2) ->
     true.
 
-is_subset_recur(Elem, Next, Root2) ->
+-compile({is_subset_iter/3}).
+is_subset_iter(Head, Tail, Root2) ->
+    case Head of
+        ?ITER_ELEM(Elem) ->
+            Next = Tail,
+            is_subset_check(Elem, Next, Root2);
+        %
+        ?LEAF2(Elem, E2) ->
+            Next = [?ITER_ELEM(E2) | Tail],
+            is_subset_check(Elem, Next, Root2);
+        %
+        ?LEAF3(Elem, E2, E3) ->
+            Next = [?ITER_ELEM(E2), ?ITER_ELEM(E3) | Tail],
+            is_subset_check(Elem, Next, Root2);
+        %
+        ?LEAF4(Elem, E2, E3, E4) ->
+            Next = [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Tail],
+            is_subset_check(Elem, Next, Root2);
+        %
+        Node ->
+            [NewHead | NewTail] = fwd_iterator_recur(Node, Tail),
+            is_subset_iter(NewHead, NewTail, Root2)
+    end.
+
+-compile({is_subset_check/3}).
+is_subset_check(Elem, Next, Root2) ->
     is_member(Elem, Root2) andalso is_subset_recur(Next, Root2).
 
 %% ------------------------------------------------------------------
@@ -4364,7 +4385,6 @@ rebalance_internal_from_right_sibling(
     Right
 ) ->
     case Right of
-        %?INTERNAL2_MATCH(E1, E2, Values, C1, C2, C3) ->
         ?INTERNAL2_MATCH_ALL ->
             MergedNode = ?INTERNAL4(
                 CElem,
