@@ -1,24 +1,4 @@
-%% FIXME
-%% -% vim: set redrawtime=10000:
-
-%% @doc Low-level API for working directly with B-tree nodes.
-%%
-%% This module provides a lower-level interface to B-tree operations that work
-%% directly on tree nodes without tracking the overall tree size. This is useful
-%% for performant re-wraps in languages like Elixir, where you might want to
-%% wrap the tree structure under a struct instead of using Erlang records.
-%%
-%% The tree size is not tracked by these functions, making them more suitable
-%% for cases where you need fine-grained control over the tree structure or
-%% when integrating with external size tracking mechanisms.
-%%
-%% @reference https://en.wikipedia.org/wiki/B-tree
-%% @reference https://www.geeksforgeeks.org/dsa/delete-operation-in-b-tree/
-%%
-%% Note regarding deletion: instead of preemptively rebalancing a node before
-%% visiting it, the current implementation allows it to become temporarily
-%% unbalanced. When this happens, the node is rebalanced immediately after.
-%% This approach showed better performance and resulted in less code bloat.
+% TODO document
 -module(b5_sets_node).
 
 -export([
@@ -36,20 +16,18 @@
     is_subset/2,
     iterator/2,
     iterator_from/3,
-    % larger/2,
+    larger/2,
     largest/1,
     map/2,
     new/0,
     next/1,
-    % smaller/2,
+    smaller/2,
     smallest/1,
     take_largest/1,
     take_smallest/1,
     to_list/1,
     union/4
 ]).
-
-% -include_lib("stdlib/include/assert.hrl").
 
 %% ------------------------------------------------------------------
 %% Macro Definitions: Nodes
@@ -266,7 +244,6 @@
 -define(INTERNAL1_ARGS, E1, C1, C2).
 -define(INTERNAL1_ARITY, 3).
 -define(INTERNAL1_ARITY_PLUS1, 4).
--define(INTERNAL1_ARITY_MINUS2, 1).
 
 -define(INTERNAL1_C1(UpdatedC1), ?new_INTERNAL1(E1, UpdatedC1, C2)).
 -define(INTERNAL1_C2(UpdatedC2), ?new_INTERNAL1(E1, C1, UpdatedC2)).
@@ -286,7 +263,6 @@
 -define(LEAF4_ARITY, 4).
 -define(LEAF4_ARITY_PLUS1, 5).
 -define(LEAF4_ARITY_PLUS2, 6).
--define(LEAF4_ARITY_MINUS1, 3).
 
 %% ?LEAF3
 
@@ -294,7 +270,6 @@
 -define(LEAF3_ARITY, 3).
 -define(LEAF3_ARITY_PLUS1, 4).
 -define(LEAF3_ARITY_PLUS2, 5).
--define(LEAF3_ARITY_MINUS1, 2).
 
 %% ?LEAF2
 
@@ -302,14 +277,12 @@
 -define(LEAF2_ARITY, 2).
 -define(LEAF2_ARITY_PLUS1, 3).
 -define(LEAF2_ARITY_PLUS2, 4).
--define(LEAF2_ARITY_MINUS1, 1).
 
 %% ?LEAF1
 
 -define(LEAF1_ARGS, E1).
 -define(LEAF1_ARITY, 1).
 -define(LEAF1_ARITY_PLUS1, 2).
--define(LEAF1_ARITY_MINUS1, 0).
 
 %%
 
@@ -317,8 +290,15 @@
 
 %%
 
+-define(NODE_CHECK_ENABLED, defined(TEST)).
+
+-if(?NODE_CHECK_ENABLED).
 -define(CHECK_NODE(Node), check_node(?LINE, Node)).
 -define(CHECK_NODE_RECUR(Node), check_node_recur(?LINE, Node)).
+-else.
+-define(CHECK_NODE(Node), Node).
+-define(CHECK_NODE_RECUR(Node), Node).
+-endif.
 
 %
 
@@ -649,6 +629,15 @@ iterator(Root, reversed) ->
 iterator_from(Elem, Root, ordered) ->
     bound_fwd_iterator(Elem, Root).
 
+larger(Elem, ?INTERNAL1_MATCH_ALL) ->
+    larger_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+larger(Elem, ?LEAF1_MATCH_ALL) ->
+    larger_LEAF1(Elem, ?LEAF1_ARGS);
+larger(Elem, ?LEAF0_MATCH_ALL) ->
+    ?new_LEAF1(Elem);
+larger(Elem, Root) ->
+    larger_recur(Elem, Root).
+
 largest(?INTERNAL1_MATCH(_, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1_MATCH(E1)) ->
@@ -670,6 +659,15 @@ next([Head | Tail]) ->
     next(Head, Tail);
 next([]) ->
     none.
+
+smaller(Elem, ?INTERNAL1_MATCH_ALL) ->
+    smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+smaller(Elem, ?LEAF1_MATCH_ALL) ->
+    smaller_LEAF1(Elem, ?LEAF1_ARGS);
+smaller(Elem, ?LEAF0_MATCH_ALL) ->
+    ?new_LEAF1(Elem);
+smaller(Elem, Root) ->
+    smaller_recur(Elem, Root).
 
 smallest(?INTERNAL1_MATCH(_, C1, _)) ->
     smallest_recur(C1);
@@ -1151,6 +1149,7 @@ difference_recur(Node, Next, MaxElem, Count, Root) ->
             difference_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root);
         %
         ?INTERNAL2_MATCH_ALL ->
+            % TODO optimize batches like in filter/2?
             [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
             [Count3 | Root3] = difference_recur(C2, [], MaxElem, Count2, Root2),
             [Count4 | Root4] = difference_recur(C3, [], MaxElem, Count3, Root3),
@@ -1158,6 +1157,7 @@ difference_recur(Node, Next, MaxElem, Count, Root) ->
             difference_batch2(E1, E2, Next, MaxElem, Count4, Root4);
         %
         ?INTERNAL3_MATCH_ALL ->
+            % TODO optimize batches like in filter/2?
             [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
             [Count3 | Root3] = difference_recur(C2, [], MaxElem, Count2, Root2),
             [Count4 | Root4] = difference_recur(C3, [], MaxElem, Count3, Root3),
@@ -1166,6 +1166,7 @@ difference_recur(Node, Next, MaxElem, Count, Root) ->
             difference_batch3(E1, E2, E3, Next, MaxElem, Count5, Root5);
         %
         ?INTERNAL4_MATCH_ALL ->
+            % TODO optimize batches like in filter/2?
             [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
             [Count3 | Root3] = difference_recur(C2, [], MaxElem, Count2, Root2),
             [Count4 | Root4] = difference_recur(C3, [], MaxElem, Count3, Root3),
@@ -1240,9 +1241,7 @@ difference_batch2_E2(E2, Next, MaxElem, Count, Root) ->
 filter_root(Fun, Root, Count, Filtered) ->
     case Root of
         ?INTERNAL1_MATCH_ALL ->
-            [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-            [Count3 | Filtered3] = filter_single_element(Fun, E1, Count2, Filtered2),
-            filter_recur(Fun, C2, Count3, Filtered3);
+            filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered);
         %
         ?LEAF1_MATCH_ALL ->
             filter_single_element(Fun, E1, Count, Filtered);
@@ -1257,67 +1256,110 @@ filter_root(Fun, Root, Count, Filtered) ->
 filter_recur(Fun, Node, Count, Filtered) ->
     case Node of
         ?LEAF2_MATCH_ALL ->
-            filter_batch2(Fun, E1, E2, Count, Filtered);
+            filter_leaf_batch2(Fun, E1, E2, Count, Filtered);
         %
         ?LEAF3_MATCH_ALL ->
-            filter_batch3(Fun, E1, E2, E3, Count, Filtered);
+            filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered);
         %
         ?LEAF4_MATCH_ALL ->
-            filter_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
+            filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
         %
         ?INTERNAL2_MATCH_ALL ->
-            [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-            [Count3 | Filtered3] = filter_recur(Fun, C2, Count2, Filtered2),
-            [Count4 | Filtered4] = filter_recur(Fun, C3, Count3, Filtered3),
-
-            filter_batch2(Fun, E1, E2, Count4, Filtered4);
+            filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered);
         %
         ?INTERNAL3_MATCH_ALL ->
-            [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-            [Count3 | Filtered3] = filter_recur(Fun, C2, Count2, Filtered2),
-            [Count4 | Filtered4] = filter_recur(Fun, C3, Count3, Filtered3),
-            [Count5 | Filtered5] = filter_recur(Fun, C4, Count4, Filtered4),
-
-            filter_batch3(Fun, E1, E2, E3, Count5, Filtered5);
+            filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered);
         %
         ?INTERNAL4_MATCH_ALL ->
-            [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-            [Count3 | Filtered3] = filter_recur(Fun, C2, Count2, Filtered2),
-            [Count4 | Filtered4] = filter_recur(Fun, C3, Count3, Filtered3),
-            [Count5 | Filtered5] = filter_recur(Fun, C4, Count4, Filtered4),
-            [Count6 | Filtered6] = filter_recur(Fun, C5, Count5, Filtered5),
-
-            filter_batch4(Fun, E1, E2, E3, E4, Count6, Filtered6)
+            filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
     end.
 
-%% INTERNAL4 and LEAF4
+%% INTERNAL4
 
--compile({inline, filter_batch4/7}).
-filter_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
+-compile({inline, filter_internal_batch4/12}).
+filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered) ->
+    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
+
     case Fun(E1) of
         true ->
-            filter_batch3(Fun, E2, E3, E4, Count + 1, insert(E1, Filtered));
+            filter_internal_batch3(
+                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, insert(E1, Filtered2)
+            );
         %
         false ->
-            filter_batch3(Fun, E2, E3, E4, Count, Filtered)
+            filter_internal_batch3(Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2)
     end.
 
-%% INTERNAL3 and LEAF3
+%% INTERNAL3
 
--compile({inline, filter_batch3/6}).
-filter_batch3(Fun, E1, E2, E3, Count, Filtered) ->
+-compile({inline, filter_internal_batch3/10}).
+filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
+    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
+
     case Fun(E1) of
         true ->
-            filter_batch2(Fun, E2, E3, Count + 1, insert(E1, Filtered));
+            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, insert(E1, Filtered2));
         %
         false ->
-            filter_batch2(Fun, E2, E3, Count, Filtered)
+            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2)
     end.
 
-%% INTERNAL2 and LEAF2
+%% INTERNAL2
 
--compile({inline, filter_batch2/5}).
-filter_batch2(Fun, E1, E2, Count, Filtered) ->
+-compile({inline, filter_internal_batch2/8}).
+filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
+    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
+
+    case Fun(E1) of
+        true ->
+            filter_internal_batch1(Fun, E2, C2, C3, Count2 + 1, insert(E1, Filtered2));
+        %
+        false ->
+            filter_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2)
+    end.
+
+%% INTERNAL1
+
+-compile({inline, filter_internal_batch1/6}).
+filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
+    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
+
+    case Fun(E1) of
+        true ->
+            filter_recur(Fun, C2, Count2 + 1, insert(E1, Filtered2));
+        %
+        false ->
+            filter_recur(Fun, C2, Count2, Filtered2)
+    end.
+
+%% LEAF4
+
+-compile({inline, filter_leaf_batch4/7}).
+filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
+    case Fun(E1) of
+        true ->
+            filter_leaf_batch3(Fun, E2, E3, E4, Count + 1, insert(E1, Filtered));
+        %
+        false ->
+            filter_leaf_batch3(Fun, E2, E3, E4, Count, Filtered)
+    end.
+
+%% LEAF3
+
+-compile({inline, filter_leaf_batch3/6}).
+filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
+    case Fun(E1) of
+        true ->
+            filter_leaf_batch2(Fun, E2, E3, Count + 1, insert(E1, Filtered));
+        %
+        false ->
+            filter_leaf_batch2(Fun, E2, E3, Count, Filtered)
+    end.
+
+%% LEAF2
+
+-compile({inline, filter_leaf_batch2/5}).
+filter_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
     case Fun(E1) of
         true ->
             filter_single_element(Fun, E2, Count + 1, insert(E1, Filtered));
@@ -1326,7 +1368,7 @@ filter_batch2(Fun, E1, E2, Count, Filtered) ->
             filter_single_element(Fun, E2, Count, Filtered)
     end.
 
-%% INTERNAL1 and LEAF1
+%% LEAF1
 
 -compile({inline, filter_single_element/4}).
 filter_single_element(Fun, E1, Count, Filtered) ->
@@ -1371,6 +1413,7 @@ filtermap_recur(Fun, Node, Count, Filtered) ->
             filtermap_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
         %
         ?INTERNAL2_MATCH_ALL ->
+            % TODO optimize batches like in filter/2
             [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
             [Count3 | Filtered3] = filtermap_recur(Fun, C2, Count2, Filtered2),
             [Count4 | Filtered4] = filtermap_recur(Fun, C3, Count3, Filtered3),
@@ -1378,6 +1421,7 @@ filtermap_recur(Fun, Node, Count, Filtered) ->
             filtermap_batch2(Fun, E1, E2, Count4, Filtered4);
         %
         ?INTERNAL3_MATCH_ALL ->
+            % TODO optimize batches like in filter/2
             [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
             [Count3 | Filtered3] = filtermap_recur(Fun, C2, Count2, Filtered2),
             [Count4 | Filtered4] = filtermap_recur(Fun, C3, Count3, Filtered3),
@@ -1386,6 +1430,7 @@ filtermap_recur(Fun, Node, Count, Filtered) ->
             filtermap_batch3(Fun, E1, E2, E3, Count5, Filtered5);
         %
         ?INTERNAL4_MATCH_ALL ->
+            % TODO optimize batches like in filter/2
             [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
             [Count3 | Filtered3] = filtermap_recur(Fun, C2, Count2, Filtered2),
             [Count4 | Filtered4] = filtermap_recur(Fun, C3, Count3, Filtered3),
@@ -2935,6 +2980,218 @@ bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
     end.
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: larger/2
+%% ------------------------------------------------------------------
+
+larger_recur(Elem, Node) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            larger_INTERNAL2(Elem, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            larger_INTERNAL3(Elem, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            larger_INTERNAL4(Elem, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            larger_LEAF2(Elem, ?LEAF2_ARGS);
+        %
+        ?LEAF3_MATCH_ALL ->
+            larger_LEAF3(Elem, ?LEAF3_ARGS);
+        %
+        ?LEAF4_MATCH_ALL ->
+            larger_LEAF4(Elem, ?LEAF4_ARGS)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, larger_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
+larger_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
+    if
+        Elem < E2 ->
+            case Elem < E1 of
+                true ->
+                    case larger_recur(Elem, C1) of
+                        none -> {found, E1};
+                        Found -> Found
+                    end;
+                _ ->
+                    case larger_recur(Elem, C2) of
+                        none -> {found, E2};
+                        Found -> Found
+                    end
+            end;
+        %
+        Elem < E3 ->
+            case larger_recur(Elem, C3) of
+                none -> {found, E3};
+                Found -> Found
+            end;
+        %
+        Elem < E4 ->
+            case larger_recur(Elem, C4) of
+                none -> {found, E4};
+                Found -> Found
+            end;
+        %
+        true ->
+            larger_recur(Elem, C5)
+    end.
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, larger_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
+larger_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
+    if
+        Elem < E2 ->
+            case Elem < E1 of
+                true ->
+                    case larger_recur(Elem, C1) of
+                        none -> {found, E1};
+                        Found -> Found
+                    end;
+                _ ->
+                    case larger_recur(Elem, C2) of
+                        none -> {found, E2};
+                        Found -> Found
+                    end
+            end;
+        %
+        Elem < E3 ->
+            case larger_recur(Elem, C3) of
+                none -> {found, E3};
+                Found -> Found
+            end;
+        %
+        true ->
+            larger_recur(Elem, C4)
+    end.
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, larger_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
+larger_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
+    if
+        Elem < E1 ->
+            case larger_recur(Elem, C1) of
+                none -> {found, E1};
+                Found -> Found
+            end;
+        %
+        Elem < E2 ->
+            case larger_recur(Elem, C2) of
+                none -> {found, E2};
+                Found -> Found
+            end;
+        %
+        true ->
+            larger_recur(Elem, C3)
+    end.
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, larger_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+larger_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+    if
+        Elem < E1 ->
+            case larger_recur(Elem, C1) of
+                none -> {found, E1};
+                Found -> Found
+            end;
+        %
+        true ->
+            larger_recur(Elem, C2)
+    end.
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, larger_LEAF4 / ?LEAF4_ARITY_PLUS1}).
+larger_LEAF4(Elem, ?LEAF4_ARGS) ->
+    if
+        Elem < E2 ->
+            case Elem < E1 of
+                true ->
+                    {found, E1};
+                _ ->
+                    {found, E2}
+            end;
+        %
+        Elem < E3 ->
+            {found, E3};
+        %
+        Elem < E4 ->
+            {found, E4};
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, larger_LEAF3 / ?LEAF3_ARITY_PLUS1}).
+larger_LEAF3(Elem, ?LEAF3_ARGS) ->
+    if
+        Elem < E2 ->
+            case Elem < E1 of
+                true ->
+                    {found, E1};
+                _ ->
+                    {found, E2}
+            end;
+        %
+        Elem < E3 ->
+            {found, E3};
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, larger_LEAF2 / ?LEAF2_ARITY_PLUS1}).
+larger_LEAF2(Elem, ?LEAF2_ARGS) ->
+    if
+        Elem < E1 ->
+            {found, E1};
+        %
+        Elem < E2 ->
+            {found, E2};
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF1
+%%
+
+-compile({inline, larger_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+larger_LEAF1(Elem, ?LEAF1_ARGS) ->
+    case Elem < E1 of
+        true ->
+            {found, E1};
+        %
+        _ ->
+            none
+    end.
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: largest/1
 %% ------------------------------------------------------------------
 
@@ -3083,6 +3340,218 @@ rev_next(Head, Tail) ->
             [?ITER_ELEM(Elem) | NewTail] = rev_iterator_recur(Node, Tail),
             Iter2 = NewTail,
             {Elem, Iter2}
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: smaller/2
+%% ------------------------------------------------------------------
+
+smaller_recur(Elem, Node) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            smaller_LEAF2(Elem, ?LEAF2_ARGS);
+        %
+        ?LEAF3_MATCH_ALL ->
+            smaller_LEAF3(Elem, ?LEAF3_ARGS);
+        %
+        ?LEAF4_MATCH_ALL ->
+            smaller_LEAF4(Elem, ?LEAF4_ARGS)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, smaller_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
+smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
+    if
+        Elem > E3 ->
+            case Elem > E4 of
+                true ->
+                    case smaller_recur(Elem, C5) of
+                        none -> {found, E4};
+                        Found -> Found
+                    end;
+                _ ->
+                    case smaller_recur(Elem, C4) of
+                        none -> {found, E3};
+                        Found -> Found
+                    end
+            end;
+        %
+        Elem > E2 ->
+            case smaller_recur(Elem, C3) of
+                none -> {found, E2};
+                Found -> Found
+            end;
+        %
+        Elem > E1 ->
+            case smaller_recur(Elem, C2) of
+                none -> {found, E1};
+                Found -> Found
+            end;
+        %
+        true ->
+            smaller_recur(Elem, C1)
+    end.
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, smaller_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
+smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
+    if
+        Elem > E2 ->
+            case Elem > E3 of
+                true ->
+                    case smaller_recur(Elem, C4) of
+                        none -> {found, E3};
+                        Found -> Found
+                    end;
+                _ ->
+                    case smaller_recur(Elem, C3) of
+                        none -> {found, E2};
+                        Found -> Found
+                    end
+            end;
+        %
+        Elem > E1 ->
+            case smaller_recur(Elem, C2) of
+                none -> {found, E1};
+                Found -> Found
+            end;
+        %
+        true ->
+            smaller_recur(Elem, C1)
+    end.
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, smaller_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
+smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
+    if
+        Elem > E2 ->
+            case smaller_recur(Elem, C3) of
+                none -> {found, E2};
+                Found -> Found
+            end;
+        %
+        Elem > E1 ->
+            case smaller_recur(Elem, C2) of
+                none -> {found, E1};
+                Found -> Found
+            end;
+        %
+        true ->
+            smaller_recur(Elem, C1)
+    end.
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, smaller_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+    case Elem > E1 of
+        true ->
+            case smaller_recur(Elem, C2) of
+                none -> {found, E1};
+                Found -> Found
+            end;
+        %
+        _ ->
+            smaller_recur(Elem, C1)
+    end.
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, smaller_LEAF4 / ?LEAF4_ARITY_PLUS1}).
+smaller_LEAF4(Elem, ?LEAF4_ARGS) ->
+    if
+        Elem > E3 ->
+            case Elem > E4 of
+                true ->
+                    {found, E4};
+                _ ->
+                    {found, E3}
+            end;
+        %
+        Elem > E2 ->
+            {found, E2};
+        %
+        Elem > E1 ->
+            {found, E1};
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, smaller_LEAF3 / ?LEAF3_ARITY_PLUS1}).
+smaller_LEAF3(Elem, ?LEAF3_ARGS) ->
+    if
+        Elem > E2 ->
+            case Elem > E3 of
+                true ->
+                    {found, E3};
+                _ ->
+                    {found, E2}
+            end;
+        %
+        Elem > E1 ->
+            {found, E1};
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, smaller_LEAF2 / ?LEAF2_ARITY_PLUS1}).
+smaller_LEAF2(Elem, ?LEAF2_ARGS) ->
+    if
+        Elem > E2 ->
+            {found, E2};
+        %
+        Elem > E1 ->
+            {found, E1};
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF1
+%%
+
+-compile({inline, smaller_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
+    case Elem > E1 of
+        true ->
+            {found, E1};
+        %
+        _ ->
+            none
     end.
 
 %% ------------------------------------------------------------------
@@ -3366,6 +3835,7 @@ union_recur(Node, Size, Root) ->
             union_batch4(E1, E2, E3, E4, Size, Root);
         %
         ?INTERNAL2_MATCH_ALL ->
+            % TODO optimize batches like in filter/2
             [Size2 | Root2] = union_recur(C1, Size, Root),
             [Size3 | Root3] = union_recur(C2, Size2, Root2),
             [Size4 | Root4] = union_recur(C3, Size3, Root3),
@@ -3373,6 +3843,7 @@ union_recur(Node, Size, Root) ->
             union_batch2(E1, E2, Size4, Root4);
         %
         ?INTERNAL3_MATCH_ALL ->
+            % TODO optimize batches like in filter/2
             [Size2 | Root2] = union_recur(C1, Size, Root),
             [Size3 | Root3] = union_recur(C2, Size2, Root2),
             [Size4 | Root4] = union_recur(C3, Size3, Root3),
@@ -3381,6 +3852,7 @@ union_recur(Node, Size, Root) ->
             union_batch3(E1, E2, E3, Size5, Root5);
         %
         ?INTERNAL4_MATCH_ALL ->
+            % TODO optimize batches like in filter/2
             [Size2 | Root2] = union_recur(C1, Size, Root),
             [Size3 | Root3] = union_recur(C2, Size2, Root2),
             [Size4 | Root4] = union_recur(C3, Size3, Root3),
@@ -4762,6 +5234,8 @@ rebalance_leaf_from_either_sibling(
 %% Internal Function Definitions: Node Well-Formedness Checks
 %% ------------------------------------------------------------------
 
+-if(?NODE_CHECK_ENABLED).
+
 check_node(LineNumber, Node) ->
     Type = node_type(Node),
     List = to_list(Node),
@@ -4845,3 +5319,6 @@ check_node_keys(E1, [E2 | Next]) ->
     end;
 check_node_keys(_, []) ->
     [].
+
+% -if(?NODE_CHECK_ENABLED).
+-endif.

@@ -31,17 +31,17 @@
     iterator/2,
     iterator_from/2,
     iterator_from/3,
-    % larger/2,
+    larger/2,
     largest/1,
     map/2,
     new/0,
     next/1,
     singleton/1,
     size/1,
-    % smaller/2,
+    smaller/2,
+    smallest/1,
     % `sets' compatibility alias
     subtract/2,
-    smallest/1,
     take_largest/1,
     take_smallest/1,
     to_list/1,
@@ -59,29 +59,29 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-add(Elem, Set) ->
+add(Element, Set) ->
     try
-        insert(Elem, Set)
+        insert(Element, Set)
     catch
-        error:{key_exists, K} when K =:= Elem ->
+        error:{key_exists, K} when K =:= Element ->
             Set
     end.
 
-add_element(Elem, Set) ->
-    add(Elem, Set).
+add_element(Element, Set) ->
+    add(Element, Set).
 
-del_element(Elem, Set) ->
-    delete_any(Elem, Set).
+del_element(Element, Set) ->
+    delete_any(Element, Set).
 
-delete(Elem, #b5_sets{size = Size, root = Root} = Set) ->
-    UpdatedRoot = b5_sets_node:delete(Elem, Root),
+delete(Element, #b5_sets{size = Size, root = Root} = Set) ->
+    UpdatedRoot = b5_sets_node:delete(Element, Root),
     Set#b5_sets{size = Size - 1, root = UpdatedRoot}.
 
-delete_any(Elem, Set) ->
+delete_any(Element, Set) ->
     try
-        delete(Elem, Set)
+        delete(Element, Set)
     catch
-        error:{badkey, K} when K =:= Elem ->
+        error:{badkey, K} when K =:= Element ->
             Set
     end.
 
@@ -109,8 +109,8 @@ from_ordset(Ordset) ->
     List = ordsets:to_list(Ordset),
     from_list(List).
 
-insert(Elem, #b5_sets{size = Size, root = Root} = Set) ->
-    UpdatedRoot = b5_sets_node:insert(Elem, Root),
+insert(Element, #b5_sets{size = Size, root = Root} = Set) ->
+    UpdatedRoot = b5_sets_node:insert(Element, Root),
     Set#b5_sets{size = Size + 1, root = UpdatedRoot}.
 
 intersection([#b5_sets{size = Size1, root = Root1} | Others]) ->
@@ -125,8 +125,8 @@ intersection(#b5_sets{root = Root1}, #b5_sets{root = Root2}) ->
 is_disjoint(#b5_sets{root = Root1, size = Size1}, #b5_sets{root = Root2, size = Size2}) ->
     b5_sets_node:is_disjoint(Root1, Size1, Root2, Size2).
 
-is_element(Elem, Set) ->
-    is_member(Elem, Set).
+is_element(Element, Set) ->
+    is_member(Element, Set).
 
 is_empty(#b5_sets{size = Size}) ->
     Size =:= 0.
@@ -134,8 +134,8 @@ is_empty(#b5_sets{size = Size}) ->
 is_equal(#b5_sets{root = Root1, size = Size1}, #b5_sets{root = Root2, size = Size2}) ->
     (Size1 =:= Size2) andalso b5_sets_node:is_equal(Root1, Root2).
 
-is_member(Elem, #b5_sets{root = Root}) ->
-    b5_sets_node:is_member(Elem, Root).
+is_member(Element, #b5_sets{root = Root}) ->
+    b5_sets_node:is_member(Element, Root).
 
 is_set(#b5_sets{size = Size, root = Root}) ->
     b5_sets_node:does_root_look_legit(Root, Size).
@@ -155,6 +155,9 @@ iterator_from(Element, Set) ->
 iterator_from(Element, #b5_sets{root = Root}, Order) ->
     b5_sets_node:iterator_from(Element, Root, Order).
 
+larger(Element, #b5_sets{root = Root}) ->
+    b5_sets_node:larger(Element, Root).
+
 largest(#b5_sets{root = Root}) ->
     b5_sets_node:largest(Root).
 
@@ -168,14 +171,17 @@ new() ->
 next(Iter) ->
     b5_sets_node:next(Iter).
 
-singleton(Elem) ->
-    #b5_sets{size = 1, root = b5_sets_node:insert(Elem, b5_sets_node:new())}.
+singleton(Element) ->
+    #b5_sets{size = 1, root = b5_sets_node:insert(Element, b5_sets_node:new())}.
 
 size(#b5_sets{size = Size}) ->
     Size.
 
 subtract(Set1, Set2) ->
     difference(Set1, Set2).
+
+smaller(Element, #b5_sets{root = Root}) ->
+    b5_sets_node:smaller(Element, Root).
 
 smallest(#b5_sets{root = Root}) ->
     b5_sets_node:smallest(Root).
@@ -204,13 +210,13 @@ union(#b5_sets{root = Root1, size = Size1}, #b5_sets{root = Root2, size = Size2}
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-from_list_recur([Elem | Next], Root, Size) ->
-    try b5_sets_node:insert(Elem, Root) of
+from_list_recur([Element | Next], Root, Size) ->
+    try b5_sets_node:insert(Element, Root) of
         UpdatedRoot ->
             UpdatedSize = Size + 1,
             from_list_recur(Next, UpdatedRoot, UpdatedSize)
     catch
-        error:{key_exists, K} when K =:= Elem ->
+        error:{key_exists, K} when K =:= Element ->
             from_list_recur(Next, Root, Size)
     end;
 from_list_recur([], Root, Size) ->
