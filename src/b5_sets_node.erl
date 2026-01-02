@@ -490,7 +490,7 @@ delete(Elem, ?INTERNAL1_MATCH_ALL) ->
 delete(Elem, ?LEAF1_MATCH_ALL) ->
     delete_LEAF1(Elem, ?LEAF1_ARGS);
 delete(Elem, ?LEAF0_MATCH_ALL) ->
-    ?new_LEAF1(Elem);
+    error_badkey(Elem);
 delete(Elem, Root) ->
     delete_recur(Elem, Root).
 
@@ -636,8 +636,8 @@ larger(Elem, ?INTERNAL1_MATCH_ALL) ->
     larger_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 larger(Elem, ?LEAF1_MATCH_ALL) ->
     larger_LEAF1(Elem, ?LEAF1_ARGS);
-larger(Elem, ?LEAF0_MATCH_ALL) ->
-    ?new_LEAF1(Elem);
+larger(_Elem, ?LEAF0_MATCH_ALL) ->
+    none;
 larger(Elem, Root) ->
     larger_recur(Elem, Root).
 
@@ -667,8 +667,8 @@ smaller(Elem, ?INTERNAL1_MATCH_ALL) ->
     smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 smaller(Elem, ?LEAF1_MATCH_ALL) ->
     smaller_LEAF1(Elem, ?LEAF1_ARGS);
-smaller(Elem, ?LEAF0_MATCH_ALL) ->
-    ?new_LEAF1(Elem);
+smaller(_Elem, ?LEAF0_MATCH_ALL) ->
+    none;
 smaller(Elem, Root) ->
     smaller_recur(Elem, Root).
 
@@ -3495,7 +3495,7 @@ rev_next(Head, Tail) ->
         %
         Node ->
             [?ITER_ELEM(Elem) | NewTail] = rev_iterator_recur(Node, Tail),
-            Iter2 = NewTail,
+            Iter2 = [?REV_ITER_TAG | NewTail],
             {Elem, Iter2}
     end.
 

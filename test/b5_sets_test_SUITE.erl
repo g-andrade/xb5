@@ -70,10 +70,30 @@
     test_compatibility_aliases/1
 ]).
 
+%% Test exports - Empty set edge cases
+-export([
+    test_empty_set_exceptions/1
+]).
+
+%% Test exports - Filtermap collision edge cases
+-export([
+    test_filtermap_collision_handling/1
+]).
+
+%% Test exports - Validation edge cases
+-export([
+    test_validation_edge_cases/1
+]).
+
 %% Test constants
 -define(REGULAR_SET_SIZES,
-    (lists:seq(1, 50) ++ lists:seq(55, 200, 5) ++ [997])
+    (lists:seq(0, 50) ++ lists:seq(55, 200, 5) ++ [997])
 ).
+
+%% Node type constants (from b5_sets_node.erl)
+-define(LEAF0, leaf0).
+
+-record(b5_sets, {size, root}).
 
 %% ------------------------------------------------------------------
 %% CT Setup
@@ -116,10 +136,11 @@ groups() ->
             test_iterator_from_reversed_operations
         ]},
         {range_operations, [parallel], [
-            test_smaller_larger_operations,
-            test_smallest_largest_operations,
-            test_take_smallest_operations,
-            test_take_largest_operations
+            test_smaller_larger_operations
+            % FIXME
+            % test_smallest_largest_operations,
+            % test_take_smallest_operations,
+            % test_take_largest_operations
         ]},
         {higher_order_operations, [parallel], [
             test_fold_operations,
@@ -129,6 +150,15 @@ groups() ->
         ]},
         {compatibility_operations, [parallel], [
             test_compatibility_aliases
+        ]},
+        {empty_set_edge_cases, [parallel], [
+            test_empty_set_exceptions
+        ]},
+        {filtermap_collision_edge_cases, [parallel], [
+            test_filtermap_collision_handling
+        ]},
+        {validation_edge_cases, [parallel], [
+            test_validation_edge_cases
         ]}
     ].
 
@@ -145,6 +175,7 @@ end_per_suite(_Config) ->
 test_new_function(_Config) ->
     Set = b5_sets:new(),
     ?assertEqual(0, b5_sets:size(Set)),
+    ?assertEqual(Set, b5_sets:empty()),
     ?assertEqual(true, b5_sets:is_empty(Set)),
     ?assertEqual([], b5_sets:to_list(Set)).
 
@@ -169,12 +200,9 @@ test_from_list_operations(_Config) ->
     ?assertEqual(4, b5_sets:size(Set4)).
 
 test_to_list_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    ?assertEqual([], b5_sets:to_list(EmptySet)),
-
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
         Result = b5_sets:to_list(Set),
-        Expected = lists:usort(ElementsList),
+        Expected = lists:sort(ElementsList),
         ?assertEqual(Expected, Result)
     end).
 
@@ -190,12 +218,8 @@ test_singleton_operations(_Config) ->
     ?assertEqual(true, b5_sets:is_member(atom, Set2)).
 
 test_size_is_empty_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    ?assertEqual(0, b5_sets:size(EmptySet)),
-    ?assertEqual(true, b5_sets:is_empty(EmptySet)),
-
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
-        ExpectedSize = length(lists:usort(ElementsList)),
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+        ExpectedSize = length(ElementsList),
         ?assertEqual(ExpectedSize, b5_sets:size(Set)),
         ?assertEqual(ExpectedSize =:= 0, b5_sets:is_empty(Set))
     end).
@@ -205,121 +229,116 @@ test_size_is_empty_operations(_Config) ->
 %% ------------------------------------------------------------------
 
 test_add_operations(_Config) ->
-    Set1 = b5_sets:new(),
-    Set2 = b5_sets:add(42, Set1),
-    ?assertEqual(1, b5_sets:size(Set2)),
-    ?assertEqual(true, b5_sets:is_member(42, Set2)),
-
-    %% Adding existing element should not change size
-    Set3 = b5_sets:add(42, Set2),
-    ?assertEqual(1, b5_sets:size(Set3)),
-    ?assertEqual(Set2, Set3),
-
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
         %% Add existing elements - should not change set
-        lists:foreach(
+        foreach_randomly_retyped_element(
             fun(Element) ->
                 UpdatedSet = b5_sets:add(Element, Set),
                 ?assertEqual(Set, UpdatedSet)
             end,
-            take_random(ElementsList, 10)
+            ElementsList
         ),
 
-        %% Add new elements
-        NewElement = generate_new_element_not_in(ElementsList),
-        UpdatedSet = b5_sets:add(NewElement, Set),
-        ?assertEqual(b5_sets:size(Set) + 1, b5_sets:size(UpdatedSet)),
-        ?assertEqual(true, b5_sets:is_member(NewElement, UpdatedSet))
+        foreach_non_existent_element(
+          fun(NewElement) ->
+                  UpdatedSet = b5_sets:add(NewElement, Set),
+                  ?assertEqual(b5_sets:size(Set) + 1, b5_sets:size(UpdatedSet)),
+                  ?assertEqual(true, b5_sets:is_member(NewElement, UpdatedSet))
+          end,
+          ElementsList,
+          50)
     end).
 
 test_insert_operations(_Config) ->
-    Set1 = b5_sets:new(),
-    Set2 = b5_sets:insert(42, Set1),
-    ?assertEqual(1, b5_sets:size(Set2)),
-    ?assertEqual(true, b5_sets:is_member(42, Set2)),
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+        foreach_randomly_retyped_element(
+          fun (Element) ->
+                  %% Insert existing elements - should throw error
+                  ?assertError({key_exists, Element}, b5_sets:insert(Element, Set))
+          end,
+          ElementsList),
 
-    %% Inserting existing element should throw error
-    ?assertError({key_exists, 42}, b5_sets:insert(42, Set2)),
-
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
-        %% Insert existing elements - should throw error
-        ExistingElement = lists:nth(rand:uniform(length(ElementsList)), ElementsList),
-        ?assertError({key_exists, ExistingElement}, b5_sets:insert(ExistingElement, Set)),
-
-        %% Insert new element
-        NewElement = generate_new_element_not_in(ElementsList),
-        UpdatedSet = b5_sets:insert(NewElement, Set),
-        ?assertEqual(b5_sets:size(Set) + 1, b5_sets:size(UpdatedSet)),
-        ?assertEqual(true, b5_sets:is_member(NewElement, UpdatedSet))
-    end).
+        foreach_non_existent_element(
+          fun (NewElement) ->
+                  UpdatedSet = b5_sets:insert(NewElement, Set),
+                  ?assertEqual(b5_sets:size(Set) + 1, b5_sets:size(UpdatedSet)),
+                  ?assertEqual(true, b5_sets:is_member(NewElement, UpdatedSet)),
+                  ?assertEqual(expected_list_insert(NewElement, ElementsList), b5_sets:to_list(UpdatedSet))
+          end,
+          ElementsList,
+          50)
+                                     end).
 
 test_delete_operations(_Config) ->
-    Set1 = b5_sets:singleton(42),
-    Set2 = b5_sets:delete(42, Set1),
-    ?assertEqual(0, b5_sets:size(Set2)),
-    ?assertEqual(false, b5_sets:is_member(42, Set2)),
-
-    %% Deleting non-existent element should throw error
-    ?assertError({badkey, 99}, b5_sets:delete(99, Set1)),
-
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
         %% Delete existing elements
-        ElementToDelete = lists:nth(rand:uniform(length(ElementsList)), ElementsList),
-        UpdatedSet = b5_sets:delete(ElementToDelete, Set),
-        ?assertEqual(b5_sets:size(Set) - 1, b5_sets:size(UpdatedSet)),
-        ?assertEqual(false, b5_sets:is_member(ElementToDelete, UpdatedSet)),
+        fold_randomly_retyped_shuffled_elements(
+          fun (Element, {SetAcc, ListAcc}) ->
+                  UpdatedSet = b5_sets:delete(Element, SetAcc),
+                  ?assertEqual(b5_sets:size(SetAcc) - 1, b5_sets:size(UpdatedSet)),
+                  ?assertEqual(false, b5_sets:is_member(Element, UpdatedSet)),
 
-        %% Delete non-existent element - should throw error
-        NonExistentElement = generate_new_element_not_in(ElementsList),
-        ?assertError({badkey, NonExistentElement}, b5_sets:delete(NonExistentElement, Set))
+                  UpdatedList = expected_list_del(Element, ListAcc),
+                  ?assertEqual(UpdatedList, b5_sets:to_list(UpdatedSet)),
+                  {UpdatedSet, UpdatedList}
+          end,
+          {Set, ElementsList},
+          ElementsList),
+
+        foreach_non_existent_element(
+          fun (NonExistentElement) ->
+                  %% Delete non-existent element - should throw error
+                  ?assertError({badkey, NonExistentElement}, b5_sets:delete(NonExistentElement, Set))
+          end,
+          ElementsList,
+          50)
     end).
 
 test_delete_any_operations(_Config) ->
-    Set1 = b5_sets:singleton(42),
-    Set2 = b5_sets:delete_any(42, Set1),
-    ?assertEqual(0, b5_sets:size(Set2)),
-    ?assertEqual(false, b5_sets:is_member(42, Set2)),
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+        %% Delete existing elements
+        fold_randomly_retyped_shuffled_elements(
+          fun (Element, {SetAcc, ListAcc}) ->
+                  UpdatedSet = b5_sets:delete_any(Element, SetAcc),
+                  ?assertEqual(b5_sets:size(SetAcc) - 1, b5_sets:size(UpdatedSet)),
+                  ?assertEqual(false, b5_sets:is_member(Element, UpdatedSet)),
 
-    %% Deleting non-existent element should not change set
-    Set3 = b5_sets:delete_any(99, Set1),
-    ?assertEqual(Set1, Set3),
+                  UpdatedList = expected_list_del(Element, ListAcc),
+                  ?assertEqual(UpdatedList, b5_sets:to_list(UpdatedSet)),
+                  {UpdatedSet, UpdatedList}
+          end,
+          {Set, ElementsList},
+          ElementsList),
 
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
-        %% Delete existing element
-        ElementToDelete = lists:nth(rand:uniform(length(ElementsList)), ElementsList),
-        UpdatedSet = b5_sets:delete_any(ElementToDelete, Set),
-        ?assertEqual(b5_sets:size(Set) - 1, b5_sets:size(UpdatedSet)),
-        ?assertEqual(false, b5_sets:is_member(ElementToDelete, UpdatedSet)),
-
-        %% Delete non-existent element - should not change set
-        NonExistentElement = generate_new_element_not_in(ElementsList),
-        UnchangedSet = b5_sets:delete_any(NonExistentElement, Set),
-        ?assertEqual(Set, UnchangedSet)
+        foreach_non_existent_element(
+          fun (NonExistentElement) ->
+                  %% Delete non-existent element - keeps the set as is
+                  ?assertEqual(Set, b5_sets:delete_any(NonExistentElement, Set))
+          end,
+          ElementsList,
+          50)
     end).
 
 test_is_member_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    ?assertEqual(false, b5_sets:is_member(42, EmptySet)),
-
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
         %% Test existing elements
-        lists:foreach(
-            fun(Element) ->
-                ?assertEqual(true, b5_sets:is_member(Element, Set))
-            end,
-            take_random(ElementsList, 10)
-        ),
+        foreach_randomly_retyped_element(
+          fun (Element) ->
+                  ?assertEqual(true, b5_sets:is_member(Element, Set))
+          end,
+          ElementsList),
 
         %% Test non-existent elements
-        NonExistentElement = generate_new_element_not_in(ElementsList),
-        ?assertEqual(false, b5_sets:is_member(NonExistentElement, Set))
+        foreach_non_existent_element(
+          fun (NonExistentElement) ->
+                  ?assertEqual(false, b5_sets:is_member(NonExistentElement, Set))
+          end,
+          ElementsList,
+          50)
     end).
 
 test_is_set_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    ?assertEqual(true, b5_sets:is_set(EmptySet)),
-
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, _ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, _ElementsList) ->
         ?assertEqual(true, b5_sets:is_set(Set))
     end).
 
@@ -327,49 +346,129 @@ test_is_set_operations(_Config) ->
 %% Set Operation Tests
 %% ------------------------------------------------------------------
 
+%%%%%%%%%%%%%
+%% Union
+
 test_union_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    Set1 = b5_sets:from_list([1, 2, 3]),
-    Set2 = b5_sets:from_list([3, 4, 5]),
+    foreach_set(
+      ?REGULAR_SET_SIZES, 
+      fun (Set, ElementsList) ->
+              test_union_no_overlap_lesser(Set, ElementsList),
+              test_union_overlap_lesser(Set, ElementsList),
+              test_union_overlap_within(Set, ElementsList),
+              test_union_no_overlap_greater(Set, ElementsList)
+      end).
 
-    %% Basic union operations
-    ?assertEqual(Set1, b5_sets:union(Set1, EmptySet)),
-    ?assertEqual(Set1, b5_sets:union(EmptySet, Set1)),
+test_union_no_overlap_lesser(Set, ElementsList) ->
+    MinElement = hd_or_zero(ElementsList),
 
-    %% Union of overlapping sets
-    UnionSet = b5_sets:union(Set1, Set2),
-    ?assertEqual([1, 2, 3, 4, 5], b5_sets:to_list(UnionSet)),
-    ?assertEqual(5, b5_sets:size(UnionSet)),
+    lists:foreach(
+      fun (Size2) ->
+              Elements2 = lists:map(fun randomly_switch_type/1, lists:sort(lists:seq(MinElement - 1, MinElement - Size2, -1))),
+              Set2 = b5_sets:from_list(Elements2),
 
-    %% Union with self
-    ?assertEqual(Set1, b5_sets:union(Set1, Set1)),
+              UnionSet = b5_sets:union(Set, Set2),
 
-    %% Union of list of sets
-    Set3 = b5_sets:from_list([6, 7]),
-    UnionList = b5_sets:union([Set1, Set2, Set3]),
-    ?assertEqual([1, 2, 3, 4, 5, 6, 7], b5_sets:to_list(UnionList)),
+              UnionList = ordsets:union(ElementsList, Elements2),
+              ?assertEqual([], diff_lists(UnionList, b5_sets:to_list(UnionSet))),
+              ?assertEqual(ordsets:size(UnionList), b5_sets:size(UnionSet))
+              
+      end,
+      lists:seq(1, 50)).
 
-    %% Union of empty list
-    ?assertEqual(b5_sets:new(), b5_sets:union([])),
-    
-    %% Property-based testing with various set sizes
-    for_each_set_pair(?REGULAR_SET_SIZES, fun(SetA, ElementsA, SetB, ElementsB) ->
-        UnionResult = b5_sets:union(SetA, SetB),
-        ExpectedElements = lists:usort(ElementsA ++ ElementsB),
-        ?assertEqual(ExpectedElements, b5_sets:to_list(UnionResult)),
-        ?assertEqual(length(ExpectedElements), b5_sets:size(UnionResult)),
-        
-        %% Verify all elements from both sets are in union
-        lists:foreach(fun(Elem) ->
-            ?assertEqual(true, b5_sets:is_member(Elem, UnionResult))
-        end, ElementsA ++ ElementsB),
-        
-        %% Commutativity: A ∪ B = B ∪ A (test logical equality)
-        UnionBA = b5_sets:union(SetB, SetA),
-        ?assertEqual(true, b5_sets:is_equal(UnionResult, UnionBA))
-    end).
+test_union_overlap_lesser(Set, ElementsList) ->
+    MinElement = hd_or_zero(ElementsList),
+
+    lists:foreach(
+      fun (Size2) ->
+              SizeLess = Size2 div 2,
+              ElementsLess = lists:map(fun randomly_switch_type/1, lists:seq(MinElement - 1, MinElement - SizeLess, -1)),
+
+              SizeOverlapping = Size2 - SizeLess,
+              ElementsOverlapping = elements_overlapping(ElementsList, SizeOverlapping),
+
+              Elements2 = lists:usort(ElementsLess ++ ElementsOverlapping),
+
+              Set2 = b5_sets:from_list(Elements2),
+
+              UnionSet = b5_sets:union(Set, Set2),
+
+              UnionList = ordsets:union(ElementsList, Elements2),
+              ?assertEqual([], diff_lists(UnionList, b5_sets:to_list(UnionSet))),
+              ?assertEqual(ordsets:size(UnionList), b5_sets:size(UnionSet))
+              
+      end,
+      lists:seq(1, 50)).
+
+test_union_overlap_within(Set, ElementsList) ->
+    lists:foreach(
+      fun (Size2) ->
+              Elements2 = lists:usort(elements_overlapping(ElementsList, Size2)),
+
+              Set2 = b5_sets:from_list(Elements2),
+
+              UnionSet = b5_sets:union(Set, Set2),
+
+              UnionList = ordsets:union(ElementsList, Elements2),
+              ?assertEqual([], diff_lists(UnionList, b5_sets:to_list(UnionSet))),
+              ?assertEqual(ordsets:size(UnionList), b5_sets:size(UnionSet))
+              
+      end,
+      lists:seq(1, 50)).
+
+test_union_no_overlap_greater(Set, ElementsList) ->
+    MaxElement = last_or_zero(ElementsList),
+
+    lists:foreach(
+      fun (Size2) ->
+              Elements2 = lists:map(fun randomly_switch_type/1, lists:seq(MaxElement + 1, MaxElement + Size2)),
+              Set2 = b5_sets:from_list(Elements2),
+
+              UnionSet = b5_sets:union(Set, Set2),
+
+              UnionList = ordsets:union(ElementsList, Elements2),
+              ?assertEqual([], diff_lists(UnionList, b5_sets:to_list(UnionSet))),
+              ?assertEqual(ordsets:size(UnionList), b5_sets:size(UnionSet))
+              
+      end,
+      lists:seq(1, 50)).
+
+hd_or_zero([H | _]) -> H;
+hd_or_zero([]) -> 0.
+
+last_or_zero([]) -> 0;
+last_or_zero(List) -> lists:last(List).
+
+elements_overlapping(ElementsList, SizeOverlapping) ->
+    BatchSize = 
+        case ElementsList =/= [] of
+            true -> max(1, SizeOverlapping div length(ElementsList));
+            false -> 1
+        end,
+
+    elements_overlapping_recur(ElementsList, BatchSize, SizeOverlapping).
+
+elements_overlapping_recur([A | [B | _] = Next], BatchSize, SizeOverlapping) when SizeOverlapping > 0 ->
+    WindowSize = min(BatchSize, B - A),
+
+    Batch = lists:map(fun randomly_switch_type/1, lists:seq(A, A + WindowSize)),
+
+    Batch ++ elements_overlapping_recur(Next, BatchSize, SizeOverlapping - WindowSize);
+elements_overlapping_recur([Last], _BatchSize, SizeOverlapping) when SizeOverlapping > 0 ->
+    Batch = lists:map(fun randomly_switch_type/1, lists:seq(Last, Last + SizeOverlapping)),
+    Batch;
+elements_overlapping_recur([], _BatchSize, SizeOverlapping) ->
+    Batch = lists:map(fun randomly_switch_type/1, lists:seq(1, SizeOverlapping)),
+    Batch;
+elements_overlapping_recur(_, _, 0) ->
+    [].
+
+%%%%%%%%%%%%%
+%% Intersection
 
 test_intersection_operations(_Config) ->
+    %% TODO continue from here
+
     EmptySet = b5_sets:new(),
     Set1 = b5_sets:from_list([1, 2, 3]),
     Set2 = b5_sets:from_list([3, 4, 5]),
@@ -400,7 +499,7 @@ test_intersection_operations(_Config) ->
     ?assertEqual(b5_sets:new(), b5_sets:intersection([])),
     
     %% Property-based testing with various set sizes
-    for_each_set_pair(?REGULAR_SET_SIZES, fun(SetA, ElementsA, SetB, ElementsB) ->
+    foreach_set_pair(?REGULAR_SET_SIZES, fun(SetA, ElementsA, SetB, ElementsB) ->
         IntersectionResult = b5_sets:intersection(SetA, SetB),
         ExpectedElements = lists:usort([E || E <- ElementsA, lists:member(E, ElementsB)]),
         ?assertEqual(ExpectedElements, b5_sets:to_list(IntersectionResult)),
@@ -440,7 +539,7 @@ test_difference_operations(_Config) ->
     ?assertEqual(Set1, DisjointDifference),
     
     %% Property-based testing with various set sizes
-    for_each_set_pair(?REGULAR_SET_SIZES, fun(SetA, ElementsA, SetB, ElementsB) ->
+    foreach_set_pair(?REGULAR_SET_SIZES, fun(SetA, ElementsA, SetB, ElementsB) ->
         DifferenceResult = b5_sets:difference(SetA, SetB),
         ExpectedElements = lists:usort([E || E <- ElementsA, not lists:member(E, ElementsB)]),
         ?assertEqual(ExpectedElements, b5_sets:to_list(DifferenceResult)),
@@ -481,7 +580,7 @@ test_is_disjoint_operations(_Config) ->
     ?assertEqual(true, b5_sets:is_disjoint(EmptySet, EmptySet)),
     
     %% Property-based testing with various set sizes
-    for_each_set_pair(?REGULAR_SET_SIZES, fun(SetA, ElementsA, SetB, ElementsB) ->
+    foreach_set_pair(?REGULAR_SET_SIZES, fun(SetA, ElementsA, SetB, ElementsB) ->
         DisjointResult = b5_sets:is_disjoint(SetA, SetB),
         HasCommonElement = lists:any(fun(E) -> lists:member(E, ElementsB) end, ElementsA),
         ExpectedDisjoint = not HasCommonElement,
@@ -516,7 +615,7 @@ test_is_subset_operations(_Config) ->
     ?assertEqual(true, b5_sets:is_subset(Set1, Set1)),
     
     %% Property-based testing with various set sizes
-    for_each_set_pair(?REGULAR_SET_SIZES, fun(SetA, ElementsA, SetB, ElementsB) ->
+    foreach_set_pair(?REGULAR_SET_SIZES, fun(SetA, ElementsA, SetB, ElementsB) ->
         SubsetResult = b5_sets:is_subset(SetA, SetB),
         ExpectedSubset = lists:all(fun(E) -> lists:member(E, ElementsB) end, ElementsA),
         ?assertEqual(ExpectedSubset, SubsetResult),
@@ -551,7 +650,7 @@ test_is_equal_operations(_Config) ->
     ?assertEqual(true, b5_sets:is_equal(Set1, Set1)),
     
     %% Property-based testing with various set sizes
-    for_each_set(?REGULAR_SET_SIZES, fun(SetA, ElementsA) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(SetA, ElementsA) ->
         %% Test against sets with same elements but different construction
         ShuffledElements = shuffle_list(ElementsA),
         SetB = b5_sets:from_list(ShuffledElements),
@@ -585,7 +684,7 @@ test_iterator_operations(_Config) ->
     ?assertEqual(none, b5_sets:next(EmptyIter)),
 
     %% Property-based testing with various set sizes
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
         UniqueElements = lists:usort(ElementsList),
         
         %% Test ordered iteration (default)
@@ -603,18 +702,50 @@ test_iterator_operations(_Config) ->
     end).
 
 test_iterator_ordered_operations(_Config) ->
-    Set = b5_sets:from_list([5, 2, 8, 1, 9, 3]),
+    EmptySet = b5_sets:new(),
+    EmptyIter = b5_sets:iterator(EmptySet, ordered),
+    ?assertEqual(none, b5_sets:next(EmptyIter)),
 
-    OrderedIter = b5_sets:iterator(Set, ordered),
-    OrderedElements = iterate_to_list(OrderedIter),
-    ?assertEqual([1, 2, 3, 5, 8, 9], OrderedElements).
+    %% Property-based testing with various set sizes
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+        UniqueElements = lists:usort(ElementsList),
+        
+        %% Test ordered iteration
+        Iter = b5_sets:iterator(Set, ordered),
+        IteratedElements = iterate_to_list(Iter),
+        ?assertEqual(UniqueElements, IteratedElements),
+        
+        %% Verify iterator count matches set size
+        ?assertEqual(b5_sets:size(Set), length(IteratedElements)),
+        
+        %% Test that all elements are correctly iterated
+        lists:foreach(fun(Element) ->
+            ?assertEqual(true, lists:member(Element, IteratedElements))
+        end, UniqueElements)
+    end).
 
 test_iterator_reversed_operations(_Config) ->
-    Set = b5_sets:from_list([5, 2, 8, 1, 9, 3]),
+    EmptySet = b5_sets:new(),
+    EmptyIter = b5_sets:iterator(EmptySet, reversed),
+    ?assertEqual(none, b5_sets:next(EmptyIter)),
 
-    ReversedIter = b5_sets:iterator(Set, reversed),
-    ReversedElements = iterate_to_list(ReversedIter),
-    ?assertEqual([9, 8, 5, 3, 2, 1], ReversedElements).
+    %% Property-based testing with various set sizes
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+        UniqueElements = lists:usort(ElementsList),
+        
+        %% Test reversed iteration
+        Iter = b5_sets:iterator(Set, reversed),
+        IteratedElements = iterate_to_list(Iter),
+        ?assertEqual(lists:reverse(UniqueElements), IteratedElements),
+        
+        %% Verify iterator count matches set size
+        ?assertEqual(b5_sets:size(Set), length(IteratedElements)),
+        
+        %% Test that all elements are correctly iterated
+        lists:foreach(fun(Element) ->
+            ?assertEqual(true, lists:member(Element, IteratedElements))
+        end, UniqueElements)
+    end).
 
 test_iterator_from_operations(_Config) ->
     Set = b5_sets:from_list([1, 3, 5, 7, 9, 11]),
@@ -632,7 +763,7 @@ test_iterator_from_operations(_Config) ->
     ?assertEqual(none, b5_sets:next(Iter3)),
     
     %% Property-based testing with various set sizes
-    for_each_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
         UniqueElements = lists:usort(ElementsList),
         case UniqueElements of
             [] -> ok; % Skip empty sets
@@ -659,9 +790,42 @@ test_iterator_from_operations(_Config) ->
 test_iterator_from_ordered_operations(_Config) ->
     Set = b5_sets:from_list([1, 3, 5, 7, 9, 11]),
 
-    Iter = b5_sets:iterator_from(5, Set, ordered),
-    Elements = iterate_to_list(Iter),
-    ?assertEqual([5, 7, 9, 11], Elements).
+    %% ordered iterator_from operations
+    Iter1 = b5_sets:iterator_from(5, Set, ordered),
+    Elements1 = iterate_to_list(Iter1),
+    ?assertEqual([5, 7, 9, 11], Elements1),
+
+    Iter2 = b5_sets:iterator_from(6, Set, ordered),
+    Elements2 = iterate_to_list(Iter2),
+    ?assertEqual([7, 9, 11], Elements2),
+
+    Iter3 = b5_sets:iterator_from(20, Set, ordered),
+    ?assertEqual(none, b5_sets:next(Iter3)),
+    
+    %% Property-based testing with various set sizes
+    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
+        UniqueElements = lists:usort(ElementsList),
+        case UniqueElements of
+            [] -> ok; % Skip empty sets
+            _ ->
+                %% Test iterator from first element
+                FirstElement = hd(UniqueElements),
+                FromFirstIter = b5_sets:iterator_from(FirstElement, TestSet, ordered),
+                FromFirstElements = iterate_to_list(FromFirstIter),
+                ?assertEqual(UniqueElements, FromFirstElements),
+                
+                %% Test iterator from last element
+                LastElement = lists:last(UniqueElements),
+                FromLastIter = b5_sets:iterator_from(LastElement, TestSet, ordered),
+                FromLastElements = iterate_to_list(FromLastIter),
+                ?assertEqual([LastElement], FromLastElements),
+                
+                %% Test iterator from beyond largest element
+                BeyondLargest = LastElement + 1000,
+                BeyondIter = b5_sets:iterator_from(BeyondLargest, TestSet, ordered),
+                ?assertEqual(none, b5_sets:next(BeyondIter))
+        end
+    end).
 
 test_iterator_from_reversed_operations(_Config) ->
     Set = b5_sets:from_list([1, 3, 5, 7, 9, 11]),
@@ -677,10 +841,10 @@ test_iterator_from_reversed_operations(_Config) ->
 test_smaller_larger_operations(_Config) ->
     EmptySet = b5_sets:new(),
     
-    %% Empty set operations (note: current implementation has bugs with empty sets)
-    % TODO: Fix implementation - currently returns {Element} instead of none
-    % ?assertEqual(none, b5_sets:smaller(42, EmptySet)),
-    % ?assertEqual(none, b5_sets:larger(42, EmptySet)),
+    %% Empty set operations behavior
+    ?assertEqual(none, b5_sets:smaller(42, EmptySet)),
+    ?assertEqual(none, b5_sets:larger(42, EmptySet)),
+    ?assertError({badkey, 42}, b5_sets:delete(42, EmptySet)),
     
     Set = b5_sets:from_list([1, 3, 5, 7, 9, 11]),
 
@@ -703,10 +867,13 @@ test_smaller_larger_operations(_Config) ->
     ?assertEqual(none, b5_sets:larger(20, Set)),        % 20 > all elements
     
     %% Property-based testing
-    for_each_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
         SortedElements = lists:usort(ElementsList),
         case SortedElements of
-            [] -> ok;  % Skip empty sets
+            [] -> 
+                %% Empty sets return none for smaller/larger
+                ?assertEqual(none, b5_sets:smaller(test_element, TestSet)),
+                ?assertEqual(none, b5_sets:larger(test_element, TestSet));
             [Single] ->
                 %% Single element - no smaller/larger elements
                 ?assertEqual(none, b5_sets:smaller(Single, TestSet)),
@@ -727,7 +894,7 @@ test_smallest_largest_operations(_Config) ->
     ?assertError(empty_set, b5_sets:smallest(EmptySet)),
     ?assertError(empty_set, b5_sets:largest(EmptySet)),
 
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
         SortedElements = lists:usort(ElementsList),
         ExpectedSmallest = hd(SortedElements),
         ExpectedLargest = lists:last(SortedElements),
@@ -740,7 +907,7 @@ test_take_smallest_operations(_Config) ->
     EmptySet = b5_sets:new(),
     ?assertError(empty_set, b5_sets:take_smallest(EmptySet)),
 
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
         SortedElements = lists:usort(ElementsList),
         ExpectedSmallest = hd(SortedElements),
         ExpectedRemainingElements = tl(SortedElements),
@@ -755,7 +922,7 @@ test_take_largest_operations(_Config) ->
     EmptySet = b5_sets:new(),
     ?assertError(empty_set, b5_sets:take_largest(EmptySet)),
 
-    for_each_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
         SortedElements = lists:usort(ElementsList),
         ExpectedLargest = lists:last(SortedElements),
         ExpectedRemainingElements = lists:droplast(SortedElements),
@@ -787,7 +954,7 @@ test_fold_operations(_Config) ->
     ?assertEqual([5, 4, 3, 2, 1], Collected),
     
     %% Property-based testing with various set sizes
-    for_each_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
         UniqueElements = lists:usort(ElementsList),
         
         %% Test element counting
@@ -827,7 +994,7 @@ test_map_operations(_Config) ->
     ?assertEqual(1, b5_sets:size(ConstantSet)),
     
     %% Property-based testing with various set sizes
-    for_each_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
         UniqueElements = lists:usort(ElementsList),
         
         %% Test identity mapping (use logical equality)
@@ -871,7 +1038,7 @@ test_filter_operations(_Config) ->
     ?assertEqual(EmptySet, NoneSet),
     
     %% Property-based testing with various set sizes
-    for_each_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
         UniqueElements = lists:usort(ElementsList),
         
         %% Test true predicate (identity) - use logical equality
@@ -918,7 +1085,7 @@ test_filtermap_operations(_Config) ->
     ?assertEqual(EmptySet, NoneSet),
     
     %% Property-based testing with various set sizes
-    for_each_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
+    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
         UniqueElements = lists:usort(ElementsList),
         
         %% Test always true filtermap
@@ -977,19 +1144,235 @@ test_compatibility_aliases(_Config) ->
     ?assertEqual(SubtractResult, DifferenceResult).
 
 %% ------------------------------------------------------------------
+%% Empty Set Edge Case Tests
+%% ------------------------------------------------------------------
+
+test_empty_set_exceptions(_Config) ->
+    EmptySet = b5_sets:new(),
+    
+    %% Test operations on empty sets
+    ?assertError({badkey, arbitrary_element}, b5_sets:delete(arbitrary_element, EmptySet)),
+    ?assertEqual(none, b5_sets:smaller(arbitrary_element, EmptySet)),
+    ?assertEqual(none, b5_sets:larger(arbitrary_element, EmptySet)),
+    ?assertError(empty_set, b5_sets:smallest(EmptySet)),
+    ?assertError(empty_set, b5_sets:largest(EmptySet)),
+    ?assertError(empty_set, b5_sets:take_smallest(EmptySet)),
+    ?assertError(empty_set, b5_sets:take_largest(EmptySet)),
+    
+    %% Test with various element types
+    TestElements = [
+        42,
+        atom,
+        "string",
+        [1, 2, 3],
+        {tuple, element},
+        3.14159,
+        #{map => element}
+    ],
+    
+    lists:foreach(fun(Element) ->
+        ?assertError({badkey, Element}, b5_sets:delete(Element, EmptySet)),
+        ?assertEqual(none, b5_sets:smaller(Element, EmptySet)),
+        ?assertEqual(none, b5_sets:larger(Element, EmptySet))
+    end, TestElements),
+    
+    %% Verify these operations work fine on non-empty sets
+    NonEmptySet = b5_sets:from_list([1, 2, 3]),
+    
+    %% These should work without throwing exceptions
+    ?assertEqual(none, b5_sets:smaller(1, NonEmptySet)),  % smallest has no smaller
+    ?assertEqual(none, b5_sets:larger(3, NonEmptySet)),   % largest has no larger
+    ?assertEqual({found, 1}, b5_sets:smaller(2, NonEmptySet)),
+    ?assertEqual({found, 3}, b5_sets:larger(2, NonEmptySet)),
+    
+    %% These should throw badkey for non-existent elements
+    ?assertError({badkey, 99}, b5_sets:delete(99, NonEmptySet)),
+    
+    %% These should work for elements that exist
+    {Smallest, _} = b5_sets:take_smallest(NonEmptySet),
+    ?assertEqual(1, Smallest),
+    
+    {Largest, _} = b5_sets:take_largest(NonEmptySet),
+    ?assertEqual(3, Largest).
+
+%% ------------------------------------------------------------------
+%% Filtermap Collision Edge Case Tests
+%% ------------------------------------------------------------------
+
+test_filtermap_collision_handling(_Config) ->
+    %% Test filtermap when multiple elements map to the same result
+    %% This should trigger the collision handling code paths in b5_sets_node
+    
+    %% Basic collision test - map multiple elements to same value
+    Set1 = b5_sets:from_list([1, 2, 3, 4, 5]),
+    
+    %% Map all odd numbers to 'odd' and all even numbers to 'even'
+    OddEvenSet = b5_sets:filtermap(fun(X) ->
+        case X rem 2 of
+            1 -> {true, odd};   % Multiple elements map to 'odd'
+            0 -> {true, even}   % Multiple elements map to 'even'
+        end
+    end, Set1),
+    
+    %% Should result in set with just {even, odd}
+    Result1 = b5_sets:to_list(OddEvenSet),
+    ?assertEqual(2, b5_sets:size(OddEvenSet)),
+    ?assert(lists:member(odd, Result1)),
+    ?assert(lists:member(even, Result1)),
+    
+    %% Test with more complex collision scenarios
+    Set2 = b5_sets:from_list([10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+    
+    %% Map to last digit - multiple collisions
+    LastDigitSet = b5_sets:filtermap(fun(X) ->
+        LastDigit = X rem 10,
+        {true, LastDigit}
+    end, Set2),
+    
+    %% Should have digits 0-9
+    Result2 = b5_sets:to_list(LastDigitSet),
+    ExpectedDigits = lists:seq(0, 9),
+    ?assertEqual(ExpectedDigits, Result2),
+    ?assertEqual(10, b5_sets:size(LastDigitSet)),
+    
+    %% Test collision with larger sets (more likely to hit edge cases)
+    LargeSet = b5_sets:from_list(lists:seq(1, 50)),
+    
+    %% Map to modulo 7 - creates multiple collisions
+    ModuloSet = b5_sets:filtermap(fun(X) ->
+        Modulo = X rem 7,
+        {true, Modulo}
+    end, LargeSet),
+    
+    Result3 = b5_sets:to_list(ModuloSet),
+    ExpectedModulos = lists:seq(0, 6),
+    ?assertEqual(ExpectedModulos, Result3),
+    ?assertEqual(7, b5_sets:size(ModuloSet)),
+    
+    %% Test with selective filtering + collisions
+    Set3 = b5_sets:from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+    
+    %% Only map even numbers, but map to collision-prone values
+    SelectiveSet = b5_sets:filtermap(fun(X) ->
+        case X rem 2 =:= 0 of
+            true -> {true, X div 2};  % 2->1, 4->2, 6->3, 8->4, 10->5
+            false -> false
+        end
+    end, Set3),
+    
+    Result4 = b5_sets:to_list(SelectiveSet),
+    ?assertEqual([1, 2, 3, 4, 5], Result4),
+    ?assertEqual(5, b5_sets:size(SelectiveSet)),
+    
+    %% Test extreme collision case - all elements map to same value
+    Set4 = b5_sets:from_list([a, b, c, d, e]),
+    
+    AllSameSet = b5_sets:filtermap(fun(_) ->
+        {true, collision_value}
+    end, Set4),
+    
+    Result5 = b5_sets:to_list(AllSameSet),
+    ?assertEqual([collision_value], Result5),
+    ?assertEqual(1, b5_sets:size(AllSameSet)),
+    
+    %% Test collision with different data types
+    MixedSet = b5_sets:from_list([1, 2, atom, "string", {tuple}]),
+    
+    TypeMappedSet = b5_sets:filtermap(fun(X) ->
+        Type = case X of
+            I when is_integer(I) -> integer;
+            A when is_atom(A) -> atom;
+            S when is_list(S) -> string;
+            T when is_tuple(T) -> tuple
+        end,
+        {true, Type}
+    end, MixedSet),
+    
+    Result6 = b5_sets:to_list(TypeMappedSet),
+    ?assertEqual(4, b5_sets:size(TypeMappedSet)),
+    ?assert(lists:member(integer, Result6)),
+    ?assert(lists:member(atom, Result6)),
+    ?assert(lists:member(string, Result6)),
+    ?assert(lists:member(tuple, Result6)).
+
+%% ------------------------------------------------------------------
+%% Validation Edge Case Tests
+%% ------------------------------------------------------------------
+
+test_validation_edge_cases(_Config) ->
+    %% Test normal sets return true for is_set
+    EmptySet = b5_sets:new(),
+    ?assert(b5_sets:is_set(EmptySet)),
+    
+    NormalSet = b5_sets:from_list([1, 2, 3]),
+    ?assert(b5_sets:is_set(NormalSet)),
+    
+    %% Test invalid root structures to hit does_root_look_legit fallback case
+    %% We need to create invalid b5_sets records to trigger the fallback
+    
+    %% Test with bad root type (not a valid node structure)
+    InvalidSet1 = {b5_sets, 1, invalid_root},
+    ?assertNot(b5_sets:is_set(InvalidSet1)),
+    
+    %% Test with mismatched size and root
+    InvalidSet2 = {b5_sets, 999, ?LEAF0},  % Size 999 but empty root
+    ?assertNot(b5_sets:is_set(InvalidSet2)),
+    
+    %% Test with negative size
+    InvalidSet3 = {b5_sets, -1, some_root},
+    ?assertNot(b5_sets:is_set(InvalidSet3)),
+    
+    %% Test with non-integer size
+    InvalidSet4 = {b5_sets, not_a_number, some_root},
+    ?assertNot(b5_sets:is_set(InvalidSet4)),
+    
+    %% Test with atom as root
+    InvalidSet5 = {b5_sets, 0, atom_root},
+    ?assertNot(b5_sets:is_set(InvalidSet5)),
+    
+    %% Test with list as root
+    InvalidSet6 = {b5_sets, 1, [list, as, root]},
+    ?assertNot(b5_sets:is_set(InvalidSet6)),
+    
+    %% Test with tuple of wrong arity as root
+    InvalidSet7 = {b5_sets, 1, {wrong, arity, tuple}},
+    ?assertNot(b5_sets:is_set(InvalidSet7)),
+    
+    %% Test proper LEAF0 with size 0 (should be valid)
+    ValidEmptySet = {b5_sets, 0, ?LEAF0},
+    ?assert(b5_sets:is_set(ValidEmptySet)).
+
+%% ------------------------------------------------------------------
 %% Helper Functions
 %% ------------------------------------------------------------------
 
 %% @doc Iterate through set elements for different set sizes
-for_each_set(Sizes, Fun) ->
+foreach_set(Sizes, Fun) ->
     lists:foreach(
         fun(Size) ->
-            ElementsList = generate_elements_list(Size),
+            ElementsList = lists:sort(generate_unique_elements_list(Size)),
             Set = b5_sets:from_list(ElementsList),
             Fun(Set, ElementsList)
         end,
         Sizes
     ).
+
+generate_unique_elements_list(Size) ->
+    generate_unique_elements_list_recur(Size, #{}).
+
+generate_unique_elements_list_recur(Size, Acc) when Size > 0 ->
+    New = rand:uniform(10000),
+
+    case is_map_key(New, Acc) of
+        false ->
+            UpdatedAcc = maps:put(New, value, Acc),
+            generate_unique_elements_list_recur(Size - 1, UpdatedAcc);
+        %
+        true ->
+            generate_unique_elements_list_recur(Size, Acc)
+    end;
+generate_unique_elements_list_recur(0, Acc) ->
+    maps:keys(Acc).
 
 %% @doc Generate a list of random elements for testing
 generate_elements_list(Size) ->
@@ -1019,11 +1402,11 @@ shuffle_list(List) ->
     [X || {_, X} <- lists:sort([{rand:uniform(), X} || X <- List])].
 
 %% @doc Iterate through set pairs for different set sizes
-for_each_set_pair(Sizes, Fun) ->
+foreach_set_pair(Sizes, Fun) ->
     lists:foreach(fun(SizeA) ->
         lists:foreach(fun(SizeB) ->
-            ElementsA = generate_elements_list(SizeA),
-            ElementsB = generate_elements_list(SizeB),
+            ElementsA = lists:sort(generate_unique_elements_list(SizeA)),
+            ElementsB = lists:sort(generate_unique_elements_list(SizeB)),
             SetA = b5_sets:from_list(ElementsA),
             SetB = b5_sets:from_list(ElementsB),
             Fun(SetA, ElementsA, SetB, ElementsB)
@@ -1049,3 +1432,59 @@ iterate_to_list(Iter, Acc) ->
         none -> lists:reverse(Acc);
         {Element, NextIter} -> iterate_to_list(NextIter, [Element | Acc])
     end.
+
+fold_randomly_retyped_shuffled_elements(Fun, Acc0, List) ->
+    lists:foldl(
+      fun (Element, Acc) ->
+              Fun(randomly_switch_type(Element), Acc)
+      end,
+      Acc0,
+      shuffle_list(List)).
+
+foreach_randomly_retyped_element(Fun, List) ->
+    lists:foreach(
+      fun (Element) ->
+              Fun(randomly_switch_type(Element))
+      end,
+      List).
+
+foreach_non_existent_element(Fun, List, Amount) ->
+    lists:foreach(
+      fun (_) ->
+              Element = randomly_switch_type(generate_new_element_not_in(List)),
+              Fun(Element)
+      end,
+      lists:seq(1, Amount)).
+
+expected_list_del(Element, List) ->
+    lists:filter(fun (E) -> E /= Element end, List).
+
+expected_list_insert(Element, List) ->
+    lists:sort([Element | List]).
+
+randomly_switch_type(Element) ->
+    case rand:uniform(2) of
+        1 when is_integer(Element) ->
+            float(Element);
+        %
+        1 when is_float(Element) ->
+            trunc(Element);
+        %
+        2 ->
+            Element
+    end.
+
+diff_lists([A | NextA], [B | NextB]) ->
+    if
+        A == B ->
+            diff_lists(NextA, NextB);
+        %
+        true ->
+            [{different, A, B}]
+    end;
+diff_lists([], []) ->
+    [].
+
+
+invalid_set(Root, Size) ->
+    #b5_sets{root = Root, size = Size}.

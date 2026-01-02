@@ -10,7 +10,7 @@
     delete/2,
     delete_any/2,
     difference/2,
-    % empty/0,
+    empty/0,
     filter/2,
     filtermap/2,
     fold/3,
@@ -88,6 +88,9 @@ delete_any(Element, Set) ->
 difference(#b5_sets{size = Size1, root = Root1} = Set1, #b5_sets{root = Root2}) ->
     [RemovedCount | UpdatedRoot1] = b5_sets_node:difference(Root1, Root2),
     Set1#b5_sets{size = Size1 - RemovedCount, root = UpdatedRoot1}.
+
+empty() ->
+    new().
 
 filter(Fun, #b5_sets{root = Root}) ->
     [FilteredSize | FilteredRoot] = b5_sets_node:filter(Fun, Root),
@@ -233,3 +236,5 @@ union_recur(Root1, Size1, [#b5_sets{root = Root2, size = Size2} | Next]) ->
     union_recur(NewRoot, NewSize, Next);
 union_recur(Root, Size, []) ->
     #b5_sets{size = Size, root = Root}.
+
+% TODO test is_set
