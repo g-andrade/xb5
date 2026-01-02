@@ -545,12 +545,12 @@ does_root_look_legit(_, _) ->
 filter(Fun, Root) ->
     Count = 0,
     Filtered = new(),
-    filter_root(Fun, Root, Count, Filtered).
+    filter_root(Fun, Count, Root, Filtered).
 
 filtermap(Fun, Root) ->
     Count = 0,
     Filtered = new(),
-    filtermap_root(Fun, Root, Count, Filtered).
+    filtermap_root(Fun, Count, Root, Filtered).
 
 fold(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
     Acc2 = fold_recur(Fun, Acc, C1),
@@ -587,7 +587,7 @@ intersection(Root1, Root2) ->
         MinElem ->
             IterA = bound_fwd_iterator(MinElem, Root1),
             IterB = bound_fwd_iterator(MinElem, Root2),
-            intersection_recur(IterA, IterB, NewRoot, Count)
+            intersection_recur(IterA, IterB, Count, NewRoot)
     catch
         error:empty_set ->
             [Count | NewRoot]
@@ -1241,7 +1241,7 @@ difference_batch2_E2(E2, Next, MaxElem, Count, Root) ->
 %% Internal Function Definitions: filter/2
 %% ------------------------------------------------------------------
 
-filter_root(Fun, Root, Count, Filtered) ->
+filter_root(Fun, Count, Root, Filtered) ->
     case Root of
         ?INTERNAL1_MATCH_ALL ->
             filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered);
@@ -1387,7 +1387,7 @@ filter_single_element(Fun, E1, Count, Filtered) ->
 %% Internal Function Definitions: filtermap/2
 %% ------------------------------------------------------------------
 
-filtermap_root(Fun, Root, Count, Filtered) ->
+filtermap_root(Fun, Count, Root, Filtered) ->
     case Root of
         ?INTERNAL1_MATCH_ALL ->
             [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
@@ -2253,53 +2253,49 @@ split_leaf(
 %% Internal Function Definitions: intersection/1
 %% ------------------------------------------------------------------
 
-intersection_recur([HeadA | TailA], IterB, Root, Count) ->
-    intersection_iterA(HeadA, TailA, IterB, Root, Count);
-intersection_recur([], _IterB, Root, Count) ->
+intersection_recur([HeadA | TailA], IterB, Count, Root) ->
+    intersection_iterA(HeadA, TailA, IterB, Count, Root);
+intersection_recur([], _IterB, Count, Root) ->
     [Count | Root].
 
 -compile({intersection_iterA/5}).
-intersection_iterA(HeadA, TailA, IterB, Root, Count) ->
+intersection_iterA(HeadA, TailA, IterB, Count, Root) ->
     case HeadA of
         ?ITER_ELEM(ElemA) ->
             NextA = TailA,
-            intersection_iterB(ElemA, NextA, IterB, Root, Count);
+            intersection_iterB(ElemA, NextA, IterB, Count, Root);
         %
         NodeA ->
             [?ITER_ELEM(ElemA) | NextA] = fwd_iterator_recur(NodeA, TailA),
-            intersection_iterB(ElemA, NextA, IterB, Root, Count)
+            intersection_iterB(ElemA, NextA, IterB, Count, Root)
     end.
 
-intersection_iterB(ElemA, NextA, [HeadB | TailB], Root, Count) ->
-    intersection_iterB(ElemA, NextA, HeadB, TailB, Root, Count);
-intersection_iterB(_ElemA, _NextA, [], Root, Count) ->
-    [Count | Root].
-
--compile({intersection_iterB/6}).
-intersection_iterB(ElemA, NextA, HeadB, TailB, Root, Count) ->
+intersection_iterB(ElemA, NextA, [HeadB | TailB], Count, Root) ->
     case HeadB of
         ?ITER_ELEM(ElemB) ->
             NextB = TailB,
-            intersection_intersect(ElemA, NextA, ElemB, NextB, Root, Count);
+            intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root);
         %
         NodeB ->
             [?ITER_ELEM(ElemB) | NextB] = fwd_iterator_recur(NodeB, TailB),
-            intersection_intersect(ElemA, NextA, ElemB, NextB, Root, Count)
-    end.
+            intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root)
+    end;
+intersection_iterB(_ElemA, _NextA, [], Count, Root) ->
+    [Count | Root].
 
 -compile({intersection_intersect/6}).
-intersection_intersect(ElemA, NextA, ElemB, NextB, Root, Count) ->
+intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root) ->
     if
         ElemA < ElemB ->
-            intersection_iterA(ElemB, NextB, NextA, Root, Count);
+            intersection_iterB(ElemB, NextB, NextA, Count, Root);
         %
         ElemA > ElemB ->
-            intersection_iterA(ElemA, NextA, NextB, Root, Count);
+            intersection_iterB(ElemA, NextA, NextB, Count, Root);
         %
         true ->
             UpdatedRoot = insert(ElemA, Root),
             UpdatedCount = Count + 1,
-            intersection_recur(NextA, NextB, UpdatedRoot, UpdatedCount)
+            intersection_recur(NextA, NextB, UpdatedCount, UpdatedRoot)
     end.
 
 %% ------------------------------------------------------------------
@@ -2615,13 +2611,13 @@ fwd_iterator(Root) ->
     Acc = [],
     fwd_iterator_recur(Root, Acc).
 
-fwd_iterator_recur(?LEAF2_MATCH(E1, E2), Acc) ->
+fwd_iterator_recur(?LEAF2_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E1), ?ITER_ELEM(E2) | Acc],
     Acc2;
-fwd_iterator_recur(?LEAF3_MATCH(E1, E2, E3), Acc) ->
+fwd_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
     Acc2;
-fwd_iterator_recur(?LEAF4_MATCH(E1, E2, E3, E4), Acc) ->
+fwd_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
     Acc2;
 fwd_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
@@ -2675,13 +2671,13 @@ rev_iterator(Root) ->
     Acc = [],
     rev_iterator_recur(Root, Acc).
 
-rev_iterator_recur(?LEAF2_MATCH(E1, E2), Acc) ->
+rev_iterator_recur(?LEAF2_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
     Acc2;
-rev_iterator_recur(?LEAF3_MATCH(E1, E2, E3), Acc) ->
+rev_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
     Acc2;
-rev_iterator_recur(?LEAF4_MATCH(E1, E2, E3, E4), Acc) ->
+rev_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E4), ?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
     Acc2;
 rev_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
