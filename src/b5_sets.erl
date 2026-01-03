@@ -141,7 +141,9 @@ is_member(Element, #b5_sets{root = Root}) ->
     b5_sets_node:is_member(Element, Root).
 
 is_set(#b5_sets{size = Size, root = Root}) ->
-    b5_sets_node:does_root_look_legit(Root, Size).
+    b5_sets_node:does_root_look_legit(Root, Size);
+is_set(_) ->
+    false.
 
 is_subset(#b5_sets{root = Root1}, #b5_sets{root = Root2}) ->
     b5_sets_node:is_subset(Root1, Root2).
