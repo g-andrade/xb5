@@ -1143,46 +1143,134 @@ difference_recur(?ITER_ELEM(Elem), Next, MaxElem, Count, Root) ->
 difference_recur(Node, Next, MaxElem, Count, Root) ->
     case Node of
         ?LEAF2_MATCH_ALL ->
-            difference_batch2(E1, E2, Next, MaxElem, Count, Root);
+            difference_leaf_batch2(E1, E2, Next, MaxElem, Count, Root);
         %
         ?LEAF3_MATCH_ALL ->
-            difference_batch3(E1, E2, E3, Next, MaxElem, Count, Root);
+            difference_leaf_batch3(E1, E2, E3, Next, MaxElem, Count, Root);
         %
         ?LEAF4_MATCH_ALL ->
-            difference_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root);
+            difference_leaf_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root);
         %
         ?INTERNAL2_MATCH_ALL ->
-            % TODO optimize batches like in filter/2?
-            [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
-            [Count3 | Root3] = difference_recur(C2, [], MaxElem, Count2, Root2),
-            [Count4 | Root4] = difference_recur(C3, [], MaxElem, Count3, Root3),
-
-            difference_batch2(E1, E2, Next, MaxElem, Count4, Root4);
+            difference_internal_batch2(
+                E1,
+                E2,
+                C1,
+                C2,
+                C3,
+                Next,
+                MaxElem,
+                Count,
+                Root
+            );
         %
         ?INTERNAL3_MATCH_ALL ->
-            % TODO optimize batches like in filter/2?
-            [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
-            [Count3 | Root3] = difference_recur(C2, [], MaxElem, Count2, Root2),
-            [Count4 | Root4] = difference_recur(C3, [], MaxElem, Count3, Root3),
-            [Count5 | Root5] = difference_recur(C4, [], MaxElem, Count4, Root4),
-
-            difference_batch3(E1, E2, E3, Next, MaxElem, Count5, Root5);
+            difference_internal_batch3(
+                E1,
+                E2,
+                E3,
+                C1,
+                C2,
+                C3,
+                C4,
+                Next,
+                MaxElem,
+                Count,
+                Root
+            );
         %
         ?INTERNAL4_MATCH_ALL ->
-            % TODO optimize batches like in filter/2?
-            [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
-            [Count3 | Root3] = difference_recur(C2, [], MaxElem, Count2, Root2),
-            [Count4 | Root4] = difference_recur(C3, [], MaxElem, Count3, Root3),
-            [Count5 | Root5] = difference_recur(C4, [], MaxElem, Count4, Root4),
-            [Count6 | Root6] = difference_recur(C5, [], MaxElem, Count5, Root5),
-
-            difference_batch4(E1, E2, E3, E4, Next, MaxElem, Count6, Root6)
+            difference_internal_batch4(
+                E1,
+                E2,
+                E3,
+                E4,
+                C1,
+                C2,
+                C3,
+                C4,
+                C5,
+                Next,
+                MaxElem,
+                Count,
+                Root
+            )
     end.
 
-%% INTERNAL4 and LEAF4
+%% INTERNAL4
 
--compile({inline, difference_batch4/8}).
-difference_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root) ->
+-compile({inline, difference_internal_batch4/13}).
+difference_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Next, MaxElem, Count, Root) ->
+    % INTERNAL4 + LEAF4 nodes make up about 20% of internal nodes. When we run
+    % into either, it means a node not previously encountered when building the
+    % `iterator_from'.
+    %
+    % Therefore, they're a good period check for MaxElem.
+
+    [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
+
+    try delete(E1, Root2) of
+        Root3 ->
+            difference_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Next, MaxElem, Count2 + 1, Root3)
+    catch
+        error:{badkey, K} when K =:= E1 ->
+            case E1 =< MaxElem of
+                true ->
+                    difference_internal_batch3(
+                        E2, E3, E4, C2, C3, C4, C5, Next, MaxElem, Count2, Root2
+                    );
+                _ ->
+                    % No point in continuing, no more elements can be removed
+                    [Count2 | Root2]
+            end
+    end.
+
+%% INTERNAL3
+
+-compile({inline, difference_internal_batch3/11}).
+difference_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Next, MaxElem, Count, Root) ->
+    [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
+
+    try delete(E1, Root2) of
+        Root3 ->
+            difference_internal_batch2(E2, E3, C2, C3, C4, Next, MaxElem, Count2 + 1, Root3)
+    catch
+        error:{badkey, K} when K =:= E1 ->
+            difference_internal_batch2(E2, E3, C2, C3, C4, Next, MaxElem, Count2, Root2)
+    end.
+
+%% INTERNAL2
+
+-compile({inline, difference_internal_batch2/9}).
+difference_internal_batch2(E1, E2, C1, C2, C3, Next, MaxElem, Count, Root) ->
+    [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
+
+    try delete(E1, Root2) of
+        Root3 ->
+            difference_internal_batch1(E2, C2, C3, Next, MaxElem, Count2 + 1, Root3)
+    catch
+        error:{badkey, K} when K =:= E1 ->
+            difference_internal_batch1(E2, C2, C3, Next, MaxElem, Count2, Root2)
+    end.
+
+%% INTERNAL1
+
+-compile({inline, difference_internal_batch1/7}).
+difference_internal_batch1(E1, C1, C2, Next, MaxElem, Count, Root) ->
+    [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
+
+    try delete(E1, Root2) of
+        Root3 ->
+            difference_recur(C2, Next, MaxElem, Count2 + 1, Root3)
+    catch
+        error:{badkey, K} when K =:= E1 ->
+            difference_recur(C2, Next, MaxElem, Count2, Root2)
+    end.
+
+%% LEAF4
+
+-compile({inline, difference_leaf_batch4/8}).
+difference_leaf_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root) ->
     % INTERNAL4 + LEAF4 nodes make up about 20% of internal nodes. When we run
     % into either, it means a node not previously encountered when building the
     % `iterator_from'.
@@ -1191,44 +1279,44 @@ difference_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root) ->
 
     try delete(E1, Root) of
         UpdatedRoot ->
-            difference_batch3(E2, E3, E4, Next, MaxElem, Count + 1, UpdatedRoot)
+            difference_leaf_batch3(E2, E3, E4, Next, MaxElem, Count + 1, UpdatedRoot)
     catch
         error:{badkey, K} when K =:= E1 ->
             case E1 =< MaxElem of
                 true ->
-                    difference_batch3(E2, E3, E4, Next, MaxElem, Count, Root);
+                    difference_leaf_batch3(E2, E3, E4, Next, MaxElem, Count, Root);
                 _ ->
                     % No point in continuing, no more elements can be removed
                     [Count | Root]
             end
     end.
 
-%% INTERNAL3 and LEAF3
+%% LEAF3
 
--compile({inline, difference_batch3/7}).
-difference_batch3(E1, E2, E3, Next, MaxElem, Count, Root) ->
+-compile({inline, difference_leaf_batch3/7}).
+difference_leaf_batch3(E1, E2, E3, Next, MaxElem, Count, Root) ->
     try delete(E1, Root) of
         UpdatedRoot ->
-            difference_batch2(E2, E3, Next, MaxElem, Count + 1, UpdatedRoot)
+            difference_leaf_batch2(E2, E3, Next, MaxElem, Count + 1, UpdatedRoot)
     catch
         error:{badkey, K} when K =:= E1 ->
-            difference_batch2(E2, E3, Next, MaxElem, Count, Root)
+            difference_leaf_batch2(E2, E3, Next, MaxElem, Count, Root)
     end.
 
-%% INTERNAL2 and LEAF2
+%% LEAF2
 
--compile({inline, difference_batch2/6}).
-difference_batch2(E1, E2, Next, MaxElem, Count, Root) ->
+-compile({inline, difference_leaf_batch2/6}).
+difference_leaf_batch2(E1, E2, Next, MaxElem, Count, Root) ->
     try delete(E1, Root) of
         UpdatedRoot ->
-            difference_batch2_E2(E2, Next, MaxElem, Count + 1, UpdatedRoot)
+            difference_leaf_batch2_E2(E2, Next, MaxElem, Count + 1, UpdatedRoot)
     catch
         error:{badkey, K} when K =:= E1 ->
-            difference_batch2_E2(E2, Next, MaxElem, Count, Root)
+            difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root)
     end.
 
--compile({inline, difference_batch2_E2/5}).
-difference_batch2_E2(E2, Next, MaxElem, Count, Root) ->
+-compile({inline, difference_leaf_batch2_E2/5}).
+difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root) ->
     try delete(E2, Root) of
         UpdatedRoot ->
             difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
