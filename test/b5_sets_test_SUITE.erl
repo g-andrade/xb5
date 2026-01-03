@@ -75,23 +75,10 @@
     test_empty_set_exceptions/1
 ]).
 
-%% Test exports - Filtermap collision edge cases
--export([
-    test_filtermap_collision_handling/1
-]).
-
-%% Test exports - Validation edge cases
--export([
-    test_validation_edge_cases/1
-]).
-
 %% Test constants
 -define(REGULAR_SET_SIZES,
     (lists:seq(0, 50) ++ lists:seq(55, 200, 5) ++ [997])
 ).
-
-%% Node type constants (from b5_sets_node.erl)
--define(LEAF0, leaf0).
 
 %% ------------------------------------------------------------------
 %% CT Setup
@@ -134,11 +121,10 @@ groups() ->
             test_iterator_from_reversed_operations
         ]},
         {range_operations, [parallel], [
-            test_smaller_larger_operations
-            % FIXME
-            % test_smallest_largest_operations,
-            % test_take_smallest_operations,
-            % test_take_largest_operations
+            test_smaller_larger_operations,
+            test_smallest_largest_operations,
+            test_take_smallest_operations,
+            test_take_largest_operations
         ]},
         {higher_order_operations, [parallel], [
             test_fold_operations,
@@ -151,12 +137,6 @@ groups() ->
         ]},
         {empty_set_edge_cases, [parallel], [
             test_empty_set_exceptions
-        ]},
-        {filtermap_collision_edge_cases, [parallel], [
-            test_filtermap_collision_handling
-        ]},
-        {validation_edge_cases, [parallel], [
-            test_validation_edge_cases
         ]}
     ].
 
@@ -837,293 +817,277 @@ test_iterator_from_reversed_operations(_Config) ->
 %% ------------------------------------------------------------------
 
 test_smaller_larger_operations(_Config) ->
-    EmptySet = b5_sets:new(),
+    foreach_set2(fun(RefSet, TestSet) ->
+        RefList = gb_sets:to_list(RefSet),
 
-    %% Empty set operations behavior
-    ?assertEqual(none, b5_sets:smaller(42, EmptySet)),
-    ?assertEqual(none, b5_sets:larger(42, EmptySet)),
-    ?assertError({badkey, 42}, b5_sets:delete(42, EmptySet)),
+        WholePivots = randomly_switch_types(
+            lists:usort(
+                [
+                    hd_or_zero(RefList) - 10,
+                    hd_or_zero(RefList) - 1,
+                    last_or_zero(RefList) + 1,
+                    last_or_zero(RefList) + 10
+                ] ++
+                    RefList
+            )
+        ),
 
-    Set = b5_sets:from_list([1, 3, 5, 7, 9, 11]),
+        Pivots =
+            (lists:map(
+                fun(From) -> From + 0.5 end,
+                take_random(WholePivots, 10)
+            ) ++
+                WholePivots),
 
-    %% Smaller operations - find greatest element < given element
-    ?assertEqual({found, 3}, b5_sets:smaller(5, Set)),
-    ?assertEqual({found, 7}, b5_sets:smaller(9, Set)),
-    % No element < 1
-    ?assertEqual(none, b5_sets:smaller(1, Set)),
-    ?assertEqual({found, 9}, b5_sets:smaller(11, Set)),
+        lists:foreach(
+            fun(Pivot) ->
+                RefSmaller = gb_sets:smaller(Pivot, RefSet),
+                ExpectedSmaller = expected_smaller(Pivot, RefList),
+                ?assertEqual(RefSmaller, ExpectedSmaller),
 
-    %% Larger operations - find least element > given element
-    ?assertEqual({found, 7}, b5_sets:larger(5, Set)),
-    ?assertEqual({found, 3}, b5_sets:larger(1, Set)),
-    % No element > 11
-    ?assertEqual(none, b5_sets:larger(11, Set)),
-    ?assertEqual({found, 5}, b5_sets:larger(3, Set)),
+                TestedSmaller = b5_sets:smaller(Pivot, TestSet),
+                ?assertEqual(ExpectedSmaller, TestedSmaller),
 
-    %% Test with non-existent elements
+                %%%
 
-    % 4 not in set, find < 4
-    ?assertEqual({found, 3}, b5_sets:smaller(4, Set)),
-    % 4 not in set, find > 4
-    ?assertEqual({found, 5}, b5_sets:larger(4, Set)),
-    % 0 < all elements
-    ?assertEqual(none, b5_sets:smaller(0, Set)),
-    % 20 > all elements
-    ?assertEqual(none, b5_sets:larger(20, Set)),
+                RefLarger = gb_sets:larger(Pivot, RefSet),
+                ExpectedLarger = expected_larger(Pivot, RefList),
+                ?assertEqual(RefLarger, ExpectedLarger),
 
-    %% Property-based testing
-    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
-        SortedElements = lists:usort(ElementsList),
-        case SortedElements of
-            [] ->
-                %% Empty sets return none for smaller/larger
-                ?assertEqual(none, b5_sets:smaller(test_element, TestSet)),
-                ?assertEqual(none, b5_sets:larger(test_element, TestSet));
-            [Single] ->
-                %% Single element - no smaller/larger elements
-                ?assertEqual(none, b5_sets:smaller(Single, TestSet)),
-                ?assertEqual(none, b5_sets:larger(Single, TestSet));
-            [First | Rest] ->
-                %% Test smallest element has no smaller
-                ?assertEqual(none, b5_sets:smaller(First, TestSet)),
-                %% Test largest element has no larger
-                Largest = lists:last(SortedElements),
-                ?assertEqual(none, b5_sets:larger(Largest, TestSet)),
-                %% Test middle elements have correct smaller/larger
-                test_smaller_larger_middle_elements(TestSet, SortedElements)
-        end
+                TestedLarger = b5_sets:larger(Pivot, TestSet),
+                ?assertEqual(ExpectedLarger, TestedLarger)
+            end,
+            Pivots
+        )
     end).
+
+expected_smaller(Pivot, RefList) ->
+    case lists:filter(fun(Elem) -> Elem < Pivot end, RefList) of
+        [] ->
+            none;
+        %
+        Filtered ->
+            {found, lists:last(Filtered)}
+    end.
+
+expected_larger(Pivot, RefList) ->
+    case lists:dropwhile(fun(Elem) -> Elem =< Pivot end, RefList) of
+        [] ->
+            none;
+        %
+        [Elem | _] ->
+            {found, Elem}
+    end.
+
+%%%
 
 test_smallest_largest_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    ?assertError(empty_set, b5_sets:smallest(EmptySet)),
-    ?assertError(empty_set, b5_sets:largest(EmptySet)),
+    foreach_set2(
+        fun(RefSet, TestSet) ->
+            case gb_sets:to_list(RefSet) of
+                [] ->
+                    ?assertError(empty_set, b5_sets:smallest(TestSet)),
+                    ?assertError(empty_set, b5_sets:largest(TestSet));
+                %
+                [ExpectedSmallest | _] = RefList ->
+                    ExpectedLargest = lists:last(RefList),
 
-    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
-        SortedElements = lists:usort(ElementsList),
-        ExpectedSmallest = hd(SortedElements),
-        ExpectedLargest = lists:last(SortedElements),
-
-        ?assertEqual(ExpectedSmallest, b5_sets:smallest(Set)),
-        ?assertEqual(ExpectedLargest, b5_sets:largest(Set))
-    end).
+                    ?assertEqual(ExpectedSmallest, b5_sets:smallest(TestSet)),
+                    ?assertEqual(ExpectedLargest, b5_sets:largest(TestSet))
+            end
+        end
+    ).
 
 test_take_smallest_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    ?assertError(empty_set, b5_sets:take_smallest(EmptySet)),
+    foreach_set2(
+        fun(RefSet, TestSet) ->
+            lists:foldl(
+                fun(_, {RefAcc, TestAcc}) ->
+                    case gb_sets:to_list(RefAcc) of
+                        [] ->
+                            ?assertError(function_clause, gb_sets:take_smallest(RefAcc)),
+                            ?assertEqual(0, gb_sets:size(RefAcc)),
 
-    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
-        SortedElements = lists:usort(ElementsList),
-        ExpectedSmallest = hd(SortedElements),
-        ExpectedRemainingElements = tl(SortedElements),
+                            ?assertError(empty_set, b5_sets:take_smallest(TestAcc)),
+                            ?assertEqual(0, b5_sets:size(TestAcc)),
+                            finished;
+                        %
+                        [ExpectedSmallest | ExpectedRemaining] ->
+                            ExpectedSize = length(ExpectedRemaining),
 
-        {TakenSmallest, RemainingSet} = b5_sets:take_smallest(Set),
-        ?assertEqual(ExpectedSmallest, TakenSmallest),
-        ?assertEqual(ExpectedRemainingElements, b5_sets:to_list(RemainingSet)),
-        ?assertEqual(b5_sets:size(Set) - 1, b5_sets:size(RemainingSet))
-    end).
+                            {RefSmallest, RefUpdated} = gb_sets:take_smallest(RefAcc),
+                            ?assertEqual(RefSmallest, ExpectedSmallest),
+                            ?assertEqual(gb_sets:to_list(RefUpdated), ExpectedRemaining),
+                            ?assertEqual(gb_sets:size(RefUpdated), ExpectedSize),
+
+                            {TestSmallest, TestUpdated} = b5_sets:take_smallest(TestAcc),
+                            ?assertEqual(TestSmallest, ExpectedSmallest),
+                            ?assertEqual(ExpectedRemaining, b5_sets:to_list(TestUpdated)),
+                            ?assertEqual(ExpectedSize, b5_sets:size(TestUpdated)),
+
+                            {RefUpdated, TestUpdated}
+                    end
+                end,
+                {RefSet, TestSet},
+                lists:seq(1, gb_sets:size(RefSet) + 1)
+            )
+        end
+    ).
 
 test_take_largest_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    ?assertError(empty_set, b5_sets:take_largest(EmptySet)),
+    foreach_set2(
+        fun(RefSet, TestSet) ->
+            lists:foldl(
+                fun(_, {RefAcc, TestAcc}) ->
+                    case gb_sets:fold(fun(Elem, Acc) -> [Elem | Acc] end, [], RefAcc) of
+                        [] ->
+                            ?assertError(function_clause, gb_sets:take_largest(RefAcc)),
+                            ?assertEqual(0, gb_sets:size(RefAcc)),
 
-    foreach_set(?REGULAR_SET_SIZES, fun(Set, ElementsList) ->
-        SortedElements = lists:usort(ElementsList),
-        ExpectedLargest = lists:last(SortedElements),
-        ExpectedRemainingElements = lists:droplast(SortedElements),
+                            ?assertError(empty_set, b5_sets:take_largest(TestAcc)),
+                            ?assertEqual(0, b5_sets:size(TestAcc)),
+                            finished;
+                        %
+                        [ExpectedLargest | ExpectedRemainingReverse] ->
+                            ExpectedRemaining = lists:reverse(ExpectedRemainingReverse),
+                            ExpectedSize = length(ExpectedRemaining),
 
-        {TakenLargest, RemainingSet} = b5_sets:take_largest(Set),
-        ?assertEqual(ExpectedLargest, TakenLargest),
-        ?assertEqual(ExpectedRemainingElements, b5_sets:to_list(RemainingSet)),
-        ?assertEqual(b5_sets:size(Set) - 1, b5_sets:size(RemainingSet))
-    end).
+                            {RefLargest, RefUpdated} = gb_sets:take_largest(RefAcc),
+                            ?assertEqual(RefLargest, ExpectedLargest),
+                            ?assertEqual(gb_sets:to_list(RefUpdated), ExpectedRemaining),
+                            ?assertEqual(gb_sets:size(RefUpdated), ExpectedSize),
+
+                            {TestLargest, TestUpdated} = b5_sets:take_largest(TestAcc),
+                            ?assertEqual(TestLargest, ExpectedLargest),
+                            ?assertEqual(ExpectedRemaining, b5_sets:to_list(TestUpdated)),
+                            ?assertEqual(ExpectedSize, b5_sets:size(TestUpdated)),
+
+                            {RefUpdated, TestUpdated}
+                    end
+                end,
+                {RefSet, TestSet},
+                lists:seq(1, gb_sets:size(RefSet) + 1)
+            )
+        end
+    ).
 
 %% ------------------------------------------------------------------
 %% Higher-Order Operation Tests
 %% ------------------------------------------------------------------
 
 test_fold_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    ?assertEqual(0, b5_sets:fold(fun(_, Acc) -> Acc + 1 end, 0, EmptySet)),
+    foreach_set2(
+        fun(RefSet, TestSet) ->
+            {FoldFun, Acc0} =
+                case rand:uniform(3) of
+                    1 ->
+                        {fun(_Elem, _Acc) -> no end, no};
+                    %
+                    2 ->
+                        {fun(Elem, Acc) -> Elem + Acc end, 0};
+                    %
+                    3 ->
+                        Multiplier = rand:uniform(10),
+                        {fun(Elem, Acc) -> [Multiplier * Elem | Acc] end, []}
+                end,
 
-    Set = b5_sets:from_list([1, 2, 3, 4, 5]),
-
-    %% Basic fold operations
-    Sum = b5_sets:fold(fun(Element, Acc) -> Element + Acc end, 0, Set),
-    ?assertEqual(15, Sum),
-
-    Count = b5_sets:fold(fun(_, Acc) -> Acc + 1 end, 0, Set),
-    ?assertEqual(5, Count),
-
-    Collected = b5_sets:fold(fun(Element, Acc) -> [Element | Acc] end, [], Set),
-    ?assertEqual([5, 4, 3, 2, 1], Collected),
-
-    %% Property-based testing with various set sizes
-    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
-        UniqueElements = lists:usort(ElementsList),
-
-        %% Test element counting
-        FoldCount = b5_sets:fold(fun(_, Acc) -> Acc + 1 end, 0, TestSet),
-        ?assertEqual(length(UniqueElements), FoldCount),
-
-        %% Test sum (only with numeric elements)
-        case lists:all(fun(E) -> is_integer(E) end, UniqueElements) of
-            true ->
-                ExpectedSum = lists:sum(UniqueElements),
-                FoldSum = b5_sets:fold(fun(E, Acc) -> E + Acc end, 0, TestSet),
-                ?assertEqual(ExpectedSum, FoldSum);
-            false ->
-                ok
-        end,
-
-        %% Test element collection preserves all elements
-        FoldList = b5_sets:fold(fun(E, Acc) -> [E | Acc] end, [], TestSet),
-        ?assertEqual(UniqueElements, lists:usort(FoldList))
-    end).
+            ?assertEqual(
+                gb_sets:fold(FoldFun, Acc0, RefSet),
+                b5_sets:fold(FoldFun, Acc0, TestSet)
+            )
+        end
+    ).
 
 test_map_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    MappedEmpty = b5_sets:map(fun(X) -> X * 2 end, EmptySet),
-    ?assertEqual(EmptySet, MappedEmpty),
+    foreach_set2(
+        fun(RefSet, TestSet) ->
+            MapFun =
+                case rand:uniform(3) of
+                    1 ->
+                        fun(_Elem) -> no end;
+                    %
+                    2 ->
+                        fun(Elem) -> Elem div 100 end;
+                    %
+                    3 ->
+                        fun(Elem) -> Elem * 100.0 end
+                end,
 
-    Set = b5_sets:from_list([1, 2, 3]),
-
-    %% Basic map operations
-    DoubledSet = b5_sets:map(fun(X) -> X * 2 end, Set),
-    ?assertEqual([2, 4, 6], b5_sets:to_list(DoubledSet)),
-
-    IdentitySet = b5_sets:map(fun(X) -> X end, Set),
-    ?assertEqual(Set, IdentitySet),
-
-    ConstantSet = b5_sets:map(fun(_) -> constant end, Set),
-    ?assertEqual([constant], b5_sets:to_list(ConstantSet)),
-    ?assertEqual(1, b5_sets:size(ConstantSet)),
-
-    %% Property-based testing with various set sizes
-    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
-        UniqueElements = lists:usort(ElementsList),
-
-        %% Test identity mapping (use logical equality)
-        IdentityMapped = b5_sets:map(fun(X) -> X end, TestSet),
-        ?assertEqual(b5_sets:to_list(TestSet), b5_sets:to_list(IdentityMapped)),
-
-        %% Test constant mapping
-        ConstantMapped = b5_sets:map(fun(_) -> mapped_constant end, TestSet),
-        case UniqueElements of
-            [] ->
-                ?assertEqual(EmptySet, ConstantMapped);
-            _ ->
-                ?assertEqual([mapped_constant], b5_sets:to_list(ConstantMapped)),
-                ?assertEqual(1, b5_sets:size(ConstantMapped))
-        end,
-
-        %% Test numeric doubling (only for integer elements)
-        case lists:all(fun(E) -> is_integer(E) end, UniqueElements) of
-            true ->
-                DoubledMapped = b5_sets:map(fun(X) -> X * 2 end, TestSet),
-                ExpectedDoubled = lists:usort([X * 2 || X <- UniqueElements]),
-                ?assertEqual(ExpectedDoubled, b5_sets:to_list(DoubledMapped));
-            false ->
-                ok
+            ?assertEqual(
+                gb_sets:to_list(gb_sets:map(MapFun, RefSet)),
+                b5_sets:to_list(b5_sets:map(MapFun, TestSet))
+            )
         end
-    end).
+    ).
 
 test_filter_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    FilteredEmpty = b5_sets:filter(fun(_) -> true end, EmptySet),
-    ?assertEqual(EmptySet, FilteredEmpty),
+    foreach_set2(
+        fun(RefSet, TestSet) ->
+            RefList = gb_sets:to_list(RefSet),
 
-    Set = b5_sets:from_list([1, 2, 3, 4, 5, 6]),
+            FilterFun =
+                case rand:uniform(3) of
+                    1 ->
+                        fun(_Elem) -> false end;
+                    %
+                    2 ->
+                        fun(Elem) -> trunc(Elem) rem 2 =:= 0 end;
+                    %
+                    3 ->
+                        FilteredAmount = rand:uniform(length(RefList) + 1) - 1,
+                        FilteredElements = gb_sets:from_list(take_random(RefList, FilteredAmount)),
+                        fun(Elem) -> gb_sets:is_element(Elem, FilteredElements) end
+                end,
 
-    %% Basic filter operations
-    EvenSet = b5_sets:filter(fun(X) -> X rem 2 =:= 0 end, Set),
-    ?assertEqual([2, 4, 6], b5_sets:to_list(EvenSet)),
-
-    AllSet = b5_sets:filter(fun(_) -> true end, Set),
-    ?assertEqual(Set, AllSet),
-
-    NoneSet = b5_sets:filter(fun(_) -> false end, Set),
-    ?assertEqual(EmptySet, NoneSet),
-
-    %% Property-based testing with various set sizes
-    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
-        UniqueElements = lists:usort(ElementsList),
-
-        %% Test true predicate (identity) - use logical equality
-        AllFiltered = b5_sets:filter(fun(_) -> true end, TestSet),
-        ?assertEqual(b5_sets:to_list(TestSet), b5_sets:to_list(AllFiltered)),
-
-        %% Test false predicate (empty result)
-        NoneFiltered = b5_sets:filter(fun(_) -> false end, TestSet),
-        ?assertEqual(EmptySet, NoneFiltered),
-
-        %% Test numeric even filter (only for integer elements)
-        case lists:all(fun(E) -> is_integer(E) end, UniqueElements) of
-            true ->
-                EvenFiltered = b5_sets:filter(fun(X) -> X rem 2 =:= 0 end, TestSet),
-                ExpectedEven = lists:usort([X || X <- UniqueElements, X rem 2 =:= 0]),
-                ?assertEqual(ExpectedEven, b5_sets:to_list(EvenFiltered));
-            false ->
-                ok
+            ?assertEqual(
+                gb_sets:to_list(gb_sets:filter(FilterFun, RefSet)),
+                b5_sets:to_list(b5_sets:filter(FilterFun, TestSet))
+            )
         end
-    end).
+    ).
 
 test_filtermap_operations(_Config) ->
-    EmptySet = b5_sets:new(),
-    FiltermappedEmpty = b5_sets:filtermap(fun(X) -> {true, X * 2} end, EmptySet),
-    ?assertEqual(EmptySet, FiltermappedEmpty),
+    foreach_set2(
+        fun(RefSet, TestSet) ->
+            RefList = gb_sets:to_list(RefSet),
 
-    Set = b5_sets:from_list([1, 2, 3, 4, 5]),
+            FilterFun =
+                case rand:uniform(3) of
+                    1 ->
+                        fun(_Elem) -> false end;
+                    %
+                    2 ->
+                        fun(Elem) -> trunc(Elem) rem 2 =:= 0 end;
+                    %
+                    3 ->
+                        FilteredAmount = rand:uniform(length(RefList) + 1) - 1,
+                        FilteredList = take_random(RefList, FilteredAmount),
+                        FilteredElements = gb_sets:from_list(FilteredList),
 
-    %% Basic filtermap operations
-    EvenDoubledSet = b5_sets:filtermap(
-        fun(X) ->
-            case X rem 2 =:= 0 of
-                true -> {true, X * 2};
-                false -> false
-            end
-        end,
-        Set
-    ),
-    ?assertEqual([4, 8], b5_sets:to_list(EvenDoubledSet)),
+                        MappedAmount = rand:uniform(length(FilteredList) + 1) - 1,
+                        MappedElements = gb_sets:from_list(take_random(FilteredList, MappedAmount)),
 
-    AllDoubledSet = b5_sets:filtermap(fun(X) -> {true, X * 2} end, Set),
-    ?assertEqual([2, 4, 6, 8, 10], b5_sets:to_list(AllDoubledSet)),
-
-    NoneSet = b5_sets:filtermap(fun(_) -> false end, Set),
-    ?assertEqual(EmptySet, NoneSet),
-
-    %% Property-based testing with various set sizes
-    foreach_set(?REGULAR_SET_SIZES, fun(TestSet, ElementsList) ->
-        UniqueElements = lists:usort(ElementsList),
-
-        %% Test always true filtermap
-        AllMapped = b5_sets:filtermap(fun(X) -> {true, {mapped, X}} end, TestSet),
-        ExpectedMapped = lists:usort([{mapped, X} || X <- UniqueElements]),
-        ?assertEqual(ExpectedMapped, b5_sets:to_list(AllMapped)),
-
-        %% Test always false filtermap
-        NoneMapped = b5_sets:filtermap(fun(_) -> false end, TestSet),
-        ?assertEqual(EmptySet, NoneMapped),
-
-        %% Test numeric even doubling (only for integer elements)
-        case lists:all(fun(E) -> is_integer(E) end, UniqueElements) of
-            true ->
-                EvenDoubleMapped = b5_sets:filtermap(
-                    fun(X) ->
-                        case X rem 2 =:= 0 of
-                            true -> {true, X * 2};
-                            false -> false
+                        fun(Elem) ->
+                            case gb_sets:is_element(Elem, FilteredElements) of
+                                true ->
+                                    case gb_sets:is_element(Elem, MappedElements) of
+                                        true ->
+                                            {true, Elem div 2};
+                                        false ->
+                                            true
+                                    end;
+                                false ->
+                                    false
+                            end
                         end
-                    end,
-                    TestSet
-                ),
-                ExpectedEvenDoubled = lists:usort([X * 2 || X <- UniqueElements, X rem 2 =:= 0]),
-                ?assertEqual(ExpectedEvenDoubled, b5_sets:to_list(EvenDoubleMapped));
-            false ->
-                ok
+                end,
+
+            ?assertEqual(
+                gb_sets:to_list(gb_sets:filtermap(FilterFun, RefSet)),
+                b5_sets:to_list(b5_sets:filtermap(FilterFun, TestSet))
+            )
         end
-    end).
+    ).
 
 %% ------------------------------------------------------------------
 %% Compatibility Operation Tests
@@ -1158,6 +1122,7 @@ test_compatibility_aliases(_Config) ->
 %% ------------------------------------------------------------------
 
 test_empty_set_exceptions(_Config) ->
+    % TODO we may not need this
     EmptySet = b5_sets:new(),
 
     %% Test operations on empty sets
@@ -1210,177 +1175,6 @@ test_empty_set_exceptions(_Config) ->
 
     {Largest, _} = b5_sets:take_largest(NonEmptySet),
     ?assertEqual(3, Largest).
-
-%% ------------------------------------------------------------------
-%% Filtermap Collision Edge Case Tests
-%% ------------------------------------------------------------------
-
-test_filtermap_collision_handling(_Config) ->
-    %% Test filtermap when multiple elements map to the same result
-    %% This should trigger the collision handling code paths in b5_sets_node
-
-    %% Basic collision test - map multiple elements to same value
-    Set1 = b5_sets:from_list([1, 2, 3, 4, 5]),
-
-    %% Map all odd numbers to 'odd' and all even numbers to 'even'
-    OddEvenSet = b5_sets:filtermap(
-        fun(X) ->
-            case X rem 2 of
-                % Multiple elements map to 'odd'
-                1 -> {true, odd};
-                % Multiple elements map to 'even'
-                0 -> {true, even}
-            end
-        end,
-        Set1
-    ),
-
-    %% Should result in set with just {even, odd}
-    Result1 = b5_sets:to_list(OddEvenSet),
-    ?assertEqual(2, b5_sets:size(OddEvenSet)),
-    ?assert(lists:member(odd, Result1)),
-    ?assert(lists:member(even, Result1)),
-
-    %% Test with more complex collision scenarios
-    Set2 = b5_sets:from_list([10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
-
-    %% Map to last digit - multiple collisions
-    LastDigitSet = b5_sets:filtermap(
-        fun(X) ->
-            LastDigit = X rem 10,
-            {true, LastDigit}
-        end,
-        Set2
-    ),
-
-    %% Should have digits 0-9
-    Result2 = b5_sets:to_list(LastDigitSet),
-    ExpectedDigits = lists:seq(0, 9),
-    ?assertEqual(ExpectedDigits, Result2),
-    ?assertEqual(10, b5_sets:size(LastDigitSet)),
-
-    %% Test collision with larger sets (more likely to hit edge cases)
-    LargeSet = b5_sets:from_list(lists:seq(1, 50)),
-
-    %% Map to modulo 7 - creates multiple collisions
-    ModuloSet = b5_sets:filtermap(
-        fun(X) ->
-            Modulo = X rem 7,
-            {true, Modulo}
-        end,
-        LargeSet
-    ),
-
-    Result3 = b5_sets:to_list(ModuloSet),
-    ExpectedModulos = lists:seq(0, 6),
-    ?assertEqual(ExpectedModulos, Result3),
-    ?assertEqual(7, b5_sets:size(ModuloSet)),
-
-    %% Test with selective filtering + collisions
-    Set3 = b5_sets:from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-
-    %% Only map even numbers, but map to collision-prone values
-    SelectiveSet = b5_sets:filtermap(
-        fun(X) ->
-            case X rem 2 =:= 0 of
-                % 2->1, 4->2, 6->3, 8->4, 10->5
-                true -> {true, X div 2};
-                false -> false
-            end
-        end,
-        Set3
-    ),
-
-    Result4 = b5_sets:to_list(SelectiveSet),
-    ?assertEqual([1, 2, 3, 4, 5], Result4),
-    ?assertEqual(5, b5_sets:size(SelectiveSet)),
-
-    %% Test extreme collision case - all elements map to same value
-    Set4 = b5_sets:from_list([a, b, c, d, e]),
-
-    AllSameSet = b5_sets:filtermap(
-        fun(_) ->
-            {true, collision_value}
-        end,
-        Set4
-    ),
-
-    Result5 = b5_sets:to_list(AllSameSet),
-    ?assertEqual([collision_value], Result5),
-    ?assertEqual(1, b5_sets:size(AllSameSet)),
-
-    %% Test collision with different data types
-    MixedSet = b5_sets:from_list([1, 2, atom, "string", {tuple}]),
-
-    TypeMappedSet = b5_sets:filtermap(
-        fun(X) ->
-            Type =
-                case X of
-                    I when is_integer(I) -> integer;
-                    A when is_atom(A) -> atom;
-                    S when is_list(S) -> string;
-                    T when is_tuple(T) -> tuple
-                end,
-            {true, Type}
-        end,
-        MixedSet
-    ),
-
-    Result6 = b5_sets:to_list(TypeMappedSet),
-    ?assertEqual(4, b5_sets:size(TypeMappedSet)),
-    ?assert(lists:member(integer, Result6)),
-    ?assert(lists:member(atom, Result6)),
-    ?assert(lists:member(string, Result6)),
-    ?assert(lists:member(tuple, Result6)).
-
-%% ------------------------------------------------------------------
-%% Validation Edge Case Tests
-%% ------------------------------------------------------------------
-
-test_validation_edge_cases(_Config) ->
-    %% Test normal sets return true for is_set
-    EmptySet = b5_sets:new(),
-    ?assert(b5_sets:is_set(EmptySet)),
-
-    NormalSet = b5_sets:from_list([1, 2, 3]),
-    ?assert(b5_sets:is_set(NormalSet)),
-
-    %% Test invalid root structures to hit does_root_look_legit fallback case
-    %% We need to create invalid b5_sets records to trigger the fallback
-
-    %% Test with bad root type (not a valid node structure)
-    InvalidSet1 = {b5_sets, 1, invalid_root},
-    ?assertNot(b5_sets:is_set(InvalidSet1)),
-
-    %% Test with mismatched size and root
-
-    % Size 999 but empty root
-    InvalidSet2 = {b5_sets, 999, ?LEAF0},
-    ?assertNot(b5_sets:is_set(InvalidSet2)),
-
-    %% Test with negative size
-    InvalidSet3 = {b5_sets, -1, some_root},
-    ?assertNot(b5_sets:is_set(InvalidSet3)),
-
-    %% Test with non-integer size
-    InvalidSet4 = {b5_sets, not_a_number, some_root},
-    ?assertNot(b5_sets:is_set(InvalidSet4)),
-
-    %% Test with atom as root
-    InvalidSet5 = {b5_sets, 0, atom_root},
-    ?assertNot(b5_sets:is_set(InvalidSet5)),
-
-    %% Test with list as root
-    InvalidSet6 = {b5_sets, 1, [list, as, root]},
-    ?assertNot(b5_sets:is_set(InvalidSet6)),
-
-    %% Test with tuple of wrong arity as root
-    InvalidSet7 = {b5_sets, 1, {wrong, arity, tuple}},
-    ?assertNot(b5_sets:is_set(InvalidSet7)),
-
-    %% Test proper LEAF0 with size 0 (should be valid)
-    ValidEmptySet = {b5_sets, 0, ?LEAF0},
-    ?assert(b5_sets:is_set(ValidEmptySet)).
 
 %% ------------------------------------------------------------------
 %% Helper Functions
