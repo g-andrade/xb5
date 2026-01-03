@@ -76,7 +76,7 @@
 ]).
 
 %% Test constants
--define(REGULAR_SET_SIZES,
+-define(TESTED_SET_SIZES,
     (lists:seq(0, 50) ++ lists:seq(55, 200, 5) ++ [997])
 ).
 
@@ -178,7 +178,7 @@ test_from_list_operations(_Config) ->
     ?assertEqual(4, b5_sets:size(Set4)).
 
 test_to_list_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         ?assertEqual(gb_sets:to_list(RefSet), b5_sets:to_list(TestSet))
     end).
 
@@ -194,7 +194,7 @@ test_singleton_operations(_Config) ->
     ?assertEqual(true, b5_sets:is_member(atom, Set2)).
 
 test_size_is_empty_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         ExpectedSize = gb_sets:size(RefSet),
         ?assertEqual(ExpectedSize, b5_sets:size(TestSet)),
         ?assertEqual(ExpectedSize =:= 0, b5_sets:is_empty(TestSet))
@@ -205,9 +205,9 @@ test_size_is_empty_operations(_Config) ->
 %% ------------------------------------------------------------------
 
 test_add_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         %% Add existing elements - should not change set
-        foreach_randomly_retyped_element2(
+        foreach_randomly_retyped_element(
             fun(Element) ->
                 UpdatedSet = b5_sets:add(Element, TestSet),
                 ?assertEqual(TestSet, UpdatedSet)
@@ -215,7 +215,7 @@ test_add_operations(_Config) ->
             RefSet
         ),
 
-        foreach_non_existent_element2(
+        foreach_non_existent_element(
             fun(NewElement) ->
                 UpdatedRef = gb_sets:add(NewElement, RefSet),
                 UpdatedSet = b5_sets:add(NewElement, TestSet),
@@ -230,8 +230,8 @@ test_add_operations(_Config) ->
     end).
 
 test_insert_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
-        foreach_randomly_retyped_element2(
+    foreach_set(fun(RefSet, TestSet) ->
+        foreach_randomly_retyped_element(
             fun(Element) ->
                 %% Insert existing elements - should throw error
                 ?assertError({key_exists, Element}, b5_sets:insert(Element, TestSet))
@@ -239,7 +239,7 @@ test_insert_operations(_Config) ->
             RefSet
         ),
 
-        foreach_non_existent_element2(
+        foreach_non_existent_element(
             fun(NewElement) ->
                 UpdatedRef = gb_sets:insert(NewElement, RefSet),
                 UpdatedSet = b5_sets:insert(NewElement, TestSet),
@@ -254,9 +254,9 @@ test_insert_operations(_Config) ->
     end).
 
 test_delete_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         %% Delete existing elements
-        fold_randomly_retyped_shuffled_elements2(
+        fold_randomly_retyped_shuffled_elements(
             fun(Element, {RefAcc, TestAcc}) ->
                 UpdatedRef = gb_sets:delete(Element, RefAcc),
                 UpdatedSet = b5_sets:delete(Element, TestAcc),
@@ -270,7 +270,7 @@ test_delete_operations(_Config) ->
             RefSet
         ),
 
-        foreach_non_existent_element2(
+        foreach_non_existent_element(
             fun(NonExistentElement) ->
                 %% Delete non-existent element - should throw error
                 ?assertError(
@@ -283,9 +283,9 @@ test_delete_operations(_Config) ->
     end).
 
 test_delete_any_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         %% Delete existing elements
-        fold_randomly_retyped_shuffled_elements2(
+        fold_randomly_retyped_shuffled_elements(
             fun(Element, {RefAcc, TestAcc}) ->
                 UpdatedRef = gb_sets:delete(Element, RefAcc),
                 UpdatedSet = b5_sets:delete(Element, TestAcc),
@@ -299,7 +299,7 @@ test_delete_any_operations(_Config) ->
             RefSet
         ),
 
-        foreach_non_existent_element2(
+        foreach_non_existent_element(
             fun(NonExistentElement) ->
                 %% Delete non-existent element - keeps the set as is
                 ?assertEqual(TestSet, b5_sets:delete_any(NonExistentElement, TestSet))
@@ -310,9 +310,9 @@ test_delete_any_operations(_Config) ->
     end).
 
 test_is_member_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         %% Test existing elements
-        foreach_randomly_retyped_element2(
+        foreach_randomly_retyped_element(
             fun(Element) ->
                 ?assertEqual(true, b5_sets:is_member(Element, TestSet))
             end,
@@ -320,7 +320,7 @@ test_is_member_operations(_Config) ->
         ),
 
         %% Test non-existent elements
-        foreach_non_existent_element2(
+        foreach_non_existent_element(
             fun(NonExistentElement) ->
                 ?assertEqual(false, b5_sets:is_member(NonExistentElement, TestSet))
             end,
@@ -330,7 +330,7 @@ test_is_member_operations(_Config) ->
     end).
 
 test_is_set_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         ?assertEqual(false, b5_sets:is_set(RefSet)),
         ?assertEqual(true, b5_sets:is_set(TestSet))
     end).
@@ -343,7 +343,7 @@ test_is_set_operations(_Config) ->
 %% Union
 
 test_union_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet1, TestSet1) ->
             % Union with self
             ?assertEqual(
@@ -374,7 +374,7 @@ test_union_operations(_Config) ->
 %% Intersection
 
 test_intersection_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet1, TestSet1) ->
             % Intersect with self
             ?assertEqual(
@@ -407,7 +407,7 @@ test_intersection_operations(_Config) ->
 %% Difference
 
 test_difference_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet1, TestSet1) ->
             % Difference with self
             ?assertEqual([], b5_sets:to_list(b5_sets:difference(TestSet1, TestSet1))),
@@ -434,7 +434,7 @@ test_difference_operations(_Config) ->
     ).
 
 test_is_disjoint_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet1, TestSet1) ->
             % is_disjoint with self
             IsEmpty = b5_sets:is_empty(TestSet1),
@@ -470,7 +470,7 @@ test_is_disjoint_operations(_Config) ->
     ).
 
 test_is_subset_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet1, TestSet1) ->
             % is_subset with self
             ?assertEqual(true, b5_sets:is_subset(TestSet1, TestSet1)),
@@ -499,7 +499,7 @@ test_is_subset_operations(_Config) ->
     ).
 
 test_is_equal_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet1, TestSet1) ->
             % is_equal with self
             ?assertEqual(true, b5_sets:is_equal(TestSet1, TestSet1)),
@@ -661,7 +661,7 @@ prepare_set_op_variant_recur(RefList, Size2) when RefList =:= [] orelse Size2 =:
 %% ------------------------------------------------------------------
 
 test_iterator_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         TestIter = b5_sets:iterator(TestSet),
         IteratedElements = iterate_to_list(TestIter),
         ?assertEqual(gb_sets:to_list(RefSet), IteratedElements),
@@ -671,7 +671,7 @@ test_iterator_operations(_Config) ->
     end).
 
 test_iterator_ordered_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         TestIter = b5_sets:iterator(TestSet, ordered),
         IteratedElements = iterate_to_list(TestIter),
         ?assertEqual(gb_sets:to_list(RefSet), IteratedElements),
@@ -681,7 +681,7 @@ test_iterator_ordered_operations(_Config) ->
     end).
 
 test_iterator_reversed_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         TestIter = b5_sets:iterator(TestSet, reversed),
         IteratedElements = iterate_to_list(TestIter),
         ?assertEqual(gb_sets:to_list(RefSet), lists:reverse(IteratedElements)),
@@ -691,7 +691,7 @@ test_iterator_reversed_operations(_Config) ->
     end).
 
 test_iterator_from_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         RefList = gb_sets:to_list(RefSet),
 
         WholeFromValues = randomly_switch_types(
@@ -731,7 +731,7 @@ test_iterator_from_operations(_Config) ->
     end).
 
 test_iterator_from_ordered_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         RefList = gb_sets:to_list(RefSet),
 
         WholeFromValues = randomly_switch_types(
@@ -771,7 +771,7 @@ test_iterator_from_ordered_operations(_Config) ->
     end).
 
 test_iterator_from_reversed_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         RefList = gb_sets:to_list(RefSet),
 
         WholeFromValues = randomly_switch_types(
@@ -817,7 +817,7 @@ test_iterator_from_reversed_operations(_Config) ->
 %% ------------------------------------------------------------------
 
 test_smaller_larger_operations(_Config) ->
-    foreach_set2(fun(RefSet, TestSet) ->
+    foreach_set(fun(RefSet, TestSet) ->
         RefList = gb_sets:to_list(RefSet),
 
         WholePivots = randomly_switch_types(
@@ -882,10 +882,14 @@ expected_larger(Pivot, RefList) ->
 %%%
 
 test_smallest_largest_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet, TestSet) ->
             case gb_sets:to_list(RefSet) of
                 [] ->
+                    ?assertError(function_clause, gb_sets:smallest(RefSet)),
+                    ?assertError(function_clause, gb_sets:largest(RefSet)),
+
+                    % FIXME should we return the exact same exception instead? (`function_clause')
                     ?assertError(empty_set, b5_sets:smallest(TestSet)),
                     ?assertError(empty_set, b5_sets:largest(TestSet));
                 %
@@ -899,7 +903,7 @@ test_smallest_largest_operations(_Config) ->
     ).
 
 test_take_smallest_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet, TestSet) ->
             lists:foldl(
                 fun(_, {RefAcc, TestAcc}) ->
@@ -908,6 +912,7 @@ test_take_smallest_operations(_Config) ->
                             ?assertError(function_clause, gb_sets:take_smallest(RefAcc)),
                             ?assertEqual(0, gb_sets:size(RefAcc)),
 
+                            % FIXME should we return the exact same exception instead? (`function_clause')
                             ?assertError(empty_set, b5_sets:take_smallest(TestAcc)),
                             ?assertEqual(0, b5_sets:size(TestAcc)),
                             finished;
@@ -935,7 +940,7 @@ test_take_smallest_operations(_Config) ->
     ).
 
 test_take_largest_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet, TestSet) ->
             lists:foldl(
                 fun(_, {RefAcc, TestAcc}) ->
@@ -976,7 +981,7 @@ test_take_largest_operations(_Config) ->
 %% ------------------------------------------------------------------
 
 test_fold_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet, TestSet) ->
             {FoldFun, Acc0} =
                 case rand:uniform(3) of
@@ -999,7 +1004,7 @@ test_fold_operations(_Config) ->
     ).
 
 test_map_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet, TestSet) ->
             MapFun =
                 case rand:uniform(3) of
@@ -1021,7 +1026,7 @@ test_map_operations(_Config) ->
     ).
 
 test_filter_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet, TestSet) ->
             RefList = gb_sets:to_list(RefSet),
 
@@ -1047,7 +1052,7 @@ test_filter_operations(_Config) ->
     ).
 
 test_filtermap_operations(_Config) ->
-    foreach_set2(
+    foreach_set(
         fun(RefSet, TestSet) ->
             RefList = gb_sets:to_list(RefSet),
 
@@ -1180,7 +1185,7 @@ test_empty_set_exceptions(_Config) ->
 %% Helper Functions
 %% ------------------------------------------------------------------
 
-foreach_set2(Fun) ->
+foreach_set(Fun) ->
     lists:foreach(
         fun(Size) ->
             ElementsList = generate_unique_elements_list(Size),
@@ -1188,18 +1193,7 @@ foreach_set2(Fun) ->
             TestSet = b5_sets:from_list(shuffle_list(ElementsList)),
             Fun(RefSet, TestSet)
         end,
-        ?REGULAR_SET_SIZES
-    ).
-
-%% @doc Iterate through set elements for different set sizes
-foreach_set(Sizes, Fun) ->
-    lists:foreach(
-        fun(Size) ->
-            ElementsList = lists:sort(generate_unique_elements_list(Size)),
-            Set = b5_sets:from_list(ElementsList),
-            Fun(Set, ElementsList)
-        end,
-        Sizes
+        ?TESTED_SET_SIZES
     ).
 
 foreach_rebuilt_variant(TestSet, Fun) ->
@@ -1251,39 +1245,6 @@ take_random(_List, 0) ->
 shuffle_list(List) ->
     [X || {_, X} <- lists:sort([{rand:uniform(), X} || X <- List])].
 
-%% @doc Iterate through set pairs for different set sizes
-foreach_set_pair(Sizes, Fun) ->
-    lists:foreach(
-        fun(SizeA) ->
-            lists:foreach(
-                fun(SizeB) ->
-                    ElementsA = lists:sort(generate_unique_elements_list(SizeA)),
-                    ElementsB = lists:sort(generate_unique_elements_list(SizeB)),
-                    SetA = b5_sets:from_list(ElementsA),
-                    SetB = b5_sets:from_list(ElementsB),
-                    Fun(SetA, ElementsA, SetB, ElementsB)
-                % Test against 10 random sizes
-                end,
-                take_random(Sizes, 10)
-            )
-        % Test 15 random sizes as first set
-        end,
-        take_random(Sizes, 15)
-    ).
-
-%% @doc Test smaller/larger for middle elements in sorted list
-test_smaller_larger_middle_elements(Set, SortedElements) ->
-    lists:foreach(
-        fun(I) when I > 1, I < length(SortedElements) ->
-            Element = lists:nth(I, SortedElements),
-            ExpectedSmaller = lists:nth(I - 1, SortedElements),
-            ExpectedLarger = lists:nth(I + 1, SortedElements),
-            ?assertEqual({found, ExpectedSmaller}, b5_sets:smaller(Element, Set)),
-            ?assertEqual({found, ExpectedLarger}, b5_sets:larger(Element, Set))
-        end,
-        lists:seq(2, length(SortedElements) - 1)
-    ).
-
 %% @doc Iterate through all elements using iterator
 iterate_to_list(Iter) ->
     iterate_to_list(Iter, []).
@@ -1303,7 +1264,7 @@ ref_iterate_to_list(Iter, Acc) ->
         {Element, NextIter} -> ref_iterate_to_list(NextIter, [Element | Acc])
     end.
 
-fold_randomly_retyped_shuffled_elements2(Fun, Acc0, RefSet) ->
+fold_randomly_retyped_shuffled_elements(Fun, Acc0, RefSet) ->
     lists:foldl(
         fun(Element, Acc) ->
             Fun(randomly_switch_type(Element), Acc)
@@ -1312,7 +1273,7 @@ fold_randomly_retyped_shuffled_elements2(Fun, Acc0, RefSet) ->
         shuffle_list(gb_sets:to_list(RefSet))
     ).
 
-foreach_randomly_retyped_element2(Fun, RefSet) ->
+foreach_randomly_retyped_element(Fun, RefSet) ->
     gb_sets:fold(
         fun(Element, _) ->
             Fun(randomly_switch_type(Element)),
@@ -1322,7 +1283,7 @@ foreach_randomly_retyped_element2(Fun, RefSet) ->
         RefSet
     ).
 
-foreach_non_existent_element2(Fun, RefSet, Amount) ->
+foreach_non_existent_element(Fun, RefSet, Amount) ->
     lists:foreach(
         fun(_) ->
             Element = randomly_switch_type(generate_new_element_not_in_set(RefSet)),

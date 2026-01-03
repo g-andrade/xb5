@@ -290,8 +290,7 @@
 
 %%
 
-% defined(TEST)).
--define(NODE_CHECK_ENABLED, false).
+-define(NODE_CHECK_ENABLED, defined(TEST)).
 
 -if(?NODE_CHECK_ENABLED).
 -define(CHECK_NODE(Node), check_node(?LINE, Node)).
@@ -1408,148 +1407,204 @@ filtermap_root(Fun, Count, Root, Filtered) ->
 filtermap_recur(Fun, Node, Count, Filtered) ->
     case Node of
         ?LEAF2_MATCH_ALL ->
-            filtermap_batch2(Fun, E1, E2, Count, Filtered);
+            filtermap_leaf_batch2(Fun, E1, E2, Count, Filtered);
         %
         ?LEAF3_MATCH_ALL ->
-            filtermap_batch3(Fun, E1, E2, E3, Count, Filtered);
+            filtermap_leaf_batch3(Fun, E1, E2, E3, Count, Filtered);
         %
         ?LEAF4_MATCH_ALL ->
-            filtermap_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
+            filtermap_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
         %
         ?INTERNAL2_MATCH_ALL ->
-            % TODO optimize batches like in filter/2
-            [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
-            [Count3 | Filtered3] = filtermap_recur(Fun, C2, Count2, Filtered2),
-            [Count4 | Filtered4] = filtermap_recur(Fun, C3, Count3, Filtered3),
-
-            filtermap_batch2(Fun, E1, E2, Count4, Filtered4);
+            filtermap_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered);
         %
         ?INTERNAL3_MATCH_ALL ->
-            % TODO optimize batches like in filter/2
-            [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
-            [Count3 | Filtered3] = filtermap_recur(Fun, C2, Count2, Filtered2),
-            [Count4 | Filtered4] = filtermap_recur(Fun, C3, Count3, Filtered3),
-            [Count5 | Filtered5] = filtermap_recur(Fun, C4, Count4, Filtered4),
-
-            filtermap_batch3(Fun, E1, E2, E3, Count5, Filtered5);
+            filtermap_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered);
         %
         ?INTERNAL4_MATCH_ALL ->
-            % TODO optimize batches like in filter/2
-            [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
-            [Count3 | Filtered3] = filtermap_recur(Fun, C2, Count2, Filtered2),
-            [Count4 | Filtered4] = filtermap_recur(Fun, C3, Count3, Filtered3),
-            [Count5 | Filtered5] = filtermap_recur(Fun, C4, Count4, Filtered4),
-            [Count6 | Filtered6] = filtermap_recur(Fun, C5, Count5, Filtered5),
-
-            filtermap_batch4(Fun, E1, E2, E3, E4, Count6, Filtered6)
+            filtermap_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
     end.
 
-%% INTERNAL4 and LEAF4
+%% INTERNAL4
 
--compile({inline, filtermap_batch4/7}).
-filtermap_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
+-compile({inline, filtermap_internal_batch4/12}).
+filtermap_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered) ->
+    [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
+
     case Fun(E1) of
-        {true, MappedE1} ->
-            try insert(MappedE1, Filtered) of
-                UpFiltered ->
-                    filtermap_batch3(Fun, E2, E3, E4, Count + 1, UpFiltered)
-            catch
-                error:{key_exists, K} when K =:= MappedE1 ->
-                    filtermap_batch3(Fun, E2, E3, E4, Count, Filtered)
-            end;
-        %
-        true ->
-            try insert(E1, Filtered) of
-                UpFiltered ->
-                    filtermap_batch3(Fun, E2, E3, E4, Count + 1, UpFiltered)
-            catch
-                error:{key_exists, K} when K =:= E1 ->
-                    filtermap_batch3(Fun, E2, E3, E4, Count, Filtered)
-            end;
-        %
         false ->
-            filtermap_batch3(Fun, E2, E3, E4, Count, Filtered)
+            filtermap_internal_batch3(Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2);
+        %
+        True ->
+            Elem = filtermap_true(True, E1),
+
+            try insert(Elem, Filtered2) of
+                Filtered3 ->
+                    filtermap_internal_batch3(
+                        Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, Filtered3
+                    )
+            catch
+                error:{key_exists, K} when K =:= Elem ->
+                    filtermap_internal_batch3(Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2)
+            end
     end.
 
-%% INTERNAL3 and LEAF3
+%% INTERNAL3
 
--compile({inline, filtermap_batch3/6}).
-filtermap_batch3(Fun, E1, E2, E3, Count, Filtered) ->
+-compile({inline, filtermap_internal_batch3/10}).
+filtermap_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
+    [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
+
     case Fun(E1) of
-        {true, MappedE1} ->
-            try insert(MappedE1, Filtered) of
-                UpFiltered ->
-                    filtermap_batch2(Fun, E2, E3, Count + 1, UpFiltered)
-            catch
-                error:{key_exists, K} when K =:= MappedE1 ->
-                    filtermap_batch2(Fun, E2, E3, Count, Filtered)
-            end;
-        %
-        true ->
-            try insert(E1, Filtered) of
-                UpFiltered ->
-                    filtermap_batch2(Fun, E2, E3, Count + 1, UpFiltered)
-            catch
-                error:{key_exists, K} when K =:= E1 ->
-                    filtermap_batch2(Fun, E2, E3, Count, Filtered)
-            end;
-        %
         false ->
-            filtermap_batch2(Fun, E2, E3, Count, Filtered)
+            filtermap_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2);
+        %
+        True ->
+            Elem = filtermap_true(True, E1),
+
+            try insert(Elem, Filtered2) of
+                Filtered3 ->
+                    filtermap_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, Filtered3)
+            catch
+                error:{key_exists, K} when K =:= Elem ->
+                    filtermap_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2)
+            end
     end.
 
-%% INTERNAL2 and LEAF2
+%% INTERNAL2
 
--compile({inline, filtermap_batch2/5}).
-filtermap_batch2(Fun, E1, E2, Count, Filtered) ->
+-compile({inline, filtermap_internal_batch2/8}).
+filtermap_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
+    [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
+
     case Fun(E1) of
-        {true, MappedE1} ->
-            try insert(MappedE1, Filtered) of
-                UpFiltered ->
-                    filtermap_single_element(Fun, E2, Count + 1, UpFiltered)
+        false ->
+            filtermap_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2);
+        %
+        True ->
+            Elem = filtermap_true(True, E1),
+
+            try insert(Elem, Filtered2) of
+                Filtered3 ->
+                    filtermap_internal_batch1(Fun, E2, C2, C3, Count2 + 1, Filtered3)
             catch
-                error:{key_exists, K} when K =:= MappedE1 ->
+                error:{key_exists, K} when K =:= Elem ->
+                    filtermap_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2)
+            end
+    end.
+
+%% INTERNAL1
+
+-compile({inline, filtermap_internal_batch1/6}).
+filtermap_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
+    [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
+
+    case Fun(E1) of
+        false ->
+            filtermap_recur(Fun, C2, Count2, Filtered2);
+        %
+        True ->
+            Elem = filtermap_true(True, E1),
+
+            try insert(Elem, Filtered2) of
+                Filtered3 ->
+                    filtermap_recur(Fun, C2, Count2 + 1, Filtered3)
+            catch
+                error:{key_exists, K} when K =:= Elem ->
+                    filtermap_recur(Fun, C2, Count2, Filtered2)
+            end
+    end.
+
+%% LEAF4
+
+-compile({inline, filtermap_leaf_batch4/7}).
+filtermap_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
+    case Fun(E1) of
+        false ->
+            filtermap_leaf_batch3(Fun, E2, E3, E4, Count, Filtered);
+        %
+        True ->
+            Elem = filtermap_true(True, E1),
+
+            try insert(Elem, Filtered) of
+                Filtered2 ->
+                    filtermap_leaf_batch3(Fun, E2, E3, E4, Count + 1, Filtered2)
+            catch
+                error:{key_exists, K} when K =:= Elem ->
+                    filtermap_leaf_batch3(Fun, E2, E3, E4, Count, Filtered)
+            end
+    end.
+
+%% LEAF3
+
+-compile({inline, filtermap_leaf_batch3/6}).
+filtermap_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
+    case Fun(E1) of
+        false ->
+            filtermap_leaf_batch2(Fun, E2, E3, Count, Filtered);
+        %
+        True ->
+            Elem = filtermap_true(True, E1),
+
+            try insert(Elem, Filtered) of
+                Filtered2 ->
+                    filtermap_leaf_batch2(Fun, E2, E3, Count + 1, Filtered2)
+            catch
+                error:{key_exists, K} when K =:= Elem ->
+                    filtermap_leaf_batch2(Fun, E2, E3, Count, Filtered)
+            end
+    end.
+
+%% LEAF2
+
+-compile({inline, filtermap_leaf_batch2/5}).
+filtermap_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
+    case Fun(E1) of
+        false ->
+            filtermap_single_element(Fun, E2, Count, Filtered);
+        %
+        True ->
+            Elem = filtermap_true(True, E1),
+
+            try insert(Elem, Filtered) of
+                Filtered2 ->
+                    filtermap_single_element(Fun, E2, Count + 1, Filtered2)
+            catch
+                error:{key_exists, K} when K =:= Elem ->
                     filtermap_single_element(Fun, E2, Count, Filtered)
-            end;
-        %
-        true ->
-            try insert(E1, Filtered) of
-                UpFiltered ->
-                    filtermap_single_element(Fun, E2, Count + 1, UpFiltered)
-            catch
-                error:{key_exists, K} when K =:= E1 ->
-                    filtermap_single_element(Fun, E2, Count, Filtered)
-            end;
-        %
-        false ->
-            filtermap_single_element(Fun, E2, Count, Filtered)
+            end
     end.
 
-%% INTERNAL1 and LEAF1
+%% LEAF1
 
 -compile({inline, filtermap_single_element/4}).
 filtermap_single_element(Fun, E1, Count, Filtered) ->
     case Fun(E1) of
-        {true, MappedE1} ->
-            try insert(MappedE1, Filtered) of
-                UpFiltered ->
-                    [Count + 1 | UpFiltered]
+        false ->
+            [Count | Filtered];
+        %
+        True ->
+            Elem = filtermap_true(True, E1),
+
+            try insert(Elem, Filtered) of
+                Filtered2 ->
+                    [Count + 1 | Filtered2]
             catch
-                error:{key_exists, K} when K =:= MappedE1 ->
+                error:{key_exists, K} when K =:= Elem ->
                     [Count | Filtered]
-            end;
+            end
+    end.
+
+%%
+
+-compile({inline, filtermap_true/2}).
+filtermap_true(True, PrevElem) ->
+    case True of
+        {true, NewElem} ->
+            NewElem;
         %
         true ->
-            try insert(E1, Filtered) of
-                UpFiltered ->
-                    [Count + 1 | UpFiltered]
-            catch
-                error:{key_exists, K} when K =:= E1 ->
-                    [Count | Filtered]
-            end;
-        %
-        false ->
-            [Count | Filtered]
+            PrevElem
     end.
 
 %% ------------------------------------------------------------------
