@@ -1,5 +1,9 @@
 -module(b5_sets).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([
     add/2,
     % `sets' compatibility alias
@@ -239,4 +243,20 @@ union_recur(Root1, Size1, [#b5_sets{root = Root2, size = Size2} | Next]) ->
 union_recur(Root, Size, []) ->
     #b5_sets{size = Size, root = Root}.
 
-% TODO test is_set
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Unit Tests
+%% ------------------------------------------------------------------
+
+-ifdef(TEST).
+
+is_set_test() ->
+    EmptyNode = b5_sets_node:new(),
+
+    ?assertEqual(true, is_set(#b5_sets{root = EmptyNode, size = 0})),
+    ?assertEqual(false, is_set(#b5_sets{root = EmptyNode, size = -1})),
+    ?assertEqual(false, is_set(#b5_sets{root = EmptyNode, size = non_integer})),
+
+    ?assertEqual(false, is_set(make_ref())).
+
+% -ifdef(TEEST).
+-endif.

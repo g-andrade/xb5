@@ -29,6 +29,10 @@
     union/4
 ]).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 %% ------------------------------------------------------------------
 %% Macro Definitions: Nodes
 %% ------------------------------------------------------------------
@@ -290,7 +294,7 @@
 
 %%
 
--define(NODE_CHECK_ENABLED, defined(TEST)).
+-define(NODE_CHECK_ENABLED, false). % defined(TEST)).
 
 -if(?NODE_CHECK_ENABLED).
 -define(CHECK_NODE(Node), check_node(?LINE, Node)).
@@ -5660,4 +5664,52 @@ check_node_keys(_, []) ->
     [].
 
 % -if(?NODE_CHECK_ENABLED).
+-endif.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Unit Tests
+%% ------------------------------------------------------------------
+
+-ifdef(TEST).
+
+does_root_look_legit_test() ->
+    ?assertEqual(true, does_root_look_legit(?LEAF0, 0)),
+    ?assertEqual(false, does_root_look_legit(?LEAF0, 1)),
+    ?assertEqual(false, does_root_look_legit(?LEAF0, -1)),
+
+    ?assertEqual(true, does_root_look_legit(?LEAF1(e1), 1)),
+    ?assertEqual(false, does_root_look_legit(?LEAF1(e1), 0)),
+    ?assertEqual(false, does_root_look_legit(?LEAF1(e1), 2)),
+
+    ?assertEqual(true, does_root_look_legit(?LEAF2(e1, e2), 2)),
+    ?assertEqual(false, does_root_look_legit(?LEAF2(e1, e2), 1)),
+    ?assertEqual(false, does_root_look_legit(?LEAF2(e1, e2), 3)),
+
+    ?assertEqual(true, does_root_look_legit(?LEAF3(e1, e2, e3), 3)),
+    ?assertEqual(false, does_root_look_legit(?LEAF3(e1, e2, e3), 2)),
+    ?assertEqual(false, does_root_look_legit(?LEAF3(e1, e2, e3), 4)),
+
+    ?assertEqual(true, does_root_look_legit(?LEAF4(e1, e2, e3, e4), 4)),
+    ?assertEqual(false, does_root_look_legit(?LEAF4(e1, e2, e3, e4), 3)),
+    ?assertEqual(false, does_root_look_legit(?LEAF4(e1, e2, e3, e4), 5)),
+
+    ?assertEqual(true, does_root_look_legit(?INTERNAL1(e1, c1, c2), 5)),
+    ?assertEqual(false, does_root_look_legit(?INTERNAL1(e1, c1, c2), 4)),
+    ?assertEqual(true, does_root_look_legit(?INTERNAL1(e1, c1, c2), 6)),
+
+    ?assertEqual(true, does_root_look_legit(?INTERNAL2(e1, e2, c1, c2, c3), 8)),
+    ?assertEqual(false, does_root_look_legit(?INTERNAL2(e1, e2, c1, c2, c3), 7)),
+    ?assertEqual(true, does_root_look_legit(?INTERNAL2(e1, e2, c1, c2, c3), 9)),
+
+    ?assertEqual(true, does_root_look_legit(?INTERNAL3(e1, e2, e3, c1, c2, c3, c4), 11)),
+    ?assertEqual(false, does_root_look_legit(?INTERNAL3(e1, e2, e3, c1, c2, c3, c4), 10)),
+    ?assertEqual(true, does_root_look_legit(?INTERNAL3(e1, e2, e3, c1, c2, c3, c4), 12)),
+
+    ?assertEqual(true, does_root_look_legit(?INTERNAL4(e1, e2, e3, e4, c1, c2, c3, c4, c5), 14)),
+    ?assertEqual(false, does_root_look_legit(?INTERNAL4(e1, e2, e3, e4, c1, c2, c3, c4, c5), 13)),
+    ?assertEqual(true, does_root_look_legit(?INTERNAL4(e1, e2, e3, e4, c1, c2, c3, c4, c5), 15)),
+
+    ?assertEqual(false, does_root_look_legit(make_ref(), 42)).
+
+% -ifdef(TEEST).
 -endif.

@@ -1018,10 +1018,11 @@ test_map_operations(_Config) ->
                         fun(Elem) -> Elem * 100.0 end
                 end,
 
-            ?assertEqual(
-                gb_sets:to_list(gb_sets:map(MapFun, RefSet)),
-                b5_sets:to_list(b5_sets:map(MapFun, TestSet))
-            )
+            UpdatedRef = gb_sets:map(MapFun, RefSet),
+            UpdatedSet = b5_sets:map(MapFun, TestSet),
+
+            ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet)),
+            ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet))
         end
     ).
 
@@ -1044,10 +1045,11 @@ test_filter_operations(_Config) ->
                         fun(Elem) -> gb_sets:is_element(Elem, FilteredElements) end
                 end,
 
-            ?assertEqual(
-                gb_sets:to_list(gb_sets:filter(FilterFun, RefSet)),
-                b5_sets:to_list(b5_sets:filter(FilterFun, TestSet))
-            )
+            UpdatedRef = gb_sets:filter(FilterFun, RefSet),
+            UpdatedSet = b5_sets:filter(FilterFun, TestSet),
+
+            ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet)),
+            ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet))
         end
     ).
 
@@ -1062,7 +1064,7 @@ test_filtermap_operations(_Config) ->
                         fun(_Elem) -> false end;
                     %
                     2 ->
-                        fun(Elem) -> trunc(Elem) rem 2 =:= 0 end;
+                        fun(Elem) -> trunc(Elem) rem 2 =:= 0 andalso {true, Elem div 3} end;
                     %
                     3 ->
                         FilteredAmount = rand:uniform(length(RefList) + 1) - 1,
@@ -1072,12 +1074,14 @@ test_filtermap_operations(_Config) ->
                         MappedAmount = rand:uniform(length(FilteredList) + 1) - 1,
                         MappedElements = gb_sets:from_list(take_random(FilteredList, MappedAmount)),
 
+                        SingleValueMap = make_ref(),
+
                         fun(Elem) ->
                             case gb_sets:is_element(Elem, FilteredElements) of
                                 true ->
                                     case gb_sets:is_element(Elem, MappedElements) of
                                         true ->
-                                            {true, Elem div 2};
+                                            {true, SingleValueMap};
                                         false ->
                                             true
                                     end;
@@ -1087,10 +1091,11 @@ test_filtermap_operations(_Config) ->
                         end
                 end,
 
-            ?assertEqual(
-                gb_sets:to_list(gb_sets:filtermap(FilterFun, RefSet)),
-                b5_sets:to_list(b5_sets:filtermap(FilterFun, TestSet))
-            )
+            UpdatedRef = gb_sets:filtermap(FilterFun, RefSet),
+            UpdatedSet = b5_sets:filtermap(FilterFun, TestSet),
+
+            ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet)),
+            ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet))
         end
     ).
 
