@@ -4039,70 +4039,108 @@ union_root(Root, Size, Target) ->
 union_recur(Node, Size, Root) ->
     case Node of
         ?LEAF2_MATCH_ALL ->
-            union_batch2(E1, E2, Size, Root);
+            union_leaf_batch2(E1, E2, Size, Root);
         %
         ?LEAF3_MATCH_ALL ->
-            union_batch3(E1, E2, E3, Size, Root);
+            union_leaf_batch3(E1, E2, E3, Size, Root);
         %
         ?LEAF4_MATCH_ALL ->
-            union_batch4(E1, E2, E3, E4, Size, Root);
+            union_leaf_batch4(E1, E2, E3, E4, Size, Root);
         %
         ?INTERNAL2_MATCH_ALL ->
-            % TODO optimize batches like in filter/2
-            [Size2 | Root2] = union_recur(C1, Size, Root),
-            [Size3 | Root3] = union_recur(C2, Size2, Root2),
-            [Size4 | Root4] = union_recur(C3, Size3, Root3),
-
-            union_batch2(E1, E2, Size4, Root4);
+            union_internal_batch2(E1, E2, C1, C2, C3, Size, Root);
         %
         ?INTERNAL3_MATCH_ALL ->
-            % TODO optimize batches like in filter/2
-            [Size2 | Root2] = union_recur(C1, Size, Root),
-            [Size3 | Root3] = union_recur(C2, Size2, Root2),
-            [Size4 | Root4] = union_recur(C3, Size3, Root3),
-            [Size5 | Root5] = union_recur(C4, Size4, Root4),
-
-            union_batch3(E1, E2, E3, Size5, Root5);
+            union_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Size, Root);
         %
         ?INTERNAL4_MATCH_ALL ->
-            % TODO optimize batches like in filter/2
-            [Size2 | Root2] = union_recur(C1, Size, Root),
-            [Size3 | Root3] = union_recur(C2, Size2, Root2),
-            [Size4 | Root4] = union_recur(C3, Size3, Root3),
-            [Size5 | Root5] = union_recur(C4, Size4, Root4),
-            [Size6 | Root6] = union_recur(C5, Size5, Root5),
-
-            union_batch4(E1, E2, E3, E4, Size6, Root6)
+            union_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Size, Root)
     end.
 
-%% INTERNAL4 and LEAF4
+%% INTERNAL4
 
--compile({inline, union_batch4/6}).
-union_batch4(E1, E2, E3, E4, Size, Root) ->
-    try insert(E1, Root) of
-        UpdatedRoot ->
-            union_batch3(E2, E3, E4, Size + 1, UpdatedRoot)
+-compile({inline, union_internal_batch4/11}).
+union_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Size, Root) ->
+    [Size2 | Root2] = union_recur(C1, Size, Root),
+
+    try insert(E1, Root2) of
+        Root3 ->
+            union_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Size2 + 1, Root3)
     catch
         error:{key_exists, K} when K =:= E1 ->
-            union_batch3(E2, E3, E4, Size, Root)
+            union_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Size2, Root2)
     end.
 
-%% INTERNAL3 and LEAF3
+%% INTERNAL3
 
--compile({inline, union_batch3/5}).
-union_batch3(E1, E2, E3, Size, Root) ->
-    try insert(E1, Root) of
-        UpdatedRoot ->
-            union_batch2(E2, E3, Size + 1, UpdatedRoot)
+-compile({inline, union_internal_batch3/9}).
+union_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Size, Root) ->
+    [Size2 | Root2] = union_recur(C1, Size, Root),
+
+    try insert(E1, Root2) of
+        Root3 ->
+            union_internal_batch2(E2, E3, C2, C3, C4, Size2 + 1, Root3)
     catch
         error:{key_exists, K} when K =:= E1 ->
-            union_batch2(E2, E3, Size, Root)
+            union_internal_batch2(E2, E3, C2, C3, C4, Size2, Root2)
     end.
 
-%% INTERNAL2 and LEAF2
+%% INTERNAL2
 
--compile({inline, union_batch2/4}).
-union_batch2(E1, E2, Size, Root) ->
+-compile({inline, union_internal_batch2/7}).
+union_internal_batch2(E1, E2, C1, C2, C3, Size, Root) ->
+    [Size2 | Root2] = union_recur(C1, Size, Root),
+
+    try insert(E1, Root2) of
+        Root3 ->
+            union_internal_batch1(E2, C2, C3, Size2 + 1, Root3)
+    catch
+        error:{key_exists, K} when K =:= E1 ->
+            union_internal_batch1(E2, C2, C3, Size2, Root2)
+    end.
+
+%% INTERNAL1
+
+-compile({inline, union_internal_batch1/5}).
+union_internal_batch1(E1, C1, C2, Size, Root) ->
+    [Size2 | Root2] = union_recur(C1, Size, Root),
+
+    try insert(E1, Root2) of
+        Root3 ->
+            union_recur(C2, Size2 + 1, Root3)
+    catch
+        error:{key_exists, K} when K =:= E1 ->
+            union_recur(C2, Size2, Root2)
+    end.
+
+%% LEAF4
+
+-compile({inline, union_leaf_batch4/6}).
+union_leaf_batch4(E1, E2, E3, E4, Size, Root) ->
+    try insert(E1, Root) of
+        UpdatedRoot ->
+            union_leaf_batch3(E2, E3, E4, Size + 1, UpdatedRoot)
+    catch
+        error:{key_exists, K} when K =:= E1 ->
+            union_leaf_batch3(E2, E3, E4, Size, Root)
+    end.
+
+%% LEAF3
+
+-compile({inline, union_leaf_batch3/5}).
+union_leaf_batch3(E1, E2, E3, Size, Root) ->
+    try insert(E1, Root) of
+        UpdatedRoot ->
+            union_leaf_batch2(E2, E3, Size + 1, UpdatedRoot)
+    catch
+        error:{key_exists, K} when K =:= E1 ->
+            union_leaf_batch2(E2, E3, Size, Root)
+    end.
+
+%% LEAF2
+
+-compile({inline, union_leaf_batch2/4}).
+union_leaf_batch2(E1, E2, Size, Root) ->
     try insert(E1, Root) of
         UpdatedRoot ->
             union_single_element(E2, Size + 1, UpdatedRoot)
@@ -4111,7 +4149,7 @@ union_batch2(E1, E2, Size, Root) ->
             union_single_element(E2, Size, Root)
     end.
 
-%% INTERNAL2 and LEAF2
+%% LEAF1
 
 -compile({inline, union_single_element/3}).
 union_single_element(E1, Size, Root) ->
