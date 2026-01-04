@@ -23,6 +23,7 @@
     next/1,
     smaller/2,
     smallest/1,
+    structural_stats/1,
     take_largest/1,
     take_smallest/1,
     to_list/1,
@@ -468,23 +469,19 @@
 
 %%%%%%%%%%%
 
--type valid_stats() :: #{
-    height := non_neg_integer(),
-    node_counts := stats_node_counts()
-}.
--export_type([valid_stats/0]).
+%%%%%%%%%%%%
 
--type stats_node_counts() :: #{
-    internal4 => pos_integer(),
-    internal3 => pos_integer(),
-    internal2 => pos_integer(),
-    internal1 => pos_integer(),
-    leaf4 => pos_integer(),
-    leaf3 => pos_integer(),
-    leaf2 => pos_integer(),
-    leaf1 => pos_integer()
-}.
--export_type([stats_node_counts/0]).
+-record(stats_acc, {
+    count_internal4,
+    count_internal3,
+    count_internal2,
+    count_internal1,
+    count_leaf4,
+    count_leaf3,
+    count_leaf2,
+    count_leaf1,
+    height
+}).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -685,6 +682,42 @@ smallest(?LEAF0_MATCH) ->
     error_empty_set();
 smallest(Root) ->
     smallest_recur(Root).
+
+structural_stats(Root) ->
+    Acc = #stats_acc{
+        count_internal4 = 0,
+        count_internal3 = 0,
+        count_internal2 = 0,
+        count_internal1 = 0,
+        count_leaf4 = 0,
+        count_leaf3 = 0,
+        count_leaf2 = 0,
+        count_leaf1 = 0,
+        height = 0
+    },
+
+    case Root of
+        ?INTERNAL1_MATCH(_, C1, C2) ->
+            Height = 1,
+            Acc2 = structural_stats_inc(#stats_acc.count_internal1, Acc),
+            Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
+            Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
+            return_structural_stats(Acc4);
+        %
+        ?LEAF1_MATCH(_) ->
+            Height = 1,
+            Acc2 = structural_stats_inc(#stats_acc.count_leaf1, Acc),
+            Acc3 = structural_stats_set_height(Height, Acc2),
+            return_structural_stats(Acc3);
+        %
+        ?LEAF0_MATCH ->
+            return_structural_stats(Acc);
+        %
+        _ ->
+            Height = 1,
+            Acc2 = structural_stats_recur(Root, Acc, Height),
+            return_structural_stats(Acc2)
+    end.
 
 take_largest(?INTERNAL1_MATCH_ALL) ->
     take_largest_INTERNAL1(?INTERNAL1_ARGS);
@@ -3886,6 +3919,146 @@ smallest_recur(Node) ->
         ?LEAF4_MATCH(E1, _, _, _) ->
             E1
     end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: structural_stats/1
+%% ------------------------------------------------------------------
+
+structural_stats_recur(Node, Acc, Height) ->
+    case Node of
+        ?LEAF2_MATCH(_, _) ->
+            Acc2 = structural_stats_inc(#stats_acc.count_leaf2, Acc),
+            structural_stats_set_height(Height, Acc2);
+        %
+        ?LEAF3_MATCH(_, _, _) ->
+            Acc2 = structural_stats_inc(#stats_acc.count_leaf3, Acc),
+            structural_stats_set_height(Height, Acc2);
+        %
+        ?LEAF4_MATCH(_, _, _, _) ->
+            Acc2 = structural_stats_inc(#stats_acc.count_leaf4, Acc),
+            structural_stats_set_height(Height, Acc2);
+        %
+        ?INTERNAL2_MATCH(_, _, C1, C2, C3) ->
+            Acc2 = structural_stats_inc(#stats_acc.count_internal2, Acc),
+            Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
+            Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
+            _Acc5 = structural_stats_recur(C3, Acc4, Height + 1);
+        %
+        ?INTERNAL3_MATCH(_, _, _, C1, C2, C3, C4) ->
+            Acc2 = structural_stats_inc(#stats_acc.count_internal3, Acc),
+            Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
+            Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
+            Acc5 = structural_stats_recur(C3, Acc4, Height + 1),
+            _Acc6 = structural_stats_recur(C4, Acc5, Height + 1);
+        %
+        ?INTERNAL4_MATCH(_, _, _, _, C1, C2, C3, C4, C5) ->
+            Acc2 = structural_stats_inc(#stats_acc.count_internal4, Acc),
+            Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
+            Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
+            Acc5 = structural_stats_recur(C3, Acc4, Height + 1),
+            Acc6 = structural_stats_recur(C4, Acc5, Height + 1),
+            _Acc7 = structural_stats_recur(C5, Acc6, Height + 1)
+    end.
+
+structural_stats_set_height(Height, #stats_acc{height = RecordHeight} = Acc) ->
+    case RecordHeight of
+        _ when RecordHeight < Height ->
+            Acc#stats_acc{height = Height};
+        %
+        _ when RecordHeight =:= Height ->
+            Acc
+    end.
+
+-compile({inline, structural_stats_inc/2}).
+structural_stats_inc(Pos, #stats_acc{} = Acc) ->
+    setelement(Pos, Acc, element(Pos, Acc) + 1).
+
+return_structural_stats(#stats_acc{} = Acc) ->
+    NodeCounts = node_counts(Acc),
+    NodePercentages = node_percentages(NodeCounts),
+    TotalKeys = total_keys(NodeCounts),
+    KeyPercentages = key_percentages(NodeCounts, TotalKeys),
+
+    [
+        {height, Acc#stats_acc.height},
+        {node_counts, NodeCounts},
+        {node_percentages, NodePercentages},
+        {total_keys, TotalKeys},
+        {key_percentages, KeyPercentages}
+    ].
+
+node_counts(#stats_acc{} = Acc) ->
+    [
+        {internal4, Acc#stats_acc.count_internal4},
+        {internal3, Acc#stats_acc.count_internal3},
+        {internal2, Acc#stats_acc.count_internal2},
+        {internal1, Acc#stats_acc.count_internal1},
+        {leaf4, Acc#stats_acc.count_leaf4},
+        {leaf3, Acc#stats_acc.count_leaf3},
+        {leaf2, Acc#stats_acc.count_leaf2},
+        {leaf1, Acc#stats_acc.count_leaf1}
+    ].
+
+node_percentages(NodeCounts) ->
+    Sum = lists:foldl(
+        fun({_Type, Count}, Acc) ->
+            Acc + Count
+        end,
+        0,
+        NodeCounts
+    ),
+
+    %%%
+
+    case Sum of
+        0 ->
+            lists:map(fun({Type, _Count}) -> {Type, 0.0} end, NodeCounts);
+        %
+        TotalCount ->
+            lists:map(
+                fun({Type, Count}) ->
+                    {Type, round_percentage(100.0 * Count / TotalCount)}
+                end,
+                NodeCounts
+            )
+    end.
+
+total_keys(NodeCounts) ->
+    lists:foldl(
+        fun({NodeType, Count}, Acc) ->
+            Acc + (Count * total_keys_in_node_type(NodeType))
+        end,
+        0,
+        NodeCounts
+    ).
+
+key_percentages(NodeCounts, 0 = _TotalKeys) ->
+    lists:map(
+        fun({NodeType, 0}) ->
+            {NodeType, 0.0}
+        end,
+        NodeCounts
+    );
+key_percentages(NodeCounts, TotalKeys) ->
+    lists:map(
+        fun({NodeType, Count}) ->
+            TotalNodeTypeKeys = Count * total_keys_in_node_type(NodeType),
+            {NodeType, round_percentage(100.0 * TotalNodeTypeKeys / TotalKeys)}
+        end,
+        NodeCounts
+    ).
+
+round_percentage(Percentage) ->
+    binary_to_float(float_to_binary(Percentage, [{decimals, 1}])).
+
+total_keys_in_node_type(internal4) -> 4;
+total_keys_in_node_type(internal3) -> 3;
+total_keys_in_node_type(internal2) -> 2;
+total_keys_in_node_type(internal1) -> 1;
+total_keys_in_node_type(leaf4) -> 4;
+total_keys_in_node_type(leaf3) -> 3;
+total_keys_in_node_type(leaf2) -> 2;
+total_keys_in_node_type(leaf1) -> 1.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: take_largest/2

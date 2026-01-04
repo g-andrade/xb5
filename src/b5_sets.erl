@@ -44,6 +44,7 @@
     size/1,
     smaller/2,
     smallest/1,
+    structural_stats/1,
     % `sets' compatibility alias
     subtract/2,
     take_largest/1,
@@ -186,14 +187,17 @@ singleton(Element) ->
 size(#b5_sets{size = Size}) ->
     Size.
 
-subtract(Set1, Set2) ->
-    difference(Set1, Set2).
-
 smaller(Element, #b5_sets{root = Root}) ->
     b5_sets_node:smaller(Element, Root).
 
 smallest(#b5_sets{root = Root}) ->
     b5_sets_node:smallest(Root).
+
+structural_stats(#b5_sets{root = Root}) ->
+    b5_sets_node:structural_stats(Root).
+
+subtract(Set1, Set2) ->
+    difference(Set1, Set2).
 
 take_largest(#b5_sets{root = Root, size = Size} = Set) ->
     [Largest | UpdatedRoot] = b5_sets_node:take_largest(Root),
