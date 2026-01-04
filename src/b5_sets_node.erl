@@ -294,7 +294,8 @@
 
 %%
 
--define(NODE_CHECK_ENABLED, false). % defined(TEST)).
+% defined(TEST)).
+-define(NODE_CHECK_ENABLED, false).
 
 -if(?NODE_CHECK_ENABLED).
 -define(CHECK_NODE(Node), check_node(?LINE, Node)).
