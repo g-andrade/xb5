@@ -120,6 +120,21 @@
 % Any of the following cannot clash with either the largest leaf or internal
 % nodes, since those are a merged node.
 
+% list
+-define(MID_MERGED(MergedNode), [MergedNode]).
+-define(MID_MERGED_MATCH(MergedNode), [MergedNode | _]).
+
+% 4 elements
+-define(MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight),
+    {UpK, UpVal, UpdatedNode, UpdatedRight}
+).
+% 5 elements
+-define(MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedNode, UpdatedRight),
+    {from_left, UpK, UpVal, UpdatedNode, UpdatedRight}
+).
+
+%%%
+
 % 4 elements
 -define(ROTATED(UpK, UpVal, UpdatedLeft, UpdatedRight), {UpK, UpVal, UpdatedLeft, UpdatedRight}).
 
@@ -2355,7 +2370,18 @@ delete_internal4_key1(K2, K3, K4, PrevValues, C1, PrevC2, C3, C4, C5) ->
 
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K1, V1, C1),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal4_rebalance_child2_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C3, C4, C5
@@ -2363,7 +2389,16 @@ delete_internal4_key1(K2, K3, K4, PrevValues, C1, PrevC2, C3, C4, C5) ->
         %
         %
         ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K1, V1, C1),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal4_rebalance_child2_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C3, C4, C5
@@ -2384,7 +2419,18 @@ delete_internal4_key2(K1, K3, K4, PrevValues, C1, C2, PrevC3, C4, C5) ->
 
     case C3 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K2, V2, C2),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K2,
+                V2,
+                C2,
+                K3,
+                V3,
+                C4
+            ),
 
             delete_internal4_rebalance_child3_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C4, C5
@@ -2392,7 +2438,16 @@ delete_internal4_key2(K1, K3, K4, PrevValues, C1, C2, PrevC3, C4, C5) ->
         %
         %
         ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K2, V2, C2),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K2,
+                V2,
+                C2,
+                K3,
+                V3,
+                C4
+            ),
 
             delete_internal4_rebalance_child3_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C4, C5
@@ -2413,7 +2468,18 @@ delete_internal4_key3(K1, K2, K4, PrevValues, C1, C2, C3, PrevC4, C5) ->
 
     case C4 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K3, V3, C3),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K3,
+                V3,
+                C3,
+                K4,
+                V4,
+                C5
+            ),
 
             delete_internal4_rebalance_child4_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C5
@@ -2421,7 +2487,16 @@ delete_internal4_key3(K1, K2, K4, PrevValues, C1, C2, C3, PrevC4, C5) ->
         %
         %
         ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K3, V3, C3),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K3,
+                V3,
+                C3,
+                K4,
+                V4,
+                C5
+            ),
 
             delete_internal4_rebalance_child4_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C5
@@ -2524,7 +2599,18 @@ delete_internal4_rebalance_child2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
             {V1, V2, V3, V4} = Values,
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K1, V1, C1),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal4_rebalance_child2_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C3, C4, C5
@@ -2533,7 +2619,16 @@ delete_internal4_rebalance_child2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
         %
         ?LEAF1_MATCH(CK, CV) ->
             {V1, V2, V3, V4} = Values,
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K1, V1, C1),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal4_rebalance_child2_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C3, C4, C5
@@ -2545,14 +2640,16 @@ delete_internal4_rebalance_child2(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     end.
 
 -compile({inline, delete_internal4_rebalance_child2_finish/13}).
-delete_internal4_rebalance_child2_finish(Result, _K1, K2, K3, K4, _V1, V2, V3, V4, _C1, C3, C4, C5) ->
+delete_internal4_rebalance_child2_finish(Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C3, C4, C5) ->
     case Result of
-        ?ROTATED(UpK, UpVal, UpdatedC1, RebalancedC2) ->
-            ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedC1, RebalancedC2, C3, C4, C5);
+        ?MID_MERGED_MATCH(MergedC1C2) ->
+            ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, MergedC1C2, C3, C4, C5);
         %
-        ?MERGED(MergedC1C2) ->
-            ?INTERNAL3(K2, K3, K4, {V2, V3, V4}, MergedC1C2, C3, C4, C5)
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC2, UpdatedC3) ->
+            ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, C1, RebalancedC2, UpdatedC3, C4, C5);
         %
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC1, RebalancedC2) ->
+            ?INTERNAL4(UpK, K2, K3, K4, {UpVal, V2, V3, V4}, UpdatedC1, RebalancedC2, C3, C4, C5)
     end.
 
 %%%%%%%%
@@ -2562,7 +2659,18 @@ delete_internal4_rebalance_child3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     case C3 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
             {V1, V2, V3, V4} = Values,
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K2, V2, C2),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K2,
+                V2,
+                C2,
+                K3,
+                V3,
+                C4
+            ),
 
             delete_internal4_rebalance_child3_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C4, C5
@@ -2571,7 +2679,16 @@ delete_internal4_rebalance_child3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
         %
         ?LEAF1_MATCH(CK, CV) ->
             {V1, V2, V3, V4} = Values,
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K2, V2, C2),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K2,
+                V2,
+                C2,
+                K3,
+                V3,
+                C4
+            ),
 
             delete_internal4_rebalance_child3_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C4, C5
@@ -2583,13 +2700,16 @@ delete_internal4_rebalance_child3(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     end.
 
 -compile({inline, delete_internal4_rebalance_child3_finish/13}).
-delete_internal4_rebalance_child3_finish(Result, K1, _K2, K3, K4, V1, _V2, V3, V4, C1, _C2, C4, C5) ->
+delete_internal4_rebalance_child3_finish(Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C4, C5) ->
     case Result of
-        ?ROTATED(UpK, UpVal, UpdatedC2, RebalancedC3) ->
-            ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, C1, UpdatedC2, RebalancedC3, C4, C5);
+        ?MID_MERGED_MATCH(MergedC2C3) ->
+            ?INTERNAL3(K1, K3, K4, {V1, V3, V4}, C1, MergedC2C3, C4, C5);
         %
-        ?MERGED(MergedC2C3) ->
-            ?INTERNAL3(K1, K3, K4, {V1, V3, V4}, C1, MergedC2C3, C4, C5)
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC3, UpdatedC4) ->
+            ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, C1, C2, RebalancedC3, UpdatedC4, C5);
+        %
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC2, RebalancedC3) ->
+            ?INTERNAL4(K1, UpK, K3, K4, {V1, UpVal, V3, V4}, C1, UpdatedC2, RebalancedC3, C4, C5)
     end.
 
 %%%
@@ -2599,7 +2719,18 @@ delete_internal4_rebalance_child4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     case C4 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
             {V1, V2, V3, V4} = Values,
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K3, V3, C3),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K3,
+                V3,
+                C3,
+                K4,
+                V4,
+                C5
+            ),
 
             delete_internal4_rebalance_child4_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C5
@@ -2608,7 +2739,16 @@ delete_internal4_rebalance_child4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
         %
         ?LEAF1_MATCH(CK, CV) ->
             {V1, V2, V3, V4} = Values,
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K3, V3, C3),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K3,
+                V3,
+                C3,
+                K4,
+                V4,
+                C5
+            ),
 
             delete_internal4_rebalance_child4_finish(
                 Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C5
@@ -2620,13 +2760,16 @@ delete_internal4_rebalance_child4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
     end.
 
 -compile({inline, delete_internal4_rebalance_child4_finish/13}).
-delete_internal4_rebalance_child4_finish(Result, K1, K2, _K3, K4, V1, V2, _V3, V4, C1, C2, _C3, C5) ->
+delete_internal4_rebalance_child4_finish(Result, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C5) ->
     case Result of
-        ?ROTATED(UpK, UpVal, UpdatedC3, RebalancedC4) ->
-            ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, C1, C2, UpdatedC3, RebalancedC4, C5);
+        ?MID_MERGED_MATCH(MergedC3C4) ->
+            ?INTERNAL3(K1, K2, K4, {V1, V2, V4}, C1, C2, MergedC3C4, C5);
         %
-        ?MERGED(MergedC3C4) ->
-            ?INTERNAL3(K1, K2, K4, {V1, V2, V4}, C1, C2, MergedC3C4, C5)
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC4, UpdatedC5) ->
+            ?INTERNAL4(K1, K2, K3, UpK, {V1, V2, V3, UpVal}, C1, C2, C3, RebalancedC4, UpdatedC5);
+        %
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC3, RebalancedC4) ->
+            ?INTERNAL4(K1, K2, UpK, K4, {V1, V2, UpVal, V4}, C1, C2, UpdatedC3, RebalancedC4, C5)
     end.
 
 %%%
@@ -2778,7 +2921,18 @@ delete_internal3_key1(K2, K3, PrevValues, C1, PrevC2, C3, C4) ->
 
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K1, V1, C1),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal3_rebalance_child2_finish(
                 Result, K1, K2, K3, V1, V2, V3, C1, C3, C4
@@ -2786,7 +2940,16 @@ delete_internal3_key1(K2, K3, PrevValues, C1, PrevC2, C3, C4) ->
         %
         %
         ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K1, V1, C1),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal3_rebalance_child2_finish(
                 Result, K1, K2, K3, V1, V2, V3, C1, C3, C4
@@ -2807,7 +2970,18 @@ delete_internal3_key2(K1, K3, PrevValues, C1, C2, PrevC3, C4) ->
 
     case C3 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K2, V2, C2),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K2,
+                V2,
+                C2,
+                K3,
+                V3,
+                C4
+            ),
 
             delete_internal3_rebalance_child3_finish(
                 Result, K1, K2, K3, V1, V2, V3, C1, C2, C4
@@ -2815,7 +2989,16 @@ delete_internal3_key2(K1, K3, PrevValues, C1, C2, PrevC3, C4) ->
         %
         %
         ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K2, V2, C2),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K2,
+                V2,
+                C2,
+                K3,
+                V3,
+                C4
+            ),
 
             delete_internal3_rebalance_child3_finish(
                 Result, K1, K2, K3, V1, V2, V3, C1, C2, C4
@@ -2918,7 +3101,18 @@ delete_internal3_rebalance_child2(K1, K2, K3, Values, C1, C2, C3, C4) ->
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
             {V1, V2, V3} = Values,
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K1, V1, C1),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal3_rebalance_child2_finish(
                 Result, K1, K2, K3, V1, V2, V3, C1, C3, C4
@@ -2927,7 +3121,16 @@ delete_internal3_rebalance_child2(K1, K2, K3, Values, C1, C2, C3, C4) ->
         %
         ?LEAF1_MATCH(CK, CV) ->
             {V1, V2, V3} = Values,
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K1, V1, C1),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal3_rebalance_child2_finish(
                 Result, K1, K2, K3, V1, V2, V3, C1, C3, C4
@@ -2939,13 +3142,16 @@ delete_internal3_rebalance_child2(K1, K2, K3, Values, C1, C2, C3, C4) ->
     end.
 
 -compile({inline, delete_internal3_rebalance_child2_finish/10}).
-delete_internal3_rebalance_child2_finish(Result, _K1, K2, K3, _V1, V2, V3, _C1, C3, C4) ->
+delete_internal3_rebalance_child2_finish(Result, K1, K2, K3, V1, V2, V3, C1, C3, C4) ->
     case Result of
-        ?ROTATED(UpK, UpVal, UpdatedC1, RebalancedC2) ->
-            ?INTERNAL3(UpK, K2, K3, {UpVal, V2, V3}, UpdatedC1, RebalancedC2, C3, C4);
+        ?MID_MERGED_MATCH(MergedC1C2) ->
+            ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4);
         %
-        ?MERGED(MergedC1C2) ->
-            ?INTERNAL2(K2, K3, [V2 | V3], MergedC1C2, C3, C4)
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC2, UpdatedC3) ->
+            ?INTERNAL3(K1, UpK, K3, {V1, UpVal, V3}, C1, RebalancedC2, UpdatedC3, C4);
+        %
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC1, RebalancedC2) ->
+            ?INTERNAL3(UpK, K2, K3, {UpVal, V2, V3}, UpdatedC1, RebalancedC2, C3, C4)
     end.
 
 %%%
@@ -2955,7 +3161,18 @@ delete_internal3_rebalance_child3(K1, K2, K3, Values, C1, C2, C3, C4) ->
     case C3 of
         ?INTERNAL1(CK, CV, CL, CR) ->
             {V1, V2, V3} = Values,
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K2, V2, C2),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K2,
+                V2,
+                C2,
+                K3,
+                V3,
+                C4
+            ),
 
             delete_internal3_rebalance_child3_finish(
                 Result, K1, K2, K3, V1, V2, V3, C1, C2, C4
@@ -2964,7 +3181,16 @@ delete_internal3_rebalance_child3(K1, K2, K3, Values, C1, C2, C3, C4) ->
         %
         ?LEAF1(CK, CV) ->
             {V1, V2, V3} = Values,
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K2, V2, C2),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K2,
+                V2,
+                C2,
+                K3,
+                V3,
+                C4
+            ),
 
             delete_internal3_rebalance_child3_finish(
                 Result, K1, K2, K3, V1, V2, V3, C1, C2, C4
@@ -2976,13 +3202,16 @@ delete_internal3_rebalance_child3(K1, K2, K3, Values, C1, C2, C3, C4) ->
     end.
 
 -compile({inline, delete_internal3_rebalance_child3_finish/10}).
-delete_internal3_rebalance_child3_finish(Result, K1, _K2, K3, V1, _V2, V3, C1, _C2, C4) ->
+delete_internal3_rebalance_child3_finish(Result, K1, K2, K3, V1, V2, V3, C1, C2, C4) ->
     case Result of
-        ?ROTATED(UpK, UpVal, UpdatedC2, RebalancedC3) ->
-            ?INTERNAL3(K1, UpK, K3, {V1, UpVal, V3}, C1, UpdatedC2, RebalancedC3, C4);
+        ?MID_MERGED_MATCH(MergedC2C3) ->
+            ?INTERNAL2(K1, K3, [V1 | V3], C1, MergedC2C3, C4);
         %
-        ?MERGED(MergedC2C3) ->
-            ?INTERNAL2(K1, K3, [V1 | V3], C1, MergedC2C3, C4)
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC3, UpdatedC4) ->
+            ?INTERNAL3(K1, K2, UpK, {V1, V2, UpVal}, C1, C2, RebalancedC3, UpdatedC4);
+        %
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC2, RebalancedC3) ->
+            ?INTERNAL3(K1, UpK, K3, {V1, UpVal, V3}, C1, UpdatedC2, RebalancedC3, C4)
     end.
 
 %%%
@@ -3104,7 +3333,18 @@ delete_internal2_key1(K2, Values, C1, PrevC2, C3) ->
 
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K1, V1, C1),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal2_rebalance_child2_finish(
                 Result, K1, K2, V1, V2, C1, C3
@@ -3112,7 +3352,16 @@ delete_internal2_key1(K2, Values, C1, PrevC2, C3) ->
         %
         %
         ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K1, V1, C1),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal2_rebalance_child2_finish(
                 Result, K1, K2, V1, V2, C1, C3
@@ -3213,7 +3462,18 @@ delete_internal2_rebalance_child2(K1, K2, Values, C1, C2, C3) ->
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
             [V1 | V2] = Values,
-            Result = rebalance_internal_from_left_sibling(CK, CV, CL, CR, K1, V1, C1),
+            Result = rebalance_internal_from_either_sibling(
+                CK,
+                CV,
+                CL,
+                CR,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal2_rebalance_child2_finish(
                 Result, K1, K2, V1, V2, C1, C3
@@ -3222,7 +3482,16 @@ delete_internal2_rebalance_child2(K1, K2, Values, C1, C2, C3) ->
         %
         ?LEAF1_MATCH(CK, CV) ->
             [V1 | V2] = Values,
-            Result = rebalance_leaf_from_left_sibling(CK, CV, K1, V1, C1),
+            Result = rebalance_leaf_from_either_sibling(
+                CK,
+                CV,
+                K1,
+                V1,
+                C1,
+                K2,
+                V2,
+                C3
+            ),
 
             delete_internal2_rebalance_child2_finish(
                 Result, K1, K2, V1, V2, C1, C3
@@ -3234,13 +3503,16 @@ delete_internal2_rebalance_child2(K1, K2, Values, C1, C2, C3) ->
     end.
 
 -compile({inline, delete_internal2_rebalance_child2_finish/7}).
-delete_internal2_rebalance_child2_finish(Result, _K1, K2, _V1, V2, _C1, C3) ->
+delete_internal2_rebalance_child2_finish(Result, K1, K2, V1, V2, C1, C3) ->
     case Result of
-        ?ROTATED(UpK, UpVal, UpdatedC1, RebalancedC2) ->
-            ?INTERNAL2(UpK, K2, [UpVal | V2], UpdatedC1, RebalancedC2, C3);
+        ?MID_MERGED_MATCH(MergedC1C2) ->
+            ?INTERNAL1(K2, V2, MergedC1C2, C3);
         %
-        ?MERGED(MergedC1C2) ->
-            ?INTERNAL1(K2, V2, MergedC1C2, C3)
+        ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, RebalancedC2, UpdatedC3) ->
+            ?INTERNAL2(K1, UpK, [V1 | UpVal], C1, RebalancedC2, UpdatedC3);
+        %
+        ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedC1, RebalancedC2) ->
+            ?INTERNAL2(UpK, K2, [UpVal | V2], UpdatedC1, RebalancedC2, C3)
     end.
 
 %%%
@@ -5783,4 +6055,240 @@ rebalance_leaf_from_left_sibling(
             UpdatedLeft = ?LEAF3(K1, K2, K3, V1, V2, V3),
 
             ?ROTATED(UpK, UpVal, UpdatedLeft, UpdatedNode)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Rebalance a node from either left/right sibling
+%% ------------------------------------------------------------------
+
+%-compile({inline, rebalance_internal_from_either_sibling/10}).
+rebalance_internal_from_either_sibling(
+    CKey,
+    CValue,
+    CLeft,
+    CRight,
+    LParentK,
+    LParentV,
+    Left,
+    RParentK,
+    RParentV,
+    Right
+) ->
+    case Left of
+        ?INTERNAL2_MATCH(LK1, LK2, LValues, LC1, LC2, LC3) ->
+            %
+            %
+            case Right of
+                ?INTERNAL3_MATCH(K1, K2, K3, Values, C1, C2, C3, C4) ->
+                    {V1, V2, V3} = Values,
+
+                    UpK = K1,
+                    UpVal = V1,
+                    MovedC = C1,
+
+                    UpdatedNode = ?INTERNAL2(
+                        CKey,
+                        RParentK,
+                        [CValue | RParentV],
+                        CLeft,
+                        CRight,
+                        MovedC
+                    ),
+
+                    UpdatedRight = ?INTERNAL2(
+                        K2,
+                        K3,
+                        [V2 | V3],
+                        C2,
+                        C3,
+                        C4
+                    ),
+
+                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
+                %
+                %
+                ?INTERNAL4_MATCH(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+                    {V1, V2, V3, V4} = Values,
+
+                    UpK = K1,
+                    UpVal = V1,
+                    MovedC = C1,
+
+                    UpdatedNode = ?INTERNAL2(
+                        CKey,
+                        RParentK,
+                        [CValue | RParentV],
+                        CLeft,
+                        CRight,
+                        MovedC
+                    ),
+
+                    UpdatedRight = ?INTERNAL3(
+                        K2,
+                        K3,
+                        K4,
+                        {V2, V3, V4},
+                        C2,
+                        C3,
+                        C4,
+                        C5
+                    ),
+
+                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
+                %
+                %
+                _ ->
+                    % Merge with left since we already unpacked it
+                    [LV1 | LV2] = LValues,
+
+                    MergedNode = ?INTERNAL4(
+                        LK1,
+                        LK2,
+                        LParentK,
+                        CKey,
+                        {LV1, LV2, LParentV, CValue},
+                        LC1,
+                        LC2,
+                        LC3,
+                        CLeft,
+                        CRight
+                    ),
+
+                    ?MID_MERGED(MergedNode)
+            end;
+        %
+        %
+        %
+        %
+        ?INTERNAL3_MATCH(K1, K2, K3, Values, C1, C2, C3, C4) ->
+            {V1, V2, V3} = Values,
+
+            UpK = K3,
+            UpVal = V3,
+            MovedC = C4,
+
+            UpdatedNode = ?INTERNAL2(
+                LParentK,
+                CKey,
+                [LParentV | CValue],
+                MovedC,
+                CLeft,
+                CRight
+            ),
+
+            UpdatedLeft = ?INTERNAL2(
+                K1,
+                K2,
+                [V1 | V2],
+                C1,
+                C2,
+                C3
+            ),
+
+            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode);
+        %
+        %
+        %
+        %
+        ?INTERNAL4_MATCH(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5) ->
+            {V1, V2, V3, V4} = Values,
+
+            UpK = K4,
+            UpVal = V4,
+            MovedC = C5,
+
+            UpdatedNode = ?INTERNAL2(
+                LParentK,
+                CKey,
+                [LParentV | CValue],
+                MovedC,
+                CLeft,
+                CRight
+            ),
+
+            UpdatedLeft = ?INTERNAL3(
+                K1,
+                K2,
+                K3,
+                {V1, V2, V3},
+                C1,
+                C2,
+                C3,
+                C4
+            ),
+
+            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode)
+    end.
+
+% -compile({inline, rebalance_leaf_from_either_sibling/8}).
+rebalance_leaf_from_either_sibling(
+    CKey,
+    CValue,
+    LParentK,
+    LParentV,
+    Left,
+    RParentK,
+    RParentV,
+    Right
+) ->
+    case Left of
+        ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
+            case Right of
+                ?LEAF3_MATCH(K1, K2, K3, V1, V2, V3) ->
+                    UpK = K1,
+                    UpVal = V1,
+
+                    UpdatedNode = ?LEAF2(CKey, RParentK, CValue, RParentV),
+                    UpdatedRight = ?LEAF2(K2, K3, V2, V3),
+
+                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
+                %
+                %
+                ?LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4) ->
+                    UpK = K1,
+                    UpVal = V1,
+
+                    UpdatedNode = ?LEAF2(CKey, RParentK, CValue, RParentV),
+                    UpdatedRight = ?LEAF3(K2, K3, K4, V2, V3, V4),
+
+                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
+                %
+                %
+                _ ->
+                    % Merge with left since we already unpacked it
+                    MergedNode = ?LEAF4(
+                        LK1,
+                        LK2,
+                        LParentK,
+                        CKey,
+                        LV1,
+                        LV2,
+                        LParentV,
+                        CValue
+                    ),
+
+                    ?MID_MERGED(MergedNode)
+            end;
+        %
+        %
+        %
+        ?LEAF3_MATCH(K1, K2, K3, V1, V2, V3) ->
+            UpK = K3,
+            UpVal = V3,
+
+            UpdatedNode = ?LEAF2(LParentK, CKey, LParentV, CValue),
+            UpdatedLeft = ?LEAF2(K1, K2, V1, V2),
+
+            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode);
+        %
+        %
+        %
+        ?LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            UpK = K4,
+            UpVal = V4,
+
+            UpdatedNode = ?LEAF2(LParentK, CKey, LParentV, CValue),
+            UpdatedLeft = ?LEAF3(K1, K2, K3, V1, V2, V3),
+
+            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode)
     end.
