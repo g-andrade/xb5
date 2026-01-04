@@ -6234,22 +6234,22 @@ rebalance_leaf_from_either_sibling(
     case Left of
         ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
             case Right of
-                ?LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4) ->
-                    UpK = K1,
-                    UpVal = V1,
-
-                    UpdatedNode = ?LEAF2(CKey, RParentK, CValue, RParentV),
-                    UpdatedRight = ?LEAF3(K2, K3, K4, V2, V3, V4),
-
-                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
-                %
-                %
                 ?LEAF3_MATCH(K1, K2, K3, V1, V2, V3) ->
                     UpK = K1,
                     UpVal = V1,
 
                     UpdatedNode = ?LEAF2(CKey, RParentK, CValue, RParentV),
                     UpdatedRight = ?LEAF2(K2, K3, V2, V3),
+
+                    ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
+                %
+                %
+                ?LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4) ->
+                    UpK = K1,
+                    UpVal = V1,
+
+                    UpdatedNode = ?LEAF2(CKey, RParentK, CValue, RParentV),
+                    UpdatedRight = ?LEAF3(K2, K3, K4, V2, V3, V4),
 
                     ?MID_ROTATED_FROM_RIGHT(UpK, UpVal, UpdatedNode, UpdatedRight);
                 %
@@ -6272,23 +6272,23 @@ rebalance_leaf_from_either_sibling(
         %
         %
         %
-        ?LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4) ->
-            UpK = K4,
-            UpVal = V4,
-
-            UpdatedNode = ?LEAF2(LParentK, CKey, LParentV, CValue),
-            UpdatedLeft = ?LEAF3(K1, K2, K3, V1, V2, V3),
-
-            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode);
-        %
-        %
-        %
         ?LEAF3_MATCH(K1, K2, K3, V1, V2, V3) ->
             UpK = K3,
             UpVal = V3,
 
             UpdatedNode = ?LEAF2(LParentK, CKey, LParentV, CValue),
             UpdatedLeft = ?LEAF2(K1, K2, V1, V2),
+
+            ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode);
+        %
+        %
+        %
+        ?LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4) ->
+            UpK = K4,
+            UpVal = V4,
+
+            UpdatedNode = ?LEAF2(LParentK, CKey, LParentV, CValue),
+            UpdatedLeft = ?LEAF3(K1, K2, K3, V1, V2, V3),
 
             ?MID_ROTATED_FROM_LEFT(UpK, UpVal, UpdatedLeft, UpdatedNode)
     end.
