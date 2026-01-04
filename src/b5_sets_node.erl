@@ -3545,6 +3545,7 @@ map_root(Fun, Node, Acc) ->
     end.
 
 map_recur(Fun, Node, Acc) ->
+    % TODO optimize like in filter, filtermap, union, etc
     case Node of
         ?LEAF2_MATCH_ALL ->
             Acc2 = map_elem(Fun, E1, Acc),
