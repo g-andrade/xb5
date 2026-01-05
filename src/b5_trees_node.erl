@@ -30,10 +30,10 @@
 %% Macro Definitions: Nodes
 %% ------------------------------------------------------------------
 
-% 7 elements
--define(INTERNAL2(K1, K2, Values, C1, C2, C3), {internal2, K1, K2, Values, C1, C2, C3}).
--define(INTERNAL2_MATCH(K1, K2, Values, C1, C2, C3), {_, K1, K2, Values, C1, C2, C3}).
--define(INTERNAL2_MATCH_ALL, {_, K1, K2, Values, C1, C2, C3}).
+% 6 elements
+-define(INTERNAL2(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
+-define(INTERNAL2_MATCH(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
+-define(INTERNAL2_MATCH_ALL, {K1, K2, Values, C1, C2, C3}).
 
 % 4 elements
 -define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
@@ -45,10 +45,10 @@
 -define(INTERNAL3_MATCH(K1, K2, K3, Values, C1, C2, C3, C4), {K1, K2, K3, Values, C1, C2, C3, C4}).
 -define(INTERNAL3_MATCH_ALL, {K1, K2, K3, Values, C1, C2, C3, C4}).
 
-% 6 elements
--define(LEAF3(K1, K2, K3, V1, V2, V3), {K1, K2, K3, V1, V2, V3}).
--define(LEAF3_MATCH(K1, K2, K3, V1, V2, V3), {K1, K2, K3, V1, V2, V3}).
--define(LEAF3_MATCH_ALL, {K1, K2, K3, V1, V2, V3}).
+% 7 elements
+-define(LEAF3(K1, K2, K3, V1, V2, V3), {leaf3, K1, K2, K3, V1, V2, V3}).
+-define(LEAF3_MATCH(K1, K2, K3, V1, V2, V3), {_, K1, K2, K3, V1, V2, V3}).
+-define(LEAF3_MATCH_ALL, {_, K1, K2, K3, V1, V2, V3}).
 
 % 10 elements
 -define(INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5),
