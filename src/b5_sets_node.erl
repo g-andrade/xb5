@@ -880,25 +880,25 @@ delete_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
 
 -compile({inline, delete_INTERNAL4_E1 / ?INTERNAL4_ARITY}).
 delete_INTERNAL4_E1(?INTERNAL4_ARGS_IGN_E1) ->
-    [ReplacementE | UpdatedC2] = take_smallest_recur(C2),
+    ?TAKEN(ReplacementE, UpdatedC2) = take_smallest_recur(C2),
 
     ?INTERNAL4_E1_C2_REBALANCE(ReplacementE, UpdatedC2).
 
 -compile({inline, delete_INTERNAL4_E2 / ?INTERNAL4_ARITY}).
 delete_INTERNAL4_E2(?INTERNAL4_ARGS_IGN_E2) ->
-    [ReplacementE | UpdatedC3] = take_smallest_recur(C3),
+    ?TAKEN(ReplacementE, UpdatedC3) = take_smallest_recur(C3),
 
     ?INTERNAL4_E2_C3_REBALANCE(ReplacementE, UpdatedC3).
 
 -compile({inline, delete_INTERNAL4_E3 / ?INTERNAL4_ARITY}).
 delete_INTERNAL4_E3(?INTERNAL4_ARGS_IGN_E3) ->
-    [ReplacementE | UpdatedC4] = take_smallest_recur(C4),
+    ?TAKEN(ReplacementE, UpdatedC4) = take_smallest_recur(C4),
 
     ?INTERNAL4_E3_C4_REBALANCE(ReplacementE, UpdatedC4).
 
 -compile({inline, delete_INTERNAL4_E4 / ?INTERNAL4_ARITY}).
 delete_INTERNAL4_E4(?INTERNAL4_ARGS_IGN_E4) ->
-    [ReplacementE | UpdatedC5] = take_smallest_recur(C5),
+    ?TAKEN(ReplacementE, UpdatedC5) = take_smallest_recur(C5),
 
     ?INTERNAL4_E4_C5_REBALANCE(ReplacementE, UpdatedC5).
 
@@ -967,19 +967,19 @@ delete_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
 
 -compile({inline, delete_INTERNAL3_E1 / ?INTERNAL3_ARITY}).
 delete_INTERNAL3_E1(?INTERNAL3_ARGS_IGN_E1) ->
-    [ReplacementE | UpdatedC2] = take_smallest_recur(C2),
+    ?TAKEN(ReplacementE, UpdatedC2) = take_smallest_recur(C2),
 
     ?INTERNAL3_E1_C2_REBALANCE(ReplacementE, UpdatedC2).
 
 -compile({inline, delete_INTERNAL3_E2 / ?INTERNAL3_ARITY}).
 delete_INTERNAL3_E2(?INTERNAL3_ARGS_IGN_E2) ->
-    [ReplacementE | UpdatedC3] = take_smallest_recur(C3),
+    ?TAKEN(ReplacementE, UpdatedC3) = take_smallest_recur(C3),
 
     ?INTERNAL3_E2_C3_REBALANCE(ReplacementE, UpdatedC3).
 
 -compile({inline, delete_INTERNAL3_E3 / ?INTERNAL3_ARITY}).
 delete_INTERNAL3_E3(?INTERNAL3_ARGS_IGN_E3) ->
-    [ReplacementE | UpdatedC4] = take_smallest_recur(C4),
+    ?TAKEN(ReplacementE, UpdatedC4) = take_smallest_recur(C4),
 
     ?INTERNAL3_E3_C4_REBALANCE(ReplacementE, UpdatedC4).
 
@@ -1032,13 +1032,13 @@ delete_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
 
 -compile({inline, delete_INTERNAL2_E1 / ?INTERNAL2_ARITY}).
 delete_INTERNAL2_E1(?INTERNAL2_ARGS_IGN_E1) ->
-    [ReplacementE | UpdatedC2] = take_smallest_recur(C2),
+    ?TAKEN(ReplacementE, UpdatedC2) = take_smallest_recur(C2),
 
     ?INTERNAL2_E1_C2_REBALANCE(ReplacementE, UpdatedC2).
 
 -compile({inline, delete_INTERNAL2_E2 / ?INTERNAL2_ARITY}).
 delete_INTERNAL2_E2(?INTERNAL2_ARGS_IGN_E2) ->
-    [ReplacementE | UpdatedC3] = take_smallest_recur(C3),
+    ?TAKEN(ReplacementE, UpdatedC3) = take_smallest_recur(C3),
 
     ?INTERNAL2_E2_C3_REBALANCE(ReplacementE, UpdatedC3).
 
@@ -1071,7 +1071,7 @@ delete_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
 
 -compile({inline, delete_INTERNAL1_E1 / ?INTERNAL1_ARITY}).
 delete_INTERNAL1_E1(?INTERNAL1_ARGS_IGN_E1) ->
-    [ReplacementE | UpdatedC2] = take_smallest_recur(C2),
+    ?TAKEN(ReplacementE, UpdatedC2) = take_smallest_recur(C2),
     ?INTERNAL1_E1_C2_REBALANCE(ReplacementE, UpdatedC2).
 
 %%
@@ -4092,8 +4092,8 @@ take_largest_recur(Node) ->
 
 -compile({inline, take_largest_INTERNAL4 / ?INTERNAL4_ARITY}).
 take_largest_INTERNAL4(?INTERNAL4_ARGS) ->
-    [Taken | UpdatedC5] = take_largest_recur(C5),
-    [Taken | ?INTERNAL4_C5_REBALANCE(UpdatedC5)].
+    ?TAKEN(Taken, UpdatedC5) = take_largest_recur(C5),
+    ?TAKEN(Taken, ?INTERNAL4_C5_REBALANCE(UpdatedC5)).
 
 %%
 %% ?INTERNAL3
@@ -4101,8 +4101,8 @@ take_largest_INTERNAL4(?INTERNAL4_ARGS) ->
 
 -compile({inline, take_largest_INTERNAL3 / ?INTERNAL3_ARITY}).
 take_largest_INTERNAL3(?INTERNAL3_ARGS) ->
-    [Taken | UpdatedC4] = take_largest_recur(C4),
-    [Taken | ?INTERNAL3_C4_REBALANCE(UpdatedC4)].
+    ?TAKEN(Taken, UpdatedC4) = take_largest_recur(C4),
+    ?TAKEN(Taken, ?INTERNAL3_C4_REBALANCE(UpdatedC4)).
 
 %%
 %% ?INTERNAL2
@@ -4110,8 +4110,8 @@ take_largest_INTERNAL3(?INTERNAL3_ARGS) ->
 
 -compile({inline, take_largest_INTERNAL2 / ?INTERNAL2_ARITY}).
 take_largest_INTERNAL2(?INTERNAL2_ARGS) ->
-    [Taken | UpdatedC3] = take_largest_recur(C3),
-    [Taken | ?INTERNAL2_C3_REBALANCE(UpdatedC3)].
+    ?TAKEN(Taken, UpdatedC3) = take_largest_recur(C3),
+    ?TAKEN(Taken, ?INTERNAL2_C3_REBALANCE(UpdatedC3)).
 
 %%
 %% ?INTERNAL1
@@ -4119,8 +4119,8 @@ take_largest_INTERNAL2(?INTERNAL2_ARGS) ->
 
 -compile({inline, take_largest_INTERNAL1 / ?INTERNAL1_ARITY}).
 take_largest_INTERNAL1(?INTERNAL1_ARGS) ->
-    [Taken | UpdatedC2] = take_largest_recur(C2),
-    [Taken | ?INTERNAL1_C2_REBALANCE(UpdatedC2)].
+    ?TAKEN(Taken, UpdatedC2) = take_largest_recur(C2),
+    ?TAKEN(Taken, ?INTERNAL1_C2_REBALANCE(UpdatedC2)).
 
 %%
 %% ?LEAF4
@@ -4186,8 +4186,8 @@ take_smallest_recur(Node) ->
 
 -compile({inline, take_smallest_INTERNAL4 / ?INTERNAL4_ARITY}).
 take_smallest_INTERNAL4(?INTERNAL4_ARGS) ->
-    [Taken | UpdatedC1] = take_smallest_recur(C1),
-    [Taken | ?INTERNAL4_C1_REBALANCE(UpdatedC1)].
+    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
+    ?TAKEN(Taken, ?INTERNAL4_C1_REBALANCE(UpdatedC1)).
 
 %%
 %% ?INTERNAL3
@@ -4195,8 +4195,8 @@ take_smallest_INTERNAL4(?INTERNAL4_ARGS) ->
 
 -compile({inline, take_smallest_INTERNAL3 / ?INTERNAL3_ARITY}).
 take_smallest_INTERNAL3(?INTERNAL3_ARGS) ->
-    [Taken | UpdatedC1] = take_smallest_recur(C1),
-    [Taken | ?INTERNAL3_C1_REBALANCE(UpdatedC1)].
+    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
+    ?TAKEN(Taken, ?INTERNAL3_C1_REBALANCE(UpdatedC1)).
 
 %%
 %% ?INTERNAL2
@@ -4204,8 +4204,8 @@ take_smallest_INTERNAL3(?INTERNAL3_ARGS) ->
 
 -compile({inline, take_smallest_INTERNAL2 / ?INTERNAL2_ARITY}).
 take_smallest_INTERNAL2(?INTERNAL2_ARGS) ->
-    [Taken | UpdatedC1] = take_smallest_recur(C1),
-    [Taken | ?INTERNAL2_C1_REBALANCE(UpdatedC1)].
+    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
+    ?TAKEN(Taken, ?INTERNAL2_C1_REBALANCE(UpdatedC1)).
 
 %%
 %% ?INTERNAL1
@@ -4213,8 +4213,8 @@ take_smallest_INTERNAL2(?INTERNAL2_ARGS) ->
 
 -compile({inline, take_smallest_INTERNAL1 / ?INTERNAL1_ARITY}).
 take_smallest_INTERNAL1(?INTERNAL1_ARGS) ->
-    [Taken | UpdatedC1] = take_smallest_recur(C1),
-    [Taken | ?INTERNAL1_C1_REBALANCE(UpdatedC1)].
+    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
+    ?TAKEN(Taken, ?INTERNAL1_C1_REBALANCE(UpdatedC1)).
 
 %%
 %% ?LEAF4
