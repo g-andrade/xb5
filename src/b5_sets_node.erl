@@ -5769,10 +5769,10 @@ check_node(LineNumber, Node) ->
 
 node_type(Node) ->
     case Node of
-        ?INTERNAL1_MATCH(_, _, _) ->
+        ?INTERNAL1(_, _, _) ->
             'INTERNAL1';
         %
-        ?LEAF1_MATCH(_) ->
+        ?LEAF1(_) ->
             'LEAF1';
         %
         _ ->
@@ -5794,22 +5794,22 @@ check_node_recur(LineNumber, Node) ->
 
 recur_node_type(Node) ->
     case Node of
-        ?INTERNAL2_MATCH(_, _, _, _, _) ->
+        ?INTERNAL2(_, _, _, _, _) ->
             'INTERNAL2';
         %
-        ?INTERNAL3_MATCH(_, _, _, _, _, _, _) ->
+        ?INTERNAL3(_, _, _, _, _, _, _) ->
             'INTERNAL3';
         %
-        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, _) ->
+        ?INTERNAL4(_, _, _, _, _, _, _, _, _) ->
             'INTERNAL4';
         %
-        ?LEAF2_MATCH(_, _) ->
+        ?LEAF2(_, _) ->
             'LEAF2';
         %
-        ?LEAF3_MATCH(_, _, _) ->
+        ?LEAF3(_, _, _) ->
             'LEAF3';
         %
-        ?LEAF4_MATCH(_, _, _, _) ->
+        ?LEAF4(_, _, _, _) ->
             'LEAF4'
     end.
 
