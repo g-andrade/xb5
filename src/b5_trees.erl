@@ -38,7 +38,6 @@
     update/3,
     update_with/3,
     update_with/4,
-    validate/1,
     values/1
 ]).
 
@@ -76,7 +75,6 @@
     update/3,
     update_with/3,
     update_with/4,
-    validate/1,
     values/1
 ]).
 
@@ -556,17 +554,6 @@ update_with(Key, Fun, Init, #b5_trees{root = Root} = Tree) ->
                 size = Tree#b5_trees.size + 1
             }
     end.
-
--if(?OTP_RELEASE >= 27).
--doc """
-Validates the internal structure of the tree.
-Returns information about the tree structure for debugging purposes.
-""".
--endif.
--spec validate(tree(_, _)) ->
-    {ok, b5_trees_node:valid_stats()} | {error, term()}.
-validate(#b5_trees{size = Size, root = Root}) ->
-    b5_trees_node:validate(Size, Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc """

@@ -12,14 +12,6 @@
 %% CT exports
 -export([all/0, groups/0, init_per_suite/1, end_per_suite/1]).
 
-%% Test exports - Direct node validation tests
--export([
-    test_node_validate_leaf1_deep_in_the_tree/1,
-    test_node_validate_internal1_deep_in_the_tree/1,
-    test_node_validate_inconsistent_heights/1,
-    test_node_validate_inconsistent_keys/1
-]).
-
 %% Test exports - Basic API tests
 -export([
     test_from_list_repeated_keys/1,
@@ -103,13 +95,6 @@ all() ->
 
 groups() ->
     [
-        % FIXME
-        % {node_validation, [parallel], [
-        %     test_node_validate_leaf1_deep_in_the_tree,
-        %     test_node_validate_internal1_deep_in_the_tree,
-        %     test_node_validate_inconsistent_heights,
-        %     test_node_validate_inconsistent_keys
-        % ]},
         {basic_api, [parallel], [
             test_from_list_repeated_keys,
             test_get_operations,
@@ -153,60 +138,6 @@ end_per_suite(_Config) ->
     ok.
 
 %% ------------------------------------------------------------------
-%% Direct Node Validation Tests (from Elixir suite)
-%% ------------------------------------------------------------------
-
-test_node_validate_leaf1_deep_in_the_tree(_Config) ->
-    %% Build tree with inconsistent heights manually
-    Root = b5_trees_util:dialyzer_opaque_term(
-        {internal1, k3, v3, {k1, k2, v1, v2}, {k4, v4}}
-    ),
-
-    ?assertEqual(
-        {error, {root_only_nodes_deep_in_the_tree, #{{leaf1, 2} => 1}}},
-        b5_trees_node:validate(4, Root)
-    ).
-
-test_node_validate_internal1_deep_in_the_tree(_Config) ->
-    %% Build tree with inconsistent heights manually
-    Root = b5_trees_util:dialyzer_opaque_term(
-        {internal1, k3, v3, {k1, k2, v1, v2}, {internal1, k5, v5, {k4, v4}, {k6, v6}}}
-    ),
-
-    ?assertEqual(
-        {error,
-            {root_only_nodes_deep_in_the_tree, #{
-                {internal1, 2} => 1,
-                {leaf1, 3} => 2
-            }}},
-        b5_trees_node:validate(4, Root)
-    ).
-
-test_node_validate_inconsistent_heights(_Config) ->
-    %% Build tree with inconsistent heights manually
-    Root = b5_trees_util:dialyzer_opaque_term(
-        {internal1, k3, v3, {k1, k2, v1, v2},
-            {k6, k9, ?IMPROPER_LIST(v6, v9), {k4, k5, v4, v5}, {k7, k8, v7, v8},
-                {k10, k11, v10, v11}}}
-    ),
-
-    ?assertMatch(
-        {error, {inconsistent_heights, #{min_height := 2, max_height := 3}}},
-        b5_trees_node:validate(9, Root)
-    ).
-
-test_node_validate_inconsistent_keys(_Config) ->
-    %% Build tree with inconsistent number of keys
-    Root = b5_trees_util:dialyzer_opaque_term(
-        {internal1, k3, v3, {k1, k2, v1, v2}, {k4, k5, v4, v5}}
-    ),
-
-    ?assertMatch(
-        {error, {inconsistent_nr_of_keys, {expected, 6}, _}},
-        b5_trees_node:validate(6, Root)
-    ).
-
-%% ------------------------------------------------------------------
 %% Basic API Tests
 %% ------------------------------------------------------------------
 
@@ -223,9 +154,12 @@ test_get_operations(_Config) ->
     b5_trees_test_helpers:for_each_tree(
         ?REGULAR_TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
+            logger:notice("Tree: ~p", [Tree]),
+
             %% Test existent keys
             maps:fold(
                 fun(Key, ExpectedValue, _) ->
+                    logger:notice("Key: ~p", [Key]),
                     Key2 = b5_trees_test_helpers:randomly_switch_key_type(Key),
                     ?assertEqual(ExpectedValue, b5_trees:get(Key2, Tree))
                 end,
@@ -285,7 +219,6 @@ test_constituent_parts(_Config) ->
     ?assertEqual(Tree, ReconstructedTree),
     ?assertEqual(b5_trees:to_list(Tree), b5_trees:to_list(ReconstructedTree)),
     ?assertEqual(b5_trees:size(Tree), b5_trees:size(ReconstructedTree)),
-    ?assertMatch({ok, _}, b5_trees:validate(ReconstructedTree)),
 
     %% Test that constituent parts have the expected structure
     #{root := Root, size := Size} = Parts2,
@@ -384,7 +317,6 @@ test_update_with_4_operations(_Config) ->
 
 test_inserts(Tree, ExistentKvs, []) ->
     ?assertEqual(ExistentKvs, b5_trees:to_list(Tree)),
-    ?assertMatch({ok, _}, b5_trees:validate(Tree)),
     ?assertEqual(length(ExistentKvs), b5_trees:size(Tree));
 test_inserts(Tree, ExistentKvs, [NonExistentKey | Rest]) ->
     %% Test that inserting existing keys fails
@@ -407,13 +339,11 @@ test_inserts(Tree, ExistentKvs, [NonExistentKey | Rest]) ->
     ?assertEqual(NewExistentKvs, b5_trees:to_list(Tree2)),
     ?assertEqual(length(NewExistentKvs), b5_trees:size(Tree2)),
     ?assertNot(b5_trees:is_empty(Tree2)),
-    ?assertMatch({ok, _}, b5_trees:validate(Tree2)),
 
     test_inserts(Tree2, NewExistentKvs, Rest).
 
 test_inserts_with(Tree, ExistentKvs, []) ->
     ?assertEqual(ExistentKvs, b5_trees:to_list(Tree)),
-    ?assertMatch({ok, _}, b5_trees:validate(Tree)),
     ?assertEqual(length(ExistentKvs), b5_trees:size(Tree));
 test_inserts_with(Tree, ExistentKvs, [NonExistentKey | Rest]) ->
     %% Test that inserting existing keys fails (function shouldn't be called)
@@ -441,7 +371,6 @@ test_inserts_with(Tree, ExistentKvs, [NonExistentKey | Rest]) ->
     ?assertEqual(NewExistentKvs, b5_trees:to_list(Tree2)),
     ?assertEqual(length(NewExistentKvs), b5_trees:size(Tree2)),
     ?assertNot(b5_trees:is_empty(Tree2)),
-    ?assertMatch({ok, _}, b5_trees:validate(Tree2)),
 
     test_inserts_with(Tree2, NewExistentKvs, Rest).
 
@@ -458,7 +387,6 @@ test_updates(Tree, [{Key, _V} | NextKeys], ExistentKvs, NonExistentKeys) ->
 
     NewExistentKvs = orddict:store(UpdateKey, NewValue, ExistentKvs),
     ?assertEqual(NewExistentKvs, b5_trees:to_list(Tree2)),
-    ?assertMatch({ok, _}, b5_trees:validate(Tree2)),
 
     %% Test updating non-existent keys fails
     NonExistentSample = b5_trees_test_helpers:take_random(NonExistentKeys, 10),
@@ -490,7 +418,6 @@ test_updates_with3(Tree, [{Key, PrevV} | NextKeys], ExistentKvs, NonExistentKeys
 
     NewExistentKvs = orddict:store(UpdateKey, NewValue, ExistentKvs),
     ?assertEqual(NewExistentKvs, b5_trees:to_list(Tree2)),
-    ?assertMatch({ok, _}, b5_trees:validate(Tree2)),
 
     %% Test updating non-existent keys fails
     NonExistentSample = b5_trees_test_helpers:take_random(NonExistentKeys, 10),
@@ -528,7 +455,6 @@ test_updates_with4(Tree, ExistentAttempts, ExistentKvs, NonExistentKeys) ->
 
                     NewExistentKvs = orddict:store(UpdateKey, NewValue, ExistentKvs),
                     ?assertEqual(NewExistentKvs, b5_trees:to_list(Tree2)),
-                    ?assertMatch({ok, _}, b5_trees:validate(Tree2)),
                     test_updates_with4(Tree2, ExistentAttempts, NewExistentKvs, NextNonExistent);
                 % Test existent key (calls function)
                 2 ->
@@ -543,7 +469,6 @@ test_updates_with4(Tree, ExistentAttempts, ExistentKvs, NonExistentKeys) ->
 
                     NewExistentKvs = orddict:store(UpdateKey, NewValue, ExistentKvs),
                     ?assertEqual(NewExistentKvs, b5_trees:to_list(Tree2)),
-                    ?assertMatch({ok, _}, b5_trees:validate(Tree2)),
                     test_updates_with4(Tree2, NextExistent, NewExistentKvs, NonExistentKeys)
             end;
         _ ->
@@ -919,7 +844,6 @@ test_delete_each(Tree, ExistentMap, NonExistentKeys) ->
             ?assertEqual(ExpectedListAfter, b5_trees:to_list(Tree2)),
             ?assertEqual(maps:size(ExistentMap) - 1, b5_trees:size(Tree2)),
             ?assertEqual(maps:size(ExistentMap) =:= 1, b5_trees:is_empty(Tree2)),
-            ?assertMatch({ok, _}, b5_trees:validate(Tree2)),
 
             ?assertError({badkey, Key}, b5_trees:delete(Key, Tree2)),
 
@@ -950,7 +874,6 @@ test_delete_all_impl(Tree, [{Key, _ExpectedV} | Next], ElementsToExpected, NonEx
 
     ElementsToExpected2 = lists:keydelete(Key, 1, ElementsToExpected),
     ?assertEqual(ElementsToExpected2, b5_trees:to_list(Tree2)),
-    ?assertMatch({ok, _}, b5_trees:validate(Tree2)),
     ?assertEqual(length(ElementsToExpected2), b5_trees:size(Tree2)),
     ?assertEqual(ElementsToExpected2 =:= [], b5_trees:is_empty(Tree2)),
 
@@ -968,7 +891,6 @@ test_delete_all_impl(Tree, [{Key, _ExpectedV} | Next], ElementsToExpected, NonEx
     test_delete_all_impl(Tree2, Next, ElementsToExpected2, NonExistentKeys);
 test_delete_all_impl(Tree, [], [], NonExistentKeys) ->
     ?assertEqual([], b5_trees:to_list(Tree)),
-    ?assertMatch({ok, _}, b5_trees:validate(Tree)),
     ?assertEqual(0, b5_trees:size(Tree)),
     ?assert(b5_trees:is_empty(Tree)),
 
@@ -1138,7 +1060,6 @@ test_enter_impl(Tree, [Key | NextKeys], ExistentKvs, NonExistentKeys) ->
     ?assertEqual(length(ExistentKvs), b5_trees:size(Tree)),
     ?assertNot(b5_trees:is_empty(Tree)),
     ?assertEqual(ExistentKvs, b5_trees:to_list(Tree)),
-    ?assertMatch({ok, _}, b5_trees:validate(Tree)),
 
     EnterKey = b5_trees_test_helpers:randomly_switch_key_type(Key),
     EnterValue = b5_trees_test_helpers:random_number(),

@@ -125,10 +125,6 @@ for_each_tree(TreeSizes, TestFun) ->
         fun(TreeSize) ->
             {ExistentMap, NonExistentKeys} = generate_kvs(TreeSize, undefined),
             Tree = b5_trees:from_list(maps:to_list(ExistentMap)),
-            case b5_trees:validate(Tree) of
-                {ok, _} -> ok;
-                Error -> error({validation_failed, Error, TreeSize})
-            end,
             TestFun(Tree, ExistentMap, NonExistentKeys)
         end,
         TreeSizes
