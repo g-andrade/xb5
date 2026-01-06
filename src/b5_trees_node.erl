@@ -784,26 +784,24 @@
 %% ------------------------------------------------------------------
 
 delete(Key, Root) ->
-    try
-        delete_recur(Key, Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH_ALL ->
-                    delete_INTERNAL2(Key, ?INTERNAL2_ARGS);
-                %
-                ?INTERNAL1_MATCH_ALL ->
-                    delete_INTERNAL1(Key, ?INTERNAL1_ARGS);
-                %
-                ?LEAF2_MATCH_ALL ->
-                    delete_LEAF2(Key, ?LEAF2_ARGS);
-                %
-                ?LEAF1_MATCH(K1, _) ->
-                    delete_LEAF1(Key, K1);
-                %
-                ?LEAF0_MATCH_ALL ->
-                    error_badkey(Key)
-            end
+    case Root of
+        ?INTERNAL2_MATCH_ALL ->
+            delete_INTERNAL2(Key, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL1_MATCH_ALL ->
+            delete_INTERNAL1(Key, ?INTERNAL1_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            delete_LEAF2(Key, ?LEAF2_ARGS);
+        %
+        ?LEAF1_MATCH(K1, _) ->
+            delete_LEAF1(Key, K1);
+        %
+        ?LEAF0_MATCH_ALL ->
+            error_badkey(Key);
+        %
+        _ ->
+            delete_recur(Key, Root)
     end.
 
 foldl(Fun, Acc, Root) ->
@@ -855,53 +853,51 @@ foldr(Fun, Acc, Root) ->
     end.
 
 get(Key, Root) ->
-    try
-        get_recur(Key, Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH_ALL ->
-                    get_INTERNAL2(Key, ?INTERNAL2_ARGS);
-                %
-                ?INTERNAL1_MATCH_ALL ->
-                    get_INTERNAL1(Key, ?INTERNAL1_ARGS);
-                %
-                ?LEAF2_MATCH_ALL ->
-                    get_LEAF2(Key, ?LEAF2_ARGS);
-                %
-                ?LEAF1_MATCH_ALL ->
-                    get_LEAF1(Key, ?LEAF1_ARGS);
-                %
-                ?LEAF0_MATCH_ALL ->
-                    error_badkey(Key)
-            end
+    case Root of
+        ?INTERNAL2_MATCH_ALL ->
+            get_INTERNAL2(Key, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL1_MATCH_ALL ->
+            get_INTERNAL1(Key, ?INTERNAL1_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            get_LEAF2(Key, ?LEAF2_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            get_LEAF1(Key, ?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH_ALL ->
+            error_badkey(Key);
+        %
+        _ ->
+            get_recur(Key, Root)
     end.
 
 insert(Key, ValueEval, ValueWrap, Root) ->
-    try insert_recur(Key, ValueEval, ValueWrap, Root) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?new_INTERNAL1(SplitK, SplitV, SplitL, SplitR);
+    case Root of
+        ?INTERNAL2_MATCH_ALL ->
+            insert_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
         %
-        UpdatedRoot ->
-            UpdatedRoot
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH_ALL ->
-                    insert_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+        ?INTERNAL1_MATCH_ALL ->
+            insert_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            insert_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            insert_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH_ALL ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_LEAF1(Key, Value);
+        %
+        _ ->
+            case insert_recur(Key, ValueEval, ValueWrap, Root) of
+                ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
+                    ?new_INTERNAL1(SplitK, SplitV, SplitL, SplitR);
                 %
-                ?INTERNAL1_MATCH_ALL ->
-                    insert_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
-                %
-                ?LEAF2_MATCH_ALL ->
-                    insert_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-                %
-                ?LEAF1_MATCH_ALL ->
-                    insert_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-                %
-                ?LEAF0_MATCH_ALL ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?new_LEAF1(Key, Value)
+                UpdatedRoot ->
+                    UpdatedRoot
             end
     end.
 
@@ -942,49 +938,45 @@ keys(Root) ->
     end.
 
 larger(Key, Root) ->
-    try
-        larger_recur(Key, Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH_ALL ->
-                    larger_INTERNAL2(Key, ?INTERNAL2_ARGS);
-                %
-                ?INTERNAL1_MATCH_ALL ->
-                    larger_INTERNAL1(Key, ?INTERNAL1_ARGS);
-                %
-                ?LEAF2_MATCH_ALL ->
-                    larger_LEAF2(Key, ?LEAF2_ARGS);
-                %
-                ?LEAF1_MATCH_ALL ->
-                    larger_LEAF1(Key, ?LEAF1_ARGS);
-                %
-                ?LEAF0_MATCH_ALL ->
-                    none
-            end
+    case Root of
+        ?INTERNAL2_MATCH_ALL ->
+            larger_INTERNAL2(Key, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL1_MATCH_ALL ->
+            larger_INTERNAL1(Key, ?INTERNAL1_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            larger_LEAF2(Key, ?LEAF2_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            larger_LEAF1(Key, ?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH_ALL ->
+            none;
+        %
+        _ ->
+            larger_recur(Key, Root)
     end.
 
 largest(Root) ->
-    try
-        largest_recur(Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH(_, _, _, _, _, _, C3) ->
-                    largest_recur(C3);
-                %
-                ?INTERNAL1_MATCH(_, _, _, C2) ->
-                    largest_recur(C2);
-                %
-                ?LEAF2_MATCH(_, K2, _, V2) ->
-                    {K2, V2};
-                %
-                ?LEAF1_MATCH(K1, V1) ->
-                    {K1, V1};
-                %
-                ?LEAF0_MATCH_ALL ->
-                    error_empty_tree()
-            end
+    case Root of
+        ?INTERNAL2_MATCH(_, _, _, _, _, _, C3) ->
+            largest_recur(C3);
+        %
+        ?INTERNAL1_MATCH(_, _, _, C2) ->
+            largest_recur(C2);
+        %
+        ?LEAF2_MATCH(_, K2, _, V2) ->
+            {K2, V2};
+        %
+        ?LEAF1_MATCH(K1, V1) ->
+            {K1, V1};
+        %
+        ?LEAF0_MATCH_ALL ->
+            error_empty_tree();
+        %
+        _ ->
+            largest_recur(Root)
     end.
 
 map(Fun, Root) ->
@@ -1045,49 +1037,45 @@ next([]) ->
     none.
 
 smaller(Key, Root) ->
-    try
-        smaller_recur(Key, Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH_ALL ->
-                    smaller_INTERNAL2(Key, ?INTERNAL2_ARGS);
-                %
-                ?INTERNAL1_MATCH_ALL ->
-                    smaller_INTERNAL1(Key, ?INTERNAL1_ARGS);
-                %
-                ?LEAF2_MATCH_ALL ->
-                    smaller_LEAF2(Key, ?LEAF2_ARGS);
-                %
-                ?LEAF1_MATCH_ALL ->
-                    smaller_LEAF1(Key, ?LEAF1_ARGS);
-                %
-                ?LEAF0_MATCH_ALL ->
-                    none
-            end
+    case Root of
+        ?INTERNAL2_MATCH_ALL ->
+            smaller_INTERNAL2(Key, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL1_MATCH_ALL ->
+            smaller_INTERNAL1(Key, ?INTERNAL1_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            smaller_LEAF2(Key, ?LEAF2_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            smaller_LEAF1(Key, ?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH_ALL ->
+            none;
+        %
+        _ ->
+            smaller_recur(Key, Root)
     end.
 
 smallest(Root) ->
-    try
-        smallest_recur(Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH(_, _, _, _, C1, _, _) ->
-                    smallest_recur(C1);
-                %
-                ?INTERNAL1_MATCH(_, _, C1, _) ->
-                    smallest_recur(C1);
-                %
-                ?LEAF2_MATCH(K1, _, V1, _) ->
-                    {K1, V1};
-                %
-                ?LEAF1_MATCH(K1, V1) ->
-                    {K1, V1};
-                %
-                ?LEAF0_MATCH_ALL ->
-                    error_empty_tree()
-            end
+    case Root of
+        ?INTERNAL2_MATCH(_, _, _, _, C1, _, _) ->
+            smallest_recur(C1);
+        %
+        ?INTERNAL1_MATCH(_, _, C1, _) ->
+            smallest_recur(C1);
+        %
+        ?LEAF2_MATCH(K1, _, V1, _) ->
+            {K1, V1};
+        %
+        ?LEAF1_MATCH(K1, V1) ->
+            {K1, V1};
+        %
+        ?LEAF0_MATCH_ALL ->
+            error_empty_tree();
+        %
+        _ ->
+            smallest_recur(Root)
     end.
 
 structural_stats(Root) ->
@@ -1145,72 +1133,66 @@ structural_stats(Root) ->
     end.
 
 take(Key, Root) ->
-    try
-        take_recur(Key, Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH_ALL ->
-                    take_INTERNAL2(Key, ?INTERNAL2_ARGS);
-                %
-                ?INTERNAL1_MATCH_ALL ->
-                    take_INTERNAL1(Key, ?INTERNAL1_ARGS);
-                %
-                ?LEAF2_MATCH_ALL ->
-                    take_LEAF2(Key, ?LEAF2_ARGS);
-                %
-                ?LEAF1_MATCH_ALL ->
-                    take_LEAF1(Key, ?LEAF1_ARGS);
-                %
-                ?LEAF0_MATCH_ALL ->
-                    error_badkey(Key)
-            end
+    case Root of
+        ?INTERNAL2_MATCH_ALL ->
+            take_INTERNAL2(Key, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL1_MATCH_ALL ->
+            take_INTERNAL1(Key, ?INTERNAL1_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            take_LEAF2(Key, ?LEAF2_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            take_LEAF1(Key, ?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH_ALL ->
+            error_badkey(Key);
+        %
+        _ ->
+            take_recur(Key, Root)
     end.
 
 take_largest(Root) ->
-    try
-        take_largest_recur(Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH_ALL ->
-                    take_largest_INTERNAL2(?INTERNAL2_ARGS);
-                %
-                ?INTERNAL1_MATCH_ALL ->
-                    take_largest_INTERNAL1(?INTERNAL1_ARGS);
-                %
-                ?LEAF2_MATCH_ALL ->
-                    take_largest_LEAF2(?LEAF2_ARGS);
-                %
-                ?LEAF1_MATCH_ALL ->
-                    take_largest_LEAF1(?LEAF1_ARGS);
-                %
-                ?LEAF0_MATCH_ALL ->
-                    error_empty_tree()
-            end
+    case Root of
+        ?INTERNAL2_MATCH_ALL ->
+            take_largest_INTERNAL2(?INTERNAL2_ARGS);
+        %
+        ?INTERNAL1_MATCH_ALL ->
+            take_largest_INTERNAL1(?INTERNAL1_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            take_largest_LEAF2(?LEAF2_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            take_largest_LEAF1(?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH_ALL ->
+            error_empty_tree();
+        %
+        _ ->
+            take_largest_recur(Root)
     end.
 
 take_smallest(Root) ->
-    try
-        take_smallest_recur(Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH_ALL ->
-                    take_smallest_INTERNAL2(?INTERNAL2_ARGS);
-                %
-                ?INTERNAL1_MATCH_ALL ->
-                    take_smallest_INTERNAL1(?INTERNAL1_ARGS);
-                %
-                ?LEAF2_MATCH_ALL ->
-                    take_smallest_LEAF2(?LEAF2_ARGS);
-                %
-                ?LEAF1_MATCH_ALL ->
-                    take_smallest_LEAF1(?LEAF1_ARGS);
-                %
-                ?LEAF0_MATCH_ALL ->
-                    error_empty_tree()
-            end
+    case Root of
+        ?INTERNAL2_MATCH_ALL ->
+            take_smallest_INTERNAL2(?INTERNAL2_ARGS);
+        %
+        ?INTERNAL1_MATCH_ALL ->
+            take_smallest_INTERNAL1(?INTERNAL1_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            take_smallest_LEAF2(?LEAF2_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            take_smallest_LEAF1(?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH_ALL ->
+            error_empty_tree();
+        %
+        _ ->
+            take_smallest_recur(Root)
     end.
 
 to_list(Root) ->
@@ -1239,26 +1221,24 @@ to_list(Root) ->
     end.
 
 update(Key, ValueEval, ValueWrap, Root) ->
-    try
-        update_recur(Key, ValueEval, ValueWrap, Root)
-    catch
-        root_only_node ->
-            case Root of
-                ?INTERNAL2_MATCH_ALL ->
-                    update_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
-                %
-                ?INTERNAL1_MATCH_ALL ->
-                    update_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
-                %
-                ?LEAF2_MATCH_ALL ->
-                    update_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-                %
-                ?LEAF1_MATCH_ALL ->
-                    update_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-                %
-                ?LEAF0_MATCH_ALL ->
-                    error_badkey(Key)
-            end
+    case Root of
+        ?INTERNAL2_MATCH_ALL ->
+            update_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL1_MATCH_ALL ->
+            update_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            update_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            update_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH_ALL ->
+            error_badkey(Key);
+        %
+        _ ->
+            update_recur(Key, ValueEval, ValueWrap, Root)
     end.
 
 values(Root) ->
@@ -1328,10 +1308,7 @@ delete_recur(Key, Node) ->
             delete_LEAF5(Key, ?LEAF5_ARGS);
         %
         ?LEAF6_MATCH_ALL ->
-            delete_LEAF6(Key, ?LEAF6_ARGS);
-        %
-        _ ->
-            throw(root_only_node)
+            delete_LEAF6(Key, ?LEAF6_ARGS)
     end.
 
 %%
@@ -2521,10 +2498,7 @@ get_recur(Key, Node) ->
             get_LEAF5(Key, ?LEAF5_ARGS);
         %
         ?LEAF6_MATCH_ALL ->
-            get_LEAF6(Key, ?LEAF6_ARGS);
-        %
-        _ ->
-            throw(root_only_node)
+            get_LEAF6(Key, ?LEAF6_ARGS)
     end.
 
 %%
@@ -2934,10 +2908,7 @@ insert_recur(Key, ValueEval, ValueWrap, Node) ->
             insert_LEAF5(Key, ValueEval, ValueWrap, ?LEAF5_ARGS);
         %
         ?LEAF6_MATCH_ALL ->
-            insert_LEAF6(Key, ValueEval, ValueWrap, ?LEAF6_ARGS);
-        %
-        _ ->
-            throw(root_only_node)
+            insert_LEAF6(Key, ValueEval, ValueWrap, ?LEAF6_ARGS)
     end.
 
 %%
@@ -6081,10 +6052,7 @@ larger_recur(Key, Node) ->
             larger_LEAF5(Key, ?LEAF5_ARGS);
         %
         ?LEAF6_MATCH_ALL ->
-            larger_LEAF6(Key, ?LEAF6_ARGS);
-        %
-        _ ->
-            throw(root_only_node)
+            larger_LEAF6(Key, ?LEAF6_ARGS)
     end.
 
 %%
@@ -6464,10 +6432,7 @@ largest_recur(Node) ->
             {K5, V5};
         %
         ?LEAF6_MATCH(_, _, _, _, _, K6, _, _, _, _, _, V6) ->
-            {K6, V6};
-        %
-        _ ->
-            throw(root_only_node)
+            {K6, V6}
     end.
 
 %% ------------------------------------------------------------------
@@ -6688,10 +6653,7 @@ smaller_recur(Key, Node) ->
             smaller_LEAF5(Key, ?LEAF5_ARGS);
         %
         ?LEAF6_MATCH_ALL ->
-            smaller_LEAF6(Key, ?LEAF6_ARGS);
-        %
-        _ ->
-            throw(root_only_node)
+            smaller_LEAF6(Key, ?LEAF6_ARGS)
     end.
 
 %%
@@ -7074,10 +7036,7 @@ smallest_recur(Node) ->
             {K1, V1};
         %
         ?LEAF6_MATCH(K1, _, _, _, _, _, V1, _, _, _, _, _) ->
-            {K1, V1};
-        %
-        _ ->
-            throw(root_only_node)
+            {K1, V1}
     end.
 
 %% ------------------------------------------------------------------
@@ -7274,10 +7233,7 @@ take_recur(Key, Node) ->
             take_LEAF5(Key, ?LEAF5_ARGS);
         %
         ?LEAF6_MATCH_ALL ->
-            take_LEAF6(Key, ?LEAF6_ARGS);
-        %
-        _ ->
-            throw(root_only_node)
+            take_LEAF6(Key, ?LEAF6_ARGS)
     end.
 
 %%
@@ -7941,10 +7897,7 @@ take_largest_recur(Node) ->
             take_largest_LEAF5(?LEAF5_ARGS);
         %
         ?LEAF6_MATCH_ALL ->
-            take_largest_LEAF6(?LEAF6_ARGS);
-        %
-        _ ->
-            throw(root_only_node)
+            take_largest_LEAF6(?LEAF6_ARGS)
     end.
 
 %%
@@ -8077,10 +8030,7 @@ take_smallest_recur(Node) ->
             take_smallest_LEAF5(?LEAF5_ARGS);
         %
         ?LEAF6_MATCH_ALL ->
-            take_smallest_LEAF6(?LEAF6_ARGS);
-        %
-        _ ->
-            throw(root_only_node)
+            take_smallest_LEAF6(?LEAF6_ARGS)
     end.
 
 %%
@@ -8262,10 +8212,7 @@ update_recur(Key, ValueEval, ValueWrap, Node) ->
             update_LEAF5(Key, ValueEval, ValueWrap, ?LEAF5_ARGS);
         %
         ?LEAF6_MATCH_ALL ->
-            update_LEAF6(Key, ValueEval, ValueWrap, ?LEAF6_ARGS);
-        %
-        _ ->
-            throw(root_only_node)
+            update_LEAF6(Key, ValueEval, ValueWrap, ?LEAF6_ARGS)
     end.
 
 %%
