@@ -30,41 +30,45 @@
 %% Macro Definitions: Nodes
 %% ------------------------------------------------------------------
 
-% 6 elements
--define(INTERNAL2(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
--define(INTERNAL2_MATCH(K1, K2, Values, C1, C2, C3), {K1, K2, Values, C1, C2, C3}).
--define(INTERNAL2_MATCH_ALL, {K1, K2, Values, C1, C2, C3}).
+% 7 elements
+-define(INTERNAL2(K1, K2, V1, V2, C1, C2, C3), {K1, K2, V1, V2, C1, C2, C3}).
+-define(INTERNAL2_MATCH(K1, K2, V1, V2, C1, C2, C3), {K1, K2, V1, V2, C1, C2, C3}).
+-define(INTERNAL2_MATCH_ALL, {K1, K2, V1, V2, C1, C2, C3}).
 
 % 4 elements
 -define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
 -define(LEAF2_MATCH(K1, K2, V1, V2), {K1, K2, V1, V2}).
 -define(LEAF2_MATCH_ALL, {K1, K2, V1, V2}).
 
-% 8 elements
--define(INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4), {K1, K2, K3, Values, C1, C2, C3, C4}).
--define(INTERNAL3_MATCH(K1, K2, K3, Values, C1, C2, C3, C4), {K1, K2, K3, Values, C1, C2, C3, C4}).
--define(INTERNAL3_MATCH_ALL, {K1, K2, K3, Values, C1, C2, C3, C4}).
-
-% 7 elements
--define(LEAF3(K1, K2, K3, V1, V2, V3), {leaf3, K1, K2, K3, V1, V2, V3}).
--define(LEAF3_MATCH(K1, K2, K3, V1, V2, V3), {_, K1, K2, K3, V1, V2, V3}).
--define(LEAF3_MATCH_ALL, {_, K1, K2, K3, V1, V2, V3}).
-
 % 10 elements
--define(INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5),
-    {K1, K2, K3, K4, Values, C1, C2, C3, C4, C5}
+-define(INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
+    {K1, K2, K3, V1, V2, V3, C1, C2, C3, C4}
 ).
--define(INTERNAL4_MATCH(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5),
-    {K1, K2, K3, K4, Values, C1, C2, C3, C4, C5}
+-define(INTERNAL3_MATCH(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
+    {K1, K2, K3, V1, V2, V3, C1, C2, C3, C4}
+).
+-define(INTERNAL3_MATCH_ALL, {K1, K2, K3, V1, V2, V3, C1, C2, C3, C4}).
+
+% 6 elements
+-define(LEAF3(K1, K2, K3, V1, V2, V3), {K1, K2, K3, V1, V2, V3}).
+-define(LEAF3_MATCH(K1, K2, K3, V1, V2, V3), {K1, K2, K3, V1, V2, V3}).
+-define(LEAF3_MATCH_ALL, {K1, K2, K3, V1, V2, V3}).
+
+% 13 elements
+-define(INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
+    {K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
+).
+-define(INTERNAL4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
+    {K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
 ).
 -define(INTERNAL4_MATCH_ALL,
-    {K1, K2, K3, K4, Values, C1, C2, C3, C4, C5}
+    {K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
 ).
 
-% 9 elements
--define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {leaf4, K1, K2, K3, K4, V1, V2, V3, V4}).
--define(LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4), {_, K1, K2, K3, K4, V1, V2, V3, V4}).
--define(LEAF4_MATCH_ALL, {_, K1, K2, K3, K4, V1, V2, V3, V4}).
+% 8 elements
+-define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {K1, K2, K3, K4, V1, V2, V3, V4}).
+-define(LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4), {K1, K2, K3, K4, V1, V2, V3, V4}).
+-define(LEAF4_MATCH_ALL, {K1, K2, K3, K4, V1, V2, V3, V4}).
 
 % 5 elements
 -define(INTERNAL1(K1, V1, C1, C2), {internal1, K1, V1, C1, C2}).
@@ -83,23 +87,23 @@
 
 %%%%%%%%
 
--define(INTERNAL2_VALUES(V1, V2), [V1 | V2]).
--define(INTERNAL2_VALUES_MATCH_ALL, [V1 | V2]).
--define(INTERNAL2_VALUES_GET2(Values), tl(Values)).
--define(INTERNAL2_VALUES_GET1(Values), hd(Values)).
+%-define(INTERNAL2_VALUES(V1, V2), [V1 | V2]).
+%-define(INTERNAL2_VALUES_MATCH_ALL, [V1 | V2]).
+%-define(INTERNAL2_VALUES_GET2(Values), tl(Values)).
+%-define(INTERNAL2_VALUES_GET1(Values), hd(Values)).
+%
+%-define(INTERNAL3_VALUES(V1, V2, V3), {V1, V2, V3}).
+%-define(INTERNAL3_VALUES_MATCH_ALL, {V1, V2, V3}).
+%-define(INTERNAL3_VALUES_GET1(Values), element(1, Values)).
+%-define(INTERNAL3_VALUES_GET2(Values), element(2, Values)).
+%-define(INTERNAL3_VALUES_GET3(Values), element(3, Values)).
 
--define(INTERNAL3_VALUES(V1, V2, V3), {V1, V2, V3}).
--define(INTERNAL3_VALUES_MATCH_ALL, {V1, V2, V3}).
--define(INTERNAL3_VALUES_GET1(Values), element(1, Values)).
--define(INTERNAL3_VALUES_GET2(Values), element(2, Values)).
--define(INTERNAL3_VALUES_GET3(Values), element(3, Values)).
-
--define(INTERNAL4_VALUES(V1, V2, V3, V4), {V1, V2, V3, V4}).
--define(INTERNAL4_VALUES_MATCH_ALL, {V1, V2, V3, V4}).
--define(INTERNAL4_VALUES_GET1(Values), element(1, Values)).
--define(INTERNAL4_VALUES_GET2(Values), element(2, Values)).
--define(INTERNAL4_VALUES_GET3(Values), element(3, Values)).
--define(INTERNAL4_VALUES_GET4(Values), element(4, Values)).
+%-define(INTERNAL4_VALUES(V1, V2, V3, V4), {V1, V2, V3, V4}).
+%-define(INTERNAL4_VALUES_MATCH_ALL, {V1, V2, V3, V4}).
+%-define(INTERNAL4_VALUES_GET1(Values), element(1, Values)).
+%-define(INTERNAL4_VALUES_GET2(Values), element(2, Values)).
+%-define(INTERNAL4_VALUES_GET3(Values), element(3, Values)).
+%-define(INTERNAL4_VALUES_GET4(Values), element(4, Values)).
 
 %%%%%%%%
 
@@ -145,95 +149,118 @@
 
 %% ?INTERNAL4
 
--define(INTERNAL4_ARGS, K1, K2, K3, K4, Values, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARITY, 10).
--define(INTERNAL4_ARITY_PLUS1, 11).
--define(INTERNAL4_ARITY_PLUS2, 12).
--define(INTERNAL4_ARITY_PLUS3, 13).
+-define(INTERNAL4_ARGS, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARITY, 13).
+-define(INTERNAL4_ARITY_PLUS1, 14).
+-define(INTERNAL4_ARITY_PLUS2, 15).
+-define(INTERNAL4_ARITY_PLUS3, 16).
+-define(INTERNAL4_ARITY_MINUS3, 10).
 
--define(INTERNAL4_C1(UpdatedC1), ?new_INTERNAL4(K1, K2, K3, K4, Values, UpdatedC1, C2, C3, C4, C5)).
--define(INTERNAL4_C2(UpdatedC2), ?new_INTERNAL4(K1, K2, K3, K4, Values, C1, UpdatedC2, C3, C4, C5)).
--define(INTERNAL4_C3(UpdatedC3), ?new_INTERNAL4(K1, K2, K3, K4, Values, C1, C2, UpdatedC3, C4, C5)).
--define(INTERNAL4_C4(UpdatedC4), ?new_INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, UpdatedC4, C5)).
--define(INTERNAL4_C5(UpdatedC5), ?new_INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, UpdatedC5)).
+-define(INTERNAL4_C1(UpdatedC1),
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, UpdatedC1, C2, C3, C4, C5)
+).
+-define(INTERNAL4_C2(UpdatedC2),
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, UpdatedC2, C3, C4, C5)
+).
+-define(INTERNAL4_C3(UpdatedC3),
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, UpdatedC3, C4, C5)
+).
+-define(INTERNAL4_C4(UpdatedC4),
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, UpdatedC4, C5)
+).
+-define(INTERNAL4_C5(UpdatedC5),
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, UpdatedC5)
+).
 
 -define(INTERNAL4_C1_REBALANCE(UpdatedC1),
-    rebalance_INTERNAL4_C1(K1, K2, K3, K4, Values, UpdatedC1, C2, C3, C4, C5)
+    rebalance_INTERNAL4_C1(K1, K2, K3, K4, V1, V2, V3, V4, UpdatedC1, C2, C3, C4, C5)
 ).
 -define(INTERNAL4_C2_REBALANCE(UpdatedC2),
-    rebalance_INTERNAL4_C2(K1, K2, K3, K4, Values, C1, UpdatedC2, C3, C4, C5)
+    rebalance_INTERNAL4_C2(K1, K2, K3, K4, V1, V2, V3, V4, C1, UpdatedC2, C3, C4, C5)
 ).
 -define(INTERNAL4_C3_REBALANCE(UpdatedC3),
-    rebalance_INTERNAL4_C3(K1, K2, K3, K4, Values, C1, C2, UpdatedC3, C4, C5)
+    rebalance_INTERNAL4_C3(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, UpdatedC3, C4, C5)
 ).
 -define(INTERNAL4_C4_REBALANCE(UpdatedC4),
-    rebalance_INTERNAL4_C4(K1, K2, K3, K4, Values, C1, C2, C3, UpdatedC4, C5)
+    rebalance_INTERNAL4_C4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, UpdatedC4, C5)
 ).
 -define(INTERNAL4_C5_REBALANCE(UpdatedC5),
-    rebalance_INTERNAL4_C5(K1, K2, K3, K4, Values, C1, C2, C3, C4, UpdatedC5)
+    rebalance_INTERNAL4_C5(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, UpdatedC5)
 ).
 
--define(INTERNAL4_ARGS_IGN_K1, _, K2, K3, K4, Values, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_K2, K1, _, K3, K4, Values, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_K3, K1, K2, _, K4, Values, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_K4, K1, K2, K3, _, Values, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K1, _, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K2, K1, _, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K3, K1, K2, _, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K4, K1, K2, K3, _, V1, V2, V3, V4, C1, C2, C3, C4, C5).
+
+-define(INTERNAL4_ARGS_IGN_K1_V1, _, K2, K3, K4, _, V2, V3, V4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K2_V2, K1, _, K3, K4, V1, _, V3, V4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K3_V3, K1, K2, _, K4, V1, V2, _, V4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K4_V4, K1, K2, K3, _, V1, V2, V3, _, C1, C2, C3, C4, C5).
 
 %% ?INTERNAL3
 
--define(INTERNAL3_ARGS, K1, K2, K3, Values, C1, C2, C3, C4).
--define(INTERNAL3_ARITY, 8).
--define(INTERNAL3_ARITY_PLUS1, 9).
--define(INTERNAL3_ARITY_PLUS2, 10).
--define(INTERNAL3_ARITY_PLUS3, 11).
--define(INTERNAL3_ARITY_MINUS1, 7).
+-define(INTERNAL3_ARGS, K1, K2, K3, V1, V2, V3, C1, C2, C3, C4).
+-define(INTERNAL3_ARITY, 10).
+-define(INTERNAL3_ARITY_PLUS1, 11).
+-define(INTERNAL3_ARITY_PLUS2, 12).
+-define(INTERNAL3_ARITY_PLUS3, 13).
+-define(INTERNAL3_ARITY_MINUS3, 7).
 
--define(INTERNAL3_C1(UpdatedC1), ?new_INTERNAL3(K1, K2, K3, Values, UpdatedC1, C2, C3, C4)).
--define(INTERNAL3_C2(UpdatedC2), ?new_INTERNAL3(K1, K2, K3, Values, C1, UpdatedC2, C3, C4)).
--define(INTERNAL3_C3(UpdatedC3), ?new_INTERNAL3(K1, K2, K3, Values, C1, C2, UpdatedC3, C4)).
--define(INTERNAL3_C4(UpdatedC4), ?new_INTERNAL3(K1, K2, K3, Values, C1, C2, C3, UpdatedC4)).
+-define(INTERNAL3_C1(UpdatedC1), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, UpdatedC1, C2, C3, C4)).
+-define(INTERNAL3_C2(UpdatedC2), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, UpdatedC2, C3, C4)).
+-define(INTERNAL3_C3(UpdatedC3), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, UpdatedC3, C4)).
+-define(INTERNAL3_C4(UpdatedC4), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, UpdatedC4)).
 
 -define(INTERNAL3_C1_REBALANCE(UpdatedC1),
-    rebalance_INTERNAL3_C1(K1, K2, K3, Values, UpdatedC1, C2, C3, C4)
+    rebalance_INTERNAL3_C1(K1, K2, K3, V1, V2, V3, UpdatedC1, C2, C3, C4)
 ).
 -define(INTERNAL3_C2_REBALANCE(UpdatedC2),
-    rebalance_INTERNAL3_C2(K1, K2, K3, Values, C1, UpdatedC2, C3, C4)
+    rebalance_INTERNAL3_C2(K1, K2, K3, V1, V2, V3, C1, UpdatedC2, C3, C4)
 ).
 -define(INTERNAL3_C3_REBALANCE(UpdatedC3),
-    rebalance_INTERNAL3_C3(K1, K2, K3, Values, C1, C2, UpdatedC3, C4)
+    rebalance_INTERNAL3_C3(K1, K2, K3, V1, V2, V3, C1, C2, UpdatedC3, C4)
 ).
 -define(INTERNAL3_C4_REBALANCE(UpdatedC4),
-    rebalance_INTERNAL3_C4(K1, K2, K3, Values, C1, C2, C3, UpdatedC4)
+    rebalance_INTERNAL3_C4(K1, K2, K3, V1, V2, V3, C1, C2, C3, UpdatedC4)
 ).
 
--define(INTERNAL3_ARGS_IGN_K1, _, K2, K3, Values, C1, C2, C3, C4).
--define(INTERNAL3_ARGS_IGN_K2, K1, _, K3, Values, C1, C2, C3, C4).
--define(INTERNAL3_ARGS_IGN_K3, K1, K2, _, Values, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K1, _, K2, K3, V1, V2, V3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K2, K1, _, K3, V1, V2, V3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K3, K1, K2, _, V1, V2, V3, C1, C2, C3, C4).
+
+-define(INTERNAL3_ARGS_IGN_K1_V1, _, K2, K3, _, V2, V3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K2_V2, K1, _, K3, V1, _, V3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K3_V3, K1, K2, _, V1, V2, _, C1, C2, C3, C4).
 
 %% ?INTERNAL2
 
--define(INTERNAL2_ARGS, K1, K2, Values, C1, C2, C3).
--define(INTERNAL2_ARITY, 6).
--define(INTERNAL2_ARITY_PLUS1, 7).
--define(INTERNAL2_ARITY_PLUS2, 8).
--define(INTERNAL2_ARITY_PLUS3, 9).
--define(INTERNAL2_ARITY_MINUS2, 4).
+-define(INTERNAL2_ARGS, K1, K2, V1, V2, C1, C2, C3).
+-define(INTERNAL2_ARITY, 7).
+-define(INTERNAL2_ARITY_PLUS1, 8).
+-define(INTERNAL2_ARITY_PLUS2, 9).
+-define(INTERNAL2_ARITY_PLUS3, 10).
+-define(INTERNAL2_ARITY_MINUS3, 4).
 
--define(INTERNAL2_C1(UpdatedC1), ?new_INTERNAL2(K1, K2, Values, UpdatedC1, C2, C3)).
--define(INTERNAL2_C2(UpdatedC2), ?new_INTERNAL2(K1, K2, Values, C1, UpdatedC2, C3)).
--define(INTERNAL2_C3(UpdatedC3), ?new_INTERNAL2(K1, K2, Values, C1, C2, UpdatedC3)).
+-define(INTERNAL2_C1(UpdatedC1), ?new_INTERNAL2(K1, K2, V1, V2, UpdatedC1, C2, C3)).
+-define(INTERNAL2_C2(UpdatedC2), ?new_INTERNAL2(K1, K2, V1, V2, C1, UpdatedC2, C3)).
+-define(INTERNAL2_C3(UpdatedC3), ?new_INTERNAL2(K1, K2, V1, V2, C1, C2, UpdatedC3)).
 
 -define(INTERNAL2_C1_REBALANCE(UpdatedC1),
-    rebalance_INTERNAL2_C1(K1, K2, Values, UpdatedC1, C2, C3)
+    rebalance_INTERNAL2_C1(K1, K2, V1, V2, UpdatedC1, C2, C3)
 ).
 -define(INTERNAL2_C2_REBALANCE(UpdatedC2),
-    rebalance_INTERNAL2_C2(K1, K2, Values, C1, UpdatedC2, C3)
+    rebalance_INTERNAL2_C2(K1, K2, V1, V2, C1, UpdatedC2, C3)
 ).
 -define(INTERNAL2_C3_REBALANCE(UpdatedC3),
-    rebalance_INTERNAL2_C3(K1, K2, Values, C1, C2, UpdatedC3)
+    rebalance_INTERNAL2_C3(K1, K2, V1, V2, C1, C2, UpdatedC3)
 ).
 
--define(INTERNAL2_ARGS_IGN_K1, _, K2, Values, C1, C2, C3).
--define(INTERNAL2_ARGS_IGN_K2, K1, _, Values, C1, C2, C3).
+-define(INTERNAL2_ARGS_IGN_K1, _, K2, V1, V2, C1, C2, C3).
+-define(INTERNAL2_ARGS_IGN_K2, K1, _, V1, V2, C1, C2, C3).
+
+-define(INTERNAL2_ARGS_IGN_K1_V1, _, K2, _, V2, C1, C2, C3).
+-define(INTERNAL2_ARGS_IGN_K2_V2, K1, _, V1, _, C1, C2, C3).
 
 %% ?INTERNAL1
 
@@ -307,16 +334,16 @@
 
 %
 
--define(new_INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5),
-    ?CHECK_NODE_RECUR(?INTERNAL4(K1, K2, K3, K4, Values, C1, C2, C3, C4, C5))
+-define(new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
+    ?CHECK_NODE_RECUR(?INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5))
 ).
 
--define(new_INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4),
-    ?CHECK_NODE_RECUR(?INTERNAL3(K1, K2, K3, Values, C1, C2, C3, C4))
+-define(new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
+    ?CHECK_NODE_RECUR(?INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4))
 ).
 
--define(new_INTERNAL2(K1, K2, Values, C1, C2, C3),
-    ?CHECK_NODE_RECUR(?INTERNAL2(K1, K2, Values, C1, C2, C3))
+-define(new_INTERNAL2(K1, K2, V1, V2, C1, C2, C3),
+    ?CHECK_NODE_RECUR(?INTERNAL2(K1, K2, V1, V2, C1, C2, C3))
 ).
 
 -define(new_INTERNAL1(K1, V1, C1, C2), ?CHECK_NODE(?INTERNAL1(K1, V1, C1, C2))).
@@ -375,7 +402,10 @@
         Key,
         Key,
         Key,
-        {Value, Value, Value, Value},
+        Value,
+        Value,
+        Value,
+        Value,
         deep_node(Key, Value),
         deep_node(Key, Value),
         deep_node(Key, Value),
@@ -388,7 +418,9 @@
         Key,
         Key,
         Key,
-        {Value, Value, Value},
+        Value,
+        Value,
+        Value,
         deep_node(Key, Value),
         deep_node(Key, Value),
         deep_node(Key, Value),
@@ -399,7 +431,8 @@
     (?INTERNAL2(
         Key,
         Key,
-        nonempty_improper_list(Value, Value),
+        Value,
+        Value,
         deep_node(Key, Value),
         deep_node(Key, Value),
         deep_node(Key, Value)
@@ -852,12 +885,12 @@ delete_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
 %%
 
 -compile({inline, delete_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_K1(?INTERNAL4_ARGS_IGN_K1) ->
-    ?INTERNAL4_VALUES(_, V2, V3, V4) = Values,
+delete_INTERNAL4_K1(?INTERNAL4_ARGS_IGN_K1_V1) ->
+    % ?INTERNAL4_VALUES(_, V2, V3, V4) = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
-    rebalance_INTERNAL4_C2_expanded(
+    rebalance_INTERNAL4_C2(
         ReplacementK,
         K2,
         K3,
@@ -876,12 +909,12 @@ delete_INTERNAL4_K1(?INTERNAL4_ARGS_IGN_K1) ->
     ).
 
 -compile({inline, delete_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_K2(?INTERNAL4_ARGS_IGN_K2) ->
-    ?INTERNAL4_VALUES(V1, _, V3, V4) = Values,
+delete_INTERNAL4_K2(?INTERNAL4_ARGS_IGN_K2_V2) ->
+    % ?INTERNAL4_VALUES(V1, _, V3, V4) = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
 
-    rebalance_INTERNAL4_C2_expanded(
+    rebalance_INTERNAL4_C2(
         K1,
         ReplacementK,
         K3,
@@ -900,12 +933,12 @@ delete_INTERNAL4_K2(?INTERNAL4_ARGS_IGN_K2) ->
     ).
 
 -compile({inline, delete_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_K3(?INTERNAL4_ARGS_IGN_K3) ->
-    ?INTERNAL4_VALUES(V1, V2, _, V4) = Values,
+delete_INTERNAL4_K3(?INTERNAL4_ARGS_IGN_K3_V3) ->
+    % ?INTERNAL4_VALUES(V1, V2, _, V4) = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_smallest_recur(C4),
 
-    rebalance_INTERNAL4_C4_expanded(
+    rebalance_INTERNAL4_C4(
         K1,
         K2,
         ReplacementK,
@@ -924,12 +957,12 @@ delete_INTERNAL4_K3(?INTERNAL4_ARGS_IGN_K3) ->
     ).
 
 -compile({inline, delete_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_K4(?INTERNAL4_ARGS_IGN_K4) ->
-    ?INTERNAL4_VALUES(V1, V2, V3, _) = Values,
+delete_INTERNAL4_K4(?INTERNAL4_ARGS_IGN_K4_V4) ->
+    % ?INTERNAL4_VALUES(V1, V2, V3, _) = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_largest_recur(C4),
 
-    rebalance_INTERNAL4_C4_expanded(
+    rebalance_INTERNAL4_C4(
         K1,
         K2,
         K3,
@@ -1011,12 +1044,12 @@ delete_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
 %%
 
 -compile({inline, delete_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
-delete_INTERNAL3_K1(?INTERNAL3_ARGS_IGN_K1) ->
-    ?INTERNAL3_VALUES(_, V2, V3) = Values,
+delete_INTERNAL3_K1(?INTERNAL3_ARGS_IGN_K1_V1) ->
+    % ?INTERNAL3_VALUES(_, V2, V3) = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
-    rebalance_INTERNAL3_C2_expanded(
+    rebalance_INTERNAL3_C2(
         ReplacementK,
         K2,
         K3,
@@ -1032,12 +1065,12 @@ delete_INTERNAL3_K1(?INTERNAL3_ARGS_IGN_K1) ->
     ).
 
 -compile({inline, delete_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
-delete_INTERNAL3_K2(?INTERNAL3_ARGS_IGN_K2) ->
-    ?INTERNAL3_VALUES(V1, _, V3) = Values,
+delete_INTERNAL3_K2(?INTERNAL3_ARGS_IGN_K2_V2) ->
+    % ?INTERNAL3_VALUES(V1, _, V3) = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
 
-    rebalance_INTERNAL3_C3_expanded(
+    rebalance_INTERNAL3_C3(
         K1,
         ReplacementK,
         K3,
@@ -1053,12 +1086,12 @@ delete_INTERNAL3_K2(?INTERNAL3_ARGS_IGN_K2) ->
     ).
 
 -compile({inline, delete_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
-delete_INTERNAL3_K3(?INTERNAL3_ARGS_IGN_K3) ->
-    ?INTERNAL3_VALUES(V1, V2, _) = Values,
+delete_INTERNAL3_K3(?INTERNAL3_ARGS_IGN_K3_V3) ->
+    % ?INTERNAL3_VALUES(V1, V2, _) = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
 
-    rebalance_INTERNAL3_C3_expanded(
+    rebalance_INTERNAL3_C3(
         K1,
         K2,
         ReplacementK,
@@ -1121,12 +1154,10 @@ delete_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
 %%
 
 -compile({inline, delete_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
-delete_INTERNAL2_K1(?INTERNAL2_ARGS_IGN_K1) ->
-    V2 = ?INTERNAL2_VALUES_GET2(Values),
-
+delete_INTERNAL2_K1(?INTERNAL2_ARGS_IGN_K1_V1) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
-    rebalance_INTERNAL2_C2_expanded(
+    rebalance_INTERNAL2_C2(
         ReplacementK,
         K2,
         %
@@ -1139,12 +1170,10 @@ delete_INTERNAL2_K1(?INTERNAL2_ARGS_IGN_K1) ->
     ).
 
 -compile({inline, delete_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
-delete_INTERNAL2_K2(?INTERNAL2_ARGS_IGN_K2) ->
-    V1 = ?INTERNAL2_VALUES_GET1(Values),
-
+delete_INTERNAL2_K2(?INTERNAL2_ARGS_IGN_K2_V2) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
 
-    rebalance_INTERNAL2_C2_expanded(
+    rebalance_INTERNAL2_C2(
         K1,
         ReplacementK,
         %
@@ -1279,20 +1308,20 @@ foldl_recur(Fun, Acc, Node) ->
             Fun(K4, V4, Fun(K3, V3, Fun(K2, V2, Fun(K1, V1, Acc))));
         %
         ?INTERNAL2_MATCH_ALL ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL2_VALUES_MATCH_ALL = Values,
             Acc2 = foldl_recur(Fun, Acc, C1),
             Acc3 = foldl_recur(Fun, Fun(K1, V1, Acc2), C2),
             _Acc4 = foldl_recur(Fun, Fun(K2, V2, Acc3), C3);
         %
         ?INTERNAL3_MATCH_ALL ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
             Acc2 = foldl_recur(Fun, Acc, C1),
             Acc3 = foldl_recur(Fun, Fun(K1, V1, Acc2), C2),
             Acc4 = foldl_recur(Fun, Fun(K2, V2, Acc3), C3),
             _Acc5 = foldl_recur(Fun, Fun(K3, V3, Acc4), C4);
         %
         ?INTERNAL4_MATCH_ALL ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
             Acc2 = foldl_recur(Fun, Acc, C1),
             Acc3 = foldl_recur(Fun, Fun(K1, V1, Acc2), C2),
             Acc4 = foldl_recur(Fun, Fun(K2, V2, Acc3), C3),
@@ -1316,20 +1345,20 @@ foldr_recur(Fun, Acc, Node) ->
             Fun(K1, V1, Fun(K2, V2, Fun(K3, V3, Fun(K4, V4, Acc))));
         %
         ?INTERNAL2_MATCH_ALL ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL2_VALUES_MATCH_ALL = Values,
             Acc2 = foldr_recur(Fun, Acc, C3),
             Acc3 = foldr_recur(Fun, Fun(K2, V2, Acc2), C2),
             _Acc4 = foldr_recur(Fun, Fun(K1, V1, Acc3), C1);
         %
         ?INTERNAL3_MATCH_ALL ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
             Acc2 = foldr_recur(Fun, Acc, C4),
             Acc3 = foldr_recur(Fun, Fun(K3, V3, Acc2), C3),
             Acc4 = foldr_recur(Fun, Fun(K2, V2, Acc3), C2),
             _Acc5 = foldr_recur(Fun, Fun(K1, V1, Acc4), C1);
         %
         ?INTERNAL4_MATCH_ALL ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
             Acc2 = foldr_recur(Fun, Acc, C5),
             Acc3 = foldr_recur(Fun, Fun(K4, V4, Acc2), C4),
             Acc4 = foldr_recur(Fun, Fun(K3, V3, Acc3), C3),
@@ -1383,14 +1412,14 @@ get_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
                             get_recur(Key, C3);
                         %
                         true ->
-                            ?INTERNAL4_VALUES_GET3(Values)
+                            V3
                     end;
                 %
                 Key > K4 ->
                     get_recur(Key, C5);
                 %
                 true ->
-                    ?INTERNAL4_VALUES_GET4(Values)
+                    V4
             end;
         %
         Key < K2 ->
@@ -1403,11 +1432,11 @@ get_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
                     get_recur(Key, C2);
                 %
                 true ->
-                    ?INTERNAL4_VALUES_GET1(Values)
+                    V1
             end;
         %
         true ->
-            ?INTERNAL4_VALUES_GET2(Values)
+            V2
     end.
 
 %%
@@ -1427,7 +1456,7 @@ get_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
                     get_recur(Key, C2);
                 %
                 true ->
-                    ?INTERNAL3_VALUES_GET1(Values)
+                    V1
             end;
         %
         Key > K2 ->
@@ -1440,11 +1469,11 @@ get_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
                     get_recur(Key, C4);
                 %
                 true ->
-                    ?INTERNAL3_VALUES_GET3(Values)
+                    V3
             end;
         %
         true ->
-            ?INTERNAL3_VALUES_GET2(Values)
+            V2
     end.
 
 %%
@@ -1464,14 +1493,14 @@ get_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
                     get_recur(Key, C3);
                 %
                 true ->
-                    ?INTERNAL2_VALUES_GET2(Values)
+                    V2
             end;
         %
         Key < K1 ->
             get_recur(Key, C1);
         %
         true ->
-            ?INTERNAL2_VALUES_GET1(Values)
+            V1
     end.
 
 %%
@@ -1641,7 +1670,7 @@ insert_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             split_internal(
                 SplitK,
@@ -1672,7 +1701,7 @@ insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             split_internal(
                 K1,
@@ -1703,7 +1732,7 @@ insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             split_internal(
                 K1,
@@ -1734,7 +1763,7 @@ insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C4) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             split_internal(
                 K1,
@@ -1765,7 +1794,7 @@ insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 insert_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C5) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             split_internal(
                 K1,
@@ -1833,7 +1862,7 @@ insert_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL4(
                 SplitK,
@@ -1841,7 +1870,10 @@ insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                 K2,
                 K3,
                 %
-                ?INTERNAL4_VALUES(SplitV, V1, V2, V3),
+                SplitV,
+                V1,
+                V2,
+                V3,
                 %
                 SplitL,
                 SplitR,
@@ -1858,7 +1890,7 @@ insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL4(
                 K1,
@@ -1866,7 +1898,10 @@ insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                 K2,
                 K3,
                 %
-                ?INTERNAL4_VALUES(V1, SplitV, V2, V3),
+                V1,
+                SplitV,
+                V2,
+                V3,
                 %
                 C1,
                 SplitL,
@@ -1883,7 +1918,7 @@ insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL4(
                 K1,
@@ -1891,7 +1926,10 @@ insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                 SplitK,
                 K3,
                 %
-                ?INTERNAL4_VALUES(V1, V2, SplitV, V3),
+                V1,
+                V2,
+                SplitV,
+                V3,
                 %
                 C1,
                 C2,
@@ -1908,7 +1946,7 @@ insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 insert_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C4) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL4(
                 K1,
@@ -1916,7 +1954,10 @@ insert_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                 K3,
                 SplitK,
                 %
-                ?INTERNAL4_VALUES(V1, V2, V3, SplitV),
+                V1,
+                V2,
+                V3,
+                SplitV,
                 %
                 C1,
                 C2,
@@ -1960,14 +2001,16 @@ insert_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 insert_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL3(
                 SplitK,
                 K1,
                 K2,
                 %
-                ?INTERNAL3_VALUES(SplitV, V1, V2),
+                SplitV,
+                V1,
+                V2,
                 %
                 SplitL,
                 SplitR,
@@ -1983,14 +2026,16 @@ insert_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL3(
                 K1,
                 SplitK,
                 K2,
                 %
-                ?INTERNAL3_VALUES(V1, SplitV, V2),
+                V1,
+                SplitV,
+                V2,
                 %
                 C1,
                 SplitL,
@@ -2006,14 +2051,16 @@ insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 insert_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL3(
                 K1,
                 K2,
                 SplitK,
                 %
-                ?INTERNAL3_VALUES(V1, V2, SplitV),
+                V1,
+                V2,
+                SplitV,
                 %
                 C1,
                 C2,
@@ -2050,7 +2097,8 @@ insert_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
                 SplitK,
                 K1,
                 %
-                ?INTERNAL2_VALUES(SplitV, V1),
+                SplitV,
+                V1,
                 %
                 SplitL,
                 SplitR,
@@ -2069,7 +2117,8 @@ insert_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
                 K1,
                 SplitK,
                 %
-                ?INTERNAL2_VALUES(V1, SplitV),
+                V1,
+                SplitV,
                 %
                 C1,
                 SplitL,
@@ -2457,8 +2506,8 @@ split_internal(
     SplitK = K3,
     SplitV = V3,
 
-    SplitL = ?new_INTERNAL2(K1, K2, ?INTERNAL2_VALUES(V1, V2), C1, C2, C3),
-    SplitR = ?new_INTERNAL2(K4, K5, ?INTERNAL2_VALUES(V4, V5), C4, C5, C6),
+    SplitL = ?new_INTERNAL2(K1, K2, V1, V2, C1, C2, C3),
+    SplitR = ?new_INTERNAL2(K4, K5, V4, V5, C4, C5, C6),
 
     ?SPLIT(SplitK, SplitV, SplitL, SplitR).
 
@@ -2511,7 +2560,7 @@ fwd_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc],
     Acc2;
 fwd_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
-    ?INTERNAL2_VALUES_MATCH_ALL = Values,
+    %?INTERNAL2_VALUES_MATCH_ALL = Values,
     Acc2 = [
         ?ITER_PAIR(K1, V1),
         C2,
@@ -2521,7 +2570,7 @@ fwd_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
     ],
     fwd_iterator_recur(C1, Acc2);
 fwd_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
-    ?INTERNAL3_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL3_VALUES_MATCH_ALL = Values,
     Acc2 = [
         ?ITER_PAIR(K1, V1),
         C2,
@@ -2533,7 +2582,7 @@ fwd_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
     ],
     fwd_iterator_recur(C1, Acc2);
 fwd_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
     Acc2 = [
         ?ITER_PAIR(K1, V1),
         C2,
@@ -2574,7 +2623,7 @@ rev_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_PAIR(K4, V4), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
     Acc2;
 rev_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
-    ?INTERNAL2_VALUES_MATCH_ALL = Values,
+    %?INTERNAL2_VALUES_MATCH_ALL = Values,
     Acc2 = [
         ?ITER_PAIR(K2, V2),
         C2,
@@ -2584,7 +2633,7 @@ rev_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
     ],
     rev_iterator_recur(C3, Acc2);
 rev_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
-    ?INTERNAL3_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL3_VALUES_MATCH_ALL = Values,
     Acc2 = [
         ?ITER_PAIR(K3, V3),
         C3,
@@ -2596,7 +2645,7 @@ rev_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
     ],
     rev_iterator_recur(C4, Acc2);
 rev_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
     Acc2 = [
         ?ITER_PAIR(K4, V4),
         C4,
@@ -2668,22 +2717,21 @@ bound_fwd_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
             end;
         %
         Key > K3 ->
-            V4 = ?INTERNAL4_VALUES_GET4(Values),
             Acc2 = [?ITER_PAIR(K4, V4), C5 | Acc],
             bound_fwd_iterator_recur(Key, C4, Acc2);
         %
         Key > K2 ->
-            ?INTERNAL4_VALUES(_, _, V3, V4) = Values,
+            % ?INTERNAL4_VALUES(_, _, V3, V4) = Values,
             Acc2 = [?ITER_PAIR(K3, V3), C4, ?ITER_PAIR(K4, V4), C5 | Acc],
             bound_fwd_iterator_recur(Key, C3, Acc2);
         %
         Key > K1 ->
-            ?INTERNAL4_VALUES(_, V2, V3, V4) = Values,
+            % ?INTERNAL4_VALUES(_, V2, V3, V4) = Values,
             Acc2 = [?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4, ?ITER_PAIR(K4, V4), C5 | Acc],
             bound_fwd_iterator_recur(Key, C2, Acc2);
         %
         true ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
             Acc2 = [
                 ?ITER_PAIR(K1, V1),
                 C2,
@@ -2714,17 +2762,16 @@ bound_fwd_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc) ->
             end;
         %
         Key > K2 ->
-            V3 = ?INTERNAL3_VALUES_GET3(Values),
             Acc2 = [?ITER_PAIR(K3, V3), C4 | Acc],
             bound_fwd_iterator_recur(Key, C3, Acc2);
         %
         Key > K1 ->
-            ?INTERNAL3_VALUES(_, V2, V3) = Values,
+            % ?INTERNAL3_VALUES(_, V2, V3) = Values,
             Acc2 = [?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4 | Acc],
             bound_fwd_iterator_recur(Key, C2, Acc2);
         %
         true ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
             Acc2 = [?ITER_PAIR(K1, V1), C2, ?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4 | Acc],
             bound_fwd_iterator_recur(Key, C1, Acc2)
     end.
@@ -2745,12 +2792,11 @@ bound_fwd_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc) ->
             end;
         %
         Key > K1 ->
-            V2 = ?INTERNAL2_VALUES_GET2(Values),
             Acc2 = [?ITER_PAIR(K2, V2), C3 | Acc],
             bound_fwd_iterator_recur(Key, C2, Acc2);
         %
         true ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
             Acc2 = [?ITER_PAIR(K1, V1), C2, ?ITER_PAIR(K2, V2), C3 | Acc],
             bound_fwd_iterator_recur(Key, C1, Acc2)
     end.
@@ -2896,22 +2942,21 @@ bound_rev_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
             end;
         %
         Key < K2 ->
-            V1 = ?INTERNAL4_VALUES_GET1(Values),
             Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C2, Acc2);
         %
         Key < K3 ->
-            ?INTERNAL4_VALUES(V1, V2, _, _) = Values,
+            % ?INTERNAL4_VALUES(V1, V2, _, _) = Values,
             Acc2 = [?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C3, Acc2);
         %
         Key < K4 ->
-            ?INTERNAL4_VALUES(V1, V2, V3, _) = Values,
+            % ?INTERNAL4_VALUES(V1, V2, V3, _) = Values,
             Acc2 = [?ITER_PAIR(K3, V3), C3, ?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C4, Acc2);
         %
         true ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
             Acc2 = [
                 ?ITER_PAIR(K4, V4),
                 C4,
@@ -2942,17 +2987,16 @@ bound_rev_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc) ->
             end;
         %
         Key < K2 ->
-            V1 = ?INTERNAL3_VALUES_GET1(Values),
             Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C2, Acc2);
         %
         Key < K3 ->
-            ?INTERNAL3_VALUES(V1, V2, _) = Values,
+            % ?INTERNAL3_VALUES(V1, V2, _) = Values,
             Acc2 = [?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C3, Acc2);
         %
         true ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
             Acc2 = [?ITER_PAIR(K3, V3), C3, ?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C4, Acc2)
     end.
@@ -2973,12 +3017,11 @@ bound_rev_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc) ->
             end;
         %
         Key < K2 ->
-            V1 = ?INTERNAL2_VALUES_GET1(Values),
             Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C2, Acc2);
         %
         true ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
             Acc2 = [?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C3, Acc2)
     end.
@@ -3081,18 +3124,18 @@ keys_recur(Node, Acc) ->
         ?LEAF4_MATCH(K1, K2, K3, K4, _, _, _, _) ->
             [K1, K2, K3, K4 | Acc];
         %
-        ?INTERNAL2_MATCH(K1, K2, _, C1, C2, C3) ->
+        ?INTERNAL2_MATCH(K1, K2, _, _, C1, C2, C3) ->
             Acc2 = [K2 | keys_recur(C3, Acc)],
             Acc3 = [K1 | keys_recur(C2, Acc2)],
             keys_recur(C1, Acc3);
         %
-        ?INTERNAL3_MATCH(K1, K2, K3, _, C1, C2, C3, C4) ->
+        ?INTERNAL3_MATCH(K1, K2, K3, _, _, _, C1, C2, C3, C4) ->
             Acc2 = [K3 | keys_recur(C4, Acc)],
             Acc3 = [K2 | keys_recur(C3, Acc2)],
             Acc4 = [K1 | keys_recur(C2, Acc3)],
             keys_recur(C1, Acc4);
         %
-        ?INTERNAL4_MATCH(K1, K2, K3, K4, _, C1, C2, C3, C4, C5) ->
+        ?INTERNAL4_MATCH(K1, K2, K3, K4, _, _, _, _, C1, C2, C3, C4, C5) ->
             Acc2 = [K4 | keys_recur(C5, Acc)],
             Acc3 = [K3 | keys_recur(C4, Acc2)],
             Acc4 = [K2 | keys_recur(C3, Acc3)],
@@ -3137,25 +3180,25 @@ larger_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
             case Key < K1 of
                 true ->
                     case larger_recur(Key, C1) of
-                        none -> {K1, ?INTERNAL4_VALUES_GET1(Values)};
+                        none -> {K1, V1};
                         Found -> Found
                     end;
                 _ ->
                     case larger_recur(Key, C2) of
-                        none -> {K2, ?INTERNAL4_VALUES_GET2(Values)};
+                        none -> {K2, V2};
                         Found -> Found
                     end
             end;
         %
         Key < K3 ->
             case larger_recur(Key, C3) of
-                none -> {K3, ?INTERNAL4_VALUES_GET3(Values)};
+                none -> {K3, V3};
                 Found -> Found
             end;
         %
         Key < K4 ->
             case larger_recur(Key, C4) of
-                none -> {K4, ?INTERNAL4_VALUES_GET4(Values)};
+                none -> {K4, V4};
                 Found -> Found
             end;
         %
@@ -3174,19 +3217,19 @@ larger_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
             case Key < K1 of
                 true ->
                     case larger_recur(Key, C1) of
-                        none -> {K1, ?INTERNAL3_VALUES_GET1(Values)};
+                        none -> {K1, V1};
                         Found -> Found
                     end;
                 _ ->
                     case larger_recur(Key, C2) of
-                        none -> {K2, ?INTERNAL3_VALUES_GET2(Values)};
+                        none -> {K2, V2};
                         Found -> Found
                     end
             end;
         %
         Key < K3 ->
             case larger_recur(Key, C3) of
-                none -> {K3, ?INTERNAL3_VALUES_GET3(Values)};
+                none -> {K3, V3};
                 Found -> Found
             end;
         %
@@ -3203,13 +3246,13 @@ larger_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
     if
         Key < K1 ->
             case larger_recur(Key, C1) of
-                none -> {K1, ?INTERNAL2_VALUES_GET1(Values)};
+                none -> {K1, V1};
                 Found -> Found
             end;
         %
         Key < K2 ->
             case larger_recur(Key, C2) of
-                none -> {K2, ?INTERNAL2_VALUES_GET2(Values)};
+                none -> {K2, V2};
                 Found -> Found
             end;
         %
@@ -3319,13 +3362,13 @@ larger_LEAF1(Key, ?LEAF1_ARGS) ->
 largest_recur(Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH(_, _, _, _, _, C3) ->
+        ?INTERNAL2_MATCH(_, _, _, _, _, _, C3) ->
             largest_recur(C3);
         %
-        ?INTERNAL3_MATCH(_, _, _, _, _, _, _, C4) ->
+        ?INTERNAL3_MATCH(_, _, _, _, _, _, _, _, _, C4) ->
             largest_recur(C4);
         %
-        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, _, C5) ->
+        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, _, _, _, _, C5) ->
             largest_recur(C5);
         %
         ?LEAF2_MATCH(_, K2, _, V2) ->
@@ -3381,13 +3424,14 @@ map_recur(Fun, Node) ->
         %
         %
         ?INTERNAL2_MATCH_ALL ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL2(
                 K1,
                 K2,
                 %
-                ?INTERNAL2_VALUES(Fun(K1, V1), Fun(K2, V2)),
+                Fun(K1, V1),
+                Fun(K2, V2),
                 %
                 map_recur(Fun, C1),
                 map_recur(Fun, C2),
@@ -3396,14 +3440,16 @@ map_recur(Fun, Node) ->
         %
         %
         ?INTERNAL3_MATCH_ALL ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL3(
                 K1,
                 K2,
                 K3,
                 %
-                ?INTERNAL3_VALUES(Fun(K1, V1), Fun(K2, V2), Fun(K3, V3)),
+                Fun(K1, V1),
+                Fun(K2, V2),
+                Fun(K3, V3),
                 %
                 map_recur(Fun, C1),
                 map_recur(Fun, C2),
@@ -3413,7 +3459,7 @@ map_recur(Fun, Node) ->
         %
         %
         ?INTERNAL4_MATCH_ALL ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             ?new_INTERNAL4(
                 K1,
@@ -3421,7 +3467,10 @@ map_recur(Fun, Node) ->
                 K3,
                 K4,
                 %
-                ?INTERNAL4_VALUES(Fun(K1, V1), Fun(K2, V2), Fun(K3, V3), Fun(K4, V4)),
+                Fun(K1, V1),
+                Fun(K2, V2),
+                Fun(K3, V3),
+                Fun(K4, V4),
                 %
                 map_recur(Fun, C1),
                 map_recur(Fun, C2),
@@ -3506,25 +3555,25 @@ smaller_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
             case Key > K4 of
                 true ->
                     case smaller_recur(Key, C5) of
-                        none -> {K4, ?INTERNAL4_VALUES_GET4(Values)};
+                        none -> {K4, V4};
                         Found -> Found
                     end;
                 _ ->
                     case smaller_recur(Key, C4) of
-                        none -> {K3, ?INTERNAL4_VALUES_GET3(Values)};
+                        none -> {K3, V3};
                         Found -> Found
                     end
             end;
         %
         Key > K2 ->
             case smaller_recur(Key, C3) of
-                none -> {K2, ?INTERNAL4_VALUES_GET2(Values)};
+                none -> {K2, V2};
                 Found -> Found
             end;
         %
         Key > K1 ->
             case smaller_recur(Key, C2) of
-                none -> {K1, ?INTERNAL4_VALUES_GET1(Values)};
+                none -> {K1, V1};
                 Found -> Found
             end;
         %
@@ -3543,19 +3592,19 @@ smaller_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
             case Key > K3 of
                 true ->
                     case smaller_recur(Key, C4) of
-                        none -> {K3, ?INTERNAL3_VALUES_GET3(Values)};
+                        none -> {K3, V3};
                         Found -> Found
                     end;
                 _ ->
                     case smaller_recur(Key, C3) of
-                        none -> {K2, ?INTERNAL3_VALUES_GET2(Values)};
+                        none -> {K2, V2};
                         Found -> Found
                     end
             end;
         %
         Key > K1 ->
             case smaller_recur(Key, C2) of
-                none -> {K1, ?INTERNAL3_VALUES_GET1(Values)};
+                none -> {K1, V1};
                 Found -> Found
             end;
         %
@@ -3572,13 +3621,13 @@ smaller_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
     if
         Key > K2 ->
             case smaller_recur(Key, C3) of
-                none -> {K2, ?INTERNAL2_VALUES_GET2(Values)};
+                none -> {K2, V2};
                 Found -> Found
             end;
         %
         Key > K1 ->
             case smaller_recur(Key, C2) of
-                none -> {K1, ?INTERNAL2_VALUES_GET1(Values)};
+                none -> {K1, V1};
                 Found -> Found
             end;
         %
@@ -3688,13 +3737,13 @@ smaller_LEAF1(Key, ?LEAF1_ARGS) ->
 smallest_recur(Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH(_, _, _, C1, _, _) ->
+        ?INTERNAL2_MATCH(_, _, _, _, C1, _, _) ->
             smallest_recur(C1);
         %
-        ?INTERNAL3_MATCH(_, _, _, _, C1, _, _, _) ->
+        ?INTERNAL3_MATCH(_, _, _, _, _, _, C1, _, _, _) ->
             smallest_recur(C1);
         %
-        ?INTERNAL4_MATCH(_, _, _, _, _, C1, _, _, _, _) ->
+        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, C1, _, _, _, _) ->
             smallest_recur(C1);
         %
         ?LEAF2_MATCH(K1, _, V1, _) ->
@@ -3725,20 +3774,20 @@ structural_stats_recur(Node, Acc, Height) ->
             Acc2 = structural_stats_inc(#stats_acc.count_leaf4, Acc),
             structural_stats_set_height(Height, Acc2);
         %
-        ?INTERNAL2_MATCH(_, _, _, C1, C2, C3) ->
+        ?INTERNAL2_MATCH(_, _, _, _, C1, C2, C3) ->
             Acc2 = structural_stats_inc(#stats_acc.count_internal2, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             _Acc5 = structural_stats_recur(C3, Acc4, Height + 1);
         %
-        ?INTERNAL3_MATCH(_, _, _, _, C1, C2, C3, C4) ->
+        ?INTERNAL3_MATCH(_, _, _, _, _, _, C1, C2, C3, C4) ->
             Acc2 = structural_stats_inc(#stats_acc.count_internal3, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             Acc5 = structural_stats_recur(C3, Acc4, Height + 1),
             _Acc6 = structural_stats_recur(C4, Acc5, Height + 1);
         %
-        ?INTERNAL4_MATCH(_, _, _, _, _, C1, C2, C3, C4, C5) ->
+        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, C1, C2, C3, C4, C5) ->
             Acc2 = structural_stats_inc(#stats_acc.count_internal4, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
@@ -3954,14 +4003,14 @@ take_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
 
 -compile({inline, take_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
 take_INTERNAL4_K1(?INTERNAL4_ARGS) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     ?TAKEN_PAIR(
         K1,
         V1,
-        rebalance_INTERNAL4_C2_expanded(
+        rebalance_INTERNAL4_C2(
             ReplacementK,
             K2,
             K3,
@@ -3982,14 +4031,14 @@ take_INTERNAL4_K1(?INTERNAL4_ARGS) ->
 
 -compile({inline, take_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
 take_INTERNAL4_K2(?INTERNAL4_ARGS) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
 
     ?TAKEN_PAIR(
         K2,
         V2,
-        rebalance_INTERNAL4_C2_expanded(
+        rebalance_INTERNAL4_C2(
             K1,
             ReplacementK,
             K3,
@@ -4010,14 +4059,14 @@ take_INTERNAL4_K2(?INTERNAL4_ARGS) ->
 
 -compile({inline, take_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
 take_INTERNAL4_K3(?INTERNAL4_ARGS) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_smallest_recur(C4),
+    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
 
     ?TAKEN_PAIR(
         K3,
         V3,
-        rebalance_INTERNAL4_C4_expanded(
+        rebalance_INTERNAL4_C3(
             K1,
             K2,
             ReplacementK,
@@ -4030,22 +4079,22 @@ take_INTERNAL4_K3(?INTERNAL4_ARGS) ->
             %
             C1,
             C2,
-            C3,
-            UpdatedC4,
+            UpdatedC3,
+            C4,
             C5
         )
     ).
 
 -compile({inline, take_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
 take_INTERNAL4_K4(?INTERNAL4_ARGS) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_largest_recur(C4),
 
     ?TAKEN_PAIR(
         K4,
         V4,
-        rebalance_INTERNAL4_C4_expanded(
+        rebalance_INTERNAL4_C4(
             K1,
             K2,
             K3,
@@ -4129,14 +4178,14 @@ take_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
 
 -compile({inline, take_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
 take_INTERNAL3_K1(?INTERNAL3_ARGS) ->
-    ?INTERNAL3_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     ?TAKEN_PAIR(
         K1,
         V1,
-        rebalance_INTERNAL3_C2_expanded(
+        rebalance_INTERNAL3_C2(
             ReplacementK,
             K2,
             K3,
@@ -4154,14 +4203,14 @@ take_INTERNAL3_K1(?INTERNAL3_ARGS) ->
 
 -compile({inline, take_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
 take_INTERNAL3_K2(?INTERNAL3_ARGS) ->
-    ?INTERNAL3_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
 
     ?TAKEN_PAIR(
         K2,
         V2,
-        rebalance_INTERNAL3_C3_expanded(
+        rebalance_INTERNAL3_C3(
             K1,
             ReplacementK,
             K3,
@@ -4179,14 +4228,14 @@ take_INTERNAL3_K2(?INTERNAL3_ARGS) ->
 
 -compile({inline, take_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
 take_INTERNAL3_K3(?INTERNAL3_ARGS) ->
-    ?INTERNAL3_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
 
     ?TAKEN_PAIR(
         K3,
         V3,
-        rebalance_INTERNAL3_C3_expanded(
+        rebalance_INTERNAL3_C3(
             K1,
             K2,
             ReplacementK,
@@ -4251,14 +4300,14 @@ take_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
 
 -compile({inline, take_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
 take_INTERNAL2_K1(?INTERNAL2_ARGS) ->
-    ?INTERNAL2_VALUES_MATCH_ALL = Values,
+    %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     ?TAKEN_PAIR(
         K1,
         V1,
-        rebalance_INTERNAL2_C2_expanded(
+        rebalance_INTERNAL2_C2(
             ReplacementK,
             K2,
             %
@@ -4273,14 +4322,14 @@ take_INTERNAL2_K1(?INTERNAL2_ARGS) ->
 
 -compile({inline, take_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
 take_INTERNAL2_K2(?INTERNAL2_ARGS) ->
-    ?INTERNAL2_VALUES_MATCH_ALL = Values,
+    %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
+    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
 
     ?TAKEN_PAIR(
         K2,
         V2,
-        rebalance_INTERNAL2_C2_expanded(
+        rebalance_INTERNAL2_C3(
             K1,
             ReplacementK,
             %
@@ -4288,8 +4337,8 @@ take_INTERNAL2_K2(?INTERNAL2_ARGS) ->
             ReplacementV,
             %
             C1,
-            UpdatedC2,
-            C3
+            C2,
+            UpdatedC3
         )
     ).
 
@@ -4604,20 +4653,20 @@ to_list_recur(Node, Acc) ->
             [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Acc];
         %
         ?INTERNAL2_MATCH_ALL ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
             Acc2 = to_list_recur(C3, Acc),
             Acc3 = to_list_recur(C2, [{K2, V2} | Acc2]),
             _Acc4 = to_list_recur(C1, [{K1, V1} | Acc3]);
         %
         ?INTERNAL3_MATCH_ALL ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
             Acc2 = to_list_recur(C4, Acc),
             Acc3 = to_list_recur(C3, [{K3, V3} | Acc2]),
             Acc4 = to_list_recur(C2, [{K2, V2} | Acc3]),
             _Acc5 = to_list_recur(C1, [{K1, V1} | Acc4]);
         %
         ?INTERNAL4_MATCH_ALL ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
             Acc2 = to_list_recur(C5, Acc),
             Acc3 = to_list_recur(C4, [{K4, V4} | Acc2]),
             Acc4 = to_list_recur(C3, [{K3, V3} | Acc3]),
@@ -4726,7 +4775,7 @@ update_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 
 -compile({inline, update_INTERNAL4_K1 / ?INTERNAL4_ARITY_PLUS3}).
 update_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K1) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
     Value = eval_update_value(ValueEval, ValueWrap, V1),
 
@@ -4736,7 +4785,10 @@ update_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K1) ->
         K3,
         K4,
         %
-        ?INTERNAL4_VALUES(Value, V2, V3, V4),
+        Value,
+        V2,
+        V3,
+        V4,
         %
         C1,
         C2,
@@ -4747,7 +4799,7 @@ update_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K1) ->
 
 -compile({inline, update_INTERNAL4_K2 / ?INTERNAL4_ARITY_PLUS3}).
 update_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K2) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
     Value = eval_update_value(ValueEval, ValueWrap, V2),
 
@@ -4757,7 +4809,10 @@ update_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K2) ->
         K3,
         K4,
         %
-        ?INTERNAL4_VALUES(V1, Value, V3, V4),
+        V1,
+        Value,
+        V3,
+        V4,
         %
         C1,
         C2,
@@ -4768,7 +4823,7 @@ update_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K2) ->
 
 -compile({inline, update_INTERNAL4_K3 / ?INTERNAL4_ARITY_PLUS3}).
 update_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K3) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
     Value = eval_update_value(ValueEval, ValueWrap, V3),
 
@@ -4778,7 +4833,10 @@ update_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K3) ->
         Key,
         K4,
         %
-        ?INTERNAL4_VALUES(V1, V2, Value, V4),
+        V1,
+        V2,
+        Value,
+        V4,
         %
         C1,
         C2,
@@ -4789,7 +4847,7 @@ update_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K3) ->
 
 -compile({inline, update_INTERNAL4_K4 / ?INTERNAL4_ARITY_PLUS3}).
 update_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K4) ->
-    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
     Value = eval_update_value(ValueEval, ValueWrap, V4),
 
@@ -4799,7 +4857,10 @@ update_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K4) ->
         K3,
         Key,
         %
-        ?INTERNAL4_VALUES(V1, V2, V3, Value),
+        V1,
+        V2,
+        V3,
+        Value,
         %
         C1,
         C2,
@@ -4869,7 +4930,7 @@ update_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 
 -compile({inline, update_INTERNAL3_K1 / ?INTERNAL3_ARITY_PLUS3}).
 update_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K1) ->
-    ?INTERNAL3_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
     Value = eval_update_value(ValueEval, ValueWrap, V1),
 
@@ -4878,7 +4939,9 @@ update_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K1) ->
         K2,
         K3,
         %
-        ?INTERNAL3_VALUES(Value, V2, V3),
+        Value,
+        V2,
+        V3,
         %
         C1,
         C2,
@@ -4888,7 +4951,7 @@ update_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K1) ->
 
 -compile({inline, update_INTERNAL3_K2 / ?INTERNAL3_ARITY_PLUS3}).
 update_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K2) ->
-    ?INTERNAL3_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
     Value = eval_update_value(ValueEval, ValueWrap, V2),
 
@@ -4897,7 +4960,9 @@ update_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K2) ->
         Key,
         K3,
         %
-        ?INTERNAL3_VALUES(V1, Value, V3),
+        V1,
+        Value,
+        V3,
         %
         C1,
         C2,
@@ -4907,7 +4972,7 @@ update_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K2) ->
 
 -compile({inline, update_INTERNAL3_K3 / ?INTERNAL3_ARITY_PLUS3}).
 update_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K3) ->
-    ?INTERNAL3_VALUES_MATCH_ALL = Values,
+    % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
     Value = eval_update_value(ValueEval, ValueWrap, V3),
 
@@ -4916,7 +4981,9 @@ update_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K3) ->
         K2,
         Key,
         %
-        ?INTERNAL3_VALUES(V1, V2, Value),
+        V1,
+        V2,
+        Value,
         %
         C1,
         C2,
@@ -4970,7 +5037,7 @@ update_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 
 -compile({inline, update_INTERNAL2_K1 / ?INTERNAL2_ARITY_PLUS3}).
 update_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K1) ->
-    ?INTERNAL2_VALUES_MATCH_ALL = Values,
+    %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
     Value = eval_update_value(ValueEval, ValueWrap, V1),
 
@@ -4978,7 +5045,8 @@ update_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K1) ->
         Key,
         K2,
         %
-        ?INTERNAL2_VALUES(Value, V2),
+        Value,
+        V2,
         %
         C1,
         C2,
@@ -4987,7 +5055,7 @@ update_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K1) ->
 
 -compile({inline, update_INTERNAL2_K2 / ?INTERNAL2_ARITY_PLUS3}).
 update_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K2) ->
-    ?INTERNAL2_VALUES_MATCH_ALL = Values,
+    %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
     Value = eval_update_value(ValueEval, ValueWrap, V2),
 
@@ -4995,7 +5063,8 @@ update_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K2) ->
         K1,
         Key,
         %
-        ?INTERNAL2_VALUES(V1, Value),
+        V1,
+        Value,
         %
         C1,
         C2,
@@ -5235,21 +5304,21 @@ values_recur(Node, Acc) ->
         ?LEAF4_MATCH(_, _, _, _, V1, V2, V3, V4) ->
             [V1, V2, V3, V4 | Acc];
         %
-        ?INTERNAL2_MATCH(_, _, Values, C1, C2, C3) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+        ?INTERNAL2_MATCH(_, _, V1, V2, C1, C2, C3) ->
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
             Acc2 = [V2 | values_recur(C3, Acc)],
             Acc3 = [V1 | values_recur(C2, Acc2)],
             values_recur(C1, Acc3);
         %
-        ?INTERNAL3_MATCH(_, _, _, Values, C1, C2, C3, C4) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+        ?INTERNAL3_MATCH(_, _, _, V1, V2, V3, C1, C2, C3, C4) ->
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
             Acc2 = [V3 | values_recur(C4, Acc)],
             Acc3 = [V2 | values_recur(C3, Acc2)],
             Acc4 = [V1 | values_recur(C2, Acc3)],
             values_recur(C1, Acc4);
         %
-        ?INTERNAL4_MATCH(_, _, _, _, Values, C1, C2, C3, C4, C5) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+        ?INTERNAL4_MATCH(_, _, _, _, V1, V2, V3, V4, C1, C2, C3, C4, C5) ->
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
             Acc2 = [V4 | values_recur(C5, Acc)],
             Acc3 = [V3 | values_recur(C4, Acc2)],
             Acc4 = [V2 | values_recur(C3, Acc3)],
@@ -5269,7 +5338,7 @@ values_recur(Node, Acc) ->
 rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
     case C1 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_right_sibling(
                 CK,
@@ -5298,7 +5367,7 @@ rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_right_sibling(
                 CK,
@@ -5328,7 +5397,7 @@ rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
             ?INTERNAL4_C1(UpdatedC1)
     end.
 
--compile({inline, rebalance_INTERNAL4_C1_finish / ?INTERNAL4_ARITY}).
+-compile({inline, rebalance_INTERNAL4_C1_finish / ?INTERNAL4_ARITY_MINUS3}).
 rebalance_INTERNAL4_C1_finish(
     Result,
     K2,
@@ -5351,7 +5420,10 @@ rebalance_INTERNAL4_C1_finish(
                 K3,
                 K4,
                 %
-                ?INTERNAL4_VALUES(UpValue, V2, V3, V4),
+                UpValue,
+                V2,
+                V3,
+                V4,
                 %
                 UpdatedC1,
                 UpdatedC2,
@@ -5366,7 +5438,9 @@ rebalance_INTERNAL4_C1_finish(
                 K3,
                 K4,
                 %
-                ?INTERNAL3_VALUES(V2, V3, V4),
+                V2,
+                V3,
+                V4,
                 %
                 MergedC1C2,
                 C3,
@@ -5383,7 +5457,7 @@ rebalance_INTERNAL4_C1_finish(
 rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_either_sibling(
                 CK,
@@ -5419,7 +5493,7 @@ rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_either_sibling(
                 CK,
@@ -5456,109 +5530,7 @@ rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
             ?INTERNAL4_C2(UpdatedC2)
     end.
 
--compile({inline, rebalance_INTERNAL4_C2_expanded / ?INTERNAL4_ARITY_PLUS3}).
-rebalance_INTERNAL4_C2_expanded(
-    K1,
-    K2,
-    K3,
-    K4,
-    %
-    V1,
-    V2,
-    V3,
-    V4,
-    %
-    C1,
-    C2,
-    C3,
-    C4,
-    C5
-) ->
-    case C2 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_either_sibling(
-                CK,
-                CV,
-                CL,
-                CR,
-                %
-                K1,
-                V1,
-                C1,
-                %
-                K2,
-                V2,
-                C3
-            ),
-
-            rebalance_INTERNAL4_C2_finish(
-                Result,
-                K1,
-                K2,
-                K3,
-                K4,
-                %
-                V1,
-                V2,
-                V3,
-                V4,
-                %
-                C1,
-                C3,
-                C4,
-                C5
-            );
-        %
-        ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_either_sibling(
-                CK,
-                CV,
-                %
-                K1,
-                V1,
-                C1,
-                %
-                K2,
-                V2,
-                C3
-            ),
-
-            rebalance_INTERNAL4_C2_finish(
-                Result,
-                K1,
-                K2,
-                K3,
-                K4,
-                %
-                V1,
-                V2,
-                V3,
-                V4,
-                %
-                C1,
-                C3,
-                C4,
-                C5
-            );
-        %
-        UpdatedC2 ->
-            ?new_INTERNAL4(
-                K1,
-                K2,
-                K3,
-                K4,
-                %
-                ?INTERNAL4_VALUES(V1, V2, V3, V4),
-                %
-                C1,
-                UpdatedC2,
-                C3,
-                C4,
-                C5
-            )
-    end.
-
--compile({inline, rebalance_INTERNAL4_C2_finish / ?INTERNAL4_ARITY_PLUS3}).
+-compile({inline, rebalance_INTERNAL4_C2_finish / ?INTERNAL4_ARITY}).
 rebalance_INTERNAL4_C2_finish(
     Result,
     K1,
@@ -5583,7 +5555,9 @@ rebalance_INTERNAL4_C2_finish(
                 K3,
                 K4,
                 %
-                ?INTERNAL3_VALUES(V2, V3, V4),
+                V2,
+                V3,
+                V4,
                 %
                 MergedC1C2,
                 C3,
@@ -5598,7 +5572,10 @@ rebalance_INTERNAL4_C2_finish(
                 K3,
                 K4,
                 %
-                ?INTERNAL4_VALUES(V1, UpValue, V3, V4),
+                V1,
+                UpValue,
+                V3,
+                V4,
                 %
                 C1,
                 RebalancedC2,
@@ -5614,7 +5591,10 @@ rebalance_INTERNAL4_C2_finish(
                 K3,
                 K4,
                 %
-                ?INTERNAL4_VALUES(UpValue, V2, V3, V4),
+                UpValue,
+                V2,
+                V3,
+                V4,
                 %
                 UpdatedC1,
                 RebalancedC2,
@@ -5632,7 +5612,7 @@ rebalance_INTERNAL4_C2_finish(
 rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
     case C3 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_either_sibling(
                 CK,
@@ -5668,7 +5648,7 @@ rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_either_sibling(
                 CK,
@@ -5705,7 +5685,7 @@ rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
             ?INTERNAL4_C3(UpdatedC3)
     end.
 
--compile({inline, rebalance_INTERNAL4_C3_finish / ?INTERNAL4_ARITY_PLUS3}).
+-compile({inline, rebalance_INTERNAL4_C3_finish / ?INTERNAL4_ARITY}).
 rebalance_INTERNAL4_C3_finish(
     Result,
     K1,
@@ -5730,7 +5710,9 @@ rebalance_INTERNAL4_C3_finish(
                 K3,
                 K4,
                 %
-                ?INTERNAL3_VALUES(V1, V3, V4),
+                V1,
+                V3,
+                V4,
                 %
                 C1,
                 MergedC2C3,
@@ -5745,7 +5727,10 @@ rebalance_INTERNAL4_C3_finish(
                 UpKey,
                 K4,
                 %
-                ?INTERNAL4_VALUES(V1, V2, UpValue, V4),
+                V1,
+                V2,
+                UpValue,
+                V4,
                 %
                 C1,
                 C2,
@@ -5761,7 +5746,10 @@ rebalance_INTERNAL4_C3_finish(
                 K3,
                 K4,
                 %
-                ?INTERNAL4_VALUES(V1, UpValue, V3, V4),
+                V1,
+                UpValue,
+                V3,
+                V4,
                 %
                 C1,
                 UpdatedC2,
@@ -5779,7 +5767,7 @@ rebalance_INTERNAL4_C3_finish(
 rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
     case C4 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_either_sibling(
                 CK,
@@ -5815,7 +5803,7 @@ rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_either_sibling(
                 CK,
@@ -5852,109 +5840,7 @@ rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
             ?INTERNAL4_C4(UpdatedC4)
     end.
 
--compile({inline, rebalance_INTERNAL4_C4_expanded / ?INTERNAL4_ARITY_PLUS3}).
-rebalance_INTERNAL4_C4_expanded(
-    K1,
-    K2,
-    K3,
-    K4,
-    %
-    V1,
-    V2,
-    V3,
-    V4,
-    %
-    C1,
-    C2,
-    C3,
-    C4,
-    C5
-) ->
-    case C4 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_either_sibling(
-                CK,
-                CV,
-                CL,
-                CR,
-                %
-                K3,
-                V3,
-                C3,
-                %
-                K4,
-                V4,
-                C5
-            ),
-
-            rebalance_INTERNAL4_C4_finish(
-                Result,
-                K1,
-                K2,
-                K3,
-                K4,
-                %
-                V1,
-                V2,
-                V3,
-                V4,
-                %
-                C1,
-                C2,
-                C3,
-                C5
-            );
-        %
-        ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_either_sibling(
-                CK,
-                CV,
-                %
-                K3,
-                V3,
-                C3,
-                %
-                K4,
-                V4,
-                C5
-            ),
-
-            rebalance_INTERNAL4_C4_finish(
-                Result,
-                K1,
-                K2,
-                K3,
-                K4,
-                %
-                V1,
-                V2,
-                V3,
-                V4,
-                %
-                C1,
-                C2,
-                C3,
-                C5
-            );
-        %
-        UpdatedC4 ->
-            ?new_INTERNAL4(
-                K1,
-                K2,
-                K3,
-                K4,
-                %
-                ?INTERNAL4_VALUES(V1, V2, V3, V4),
-                %
-                C1,
-                C2,
-                C3,
-                UpdatedC4,
-                C5
-            )
-    end.
-
--compile({inline, rebalance_INTERNAL4_C4_finish / ?INTERNAL4_ARITY_PLUS3}).
+-compile({inline, rebalance_INTERNAL4_C4_finish / ?INTERNAL4_ARITY}).
 rebalance_INTERNAL4_C4_finish(
     Result,
     K1,
@@ -5979,7 +5865,9 @@ rebalance_INTERNAL4_C4_finish(
                 K2,
                 K4,
                 %
-                ?INTERNAL3_VALUES(V1, V2, V4),
+                V1,
+                V2,
+                V4,
                 %
                 C1,
                 C2,
@@ -5994,7 +5882,10 @@ rebalance_INTERNAL4_C4_finish(
                 K3,
                 UpKey,
                 %
-                ?INTERNAL4_VALUES(V1, V2, V3, UpValue),
+                V1,
+                V2,
+                V3,
+                UpValue,
                 %
                 C1,
                 C2,
@@ -6010,7 +5901,10 @@ rebalance_INTERNAL4_C4_finish(
                 UpKey,
                 K4,
                 %
-                ?INTERNAL4_VALUES(V1, V2, UpValue, V4),
+                V1,
+                V2,
+                UpValue,
+                V4,
                 %
                 C1,
                 C2,
@@ -6028,7 +5922,7 @@ rebalance_INTERNAL4_C4_finish(
 rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
     case C5 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_left_sibling(
                 CK,
@@ -6057,7 +5951,7 @@ rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_left_sibling(
                 CK,
@@ -6087,7 +5981,7 @@ rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
             ?INTERNAL4_C5(UpdatedC5)
     end.
 
--compile({inline, rebalance_INTERNAL4_C5_finish / ?INTERNAL4_ARITY}).
+-compile({inline, rebalance_INTERNAL4_C5_finish / ?INTERNAL4_ARITY_MINUS3}).
 rebalance_INTERNAL4_C5_finish(
     Result,
     K1,
@@ -6110,7 +6004,10 @@ rebalance_INTERNAL4_C5_finish(
                 K3,
                 UpKey,
                 %
-                ?INTERNAL4_VALUES(V1, V2, V3, UpValue),
+                V1,
+                V2,
+                V3,
+                UpValue,
                 %
                 C1,
                 C2,
@@ -6125,7 +6022,9 @@ rebalance_INTERNAL4_C5_finish(
                 K2,
                 K3,
                 %
-                ?INTERNAL3_VALUES(V1, V2, V3),
+                V1,
+                V2,
+                V3,
                 %
                 C1,
                 C2,
@@ -6146,7 +6045,7 @@ rebalance_INTERNAL4_C5_finish(
 rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
     case C1 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_right_sibling(
                 CK,
@@ -6172,7 +6071,7 @@ rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_right_sibling(
                 CK,
@@ -6199,7 +6098,7 @@ rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
             ?INTERNAL3_C1(UpdatedC1)
     end.
 
--compile({inline, rebalance_INTERNAL3_C1_finish / ?INTERNAL3_ARITY_MINUS1}).
+-compile({inline, rebalance_INTERNAL3_C1_finish / ?INTERNAL3_ARITY_MINUS3}).
 rebalance_INTERNAL3_C1_finish(
     Result,
     K2,
@@ -6218,7 +6117,9 @@ rebalance_INTERNAL3_C1_finish(
                 K2,
                 K3,
                 %
-                ?INTERNAL3_VALUES(UpValue, V2, V3),
+                UpValue,
+                V2,
+                V3,
                 %
                 UpdatedC1,
                 UpdatedC2,
@@ -6231,7 +6132,8 @@ rebalance_INTERNAL3_C1_finish(
                 K2,
                 K3,
                 %
-                ?INTERNAL2_VALUES(V2, V3),
+                V2,
+                V3,
                 %
                 MergedC1C2,
                 C3,
@@ -6247,7 +6149,7 @@ rebalance_INTERNAL3_C1_finish(
 rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_either_sibling(
                 CK,
@@ -6280,7 +6182,7 @@ rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_either_sibling(
                 CK,
@@ -6314,98 +6216,7 @@ rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
             ?INTERNAL3_C2(UpdatedC2)
     end.
 
--compile({inline, rebalance_INTERNAL3_C2_expanded / ?INTERNAL3_ARITY_PLUS2}).
-rebalance_INTERNAL3_C2_expanded(
-    K1,
-    K2,
-    K3,
-    %
-    V1,
-    V2,
-    V3,
-    %
-    C1,
-    C2,
-    C3,
-    C4
-) ->
-    case C2 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_either_sibling(
-                CK,
-                CV,
-                CL,
-                CR,
-                %
-                K1,
-                V1,
-                C1,
-                %
-                K2,
-                V2,
-                C3
-            ),
-
-            rebalance_INTERNAL3_C2_finish(
-                Result,
-                K1,
-                K2,
-                K3,
-                %
-                V1,
-                V2,
-                V3,
-                %
-                C1,
-                C3,
-                C4
-            );
-        %
-        ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_either_sibling(
-                CK,
-                CV,
-                %
-                K1,
-                V1,
-                C1,
-                %
-                K2,
-                V2,
-                C3
-            ),
-
-            rebalance_INTERNAL3_C2_finish(
-                Result,
-                K1,
-                K2,
-                K3,
-                %
-                V1,
-                V2,
-                V3,
-                %
-                C1,
-                C3,
-                C4
-            );
-        %
-        UpdatedC2 ->
-            ?new_INTERNAL3(
-                K1,
-                K2,
-                K3,
-                %
-                ?INTERNAL3_VALUES(V1, V2, V3),
-                %
-                C1,
-                UpdatedC2,
-                C3,
-                C4
-            )
-    end.
-
--compile({inline, rebalance_INTERNAL3_C2_finish / ?INTERNAL3_ARITY_PLUS2}).
+-compile({inline, rebalance_INTERNAL3_C2_finish / ?INTERNAL3_ARITY}).
 rebalance_INTERNAL3_C2_finish(
     Result,
     K1,
@@ -6426,7 +6237,8 @@ rebalance_INTERNAL3_C2_finish(
                 K2,
                 K3,
                 %
-                ?INTERNAL2_VALUES(V2, V3),
+                V2,
+                V3,
                 %
                 MergedC1C2,
                 C3,
@@ -6439,7 +6251,9 @@ rebalance_INTERNAL3_C2_finish(
                 UpKey,
                 K3,
                 %
-                ?INTERNAL3_VALUES(V1, UpValue, V3),
+                V1,
+                UpValue,
+                V3,
                 %
                 C1,
                 RebalancedC2,
@@ -6453,7 +6267,9 @@ rebalance_INTERNAL3_C2_finish(
                 K2,
                 K3,
                 %
-                ?INTERNAL3_VALUES(UpValue, V2, V3),
+                UpValue,
+                V2,
+                V3,
                 %
                 UpdatedC1,
                 RebalancedC2,
@@ -6470,7 +6286,7 @@ rebalance_INTERNAL3_C2_finish(
 rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
     case C3 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_either_sibling(
                 CK,
@@ -6503,7 +6319,7 @@ rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_either_sibling(
                 CK,
@@ -6537,98 +6353,7 @@ rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
             ?INTERNAL3_C3(UpdatedC3)
     end.
 
--compile({inline, rebalance_INTERNAL3_C3_expanded / ?INTERNAL3_ARITY_PLUS2}).
-rebalance_INTERNAL3_C3_expanded(
-    K1,
-    K2,
-    K3,
-    %
-    V1,
-    V2,
-    V3,
-    %
-    C1,
-    C2,
-    C3,
-    C4
-) ->
-    case C3 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_either_sibling(
-                CK,
-                CV,
-                CL,
-                CR,
-                %
-                K2,
-                V2,
-                C2,
-                %
-                K3,
-                V3,
-                C4
-            ),
-
-            rebalance_INTERNAL3_C3_finish(
-                Result,
-                K1,
-                K2,
-                K3,
-                %
-                V1,
-                V2,
-                V3,
-                %
-                C1,
-                C2,
-                C4
-            );
-        %
-        ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_either_sibling(
-                CK,
-                CV,
-                %
-                K2,
-                V2,
-                C2,
-                %
-                K3,
-                V3,
-                C4
-            ),
-
-            rebalance_INTERNAL3_C3_finish(
-                Result,
-                K1,
-                K2,
-                K3,
-                %
-                V1,
-                V2,
-                V3,
-                %
-                C1,
-                C2,
-                C4
-            );
-        %
-        UpdatedC3 ->
-            ?new_INTERNAL3(
-                K1,
-                K2,
-                K3,
-                %
-                ?INTERNAL3_VALUES(V1, V2, V3),
-                %
-                C1,
-                C2,
-                UpdatedC3,
-                C4
-            )
-    end.
-
--compile({inline, rebalance_INTERNAL3_C3_finish / ?INTERNAL3_ARITY_PLUS2}).
+-compile({inline, rebalance_INTERNAL3_C3_finish / ?INTERNAL3_ARITY}).
 rebalance_INTERNAL3_C3_finish(
     Result,
     K1,
@@ -6649,7 +6374,8 @@ rebalance_INTERNAL3_C3_finish(
                 K1,
                 K3,
                 %
-                ?INTERNAL2_VALUES(V1, V3),
+                V1,
+                V3,
                 %
                 C1,
                 MergedC2C3,
@@ -6662,7 +6388,9 @@ rebalance_INTERNAL3_C3_finish(
                 K2,
                 UpKey,
                 %
-                ?INTERNAL3_VALUES(V1, V2, UpValue),
+                V1,
+                V2,
+                UpValue,
                 %
                 C1,
                 C2,
@@ -6676,7 +6404,9 @@ rebalance_INTERNAL3_C3_finish(
                 UpKey,
                 K3,
                 %
-                ?INTERNAL3_VALUES(V1, UpValue, V3),
+                V1,
+                UpValue,
+                V3,
                 %
                 C1,
                 UpdatedC2,
@@ -6693,7 +6423,7 @@ rebalance_INTERNAL3_C3_finish(
 rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
     case C4 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_left_sibling(
                 CK,
@@ -6719,7 +6449,7 @@ rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_left_sibling(
                 CK,
@@ -6746,7 +6476,7 @@ rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
             ?INTERNAL3_C4(UpdatedC4)
     end.
 
--compile({inline, rebalance_INTERNAL3_C4_finish / ?INTERNAL3_ARITY_MINUS1}).
+-compile({inline, rebalance_INTERNAL3_C4_finish / ?INTERNAL3_ARITY_MINUS3}).
 rebalance_INTERNAL3_C4_finish(
     Result,
     K1,
@@ -6765,7 +6495,9 @@ rebalance_INTERNAL3_C4_finish(
                 K2,
                 UpKey,
                 %
-                ?INTERNAL3_VALUES(V1, V2, UpValue),
+                V1,
+                V2,
+                UpValue,
                 %
                 C1,
                 C2,
@@ -6778,7 +6510,8 @@ rebalance_INTERNAL3_C4_finish(
                 K1,
                 K2,
                 %
-                ?INTERNAL2_VALUES(V1, V2),
+                V1,
+                V2,
                 %
                 C1,
                 C2,
@@ -6798,7 +6531,7 @@ rebalance_INTERNAL3_C4_finish(
 rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
     case C1 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_right_sibling(
                 CK,
@@ -6814,7 +6547,7 @@ rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
             rebalance_INTERNAL2_C1_finish(Result, K2, V2, C3);
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_right_sibling(
                 CK,
@@ -6831,7 +6564,7 @@ rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
             ?INTERNAL2_C1(UpdatedC1)
     end.
 
--compile({inline, rebalance_INTERNAL2_C1_finish / ?INTERNAL2_ARITY_MINUS2}).
+-compile({inline, rebalance_INTERNAL2_C1_finish / ?INTERNAL2_ARITY_MINUS3}).
 rebalance_INTERNAL2_C1_finish(Result, K2, V2, C3) ->
     case Result of
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
@@ -6839,7 +6572,8 @@ rebalance_INTERNAL2_C1_finish(Result, K2, V2, C3) ->
                 UpKey,
                 K2,
                 %
-                ?INTERNAL2_VALUES(UpValue, V2),
+                UpValue,
+                V2,
                 %
                 UpdatedC1,
                 UpdatedC2,
@@ -6858,7 +6592,7 @@ rebalance_INTERNAL2_C1_finish(Result, K2, V2, C3) ->
 rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
     case C2 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_either_sibling(
                 CK,
@@ -6888,7 +6622,7 @@ rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
             );
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_either_sibling(
                 CK,
@@ -6919,87 +6653,7 @@ rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
             ?INTERNAL2_C2(UpdatedC2)
     end.
 
--compile({inline, rebalance_INTERNAL2_C2_expanded / ?INTERNAL2_ARITY_PLUS1}).
-rebalance_INTERNAL2_C2_expanded(
-    K1,
-    K2,
-    %
-    V1,
-    V2,
-    %
-    C1,
-    C2,
-    C3
-) ->
-    case C2 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            Result = rebalance_internal_from_either_sibling(
-                CK,
-                CV,
-                CL,
-                CR,
-                %
-                K1,
-                V1,
-                C1,
-                %
-                K2,
-                V2,
-                C3
-            ),
-
-            rebalance_INTERNAL2_C2_finish(
-                Result,
-                K1,
-                K2,
-                %
-                V1,
-                V2,
-                %
-                C1,
-                C3
-            );
-        %
-        ?LEAF1_MATCH(CK, CV) ->
-            Result = rebalance_leaf_from_either_sibling(
-                CK,
-                CV,
-                %
-                K1,
-                V1,
-                C1,
-                %
-                K2,
-                V2,
-                C3
-            ),
-
-            rebalance_INTERNAL2_C2_finish(
-                Result,
-                K1,
-                K2,
-                %
-                V1,
-                V2,
-                %
-                C1,
-                C3
-            );
-        %
-        UpdatedC2 ->
-            ?new_INTERNAL2(
-                K1,
-                K2,
-                %
-                ?INTERNAL2_VALUES(V1, V2),
-                %
-                C1,
-                UpdatedC2,
-                C3
-            )
-    end.
-
--compile({inline, rebalance_INTERNAL2_C2_finish / ?INTERNAL2_ARITY_PLUS1}).
+-compile({inline, rebalance_INTERNAL2_C2_finish / ?INTERNAL2_ARITY}).
 rebalance_INTERNAL2_C2_finish(
     Result,
     K1,
@@ -7027,7 +6681,8 @@ rebalance_INTERNAL2_C2_finish(
                 K1,
                 UpKey,
                 %
-                ?INTERNAL2_VALUES(V1, UpValue),
+                V1,
+                UpValue,
                 %
                 C1,
                 RebalancedC2,
@@ -7039,7 +6694,8 @@ rebalance_INTERNAL2_C2_finish(
                 UpKey,
                 K2,
                 %
-                ?INTERNAL2_VALUES(UpValue, V2),
+                UpValue,
+                V2,
                 %
                 UpdatedC1,
                 RebalancedC2,
@@ -7055,7 +6711,7 @@ rebalance_INTERNAL2_C2_finish(
 rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
     case C3 of
         ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_internal_from_left_sibling(
                 CK,
@@ -7071,7 +6727,7 @@ rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
             rebalance_INTERNAL2_C3_finish(Result, K1, V1, C1);
         %
         ?LEAF1_MATCH(CK, CV) ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             Result = rebalance_leaf_from_left_sibling(
                 CK,
@@ -7088,7 +6744,7 @@ rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
             ?INTERNAL2_C3(UpdatedC3)
     end.
 
--compile({inline, rebalance_INTERNAL2_C3_finish / ?INTERNAL2_ARITY_MINUS2}).
+-compile({inline, rebalance_INTERNAL2_C3_finish / ?INTERNAL2_ARITY_MINUS3}).
 rebalance_INTERNAL2_C3_finish(Result, K1, V1, C1) ->
     case Result of
         ?ROTATED(UpKey, UpValue, UpdatedC2, RebalancedC3) ->
@@ -7096,7 +6752,8 @@ rebalance_INTERNAL2_C3_finish(Result, K1, V1, C1) ->
                 K1,
                 UpKey,
                 %
-                ?INTERNAL2_VALUES(V1, UpValue),
+                V1,
+                UpValue,
                 %
                 C1,
                 UpdatedC2,
@@ -7220,7 +6877,7 @@ rebalance_internal_from_right_sibling(
 ) ->
     case Right of
         ?INTERNAL2_MATCH_ALL ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             MergedNode = ?new_INTERNAL4(
                 CKey,
@@ -7228,7 +6885,10 @@ rebalance_internal_from_right_sibling(
                 K1,
                 K2,
                 %
-                ?INTERNAL4_VALUES(CValue, ParentV, V1, V2),
+                CValue,
+                ParentV,
+                V1,
+                V2,
                 %
                 CLeft,
                 CRight,
@@ -7242,7 +6902,7 @@ rebalance_internal_from_right_sibling(
         %
         %
         ?INTERNAL3_MATCH_ALL ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             UpKey = K1,
             UpValue = V1,
@@ -7252,7 +6912,8 @@ rebalance_internal_from_right_sibling(
                 CKey,
                 ParentK,
                 %
-                ?INTERNAL2_VALUES(CValue, ParentV),
+                CValue,
+                ParentV,
                 %
                 CLeft,
                 CRight,
@@ -7263,7 +6924,8 @@ rebalance_internal_from_right_sibling(
                 K2,
                 K3,
                 %
-                ?INTERNAL2_VALUES(V2, V3),
+                V2,
+                V3,
                 %
                 C2,
                 C3,
@@ -7275,7 +6937,7 @@ rebalance_internal_from_right_sibling(
         %
         %
         ?INTERNAL4_MATCH_ALL ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             UpKey = K1,
             UpValue = V1,
@@ -7285,7 +6947,8 @@ rebalance_internal_from_right_sibling(
                 CKey,
                 ParentK,
                 %
-                ?INTERNAL2_VALUES(CValue, ParentV),
+                CValue,
+                ParentV,
                 %
                 CLeft,
                 CRight,
@@ -7297,7 +6960,9 @@ rebalance_internal_from_right_sibling(
                 K3,
                 K4,
                 %
-                ?INTERNAL3_VALUES(V2, V3, V4),
+                V2,
+                V3,
+                V4,
                 %
                 C2,
                 C3,
@@ -7368,7 +7033,7 @@ rebalance_internal_from_left_sibling(
 ) ->
     case Left of
         ?INTERNAL2_MATCH_ALL ->
-            ?INTERNAL2_VALUES_MATCH_ALL = Values,
+            %?INTERNAL2_VALUES_MATCH_ALL = Values,
 
             MergedNode = ?new_INTERNAL4(
                 K1,
@@ -7376,7 +7041,10 @@ rebalance_internal_from_left_sibling(
                 ParentK,
                 CKey,
                 %
-                ?INTERNAL4_VALUES(V1, V2, ParentV, CValue),
+                V1,
+                V2,
+                ParentV,
+                CValue,
                 %
                 C1,
                 C2,
@@ -7390,7 +7058,7 @@ rebalance_internal_from_left_sibling(
         %
         %
         ?INTERNAL3_MATCH_ALL ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             UpKey = K3,
             UpValue = V3,
@@ -7400,7 +7068,8 @@ rebalance_internal_from_left_sibling(
                 ParentK,
                 CKey,
                 %
-                ?INTERNAL2_VALUES(ParentV, CValue),
+                ParentV,
+                CValue,
                 %
                 MovedC,
                 CLeft,
@@ -7411,7 +7080,8 @@ rebalance_internal_from_left_sibling(
                 K1,
                 K2,
                 %
-                ?INTERNAL2_VALUES(V1, V2),
+                V1,
+                V2,
                 C1,
                 C2,
                 C3
@@ -7422,7 +7092,7 @@ rebalance_internal_from_left_sibling(
         %
         %
         ?INTERNAL4_MATCH_ALL ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             UpKey = K4,
             UpValue = V4,
@@ -7432,7 +7102,8 @@ rebalance_internal_from_left_sibling(
                 ParentK,
                 CKey,
                 %
-                ?INTERNAL2_VALUES(ParentV, CValue),
+                ParentV,
+                CValue,
                 %
                 MovedC,
                 CLeft,
@@ -7444,7 +7115,9 @@ rebalance_internal_from_left_sibling(
                 K2,
                 K3,
                 %
-                ?INTERNAL3_VALUES(V1, V2, V3),
+                V1,
+                V2,
+                V3,
                 %
                 C1,
                 C2,
@@ -7522,12 +7195,12 @@ rebalance_internal_from_either_sibling(
     Right
 ) ->
     case Left of
-        ?INTERNAL2_MATCH(LK1, LK2, LValues, LC1, LC2, LC3) ->
+        ?INTERNAL2_MATCH(LK1, LK2, LV1, LV2, LC1, LC2, LC3) ->
             %
             %
             case Right of
                 ?INTERNAL3_MATCH_ALL ->
-                    ?INTERNAL3_VALUES_MATCH_ALL = Values,
+                    % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
                     UpKey = K1,
                     UpValue = V1,
@@ -7537,7 +7210,8 @@ rebalance_internal_from_either_sibling(
                         CKey,
                         RParentK,
                         %
-                        ?INTERNAL2_VALUES(CValue, RParentV),
+                        CValue,
+                        RParentV,
                         %
                         CLeft,
                         CRight,
@@ -7548,7 +7222,8 @@ rebalance_internal_from_either_sibling(
                         K2,
                         K3,
                         %
-                        ?INTERNAL2_VALUES(V2, V3),
+                        V2,
+                        V3,
                         %
                         C2,
                         C3,
@@ -7559,7 +7234,7 @@ rebalance_internal_from_either_sibling(
                 %
                 %
                 ?INTERNAL4_MATCH_ALL ->
-                    ?INTERNAL4_VALUES_MATCH_ALL = Values,
+                    % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
                     UpKey = K1,
                     UpValue = V1,
@@ -7569,7 +7244,8 @@ rebalance_internal_from_either_sibling(
                         CKey,
                         RParentK,
                         %
-                        ?INTERNAL2_VALUES(CValue, RParentV),
+                        CValue,
+                        RParentV,
                         %
                         CLeft,
                         CRight,
@@ -7581,7 +7257,9 @@ rebalance_internal_from_either_sibling(
                         K3,
                         K4,
                         %
-                        ?INTERNAL3_VALUES(V2, V3, V4),
+                        V2,
+                        V3,
+                        V4,
                         %
                         C2,
                         C3,
@@ -7593,7 +7271,7 @@ rebalance_internal_from_either_sibling(
                 %
                 %
                 _ ->
-                    ?INTERNAL2_VALUES(LV1, LV2) = LValues,
+                    % ?INTERNAL2_VALUES(LV1, LV2) = LValues,
 
                     % Merge with left since we already unpacked it
                     MergedNode = ?new_INTERNAL4(
@@ -7602,7 +7280,10 @@ rebalance_internal_from_either_sibling(
                         LParentK,
                         CKey,
                         %
-                        ?INTERNAL4_VALUES(LV1, LV2, LParentV, CValue),
+                        LV1,
+                        LV2,
+                        LParentV,
+                        CValue,
                         %
                         LC1,
                         LC2,
@@ -7618,7 +7299,7 @@ rebalance_internal_from_either_sibling(
         %
         %
         ?INTERNAL3_MATCH_ALL ->
-            ?INTERNAL3_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
 
             UpKey = K3,
             UpValue = V3,
@@ -7628,7 +7309,8 @@ rebalance_internal_from_either_sibling(
                 LParentK,
                 CKey,
                 %
-                ?INTERNAL2_VALUES(LParentV, CValue),
+                LParentV,
+                CValue,
                 %
                 MovedC,
                 CLeft,
@@ -7639,7 +7321,8 @@ rebalance_internal_from_either_sibling(
                 K1,
                 K2,
                 %
-                ?INTERNAL2_VALUES(V1, V2),
+                V1,
+                V2,
                 %
                 C1,
                 C2,
@@ -7652,7 +7335,7 @@ rebalance_internal_from_either_sibling(
         %
         %
         ?INTERNAL4_MATCH_ALL ->
-            ?INTERNAL4_VALUES_MATCH_ALL = Values,
+            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
 
             UpKey = K4,
             UpValue = V4,
@@ -7662,7 +7345,8 @@ rebalance_internal_from_either_sibling(
                 LParentK,
                 CKey,
                 %
-                ?INTERNAL2_VALUES(LParentV, CValue),
+                LParentV,
+                CValue,
                 %
                 MovedC,
                 CLeft,
@@ -7674,7 +7358,9 @@ rebalance_internal_from_either_sibling(
                 K2,
                 K3,
                 %
-                ?INTERNAL3_VALUES(V1, V2, V3),
+                V1,
+                V2,
+                V3,
                 %
                 C1,
                 C2,
@@ -7808,13 +7494,13 @@ check_node_recur(LineNumber, Node) ->
 
 recur_node_type(Node) ->
     case Node of
-        ?INTERNAL2(_, _, _, _, _, _) ->
+        ?INTERNAL2(_, _, _, _, _, _, _) ->
             'INTERNAL2';
         %
-        ?INTERNAL3(_, _, _, _, _, _, _, _) ->
+        ?INTERNAL3(_, _, _, _, _, _, _, _, _, _) ->
             'INTERNAL3';
         %
-        ?INTERNAL4(_, _, _, _, _, _, _, _, _, _) ->
+        ?INTERNAL4(_, _, _, _, _, _, _, _, _, _, _, _, _) ->
             'INTERNAL4';
         %
         ?LEAF2(_, _, _, _) ->
