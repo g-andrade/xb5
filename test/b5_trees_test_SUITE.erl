@@ -7,8 +7,6 @@
 
 -include_lib("stdlib/include/assert.hrl").
 
--define(IMPROPER_LIST(V1, V2), [(V1) | b5_trees_util:dialyzer_opaque_term(V2)]).
-
 %% CT exports
 -export([all/0, groups/0, init_per_suite/1, end_per_suite/1]).
 
