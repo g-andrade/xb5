@@ -267,7 +267,6 @@
 -define(INTERNAL1_ARGS, K1, V1, C1, C2).
 -define(INTERNAL1_ARITY, 4).
 -define(INTERNAL1_ARITY_PLUS1, 5).
--define(INTERNAL1_ARITY_PLUS2, 6).
 -define(INTERNAL1_ARITY_PLUS3, 7).
 
 -define(INTERNAL1_C1(UpdatedC1), ?new_INTERNAL1(K1, V1, UpdatedC1, C2)).
@@ -312,7 +311,6 @@
 -define(LEAF1_ARGS, K1, V1).
 -define(LEAF1_ARITY, 2).
 -define(LEAF1_ARITY_PLUS1, 3).
--define(LEAF1_ARITY_PLUS2, 4).
 -define(LEAF1_ARITY_PLUS3, 5).
 
 %%
@@ -536,18 +534,53 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+delete(Key, ?INTERNAL1_MATCH_ALL) ->
+    delete_INTERNAL1(Key, ?INTERNAL1_ARGS);
+delete(Key, ?LEAF1_MATCH(K1, _)) ->
+    delete_LEAF1(Key, K1);
+delete(Key, ?LEAF0_MATCH_ALL) ->
+    error_badkey(Key);
 delete(Key, Root) ->
     delete_recur(Key, Root).
 
+foldl(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
+    Acc2 = foldl_recur(Fun, Acc, C1),
+    Acc3 = Fun(K1, V1, Acc2),
+    foldl_recur(Fun, Acc3, C2);
+foldl(Fun, Acc, ?LEAF1_MATCH_ALL) ->
+    Fun(K1, V1, Acc);
+foldl(_Fun, Acc, ?LEAF0_MATCH_ALL) ->
+    Acc;
 foldl(Fun, Acc, Root) ->
     foldl_recur(Fun, Acc, Root).
 
+foldr(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
+    Acc2 = foldr_recur(Fun, Acc, C2),
+    Acc3 = Fun(K1, V1, Acc2),
+    foldr_recur(Fun, Acc3, C1);
+foldr(Fun, Acc, ?LEAF1_MATCH_ALL) ->
+    Fun(K1, V1, Acc);
+foldr(_Fun, Acc, ?LEAF0_MATCH_ALL) ->
+    Acc;
 foldr(Fun, Acc, Root) ->
     foldr_recur(Fun, Acc, Root).
 
+get(Key, ?INTERNAL1_MATCH_ALL) ->
+    get_INTERNAL1(Key, ?INTERNAL1_ARGS);
+get(Key, ?LEAF1_MATCH_ALL) ->
+    get_LEAF1(Key, ?LEAF1_ARGS);
+get(Key, ?LEAF0_MATCH_ALL) ->
+    error_badkey(Key);
 get(Key, Root) ->
     get_recur(Key, Root).
 
+insert(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
+    insert_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+insert(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
+    insert_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
+insert(Key, ValueEval, ValueWrap, ?LEAF0_MATCH_ALL) ->
+    Value = eval_insert_value(ValueEval, ValueWrap),
+    ?new_LEAF1(Key, Value);
 insert(Key, ValueEval, ValueWrap, Root) ->
     case insert_recur(Key, ValueEval, ValueWrap, Root) of
         ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
@@ -569,13 +602,24 @@ iterator_from(Key, Root, reversed) ->
     Acc = bound_rev_iterator(Key, Root),
     [?REV_ITER_TAG | Acc].
 
+keys(?INTERNAL1_MATCH(K1, _, C1, C2)) ->
+    keys_recur(C1, [K1 | keys_recur(C2, [])]);
+keys(?LEAF1_MATCH(K1, _)) ->
+    [K1];
+keys(?LEAF0_MATCH) ->
+    [];
 keys(Root) ->
     keys_recur(Root, []).
 
+larger(Key, ?INTERNAL1_MATCH_ALL) ->
+    larger_INTERNAL1(Key, ?INTERNAL1_ARGS);
+larger(Key, ?LEAF1_MATCH_ALL) ->
+    larger_LEAF1(Key, ?LEAF1_ARGS);
+larger(_Key, ?LEAF0_MATCH_ALL) ->
+    none;
 larger(Key, Root) ->
     larger_recur(Key, Root).
 
-% TODO continue from here: we're moving root-only definitions so that they're allowed anywhere in the tree
 largest(?INTERNAL1_MATCH(_, _, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1_MATCH(K1, V1)) ->
@@ -758,18 +802,7 @@ delete_recur(Key, Node) ->
             delete_LEAF3(Key, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            delete_LEAF4(Key, ?LEAF4_ARGS);
-        %
-        %
-        %
-        ?INTERNAL1_MATCH_ALL ->
-            delete_INTERNAL1(Key, ?INTERNAL1_ARGS);
-        %
-        ?LEAF1_MATCH(K1, _) ->
-            delete_LEAF1(Key, K1);
-        %
-        ?LEAF0_MATCH_ALL ->
-            error_badkey(Key)
+            delete_LEAF4(Key, ?LEAF4_ARGS)
     end.
 
 %%
@@ -1293,20 +1326,7 @@ foldl_recur(Fun, Acc, Node) ->
             Acc3 = foldl_recur(Fun, Fun(K1, V1, Acc2), C2),
             Acc4 = foldl_recur(Fun, Fun(K2, V2, Acc3), C3),
             Acc5 = foldl_recur(Fun, Fun(K3, V3, Acc4), C4),
-            _Acc6 = foldl_recur(Fun, Fun(K4, V4, Acc5), C5);
-        %
-        %
-        %
-        ?INTERNAL1_MATCH_ALL ->
-            Acc2 = foldl_recur(Fun, Acc, C1),
-            Acc3 = Fun(K1, V1, Acc2),
-            foldl_recur(Fun, Acc3, C2);
-        %
-        ?LEAF1_MATCH_ALL ->
-            Fun(K1, V1, Acc);
-        %
-        ?LEAF0_MATCH_ALL ->
-            Acc
+            _Acc6 = foldl_recur(Fun, Fun(K4, V4, Acc5), C5)
     end.
 
 %% ------------------------------------------------------------------
@@ -1343,20 +1363,7 @@ foldr_recur(Fun, Acc, Node) ->
             Acc3 = foldr_recur(Fun, Fun(K4, V4, Acc2), C4),
             Acc4 = foldr_recur(Fun, Fun(K3, V3, Acc3), C3),
             Acc5 = foldr_recur(Fun, Fun(K2, V2, Acc4), C2),
-            _Acc6 = foldr_recur(Fun, Fun(K1, V1, Acc5), C1);
-        %
-        %
-        %
-        ?INTERNAL1_MATCH_ALL ->
-            Acc2 = foldr_recur(Fun, Acc, C2),
-            Acc3 = Fun(K1, V1, Acc2),
-            foldr_recur(Fun, Acc3, C1);
-        %
-        ?LEAF1_MATCH_ALL ->
-            Fun(K1, V1, Acc);
-        %
-        ?LEAF0_MATCH_ALL ->
-            Acc
+            _Acc6 = foldr_recur(Fun, Fun(K1, V1, Acc5), C1)
     end.
 
 %% ------------------------------------------------------------------
@@ -1382,16 +1389,7 @@ get_recur(Key, Node) ->
             get_LEAF3(Key, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            get_LEAF4(Key, ?LEAF4_ARGS);
-        %
-        %
-        %
-        ?INTERNAL1_MATCH_ALL ->
-            get_INTERNAL1(Key, ?INTERNAL1_ARGS);
-        ?LEAF1_MATCH_ALL ->
-            get_LEAF1(Key, ?LEAF1_ARGS);
-        ?LEAF0_MATCH_ALL ->
-            error_badkey(Key)
+            get_LEAF4(Key, ?LEAF4_ARGS)
     end.
 
 %%
@@ -1618,17 +1616,7 @@ insert_recur(Key, ValueEval, ValueWrap, Node) ->
             insert_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            insert_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS);
-        %
-        %
-        %
-        ?INTERNAL1_MATCH_ALL ->
-            insert_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
-        ?LEAF1_MATCH_ALL ->
-            insert_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-        ?LEAF0_MATCH_ALL ->
-            Value = eval_insert_value(ValueEval, ValueWrap),
-            ?new_LEAF1(Key, Value)
+            insert_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS)
     end.
 
 %%
@@ -2549,6 +2537,15 @@ split_leaf(
 %% Internal Function Definitions: iterator/2 - forward
 %% ------------------------------------------------------------------
 
+fwd_iterator(?INTERNAL1_MATCH_ALL) ->
+    Acc = [?ITER_PAIR(K1, V1), C2],
+    fwd_iterator_recur(C1, Acc);
+fwd_iterator(?LEAF1_MATCH_ALL) ->
+    Iter = [?ITER_PAIR(K1, V1)],
+    Iter;
+fwd_iterator(?LEAF0_MATCH) ->
+    Iter = [],
+    Iter;
 fwd_iterator(Root) ->
     Acc = [],
     fwd_iterator_recur(Root, Acc).
@@ -2597,23 +2594,21 @@ fwd_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
         C5
         | Acc
     ],
-    fwd_iterator_recur(C1, Acc2);
-%
-%
-%
-fwd_iterator_recur(?INTERNAL1_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K1, V1), C2 | Acc],
-    fwd_iterator_recur(C1, Acc2);
-fwd_iterator_recur(?LEAF1_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K1, V1) | Acc],
-    Acc2;
-fwd_iterator_recur(?LEAF0_MATCH, Acc) ->
-    Acc.
+    fwd_iterator_recur(C1, Acc2).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - reverse
 %% ------------------------------------------------------------------
 
+rev_iterator(?INTERNAL1_MATCH_ALL) ->
+    Acc = [?ITER_PAIR(K1, V1), C1],
+    rev_iterator_recur(C2, Acc);
+rev_iterator(?LEAF1_MATCH_ALL) ->
+    Iter = [?ITER_PAIR(K1, V1)],
+    Iter;
+rev_iterator(?LEAF0_MATCH) ->
+    Iter = [],
+    Iter;
 rev_iterator(Root) ->
     Acc = [],
     rev_iterator_recur(Root, Acc).
@@ -2662,26 +2657,28 @@ rev_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
         C1
         | Acc
     ],
-    rev_iterator_recur(C5, Acc2);
-%
-%
-%
-rev_iterator_recur(?INTERNAL1_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
-    rev_iterator_recur(C2, Acc2);
-rev_iterator_recur(?LEAF1_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K1, V1) | Acc],
-    Acc2;
-rev_iterator_recur(?LEAF0_MATCH, Acc) ->
-    Acc.
+    rev_iterator_recur(C5, Acc2).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator_from/3 - forward
 %% ------------------------------------------------------------------
 
 bound_fwd_iterator(Key, Root) ->
-    Acc = [],
-    bound_fwd_iterator_recur(Key, Root, Acc).
+    case Root of
+        ?INTERNAL1_MATCH_ALL ->
+            bound_fwd_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH ->
+            Iter = [],
+            Iter;
+        %
+        _ ->
+            Acc = [],
+            bound_fwd_iterator_recur(Key, Root, Acc)
+    end.
 
 bound_fwd_iterator_recur(Key, Node, Acc) ->
     case Node of
@@ -2701,18 +2698,7 @@ bound_fwd_iterator_recur(Key, Node, Acc) ->
             bound_fwd_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc);
         %
         ?INTERNAL4_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc);
-        %
-        %
-        %
-        ?INTERNAL1_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS, Acc);
-        %
-        ?LEAF1_MATCH_ALL ->
-            bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS, Acc);
-        %
-        ?LEAF0_MATCH ->
-            Acc
+            bound_fwd_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc)
     end.
 
 %% INTERNAL4
@@ -2817,22 +2803,19 @@ bound_fwd_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc) ->
 
 %% INTERNAL1
 
--compile({inline, bound_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS2}).
-bound_fwd_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+bound_fwd_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
     if
+        Key < K1 ->
+            Acc = [?ITER_PAIR(K1, V1), C2],
+            bound_fwd_iterator_recur(Key, C1, Acc);
+        %
         Key > K1 ->
-            case Acc of
-                [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_fwd_iterator_recur(Key, C2, Acc)
-            end;
+            Acc = [],
+            bound_fwd_iterator_recur(Key, C2, Acc);
         %
         true ->
-            Acc2 = [?ITER_PAIR(K1, V1), C2 | Acc],
-            bound_fwd_iterator_recur(Key, C1, Acc2)
+            _Acc = [?ITER_PAIR(K1, V1), C2]
     end.
 
 %% LEAF4
@@ -2891,14 +2874,14 @@ bound_fwd_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc) ->
 
 %% LEAF1
 
--compile({inline, bound_fwd_iterator_LEAF1 / ?LEAF1_ARITY_PLUS2}).
-bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS) ->
     if
         Key > K1 ->
-            Acc;
+            [];
         %
         true ->
-            [?ITER_PAIR(K1, V1) | Acc]
+            [?ITER_PAIR(K1, V1)]
     end.
 
 %% ------------------------------------------------------------------
@@ -2906,8 +2889,21 @@ bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS, Acc) ->
 %% ------------------------------------------------------------------
 
 bound_rev_iterator(Key, Root) ->
-    Acc = [],
-    bound_rev_iterator_recur(Key, Root, Acc).
+    case Root of
+        ?INTERNAL1_MATCH_ALL ->
+            bound_rev_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS);
+        %
+        ?LEAF1_MATCH_ALL ->
+            bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS);
+        %
+        ?LEAF0_MATCH ->
+            Iter = [],
+            Iter;
+        %
+        _ ->
+            Acc = [],
+            bound_rev_iterator_recur(Key, Root, Acc)
+    end.
 
 bound_rev_iterator_recur(Key, Node, Acc) ->
     case Node of
@@ -2927,18 +2923,7 @@ bound_rev_iterator_recur(Key, Node, Acc) ->
             bound_rev_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc);
         %
         ?INTERNAL4_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc);
-        %
-        %
-        %
-        ?INTERNAL1_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS, Acc);
-        %
-        ?LEAF1_MATCH_ALL ->
-            bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS, Acc);
-        %
-        ?LEAF0_MATCH ->
-            Acc
+            bound_rev_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc)
     end.
 
 %% INTERNAL4
@@ -3043,22 +3028,19 @@ bound_rev_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc) ->
 
 %% INTERNAL1
 
--compile({inline, bound_rev_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS2}).
-bound_rev_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+bound_rev_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
     if
+        Key > K1 ->
+            Acc = [?ITER_PAIR(K1, V1), C1],
+            bound_rev_iterator_recur(Key, C2, Acc);
+        %
         Key < K1 ->
-            case Acc of
-                [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_rev_iterator_recur(Key, C1, Acc)
-            end;
+            Acc = [],
+            bound_rev_iterator_recur(Key, C1, Acc);
         %
         true ->
-            Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
-            bound_rev_iterator_recur(Key, C2, Acc2)
+            _Acc = [?ITER_PAIR(K1, V1), C1]
     end.
 
 %% LEAF4
@@ -3117,14 +3099,14 @@ bound_rev_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc) ->
 
 %% LEAF1
 
--compile({inline, bound_rev_iterator_LEAF1 / ?LEAF1_ARITY_PLUS2}).
-bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS) ->
     if
         Key < K1 ->
-            Acc;
+            [];
         %
         true ->
-            [?ITER_PAIR(K1, V1) | Acc]
+            [?ITER_PAIR(K1, V1)]
     end.
 
 %% ------------------------------------------------------------------
@@ -3158,19 +3140,7 @@ keys_recur(Node, Acc) ->
             Acc3 = [K3 | keys_recur(C4, Acc2)],
             Acc4 = [K2 | keys_recur(C3, Acc3)],
             Acc5 = [K1 | keys_recur(C2, Acc4)],
-            keys_recur(C1, Acc5);
-        %
-        %
-        %
-        ?INTERNAL1_MATCH(K1, _, C1, C2) ->
-            Acc2 = [K1 | keys_recur(C2, Acc)],
-            keys_recur(C1, Acc2);
-        %
-        ?LEAF1_MATCH(K1, _) ->
-            [K1 | Acc];
-        %
-        ?LEAF0_MATCH ->
-            Acc
+            keys_recur(C1, Acc5)
     end.
 
 %% ------------------------------------------------------------------
@@ -3196,18 +3166,7 @@ larger_recur(Key, Node) ->
             larger_LEAF3(Key, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            larger_LEAF4(Key, ?LEAF4_ARGS);
-        %
-        %
-        %
-        ?INTERNAL1_MATCH_ALL ->
-            larger_INTERNAL1(Key, ?INTERNAL1_ARGS);
-        %
-        ?LEAF1_MATCH_ALL ->
-            larger_LEAF1(Key, ?LEAF1_ARGS);
-        %
-        ?LEAF0_MATCH_ALL ->
-            none
+            larger_LEAF4(Key, ?LEAF4_ARGS)
     end.
 
 %%
