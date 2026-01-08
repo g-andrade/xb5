@@ -1706,21 +1706,7 @@ insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
-            case
-                maybe_rebalance_insert_either(
-                    C2,
-                    Pos,
-                    Args,
-                    %
-                    K1,
-                    V1,
-                    C1,
-                    %
-                    K2,
-                    V2,
-                    C3
-                )
-            of
+            case maybe_rebalance_insert_left(C2, Pos, Args, K1, V1, C1) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
                     ?new_INTERNAL4(
                         UpKey,
@@ -1740,25 +1726,6 @@ insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                         C5
                     );
                 %
-                [into_right | {UpKey, UpValue, UpdatedC2, UpdatedC3}] ->
-                    ?new_INTERNAL4(
-                        K1,
-                        UpKey,
-                        K3,
-                        K4,
-                        %
-                        V1,
-                        UpValue,
-                        V3,
-                        V4,
-                        %
-                        C1,
-                        UpdatedC2,
-                        UpdatedC3,
-                        C4,
-                        C5
-                    );
-                %
                 Split ->
                     ?SPLIT(2, Split)
             end;
@@ -1771,21 +1738,7 @@ insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
         ?SPLIT_MATCH(Pos, Args) ->
-            case
-                maybe_rebalance_insert_either(
-                    C3,
-                    Pos,
-                    Args,
-                    %
-                    K2,
-                    V2,
-                    C2,
-                    %
-                    K3,
-                    V3,
-                    C4
-                )
-            of
+            case maybe_rebalance_insert_left(C3, Pos, Args, K2, V2, C2) of
                 {UpKey, UpValue, UpdatedC2, UpdatedC3} ->
                     ?new_INTERNAL4(
                         K1,
@@ -1805,25 +1758,6 @@ insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                         C5
                     );
                 %
-                [into_right | {UpKey, UpValue, UpdatedC3, UpdatedC4}] ->
-                    ?new_INTERNAL4(
-                        K1,
-                        K2,
-                        UpKey,
-                        K4,
-                        %
-                        V1,
-                        V2,
-                        UpValue,
-                        V4,
-                        %
-                        C1,
-                        C2,
-                        UpdatedC3,
-                        UpdatedC4,
-                        C5
-                    );
-                %
                 Split ->
                     ?SPLIT(3, Split)
             end;
@@ -1836,21 +1770,7 @@ insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C4) of
         ?SPLIT_MATCH(Pos, Args) ->
-            case
-                maybe_rebalance_insert_either(
-                    C4,
-                    Pos,
-                    Args,
-                    %
-                    K3,
-                    V3,
-                    C3,
-                    %
-                    K4,
-                    V4,
-                    C5
-                )
-            of
+            case maybe_rebalance_insert_left(C4, Pos, Args, K3, V3, C3) of
                 {UpKey, UpValue, UpdatedC3, UpdatedC4} ->
                     ?new_INTERNAL4(
                         K1,
@@ -1868,25 +1788,6 @@ insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                         UpdatedC3,
                         UpdatedC4,
                         C5
-                    );
-                %
-                [into_right | {UpKey, UpValue, UpdatedC4, UpdatedC5}] ->
-                    ?new_INTERNAL4(
-                        K1,
-                        K2,
-                        K3,
-                        UpKey,
-                        %
-                        V1,
-                        V2,
-                        V3,
-                        UpValue,
-                        %
-                        C1,
-                        C2,
-                        C3,
-                        UpdatedC4,
-                        UpdatedC5
                     );
                 %
                 Split ->
@@ -2015,21 +1916,7 @@ insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
-            case
-                maybe_rebalance_insert_either(
-                    C2,
-                    Pos,
-                    Args,
-                    %
-                    K1,
-                    V1,
-                    C1,
-                    %
-                    K2,
-                    V2,
-                    C3
-                )
-            of
+            case maybe_rebalance_insert_left(C2, Pos, Args, K1, V1, C1) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
                     ?new_INTERNAL3(
                         UpKey,
@@ -2043,22 +1930,6 @@ insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                         UpdatedC1,
                         UpdatedC2,
                         C3,
-                        C4
-                    );
-                %
-                [into_right | {UpKey, UpValue, UpdatedC2, UpdatedC3}] ->
-                    ?new_INTERNAL3(
-                        K1,
-                        UpKey,
-                        K3,
-                        %
-                        V1,
-                        UpValue,
-                        V3,
-                        %
-                        C1,
-                        UpdatedC2,
-                        UpdatedC3,
                         C4
                     );
                 %
@@ -2090,21 +1961,7 @@ insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
         ?SPLIT_MATCH(Pos, Args) ->
-            case
-                maybe_rebalance_insert_either(
-                    C3,
-                    Pos,
-                    Args,
-                    %
-                    K2,
-                    V2,
-                    C2,
-                    %
-                    K3,
-                    V3,
-                    C4
-                )
-            of
+            case maybe_rebalance_insert_left(C3, Pos, Args, K2, V2, C2) of
                 {UpKey, UpValue, UpdatedC2, UpdatedC3} ->
                     ?new_INTERNAL3(
                         K1,
@@ -2119,22 +1976,6 @@ insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                         UpdatedC2,
                         UpdatedC3,
                         C4
-                    );
-                %
-                [into_right | {UpKey, UpValue, UpdatedC3, UpdatedC4}] ->
-                    ?new_INTERNAL3(
-                        K1,
-                        K2,
-                        UpKey,
-                        %
-                        V1,
-                        V2,
-                        UpValue,
-                        %
-                        C1,
-                        C2,
-                        UpdatedC3,
-                        UpdatedC4
                     );
                 %
                 {split, SplitK, SplitV, SplitL, SplitR} ->
@@ -2276,21 +2117,7 @@ insert_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
-            case
-                maybe_rebalance_insert_either(
-                    C2,
-                    Pos,
-                    Args,
-                    %
-                    K1,
-                    V1,
-                    C1,
-                    %
-                    K2,
-                    V2,
-                    C3
-                )
-            of
+            case maybe_rebalance_insert_left(C2, Pos, Args, K1, V1, C1) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
                     ?new_INTERNAL2(
                         UpKey,
@@ -2302,19 +2129,6 @@ insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
                         UpdatedC1,
                         UpdatedC2,
                         C3
-                    );
-                %
-                [into_right | {UpKey, UpValue, UpdatedC2, UpdatedC3}] ->
-                    ?new_INTERNAL2(
-                        K1,
-                        UpKey,
-                        %
-                        V1,
-                        UpValue,
-                        %
-                        C1,
-                        UpdatedC2,
-                        UpdatedC3
                     );
                 %
                 {split, SplitK, SplitV, SplitL, SplitR} ->
@@ -2638,428 +2452,6 @@ insert_split_root(Pos, {split, SplitK, SplitV, SplitL, SplitR}, Root) ->
         end,
 
     ?new_INTERNAL1(ResplitK, ResplitV, ResplitL, ResplitR).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%
-
--compile({inline, maybe_rebalance_insert_either/9}).
-maybe_rebalance_insert_either(
-    Node,
-    Pos,
-    Args,
-    %
-    LParentK,
-    LParentV,
-    Left,
-    %
-    RParentK,
-    RParentV,
-    Right
-) ->
-    case Args of
-        {split, SplitK, SplitV, SplitL, SplitR} ->
-            internal_maybe_rebalance_insert_either(
-                Node,
-                Pos,
-                SplitK,
-                SplitV,
-                SplitL,
-                SplitR,
-                %
-                LParentK,
-                LParentV,
-                Left,
-                %
-                RParentK,
-                RParentV,
-                Right
-            );
-        %
-        [NewKey | NewValue] ->
-            leaf_maybe_rebalance_insert_either(
-                Node,
-                Pos,
-                NewKey,
-                NewValue,
-                %
-                LParentK,
-                LParentV,
-                Left,
-                %
-                RParentK,
-                RParentV,
-                Right
-            )
-    end.
-
--compile({inline, internal_maybe_rebalance_insert_either/12}).
-internal_maybe_rebalance_insert_either(
-    ?INTERNAL4_MATCH_ALL,
-    Pos,
-    SplitK,
-    SplitV,
-    SplitL,
-    SplitR,
-    %
-    LParentK,
-    LParentV,
-    Left,
-    %
-    RParentK,
-    RParentV,
-    Right
-) ->
-    case Pos of
-        1 ->
-            internal_rebalance_insert_either(
-                SplitK,
-                K1,
-                K2,
-                K3,
-                K4,
-                %
-                SplitV,
-                V1,
-                V2,
-                V3,
-                V4,
-                %
-                SplitL,
-                SplitR,
-                C2,
-                C3,
-                C4,
-                C5,
-                %
-                LParentK,
-                LParentV,
-                Left,
-                %
-                RParentK,
-                RParentV,
-                Right
-            );
-        %
-        2 ->
-            internal_rebalance_insert_either(
-                K1,
-                SplitK,
-                K2,
-                K3,
-                K4,
-                %
-                V1,
-                SplitV,
-                V2,
-                V3,
-                V4,
-                %
-                C1,
-                SplitL,
-                SplitR,
-                C3,
-                C4,
-                C5,
-                %
-                LParentK,
-                LParentV,
-                Left,
-                %
-                RParentK,
-                RParentV,
-                Right
-            );
-        %
-        3 ->
-            internal_rebalance_insert_either(
-                K1,
-                K2,
-                SplitK,
-                K3,
-                K4,
-                %
-                V1,
-                V2,
-                SplitV,
-                V3,
-                V4,
-                %
-                C1,
-                C2,
-                SplitL,
-                SplitR,
-                C4,
-                C5,
-                %
-                LParentK,
-                LParentV,
-                Left,
-                %
-                RParentK,
-                RParentV,
-                Right
-            );
-        %
-        4 ->
-            internal_rebalance_insert_either(
-                K1,
-                K2,
-                K3,
-                SplitK,
-                K4,
-                %
-                V1,
-                V2,
-                V3,
-                SplitV,
-                V4,
-                %
-                C1,
-                C2,
-                C3,
-                SplitL,
-                SplitR,
-                C5,
-                %
-                LParentK,
-                LParentV,
-                Left,
-                %
-                RParentK,
-                RParentV,
-                Right
-            );
-        %
-        5 ->
-            internal_rebalance_insert_either(
-                K1,
-                K2,
-                K3,
-                K4,
-                SplitK,
-                %
-                V1,
-                V2,
-                V3,
-                V4,
-                SplitV,
-                %
-                C1,
-                C2,
-                C3,
-                C4,
-                SplitL,
-                SplitR,
-                %
-                LParentK,
-                LParentV,
-                Left,
-                %
-                RParentK,
-                RParentV,
-                Right
-            )
-    end.
-
--compile({inline, internal_rebalance_insert_either/22}).
-internal_rebalance_insert_either(
-    K1,
-    K2,
-    K3,
-    K4,
-    K5,
-    %
-    V1,
-    V2,
-    V3,
-    V4,
-    V5,
-    %
-    C1,
-    C2,
-    C3,
-    C4,
-    C5,
-    C6,
-    %
-    LParentK,
-    LParentV,
-    Left,
-    %
-    RParentK,
-    RParentV,
-    Right
-) ->
-    case Left of
-        ?INTERNAL2_MATCH(
-            LK1,
-            LK2,
-            %
-            LV1,
-            LV2,
-            %
-            LC1,
-            LC2,
-            LC3
-        ) ->
-            UpKey = K1,
-            UpValue = V1,
-
-            UpdatedLeft = ?new_INTERNAL3(
-                LK1,
-                LK2,
-                LParentK,
-                %
-                LV1,
-                LV2,
-                LParentV,
-                %
-                LC1,
-                LC2,
-                LC3,
-                C1
-            ),
-
-            UpdatedNode = ?new_INTERNAL4(
-                K2,
-                K3,
-                K4,
-                K5,
-                %
-                V2,
-                V3,
-                V4,
-                V5,
-                %
-                C2,
-                C3,
-                C4,
-                C5,
-                C6
-            ),
-
-            {UpKey, UpValue, UpdatedLeft, UpdatedNode};
-        %
-        %
-        %
-        %
-        _ ->
-            case Right of
-                ?INTERNAL2_MATCH(
-                    RK1,
-                    RK2,
-                    %
-                    RV1,
-                    RV2,
-                    %
-                    RC1,
-                    RC2,
-                    RC3
-                ) ->
-                    UpKey = K5,
-                    UpValue = V5,
-
-                    UpdatedNode = ?new_INTERNAL4(
-                        K1,
-                        K2,
-                        K3,
-                        K4,
-                        %
-                        V1,
-                        V2,
-                        V3,
-                        V4,
-                        %
-                        C1,
-                        C2,
-                        C3,
-                        C4,
-                        C5
-                    ),
-
-                    UpdatedRight = ?new_INTERNAL3(
-                        RParentK,
-                        RK1,
-                        RK2,
-                        %
-                        RParentV,
-                        RV1,
-                        RV2,
-                        %
-                        C6,
-                        RC1,
-                        RC2,
-                        RC3
-                    ),
-
-                    [into_right | {UpKey, UpValue, UpdatedNode, UpdatedRight}];
-                %
-                %
-                %
-                %
-                _ ->
-                    split_internal(
-                        K1,
-                        K2,
-                        K3,
-                        K4,
-                        K5,
-                        %
-                        V1,
-                        V2,
-                        V3,
-                        V4,
-                        V5,
-                        %
-                        C1,
-                        C2,
-                        C3,
-                        C4,
-                        C5,
-                        C6
-                    )
-            end
-    end.
-
--compile({inline, leaf_maybe_rebalance_insert_either/10}).
-leaf_maybe_rebalance_insert_either(
-    Node,
-    Pos,
-    NewKey,
-    NewValue,
-    %
-    LParentK,
-    LParentV,
-    Left,
-    %
-    RParentK,
-    RParentV,
-    Right
-) ->
-    case Left of
-        ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
-            UpdatedLeft = ?new_LEAF3(LK1, LK2, LParentK, LV1, LV2, LParentV),
-            leaf_rebalance_insert_left(Node, Pos, NewKey, NewValue, UpdatedLeft);
-        %
-        _ ->
-            case Right of
-                ?LEAF2_MATCH(RK1, RK2, RV1, RV2) ->
-                    UpdatedRight = ?new_LEAF3(RParentK, RK1, RK2, RParentV, RV1, RV2),
-                    [
-                        into_right
-                        | leaf_rebalance_insert_right(Node, Pos, NewKey, NewValue, UpdatedRight)
-                    ];
-                %
-                _ ->
-                    leaf_rebalance_insert_split(Node, Pos, NewKey, NewValue)
-            end
-    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
