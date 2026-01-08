@@ -2688,37 +2688,6 @@ internal_rebalance_insert_left(
         %
         %
         %
-        %?INTERNAL3_MATCH(
-        %   LK1, LK2, LK3,
-        %   %
-        %   LV1, LV2, LV3,
-        %   %
-        %   LC1, LC2, LC3, LC4
-        %) ->
-        %    UpKey = K1,
-        %    UpValue = V1,
-
-        %    UpdatedLeft = ?new_INTERNAL4(
-        %        LK1, LK2, LK3, ParentK,
-        %        %
-        %        LV1, LV2, LV3, ParentV,
-        %        %
-        %        LC1, LC2, LC3, LC4, C1
-        %    ),
-
-        %    UpdatedNode = ?new_INTERNAL4(
-        %        K2, K3, K4, K5,
-        %        %
-        %        V2, V3, V4, V5,
-        %        %
-        %        C2, C3, C4, C5, C6
-        %    ),
-
-        %    {UpKey, UpValue, UpdatedLeft, UpdatedNode};
-        %
-        %
-        %
-        %
         _ ->
             split_internal(
                 K1,
@@ -2748,11 +2717,6 @@ leaf_maybe_rebalance_insert_left(Node, Pos, NewKey, NewValue, ParentK, ParentV, 
         ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
             UpdatedLeft = ?new_LEAF3(LK1, LK2, ParentK, LV1, LV2, ParentV),
             leaf_rebalance_insert_left(Node, Pos, NewKey, NewValue, UpdatedLeft);
-        %
-        %?LEAF3_MATCH(LK1, LK2, LK3, LV1, LV2, LV3) ->
-        %    UpdatedLeft = ?new_LEAF4(LK1, LK2, LK3, ParentK, LV1, LV2, LV3, ParentV),
-        %    leaf_rebalance_insert_left(Node, Pos, NewKey, NewValue, UpdatedLeft);
-        %
         _ ->
             leaf_rebalance_insert_split(Node, Pos, NewKey, NewValue)
     end.
@@ -3026,37 +2990,6 @@ internal_rebalance_insert_right(
         %
         %
         %
-        %        ?INTERNAL3_MATCH(
-        %           RK1, RK2, RK3,
-        %           %
-        %           RV1, RV2, RV3,
-        %           %
-        %           RC1, RC2, RC3, RC4
-        %        ) ->
-        %            UpKey = K5,
-        %            UpValue = V5,
-        %
-        %            UpdatedNode = ?new_INTERNAL4(
-        %                K1, K2, K3, K4,
-        %                %
-        %                V1, V2, V3, V4,
-        %                %
-        %                C1, C2, C3, C4, C5
-        %            ),
-        %
-        %            UpdatedRight = ?new_INTERNAL4(
-        %                ParentK, RK1, RK2, RK3,
-        %                %
-        %                ParentV, RV1, RV2, RV3,
-        %                %
-        %                C6, RC1, RC2, RC3, RC4
-        %            ),
-        %
-        %            {UpKey, UpValue, UpdatedNode, UpdatedRight};
-        %
-        %
-        %
-        %
         _ ->
             split_internal(
                 K1,
@@ -3086,10 +3019,6 @@ leaf_maybe_rebalance_insert_right(Node, Pos, NewKey, NewValue, ParentK, ParentV,
         ?LEAF2_MATCH(RK1, RK2, RV1, RV2) ->
             UpdatedRight = ?new_LEAF3(ParentK, RK1, RK2, ParentV, RV1, RV2),
             leaf_rebalance_insert_right(Node, Pos, NewKey, NewValue, UpdatedRight);
-        %
-        %?LEAF3_MATCH(RK1, RK2, RK3, RV1, RV2, RV3) ->
-        %    UpdatedRight = ?new_LEAF4(ParentK, RK1, RK2, RK3, ParentV, RV1, RV2, RV3),
-        %    leaf_rebalance_insert_right(Node, Pos, NewKey, NewValue, UpdatedRight);
         %
         _ ->
             leaf_rebalance_insert_split(Node, Pos, NewKey, NewValue)
