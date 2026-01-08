@@ -75,10 +75,10 @@
 -define(INTERNAL1_MATCH(K1, V1, C1, C2), {_, K1, V1, C1, C2}).
 -define(INTERNAL1_MATCH_ALL, {_, K1, V1, C1, C2}).
 
-% improper list
--define(LEAF1(K1, V1), [K1 | V1]).
--define(LEAF1_MATCH(K1, V1), [K1 | V1]).
--define(LEAF1_MATCH_ALL, [K1 | V1]).
+% 2 elements
+-define(LEAF1(K1, V1), {K1, V1}).
+-define(LEAF1_MATCH(K1, V1), {K1, V1}).
+-define(LEAF1_MATCH_ALL, {K1, V1}).
 
 % empty root
 -define(LEAF0, leaf0).
@@ -108,8 +108,12 @@
 %%%%%%%%
 
 % 5 elements; cannot clash with any node type.
--define(SPLIT(SplitK, SplitV, SplitL, SplitR), {split, SplitK, SplitV, SplitL, SplitR}).
--define(SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR), {split, SplitK, SplitV, SplitL, SplitR}).
+% -define(SPLIT(SplitK, SplitV, SplitL, SplitR), {split, SplitK, SplitV, SplitL, SplitR}).
+% -define(SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR), {split, SplitK, SplitV, SplitL, SplitR}).
+
+-define(SPLIT(Pos, Args), [Pos | Args]).
+
+-define(SPLIT_MATCH(Pos, Args), [Pos | Args]).
 
 %%%%%%%%%
 
@@ -583,8 +587,8 @@ insert(Key, ValueEval, ValueWrap, ?LEAF0_MATCH_ALL) ->
     ?new_LEAF1(Key, Value);
 insert(Key, ValueEval, ValueWrap, Root) ->
     case insert_recur(Key, ValueEval, ValueWrap, Root) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?new_INTERNAL1(SplitK, SplitV, SplitL, SplitR);
+        ?SPLIT_MATCH(Pos, Args) ->
+            insert_split_root(Pos, Args, Root);
         %
         UpdatedRoot ->
             UpdatedRoot
@@ -1669,29 +1673,30 @@ insert_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 -compile({inline, insert_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS3}).
 insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
-
-            split_internal(
-                SplitK,
-                K1,
-                K2,
-                K3,
-                K4,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_right(C1, Pos, Args, K1, V1, C2) of
+                {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL4(
+                        UpKey,
+                        K2,
+                        K3,
+                        K4,
+                        %
+                        UpValue,
+                        V2,
+                        V3,
+                        V4,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3,
+                        C4,
+                        C5
+                    );
                 %
-                SplitV,
-                V1,
-                V2,
-                V3,
-                V4,
-                %
-                SplitL,
-                SplitR,
-                C2,
-                C3,
-                C4,
-                C5
-            );
+                Split ->
+                    ?SPLIT(1, Split)
+            end;
         %
         UpdatedC1 ->
             ?INTERNAL4_C1(UpdatedC1)
@@ -1700,29 +1705,30 @@ insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 -compile({inline, insert_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS3}).
 insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
-
-            split_internal(
-                K1,
-                SplitK,
-                K2,
-                K3,
-                K4,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C2, Pos, Args, K1, V1, C1) of
+                {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL4(
+                        UpKey,
+                        K2,
+                        K3,
+                        K4,
+                        %
+                        UpValue,
+                        V2,
+                        V3,
+                        V4,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3,
+                        C4,
+                        C5
+                    );
                 %
-                V1,
-                SplitV,
-                V2,
-                V3,
-                V4,
-                %
-                C1,
-                SplitL,
-                SplitR,
-                C3,
-                C4,
-                C5
-            );
+                Split ->
+                    ?SPLIT(2, Split)
+            end;
         %
         UpdatedC2 ->
             ?INTERNAL4_C2(UpdatedC2)
@@ -1731,29 +1737,30 @@ insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 -compile({inline, insert_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS3}).
 insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
-
-            split_internal(
-                K1,
-                K2,
-                SplitK,
-                K3,
-                K4,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C3, Pos, Args, K2, V2, C2) of
+                {UpKey, UpValue, UpdatedC2, UpdatedC3} ->
+                    ?new_INTERNAL4(
+                        K1,
+                        UpKey,
+                        K3,
+                        K4,
+                        %
+                        V1,
+                        UpValue,
+                        V3,
+                        V4,
+                        %
+                        C1,
+                        UpdatedC2,
+                        UpdatedC3,
+                        C4,
+                        C5
+                    );
                 %
-                V1,
-                V2,
-                SplitV,
-                V3,
-                V4,
-                %
-                C1,
-                C2,
-                SplitL,
-                SplitR,
-                C4,
-                C5
-            );
+                Split ->
+                    ?SPLIT(3, Split)
+            end;
         %
         UpdatedC3 ->
             ?INTERNAL4_C3(UpdatedC3)
@@ -1762,29 +1769,30 @@ insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 -compile({inline, insert_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS3}).
 insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C4) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
-
-            split_internal(
-                K1,
-                K2,
-                K3,
-                SplitK,
-                K4,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C4, Pos, Args, K3, V3, C3) of
+                {UpKey, UpValue, UpdatedC3, UpdatedC4} ->
+                    ?new_INTERNAL4(
+                        K1,
+                        K2,
+                        UpKey,
+                        K4,
+                        %
+                        V1,
+                        V2,
+                        UpValue,
+                        V4,
+                        %
+                        C1,
+                        C2,
+                        UpdatedC3,
+                        UpdatedC4,
+                        C5
+                    );
                 %
-                V1,
-                V2,
-                V3,
-                SplitV,
-                V4,
-                %
-                C1,
-                C2,
-                C3,
-                SplitL,
-                SplitR,
-                C5
-            );
+                Split ->
+                    ?SPLIT(4, Split)
+            end;
         %
         UpdatedC4 ->
             ?INTERNAL4_C4(UpdatedC4)
@@ -1793,29 +1801,30 @@ insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 -compile({inline, insert_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS3}).
 insert_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C5) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL4_VALUES_MATCH_ALL = Values,
-
-            split_internal(
-                K1,
-                K2,
-                K3,
-                K4,
-                SplitK,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C5, Pos, Args, K4, V4, C4) of
+                {UpKey, UpValue, UpdatedC4, UpdatedC5} ->
+                    ?new_INTERNAL4(
+                        K1,
+                        K2,
+                        K3,
+                        UpKey,
+                        %
+                        V1,
+                        V2,
+                        V3,
+                        UpValue,
+                        %
+                        C1,
+                        C2,
+                        C3,
+                        UpdatedC4,
+                        UpdatedC5
+                    );
                 %
-                V1,
-                V2,
-                V3,
-                V4,
-                SplitV,
-                %
-                C1,
-                C2,
-                C3,
-                C4,
-                SplitL,
-                SplitR
-            );
+                Split ->
+                    ?SPLIT(5, Split)
+            end;
         %
         UpdatedC5 ->
             ?INTERNAL4_C5(UpdatedC5)
@@ -1861,26 +1870,43 @@ insert_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 -compile({inline, insert_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS3}).
 insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
-
-            ?new_INTERNAL4(
-                SplitK,
-                K1,
-                K2,
-                K3,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_right(C1, Pos, Args, K1, V1, C2) of
+                {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL3(
+                        UpKey,
+                        K2,
+                        K3,
+                        %
+                        UpValue,
+                        V2,
+                        V3,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3,
+                        C4
+                    );
                 %
-                SplitV,
-                V1,
-                V2,
-                V3,
-                %
-                SplitL,
-                SplitR,
-                C2,
-                C3,
-                C4
-            );
+                {split, SplitK, SplitV, SplitL, SplitR} ->
+                    ?new_INTERNAL4(
+                        SplitK,
+                        K1,
+                        K2,
+                        K3,
+                        %
+                        SplitV,
+                        V1,
+                        V2,
+                        V3,
+                        %
+                        SplitL,
+                        SplitR,
+                        C2,
+                        C3,
+                        C4
+                    )
+            end;
         %
         UpdatedC1 ->
             ?INTERNAL3_C1(UpdatedC1)
@@ -1889,26 +1915,43 @@ insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 -compile({inline, insert_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS3}).
 insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
-
-            ?new_INTERNAL4(
-                K1,
-                SplitK,
-                K2,
-                K3,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C2, Pos, Args, K1, V1, C1) of
+                {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL3(
+                        UpKey,
+                        K2,
+                        K3,
+                        %
+                        UpValue,
+                        V2,
+                        V3,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3,
+                        C4
+                    );
                 %
-                V1,
-                SplitV,
-                V2,
-                V3,
-                %
-                C1,
-                SplitL,
-                SplitR,
-                C3,
-                C4
-            );
+                {split, SplitK, SplitV, SplitL, SplitR} ->
+                    ?new_INTERNAL4(
+                        K1,
+                        SplitK,
+                        K2,
+                        K3,
+                        %
+                        V1,
+                        SplitV,
+                        V2,
+                        V3,
+                        %
+                        C1,
+                        SplitL,
+                        SplitR,
+                        C3,
+                        C4
+                    )
+            end;
         %
         UpdatedC2 ->
             ?INTERNAL3_C2(UpdatedC2)
@@ -1917,26 +1960,43 @@ insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 -compile({inline, insert_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS3}).
 insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
-
-            ?new_INTERNAL4(
-                K1,
-                K2,
-                SplitK,
-                K3,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C3, Pos, Args, K2, V2, C2) of
+                {UpKey, UpValue, UpdatedC2, UpdatedC3} ->
+                    ?new_INTERNAL3(
+                        K1,
+                        UpKey,
+                        K3,
+                        %
+                        V1,
+                        UpValue,
+                        V3,
+                        %
+                        C1,
+                        UpdatedC2,
+                        UpdatedC3,
+                        C4
+                    );
                 %
-                V1,
-                V2,
-                SplitV,
-                V3,
-                %
-                C1,
-                C2,
-                SplitL,
-                SplitR,
-                C4
-            );
+                {split, SplitK, SplitV, SplitL, SplitR} ->
+                    ?new_INTERNAL4(
+                        K1,
+                        K2,
+                        SplitK,
+                        K3,
+                        %
+                        V1,
+                        V2,
+                        SplitV,
+                        V3,
+                        %
+                        C1,
+                        C2,
+                        SplitL,
+                        SplitR,
+                        C4
+                    )
+            end;
         %
         UpdatedC3 ->
             ?INTERNAL3_C3(UpdatedC3)
@@ -1945,26 +2005,43 @@ insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 -compile({inline, insert_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS3}).
 insert_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C4) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL3_VALUES_MATCH_ALL = Values,
-
-            ?new_INTERNAL4(
-                K1,
-                K2,
-                K3,
-                SplitK,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C4, Pos, Args, K3, V3, C3) of
+                {UpKey, UpValue, UpdatedC3, UpdatedC4} ->
+                    ?new_INTERNAL3(
+                        K1,
+                        K2,
+                        UpKey,
+                        %
+                        V1,
+                        V2,
+                        UpValue,
+                        %
+                        C1,
+                        C2,
+                        UpdatedC3,
+                        UpdatedC4
+                    );
                 %
-                V1,
-                V2,
-                V3,
-                SplitV,
-                %
-                C1,
-                C2,
-                C3,
-                SplitL,
-                SplitR
-            );
+                {split, SplitK, SplitV, SplitL, SplitR} ->
+                    ?new_INTERNAL4(
+                        K1,
+                        K2,
+                        K3,
+                        SplitK,
+                        %
+                        V1,
+                        V2,
+                        V3,
+                        SplitV,
+                        %
+                        C1,
+                        C2,
+                        C3,
+                        SplitL,
+                        SplitR
+                    )
+            end;
         %
         UpdatedC4 ->
             ?INTERNAL3_C4(UpdatedC4)
@@ -2000,23 +2077,37 @@ insert_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 -compile({inline, insert_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS3}).
 insert_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL2_VALUES_MATCH_ALL = Values,
-
-            ?new_INTERNAL3(
-                SplitK,
-                K1,
-                K2,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_right(C1, Pos, Args, K1, V1, C2) of
+                {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL2(
+                        UpKey,
+                        K2,
+                        %
+                        UpValue,
+                        V2,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3
+                    );
                 %
-                SplitV,
-                V1,
-                V2,
-                %
-                SplitL,
-                SplitR,
-                C2,
-                C3
-            );
+                {split, SplitK, SplitV, SplitL, SplitR} ->
+                    ?new_INTERNAL3(
+                        SplitK,
+                        K1,
+                        K2,
+                        %
+                        SplitV,
+                        V1,
+                        V2,
+                        %
+                        SplitL,
+                        SplitR,
+                        C2,
+                        C3
+                    )
+            end;
         %
         UpdatedC1 ->
             ?INTERNAL2_C1(UpdatedC1)
@@ -2025,23 +2116,37 @@ insert_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 -compile({inline, insert_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS3}).
 insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL2_VALUES_MATCH_ALL = Values,
-
-            ?new_INTERNAL3(
-                K1,
-                SplitK,
-                K2,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C2, Pos, Args, K1, V1, C1) of
+                {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL2(
+                        UpKey,
+                        K2,
+                        %
+                        UpValue,
+                        V2,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3
+                    );
                 %
-                V1,
-                SplitV,
-                V2,
-                %
-                C1,
-                SplitL,
-                SplitR,
-                C3
-            );
+                {split, SplitK, SplitV, SplitL, SplitR} ->
+                    ?new_INTERNAL3(
+                        K1,
+                        SplitK,
+                        K2,
+                        %
+                        V1,
+                        SplitV,
+                        V2,
+                        %
+                        C1,
+                        SplitL,
+                        SplitR,
+                        C3
+                    )
+            end;
         %
         UpdatedC2 ->
             ?INTERNAL2_C2(UpdatedC2)
@@ -2050,23 +2155,37 @@ insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 -compile({inline, insert_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS3}).
 insert_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C3) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            % ?INTERNAL2_VALUES_MATCH_ALL = Values,
-
-            ?new_INTERNAL3(
-                K1,
-                K2,
-                SplitK,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C3, Pos, Args, K2, V2, C2) of
+                {UpKey, UpValue, UpdatedC2, UpdatedC3} ->
+                    ?new_INTERNAL2(
+                        K1,
+                        UpKey,
+                        %
+                        V1,
+                        UpValue,
+                        %
+                        C1,
+                        UpdatedC2,
+                        UpdatedC3
+                    );
                 %
-                V1,
-                V2,
-                SplitV,
-                %
-                C1,
-                C2,
-                SplitL,
-                SplitR
-            );
+                {split, SplitK, SplitV, SplitL, SplitR} ->
+                    ?new_INTERNAL3(
+                        K1,
+                        K2,
+                        SplitK,
+                        %
+                        V1,
+                        V2,
+                        SplitV,
+                        %
+                        C1,
+                        C2,
+                        SplitL,
+                        SplitR
+                    )
+            end;
         %
         UpdatedC3 ->
             ?INTERNAL2_C3(UpdatedC3)
@@ -2092,41 +2211,996 @@ insert_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
 -compile({inline, insert_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS3}).
 insert_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C1) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?new_INTERNAL2(
-                SplitK,
-                K1,
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_right(C1, Pos, Args, K1, V1, C2) of
+                {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
                 %
-                SplitV,
-                V1,
-                %
-                SplitL,
-                SplitR,
-                C2
-            );
+                {split, SplitK, SplitV, SplitL, SplitR} ->
+                    ?new_INTERNAL2(
+                        SplitK,
+                        K1,
+                        %
+                        SplitV,
+                        V1,
+                        %
+                        SplitL,
+                        SplitR,
+                        C2
+                    )
+            end;
         %
         UpdatedC1 ->
-            ?INTERNAL1_C1(UpdatedC1)
+            ?new_INTERNAL1(K1, V1, UpdatedC1, C2)
     end.
 
 -compile({inline, insert_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS3}).
 insert_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
     case insert_recur(Key, ValueEval, ValueWrap, C2) of
-        ?SPLIT_MATCH(SplitK, SplitV, SplitL, SplitR) ->
-            ?new_INTERNAL2(
+        ?SPLIT_MATCH(Pos, Args) ->
+            case maybe_rebalance_insert_left(C2, Pos, Args, K1, V1, C1) of
+                {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
+                %
+                {split, SplitK, SplitV, SplitL, SplitR} ->
+                    ?new_INTERNAL2(
+                        K1,
+                        SplitK,
+                        %
+                        V1,
+                        SplitV,
+                        C1,
+                        SplitL,
+                        SplitR
+                    )
+            end;
+        %
+        UpdatedC2 ->
+            ?new_INTERNAL1(K1, V1, C1, UpdatedC2)
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+insert_split_root(Pos, [NewKey | NewValue], Root) ->
+    ?LEAF4_MATCH_ALL = Root,
+
+    {split, SplitK, SplitV, SplitL, SplitR} =
+        case Pos of
+            1 ->
+                split_leaf(
+                    NewKey,
+                    K1,
+                    K2,
+                    K3,
+                    K4,
+                    NewValue,
+                    V1,
+                    V2,
+                    V3,
+                    V4
+                );
+            %
+            2 ->
+                split_leaf(
+                    K1,
+                    NewKey,
+                    K2,
+                    K3,
+                    K4,
+                    V1,
+                    NewValue,
+                    V2,
+                    V3,
+                    V4
+                );
+            %
+            3 ->
+                split_leaf(
+                    K1,
+                    K2,
+                    NewKey,
+                    K3,
+                    K4,
+                    V1,
+                    V2,
+                    NewValue,
+                    V3,
+                    V4
+                );
+            %
+            4 ->
+                split_leaf(
+                    K1,
+                    K2,
+                    K3,
+                    NewKey,
+                    K4,
+                    V1,
+                    V2,
+                    V3,
+                    NewValue,
+                    V4
+                );
+            %
+            5 ->
+                split_leaf(
+                    K1,
+                    K2,
+                    K3,
+                    K4,
+                    NewKey,
+                    V1,
+                    V2,
+                    V3,
+                    V4,
+                    NewValue
+                )
+        end,
+
+    ?new_INTERNAL1(SplitK, SplitV, SplitL, SplitR);
+insert_split_root(Pos, {split, SplitK, SplitV, SplitL, SplitR}, Root) ->
+    ?INTERNAL4_MATCH_ALL = Root,
+
+    {split, ResplitK, ResplitV, ResplitL, ResplitR} =
+        case Pos of
+            1 ->
+                split_internal(
+                    SplitK,
+                    K1,
+                    K2,
+                    K3,
+                    K4,
+                    SplitV,
+                    V1,
+                    V2,
+                    V3,
+                    V4,
+                    SplitL,
+                    SplitR,
+                    C2,
+                    C3,
+                    C4,
+                    C5
+                );
+            %
+            2 ->
+                split_internal(
+                    K1,
+                    SplitK,
+                    K2,
+                    K3,
+                    K4,
+                    V1,
+                    SplitV,
+                    V2,
+                    V3,
+                    V4,
+                    C1,
+                    SplitL,
+                    SplitR,
+                    C3,
+                    C4,
+                    C5
+                );
+            %
+            3 ->
+                split_internal(
+                    K1,
+                    K2,
+                    SplitK,
+                    K3,
+                    K4,
+                    V1,
+                    V2,
+                    SplitV,
+                    V3,
+                    V4,
+                    C1,
+                    C2,
+                    SplitL,
+                    SplitR,
+                    C4,
+                    C5
+                );
+            %
+            4 ->
+                split_internal(
+                    K1,
+                    K2,
+                    K3,
+                    SplitK,
+                    K4,
+                    V1,
+                    V2,
+                    V3,
+                    SplitV,
+                    V4,
+                    C1,
+                    C2,
+                    C3,
+                    SplitL,
+                    SplitR,
+                    C5
+                );
+            %
+            5 ->
+                split_internal(
+                    K1,
+                    K2,
+                    K3,
+                    K4,
+                    SplitK,
+                    V1,
+                    V2,
+                    V3,
+                    V4,
+                    SplitV,
+                    C1,
+                    C2,
+                    C3,
+                    C4,
+                    SplitL,
+                    SplitR
+                )
+        end,
+
+    ?new_INTERNAL1(ResplitK, ResplitV, ResplitL, ResplitR).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-compile({inline, maybe_rebalance_insert_left/6}).
+maybe_rebalance_insert_left(Node, Pos, Args, ParentK, ParentV, Left) ->
+    case Args of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            internal_maybe_rebalance_insert_left(
+                Node, Pos, SplitK, SplitV, SplitL, SplitR, ParentK, ParentV, Left
+            );
+        %
+        [NewKey | NewValue] ->
+            leaf_maybe_rebalance_insert_left(Node, Pos, NewKey, NewValue, ParentK, ParentV, Left)
+    end.
+
+-compile({inline, internal_maybe_rebalance_insert_left/9}).
+internal_maybe_rebalance_insert_left(
+    ?INTERNAL4_MATCH_ALL, Pos, SplitK, SplitV, SplitL, SplitR, ParentK, ParentV, Left
+) ->
+    case Pos of
+        1 ->
+            internal_rebalance_insert_left(
+                SplitK,
+                K1,
+                K2,
+                K3,
+                K4,
+                %
+                SplitV,
+                V1,
+                V2,
+                V3,
+                V4,
+                %
+                SplitL,
+                SplitR,
+                C2,
+                C3,
+                C4,
+                C5,
+                %
+                ParentK,
+                ParentV,
+                Left
+            );
+        %
+        2 ->
+            internal_rebalance_insert_left(
                 K1,
                 SplitK,
+                K2,
+                K3,
+                K4,
                 %
                 V1,
                 SplitV,
+                V2,
+                V3,
+                V4,
                 %
                 C1,
                 SplitL,
-                SplitR
+                SplitR,
+                C3,
+                C4,
+                C5,
+                %
+                ParentK,
+                ParentV,
+                Left
             );
         %
-        UpdatedC2 ->
-            ?INTERNAL1_C2(UpdatedC2)
+        3 ->
+            internal_rebalance_insert_left(
+                K1,
+                K2,
+                SplitK,
+                K3,
+                K4,
+                %
+                V1,
+                V2,
+                SplitV,
+                V3,
+                V4,
+                %
+                C1,
+                C2,
+                SplitL,
+                SplitR,
+                C4,
+                C5,
+                %
+                ParentK,
+                ParentV,
+                Left
+            );
+        %
+        4 ->
+            internal_rebalance_insert_left(
+                K1,
+                K2,
+                K3,
+                SplitK,
+                K4,
+                %
+                V1,
+                V2,
+                V3,
+                SplitV,
+                V4,
+                %
+                C1,
+                C2,
+                C3,
+                SplitL,
+                SplitR,
+                C5,
+                %
+                ParentK,
+                ParentV,
+                Left
+            );
+        %
+        5 ->
+            internal_rebalance_insert_left(
+                K1,
+                K2,
+                K3,
+                K4,
+                SplitK,
+                %
+                V1,
+                V2,
+                V3,
+                V4,
+                SplitV,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                SplitL,
+                SplitR,
+                %
+                ParentK,
+                ParentV,
+                Left
+            )
+    end.
+
+-compile({inline, internal_rebalance_insert_left/19}).
+internal_rebalance_insert_left(
+    K1,
+    K2,
+    K3,
+    K4,
+    K5,
+    %
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    %
+    C1,
+    C2,
+    C3,
+    C4,
+    C5,
+    C6,
+    %
+    ParentK,
+    ParentV,
+    Left
+) ->
+    case Left of
+        ?INTERNAL2_MATCH(
+            LK1,
+            LK2,
+            %
+            LV1,
+            LV2,
+            %
+            LC1,
+            LC2,
+            LC3
+        ) ->
+            UpKey = K1,
+            UpValue = V1,
+
+            UpdatedLeft = ?new_INTERNAL3(
+                LK1,
+                LK2,
+                ParentK,
+                %
+                LV1,
+                LV2,
+                ParentV,
+                %
+                LC1,
+                LC2,
+                LC3,
+                C1
+            ),
+
+            UpdatedNode = ?new_INTERNAL4(
+                K2,
+                K3,
+                K4,
+                K5,
+                %
+                V2,
+                V3,
+                V4,
+                V5,
+                %
+                C2,
+                C3,
+                C4,
+                C5,
+                C6
+            ),
+
+            {UpKey, UpValue, UpdatedLeft, UpdatedNode};
+        %
+        %
+        %
+        %
+        %?INTERNAL3_MATCH(
+        %   LK1, LK2, LK3,
+        %   %
+        %   LV1, LV2, LV3,
+        %   %
+        %   LC1, LC2, LC3, LC4
+        %) ->
+        %    UpKey = K1,
+        %    UpValue = V1,
+
+        %    UpdatedLeft = ?new_INTERNAL4(
+        %        LK1, LK2, LK3, ParentK,
+        %        %
+        %        LV1, LV2, LV3, ParentV,
+        %        %
+        %        LC1, LC2, LC3, LC4, C1
+        %    ),
+
+        %    UpdatedNode = ?new_INTERNAL4(
+        %        K2, K3, K4, K5,
+        %        %
+        %        V2, V3, V4, V5,
+        %        %
+        %        C2, C3, C4, C5, C6
+        %    ),
+
+        %    {UpKey, UpValue, UpdatedLeft, UpdatedNode};
+        %
+        %
+        %
+        %
+        _ ->
+            split_internal(
+                K1,
+                K2,
+                K3,
+                K4,
+                K5,
+                %
+                V1,
+                V2,
+                V3,
+                V4,
+                V5,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                C5,
+                C6
+            )
+    end.
+
+-compile({inline, leaf_maybe_rebalance_insert_left/7}).
+leaf_maybe_rebalance_insert_left(Node, Pos, NewKey, NewValue, ParentK, ParentV, Left) ->
+    case Left of
+        ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
+            UpdatedLeft = ?new_LEAF3(LK1, LK2, ParentK, LV1, LV2, ParentV),
+            leaf_rebalance_insert_left(Node, Pos, NewKey, NewValue, UpdatedLeft);
+        %
+        %?LEAF3_MATCH(LK1, LK2, LK3, LV1, LV2, LV3) ->
+        %    UpdatedLeft = ?new_LEAF4(LK1, LK2, LK3, ParentK, LV1, LV2, LV3, ParentV),
+        %    leaf_rebalance_insert_left(Node, Pos, NewKey, NewValue, UpdatedLeft);
+        %
+        _ ->
+            leaf_rebalance_insert_split(Node, Pos, NewKey, NewValue)
+    end.
+
+-compile({inline, leaf_rebalance_insert_left/5}).
+leaf_rebalance_insert_left(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, UpdatedLeft) ->
+    case Pos of
+        1 ->
+            UpKey = NewKey,
+            UpValue = NewValue,
+            UpdatedNode = Node,
+            {UpKey, UpValue, UpdatedLeft, UpdatedNode};
+        %
+        2 ->
+            UpKey = K1,
+            UpValue = V1,
+            UpdatedNode = ?new_LEAF4(NewKey, K2, K3, K4, NewValue, V2, V3, V4),
+            {UpKey, UpValue, UpdatedLeft, UpdatedNode};
+        %
+        3 ->
+            UpKey = K1,
+            UpValue = V1,
+            UpdatedNode = ?new_LEAF4(K2, NewKey, K3, K4, V2, NewValue, V3, V4),
+            {UpKey, UpValue, UpdatedLeft, UpdatedNode};
+        %
+        4 ->
+            UpKey = K1,
+            UpValue = V1,
+            UpdatedNode = ?new_LEAF4(K2, K3, NewKey, K4, V2, V3, NewValue, V4),
+            {UpKey, UpValue, UpdatedLeft, UpdatedNode};
+        %
+        5 ->
+            UpKey = K1,
+            UpValue = V1,
+            UpdatedNode = ?new_LEAF4(K2, K3, K4, NewKey, V2, V3, V4, NewValue),
+            {UpKey, UpValue, UpdatedLeft, UpdatedNode}
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-compile({inline, maybe_rebalance_insert_right/6}).
+maybe_rebalance_insert_right(Node, Pos, Args, ParentK, ParentV, Right) ->
+    case Args of
+        {split, SplitK, SplitV, SplitL, SplitR} ->
+            internal_maybe_rebalance_insert_right(
+                Node, Pos, SplitK, SplitV, SplitL, SplitR, ParentK, ParentV, Right
+            );
+        %
+        [NewKey | NewValue] ->
+            leaf_maybe_rebalance_insert_right(Node, Pos, NewKey, NewValue, ParentK, ParentV, Right)
+    end.
+
+-compile({inline, internal_maybe_rebalance_insert_right/9}).
+internal_maybe_rebalance_insert_right(
+    ?INTERNAL4_MATCH_ALL, Pos, SplitK, SplitV, SplitL, SplitR, ParentK, ParentV, Right
+) ->
+    case Pos of
+        1 ->
+            internal_rebalance_insert_right(
+                SplitK,
+                K1,
+                K2,
+                K3,
+                K4,
+                %
+                SplitV,
+                V1,
+                V2,
+                V3,
+                V4,
+                %
+                SplitL,
+                SplitR,
+                C2,
+                C3,
+                C4,
+                C5,
+                %
+                ParentK,
+                ParentV,
+                Right
+            );
+        %
+        2 ->
+            internal_rebalance_insert_right(
+                K1,
+                SplitK,
+                K2,
+                K3,
+                K4,
+                %
+                V1,
+                SplitV,
+                V2,
+                V3,
+                V4,
+                %
+                C1,
+                SplitL,
+                SplitR,
+                C3,
+                C4,
+                C5,
+                %
+                ParentK,
+                ParentV,
+                Right
+            );
+        %
+        3 ->
+            internal_rebalance_insert_right(
+                K1,
+                K2,
+                SplitK,
+                K3,
+                K4,
+                %
+                V1,
+                V2,
+                SplitV,
+                V3,
+                V4,
+                %
+                C1,
+                C2,
+                SplitL,
+                SplitR,
+                C4,
+                C5,
+                %
+                ParentK,
+                ParentV,
+                Right
+            );
+        %
+        4 ->
+            internal_rebalance_insert_right(
+                K1,
+                K2,
+                K3,
+                SplitK,
+                K4,
+                %
+                V1,
+                V2,
+                V3,
+                SplitV,
+                V4,
+                %
+                C1,
+                C2,
+                C3,
+                SplitL,
+                SplitR,
+                C5,
+                %
+                ParentK,
+                ParentV,
+                Right
+            );
+        %
+        5 ->
+            internal_rebalance_insert_right(
+                K1,
+                K2,
+                K3,
+                K4,
+                SplitK,
+                %
+                V1,
+                V2,
+                V3,
+                V4,
+                SplitV,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                SplitL,
+                SplitR,
+                %
+                ParentK,
+                ParentV,
+                Right
+            )
+    end.
+
+-compile({inline, internal_rebalance_insert_right/19}).
+internal_rebalance_insert_right(
+    K1,
+    K2,
+    K3,
+    K4,
+    K5,
+    %
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    %
+    C1,
+    C2,
+    C3,
+    C4,
+    C5,
+    C6,
+    %
+    ParentK,
+    ParentV,
+    Right
+) ->
+    case Right of
+        ?INTERNAL2_MATCH(
+            RK1,
+            RK2,
+            %
+            RV1,
+            RV2,
+            %
+            RC1,
+            RC2,
+            RC3
+        ) ->
+            UpKey = K5,
+            UpValue = V5,
+
+            UpdatedNode = ?new_INTERNAL4(
+                K1,
+                K2,
+                K3,
+                K4,
+                %
+                V1,
+                V2,
+                V3,
+                V4,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                C5
+            ),
+
+            UpdatedRight = ?new_INTERNAL3(
+                ParentK,
+                RK1,
+                RK2,
+                %
+                ParentV,
+                RV1,
+                RV2,
+                %
+                C6,
+                RC1,
+                RC2,
+                RC3
+            ),
+
+            {UpKey, UpValue, UpdatedNode, UpdatedRight};
+        %
+        %
+        %
+        %
+        %        ?INTERNAL3_MATCH(
+        %           RK1, RK2, RK3,
+        %           %
+        %           RV1, RV2, RV3,
+        %           %
+        %           RC1, RC2, RC3, RC4
+        %        ) ->
+        %            UpKey = K5,
+        %            UpValue = V5,
+        %
+        %            UpdatedNode = ?new_INTERNAL4(
+        %                K1, K2, K3, K4,
+        %                %
+        %                V1, V2, V3, V4,
+        %                %
+        %                C1, C2, C3, C4, C5
+        %            ),
+        %
+        %            UpdatedRight = ?new_INTERNAL4(
+        %                ParentK, RK1, RK2, RK3,
+        %                %
+        %                ParentV, RV1, RV2, RV3,
+        %                %
+        %                C6, RC1, RC2, RC3, RC4
+        %            ),
+        %
+        %            {UpKey, UpValue, UpdatedNode, UpdatedRight};
+        %
+        %
+        %
+        %
+        _ ->
+            split_internal(
+                K1,
+                K2,
+                K3,
+                K4,
+                K5,
+                %
+                V1,
+                V2,
+                V3,
+                V4,
+                V5,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                C5,
+                C6
+            )
+    end.
+
+-compile({inline, leaf_maybe_rebalance_insert_right/7}).
+leaf_maybe_rebalance_insert_right(Node, Pos, NewKey, NewValue, ParentK, ParentV, Right) ->
+    case Right of
+        ?LEAF2_MATCH(RK1, RK2, RV1, RV2) ->
+            UpdatedRight = ?new_LEAF3(ParentK, RK1, RK2, ParentV, RV1, RV2),
+            leaf_rebalance_insert_right(Node, Pos, NewKey, NewValue, UpdatedRight);
+        %
+        %?LEAF3_MATCH(RK1, RK2, RK3, RV1, RV2, RV3) ->
+        %    UpdatedRight = ?new_LEAF4(ParentK, RK1, RK2, RK3, ParentV, RV1, RV2, RV3),
+        %    leaf_rebalance_insert_right(Node, Pos, NewKey, NewValue, UpdatedRight);
+        %
+        _ ->
+            leaf_rebalance_insert_split(Node, Pos, NewKey, NewValue)
+    end.
+
+-compile({inline, leaf_rebalance_insert_right/5}).
+leaf_rebalance_insert_right(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, UpdatedRight) ->
+    case Pos of
+        1 ->
+            UpKey = K4,
+            UpValue = V4,
+            UpdatedNode = ?new_LEAF4(NewKey, K1, K2, K3, NewValue, V1, V2, V3),
+            {UpKey, UpValue, UpdatedNode, UpdatedRight};
+        %
+        2 ->
+            UpKey = K4,
+            UpValue = V4,
+            UpdatedNode = ?new_LEAF4(K1, NewKey, K2, K3, V1, NewValue, V2, V3),
+            {UpKey, UpValue, UpdatedNode, UpdatedRight};
+        %
+        3 ->
+            UpKey = K4,
+            UpValue = V4,
+            UpdatedNode = ?new_LEAF4(K1, K2, NewKey, K3, V1, V2, NewValue, V3),
+            {UpKey, UpValue, UpdatedNode, UpdatedRight};
+        %
+        4 ->
+            UpKey = K4,
+            UpValue = V4,
+            UpdatedNode = ?new_LEAF4(K1, K2, K3, NewKey, V1, V2, V3, NewValue),
+            {UpKey, UpValue, UpdatedNode, UpdatedRight};
+        %
+        5 ->
+            UpKey = NewKey,
+            UpValue = NewValue,
+            UpdatedNode = Node,
+            {UpKey, UpValue, UpdatedNode, UpdatedRight}
+    end.
+
+-compile({inline, leaf_rebalance_insert_split/4}).
+leaf_rebalance_insert_split(?LEAF4_MATCH_ALL, Pos, NewKey, NewValue) ->
+    case Pos of
+        1 ->
+            split_leaf(
+                NewKey,
+                K1,
+                K2,
+                K3,
+                K4,
+                NewValue,
+                V1,
+                V2,
+                V3,
+                V4
+            );
+        %
+        2 ->
+            split_leaf(
+                K1,
+                NewKey,
+                K2,
+                K3,
+                K4,
+                V1,
+                NewValue,
+                V2,
+                V3,
+                V4
+            );
+        %
+        3 ->
+            split_leaf(
+                K1,
+                K2,
+                NewKey,
+                K3,
+                K4,
+                V1,
+                V2,
+                NewValue,
+                V3,
+                V4
+            );
+        %
+        4 ->
+            split_leaf(
+                K1,
+                K2,
+                K3,
+                NewKey,
+                K4,
+                V1,
+                V2,
+                V3,
+                NewValue,
+                V4
+            );
+        %
+        5 ->
+            split_leaf(
+                K1,
+                K2,
+                K3,
+                K4,
+                NewKey,
+                V1,
+                V2,
+                V3,
+                V4,
+                NewValue
+            )
     end.
 
 %%
@@ -2143,17 +3217,20 @@ insert_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
                     %
                     if
                         Key > K3 ->
-                            insert_LEAF4_POS4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS);
+                            Value = eval_insert_value(ValueEval, ValueWrap),
+                            ?SPLIT(4, [Key | Value]);
                         %
                         Key < K3 ->
-                            insert_LEAF4_POS3(Key, ValueEval, ValueWrap, ?LEAF4_ARGS);
+                            Value = eval_insert_value(ValueEval, ValueWrap),
+                            ?SPLIT(3, [Key | Value]);
                         %
                         true ->
                             error_key_exists(Key)
                     end;
                 %
                 Key > K4 ->
-                    insert_LEAF4_POS5(Key, ValueEval, ValueWrap, ?LEAF4_ARGS);
+                    Value = eval_insert_value(ValueEval, ValueWrap),
+                    ?SPLIT(5, [Key | Value]);
                 %
                 true ->
                     error_key_exists(Key)
@@ -2163,10 +3240,12 @@ insert_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
             %
             if
                 Key < K1 ->
-                    insert_LEAF4_POS1(Key, ValueEval, ValueWrap, ?LEAF4_ARGS);
+                    Value = eval_insert_value(ValueEval, ValueWrap),
+                    ?SPLIT(1, [Key | Value]);
                 %
                 Key > K1 ->
-                    insert_LEAF4_POS2(Key, ValueEval, ValueWrap, ?LEAF4_ARGS);
+                    Value = eval_insert_value(ValueEval, ValueWrap),
+                    ?SPLIT(2, [Key | Value]);
                 %
                 true ->
                     error_key_exists(Key)
@@ -2175,96 +3254,6 @@ insert_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
         true ->
             error_key_exists(Key)
     end.
-
--compile({inline, insert_LEAF4_POS1 / ?LEAF4_ARITY_PLUS3}).
-insert_LEAF4_POS1(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    split_leaf(
-        Key,
-        K1,
-        K2,
-        K3,
-        K4,
-        %
-        Value,
-        V1,
-        V2,
-        V3,
-        V4
-    ).
-
--compile({inline, insert_LEAF4_POS2 / ?LEAF4_ARITY_PLUS3}).
-insert_LEAF4_POS2(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    split_leaf(
-        K1,
-        Key,
-        K2,
-        K3,
-        K4,
-        %
-        V1,
-        Value,
-        V2,
-        V3,
-        V4
-    ).
-
--compile({inline, insert_LEAF4_POS3 / ?LEAF4_ARITY_PLUS3}).
-insert_LEAF4_POS3(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    split_leaf(
-        K1,
-        K2,
-        Key,
-        K3,
-        K4,
-        %
-        V1,
-        V2,
-        Value,
-        V3,
-        V4
-    ).
-
--compile({inline, insert_LEAF4_POS4 / ?LEAF4_ARITY_PLUS3}).
-insert_LEAF4_POS4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    split_leaf(
-        K1,
-        K2,
-        K3,
-        Key,
-        K4,
-        %
-        V1,
-        V2,
-        V3,
-        Value,
-        V4
-    ).
-
--compile({inline, insert_LEAF4_POS5 / ?LEAF4_ARITY_PLUS3}).
-insert_LEAF4_POS5(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    split_leaf(
-        K1,
-        K2,
-        K3,
-        K4,
-        Key,
-        %
-        V1,
-        V2,
-        V3,
-        V4,
-        Value
-    ).
 
 %%
 %% ?LEAF3
@@ -2509,7 +3498,7 @@ split_internal(
     SplitL = ?new_INTERNAL2(K1, K2, V1, V2, C1, C2, C3),
     SplitR = ?new_INTERNAL2(K4, K5, V4, V5, C4, C5, C6),
 
-    ?SPLIT(SplitK, SplitV, SplitL, SplitR).
+    {split, SplitK, SplitV, SplitL, SplitR}.
 
 -compile({inline, split_leaf/10}).
 split_leaf(
@@ -2531,7 +3520,7 @@ split_leaf(
     SplitL = ?new_LEAF2(K1, K2, V1, V2),
     SplitR = ?new_LEAF2(K4, K5, V4, V5),
 
-    ?SPLIT(SplitK, SplitV, SplitL, SplitR).
+    {split, SplitK, SplitV, SplitL, SplitR}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - forward
@@ -7464,7 +8453,7 @@ check_node(LineNumber, Node) ->
             Node;
         %
         [_ | _] ->
-            fail_node_check(LineNumber, Type, {missorted_keys, MissortedKeys})
+            fail_node_check(LineNumber, Type, Node, {missorted_keys, MissortedKeys})
     end.
 
 node_type(Node) ->
@@ -7489,7 +8478,7 @@ check_node_recur(LineNumber, Node) ->
             Node;
         %
         [_ | _] ->
-            fail_node_check(LineNumber, Type, {missorted_keys, MissortedKeys})
+            fail_node_check(LineNumber, Type, Node, {missorted_keys, MissortedKeys})
     end.
 
 recur_node_type(Node) ->
@@ -7513,12 +8502,13 @@ recur_node_type(Node) ->
             'LEAF4'
     end.
 
-fail_node_check(LineNumber, Type, Reason) ->
+fail_node_check(LineNumber, Type, Node, Reason) ->
     error(
         {bad_node, [
             {line, LineNumber},
             {type, Type},
-            {reason, Reason}
+            {reason, Reason},
+            {node, Node}
         ]}
     ).
 
