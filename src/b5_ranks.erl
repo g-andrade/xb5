@@ -4,6 +4,8 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
+% TODO re-write in the latest style of tree/set
+
 -export([
     delete/2,
     empty/0,

@@ -4,6 +4,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
+% TODO adapt insert tweaks from tree
+
 -export([
     add/2,
     % `sets' compatibility alias
