@@ -7,11 +7,13 @@
     foldr/3,
     get/2,
     insert/4,
+    is_defined/2,
     iterator/2,
     iterator_from/3,
     keys/1,
     larger/2,
     largest/1,
+    lookup/2,
     map/2,
     new/0,
     next/1,
@@ -594,6 +596,15 @@ insert(Key, ValueEval, ValueWrap, Root) ->
             UpdatedRoot
     end.
 
+is_defined(Key, ?INTERNAL1_MATCH(K1, _, C1, C2)) ->
+    is_defined_INTERNAL1(Key, K1, C1, C2);
+is_defined(Key, ?LEAF1_MATCH(K1, _)) ->
+    is_defined_LEAF1(Key, K1);
+is_defined(_Key, ?LEAF0_MATCH_ALL) ->
+    false;
+is_defined(Key, Root) ->
+    is_defined_recur(Key, Root).
+
 iterator(Root, ordered) ->
     fwd_iterator(Root);
 iterator(Root, reversed) ->
@@ -632,6 +643,15 @@ largest(?LEAF0_MATCH) ->
     error_empty_tree();
 largest(Root) ->
     largest_recur(Root).
+
+lookup(Key, ?INTERNAL1_MATCH_ALL) ->
+    lookup_INTERNAL1(Key, ?INTERNAL1_ARGS);
+lookup(Key, ?LEAF1_MATCH_ALL) ->
+    lookup_LEAF1(Key, ?LEAF1_ARGS);
+lookup(Key, ?LEAF0_MATCH_ALL) ->
+    error_badkey(Key);
+lookup(Key, Root) ->
+    lookup_recur(Key, Root).
 
 map(Fun, ?INTERNAL1_MATCH_ALL) ->
     ?new_INTERNAL1(
@@ -2764,6 +2784,8 @@ leaf_rebalance_insert_left(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, Updat
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
+% FIXME refactor/clean up the new insertion rebalance functions
+
 -compile({inline, maybe_rebalance_insert_right/6}).
 maybe_rebalance_insert_right(Node, Pos, Args, ParentK, ParentV, Right) ->
     case Args of
@@ -3450,6 +3472,192 @@ split_leaf(
     SplitR = ?new_LEAF2(K4, K5, V4, V5),
 
     {split, SplitK, SplitV, SplitL, SplitR}.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: is_defined/2
+%% ------------------------------------------------------------------
+
+is_defined_recur(Key, Node) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH(K1, K2, _, _, C1, C2, C3) ->
+            is_defined_INTERNAL2(Key, K1, K2, C1, C2, C3);
+        %
+        ?INTERNAL3_MATCH(K1, K2, K3, _, _, _, C1, C2, C3, C4) ->
+            is_defined_INTERNAL3(Key, K1, K2, K3, C1, C2, C3, C4);
+        %
+        ?INTERNAL4_MATCH(K1, K2, K3, K4, _, _, _, _, C1, C2, C3, C4, C5) ->
+            is_defined_INTERNAL4(Key, K1, K2, K3, K4, C1, C2, C3, C4, C5);
+        %
+        ?LEAF2_MATCH(K1, K2, _, _) ->
+            is_defined_LEAF2(Key, K1, K2);
+        %
+        ?LEAF3_MATCH(K1, K2, K3, _, _, _) ->
+            is_defined_LEAF3(Key, K1, K2, K3);
+        %
+        ?LEAF4_MATCH(K1, K2, K3, K4, _, _, _, _) ->
+            is_defined_LEAF4(Key, K1, K2, K3, K4)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, is_defined_INTERNAL4/10}).
+is_defined_INTERNAL4(Key, K1, K2, K3, K4, C1, C2, C3, C4, C5) ->
+    if
+        Key > K2 ->
+            %
+            if
+                Key < K4 ->
+                    %
+                    if
+                        Key > K3 ->
+                            is_defined_recur(Key, C4);
+                        %
+                        Key < K3 ->
+                            is_defined_recur(Key, C3);
+                        %
+                        true ->
+                            true
+                    end;
+                %
+                Key > K4 ->
+                    is_defined_recur(Key, C5);
+                %
+                true ->
+                    true
+            end;
+        %
+        Key < K2 ->
+            %
+            if
+                Key < K1 ->
+                    is_defined_recur(Key, C1);
+                %
+                Key > K1 ->
+                    is_defined_recur(Key, C2);
+                %
+                true ->
+                    true
+            end;
+        %
+        true ->
+            true
+    end.
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, is_defined_INTERNAL3/8}).
+is_defined_INTERNAL3(Key, K1, K2, K3, C1, C2, C3, C4) ->
+    if
+        Key < K2 ->
+            %
+            if
+                Key < K1 ->
+                    is_defined_recur(Key, C1);
+                %
+                Key > K1 ->
+                    is_defined_recur(Key, C2);
+                %
+                true ->
+                    true
+            end;
+        %
+        Key > K2 ->
+            %
+            if
+                Key < K3 ->
+                    is_defined_recur(Key, C3);
+                %
+                Key > K3 ->
+                    is_defined_recur(Key, C4);
+                %
+                true ->
+                    true
+            end;
+        %
+        true ->
+            true
+    end.
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, is_defined_INTERNAL2/6}).
+is_defined_INTERNAL2(Key, K1, K2, C1, C2, C3) ->
+    if
+        Key > K1 ->
+            %
+            if
+                Key < K2 ->
+                    is_defined_recur(Key, C2);
+                %
+                Key > K2 ->
+                    is_defined_recur(Key, C3);
+                %
+                true ->
+                    true
+            end;
+        %
+        Key < K1 ->
+            is_defined_recur(Key, C1);
+        %
+        true ->
+            true
+    end.
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, is_defined_INTERNAL1/4}).
+is_defined_INTERNAL1(Key, K1, C1, C2) ->
+    if
+        Key < K1 ->
+            is_defined_recur(Key, C1);
+        %
+        Key > K1 ->
+            is_defined_recur(Key, C2);
+        %
+        true ->
+            true
+    end.
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, is_defined_LEAF4/5}).
+is_defined_LEAF4(Key, K1, K2, K3, K4) ->
+    Key == K1 orelse Key == K2 orelse Key == K3 orelse Key == K4.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, is_defined_LEAF3/4}).
+is_defined_LEAF3(Key, K1, K2, K3) ->
+    Key == K1 orelse Key == K2 orelse Key == K3.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, is_defined_LEAF2/3}).
+is_defined_LEAF2(Key, K1, K2) ->
+    Key == K1 orelse Key == K2.
+
+%%
+%% ?LEAF1
+%%
+
+-compile({inline, is_defined_LEAF1/2}).
+is_defined_LEAF1(Key, K1) ->
+    Key == K1.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - forward
@@ -4297,6 +4505,234 @@ largest_recur(Node) ->
         %
         ?LEAF4_MATCH(_, _, _, K4, _, _, _, V4) ->
             {K4, V4}
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: lookup/2
+%% ------------------------------------------------------------------
+
+lookup_recur(Key, Node) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            lookup_INTERNAL2(Key, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            lookup_INTERNAL3(Key, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            lookup_INTERNAL4(Key, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            lookup_LEAF2(Key, ?LEAF2_ARGS);
+        %
+        ?LEAF3_MATCH_ALL ->
+            lookup_LEAF3(Key, ?LEAF3_ARGS);
+        %
+        ?LEAF4_MATCH_ALL ->
+            lookup_LEAF4(Key, ?LEAF4_ARGS)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, lookup_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
+lookup_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
+    if
+        Key > K2 ->
+            %
+            if
+                Key < K4 ->
+                    %
+                    if
+                        Key > K3 ->
+                            lookup_recur(Key, C4);
+                        %
+                        Key < K3 ->
+                            lookup_recur(Key, C3);
+                        %
+                        true ->
+                            {value, V3}
+                    end;
+                %
+                Key > K4 ->
+                    lookup_recur(Key, C5);
+                %
+                true ->
+                    {value, V4}
+            end;
+        %
+        Key < K2 ->
+            %
+            if
+                Key < K1 ->
+                    lookup_recur(Key, C1);
+                %
+                Key > K1 ->
+                    lookup_recur(Key, C2);
+                %
+                true ->
+                    {value, V1}
+            end;
+        %
+        true ->
+            {value, V2}
+    end.
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, lookup_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
+lookup_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
+    if
+        Key < K2 ->
+            %
+            if
+                Key < K1 ->
+                    lookup_recur(Key, C1);
+                %
+                Key > K1 ->
+                    lookup_recur(Key, C2);
+                %
+                true ->
+                    {value, V1}
+            end;
+        %
+        Key > K2 ->
+            %
+            if
+                Key < K3 ->
+                    lookup_recur(Key, C3);
+                %
+                Key > K3 ->
+                    lookup_recur(Key, C4);
+                %
+                true ->
+                    {value, V3}
+            end;
+        %
+        true ->
+            {value, V2}
+    end.
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, lookup_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
+lookup_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
+    if
+        Key > K1 ->
+            %
+            if
+                Key < K2 ->
+                    lookup_recur(Key, C2);
+                %
+                Key > K2 ->
+                    lookup_recur(Key, C3);
+                %
+                true ->
+                    {value, V2}
+            end;
+        %
+        Key < K1 ->
+            lookup_recur(Key, C1);
+        %
+        true ->
+            {value, V1}
+    end.
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, lookup_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+lookup_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
+    if
+        Key < K1 ->
+            lookup_recur(Key, C1);
+        %
+        Key > K1 ->
+            lookup_recur(Key, C2);
+        %
+        true ->
+            {value, V1}
+    end.
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, lookup_LEAF4 / ?LEAF4_ARITY_PLUS1}).
+lookup_LEAF4(Key, ?LEAF4_ARGS) ->
+    if
+        Key == K1 ->
+            {value, V1};
+        %
+        Key == K2 ->
+            {value, V2};
+        %
+        Key == K3 ->
+            {value, V3};
+        %
+        Key == K4 ->
+            {value, V4};
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, lookup_LEAF3 / ?LEAF3_ARITY_PLUS1}).
+lookup_LEAF3(Key, ?LEAF3_ARGS) ->
+    if
+        Key == K1 ->
+            {value, V1};
+        %
+        Key == K2 ->
+            {value, V2};
+        %
+        Key == K3 ->
+            {value, V3};
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, lookup_LEAF2 / ?LEAF2_ARITY_PLUS1}).
+lookup_LEAF2(Key, ?LEAF2_ARGS) ->
+    if
+        Key == K1 ->
+            {value, V1};
+        %
+        Key == K2 ->
+            {value, V2};
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF1
+%%
+
+-compile({inline, lookup_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+lookup_LEAF1(Key, ?LEAF1_ARGS) ->
+    if
+        Key == K1 ->
+            {value, V1};
+        %
+        true ->
+            none
     end.
 
 %% ------------------------------------------------------------------
@@ -6204,6 +6640,7 @@ eval_update_value(Type, Wrap, Prev) ->
             Wrap;
         %
         lazy ->
+            % FIXME do we still need this?
             Wrap(Prev)
     end.
 

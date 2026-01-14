@@ -127,11 +127,15 @@ delete(Key, #b5_trees{root = Root, size = Size} = Tree) ->
     }.
 
 %% TODO test
-delete_any(Key, Tree) ->
-    try
-        delete(Key, Tree)
-    catch
-        error:{badkey, K} when K =:= Key ->
+delete_any(Key, #b5_trees{root = Root, size = Size} = Tree) ->
+    case b5_trees_node:is_defined(Key, Root) of
+        true ->
+            Tree#b5_trees{
+                root = b5_trees_node:delete(Key, Root),
+                size = Size - 1
+            };
+        %
+        false ->
             Tree
     end.
 
@@ -151,11 +155,12 @@ Returns the new tree.
 -endif.
 -spec enter(Key, Value, tree(Key, Value)) -> tree(Key, Value).
 enter(Key, Value, #b5_trees{size = Size, root = Root} = Tree) ->
-    try b5_trees_node:update(Key, eager, Value, Root) of
-        UpdatedRoot ->
-            Tree#b5_trees{root = UpdatedRoot}
-    catch
-        error:{badkey, K} when K =:= Key ->
+    case b5_trees_node:is_defined(Key, Root) of
+        true ->
+            UpdatedRoot = b5_trees_node:update(Key, eager, Value, Root),
+            Tree#b5_trees{root = UpdatedRoot};
+        %
+        false ->
             Tree#b5_trees{
                 root = b5_trees_node:insert(Key, eager, Value, Root),
                 size = Size + 1
@@ -248,14 +253,8 @@ insert_with(Key, Fun, #b5_trees{size = Size, root = Root} = Tree) ->
 -doc "Returns `true` if `Key` is present in `Tree`, otherwise `false`.".
 -endif.
 -spec is_defined(Key, tree(Key, _)) -> boolean().
-is_defined(Key, Tree) ->
-    try get(Key, Tree) of
-        _ ->
-            true
-    catch
-        error:{badkey, K} when K =:= Key ->
-            false
-    end.
+is_defined(Key, #b5_trees{root = Root}) ->
+    b5_trees_node:is_defined(Key, Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc "Returns `true` if `Tree` is an empty tree, otherwise `false`.".
@@ -361,14 +360,8 @@ Returns `{value, Value}`, or `none` if the key is not present.
 """.
 -endif.
 -spec lookup(Key, Tree) -> {value, Value} | none when Tree :: tree(Key, Value).
-lookup(Key, Tree) ->
-    try get(Key, Tree) of
-        Value ->
-            {value, Value}
-    catch
-        error:{badkey, K} when K =:= Key ->
-            none
-    end.
+lookup(Key, #b5_trees{root = Root}) ->
+    b5_trees_node:lookup(Key, Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -455,11 +448,16 @@ Returns `error` if the node with the key is not present in the tree.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take_any(Key, Tree) ->
-    try
-        take(Key, Tree)
-    catch
-        error:{badkey, K} when K =:= Key ->
+take_any(Key, #b5_trees{size = Size, root = Root} = Tree) ->
+    case b5_trees_node:is_defined(Key, Root) of
+        true ->
+            [TakenPair | UpdatedRoot] = b5_trees_node:take(Key, Root),
+            UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
+
+            [_ | Value] = TakenPair,
+            {Value, UpdatedTree};
+        %
+        false ->
             error
     end.
 
@@ -555,11 +553,13 @@ If the key does not exist, `Init` is inserted as the value.
     Tree2 :: tree(Key, Value | Value2 | Init).
 
 update_with(Key, Fun, Init, #b5_trees{root = Root} = Tree) ->
-    try b5_trees_node:update(Key, lazy, Fun, Root) of
-        UpdatedRoot ->
-            Tree#b5_trees{root = UpdatedRoot}
-    catch
-        error:{badkey, K} when K =:= Key ->
+    case b5_trees_node:lookup(Key, Root) of
+        {value, PrevValue} ->
+            UpdatedValue = Fun(PrevValue),
+            UpdatedRoot = b5_trees_node:update(Key, eager, UpdatedValue, Root),
+            Tree#b5_trees{root = UpdatedRoot};
+        %
+        none ->
             Tree#b5_trees{
                 root = b5_trees_node:insert(Key, eager, Init, Root),
                 size = Tree#b5_trees.size + 1

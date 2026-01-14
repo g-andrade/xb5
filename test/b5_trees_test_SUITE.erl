@@ -149,6 +149,7 @@ test_from_list_repeated_keys(_Config) ->
 test_get_operations(_Config) ->
     EmptyTree = b5_trees:new(),
     ?assertError({badkey, foobar}, b5_trees:get(foobar, EmptyTree)),
+    ?assertEqual(false, b5_trees:is_defined(foobar, EmptyTree)),
 
     %% Test with multiple tree sizes
     b5_trees_test_helpers:for_each_tree(
@@ -161,7 +162,8 @@ test_get_operations(_Config) ->
                 fun(Key, ExpectedValue, _) ->
                     logger:notice("Key: ~p", [Key]),
                     Key2 = b5_trees_test_helpers:randomly_switch_key_type(Key),
-                    ?assertEqual(ExpectedValue, b5_trees:get(Key2, Tree))
+                    ?assertEqual(ExpectedValue, b5_trees:get(Key2, Tree)),
+                    ?assertEqual(true, b5_trees:is_defined(Key2, Tree))
                 end,
                 ok,
                 ExistentMap
@@ -170,7 +172,8 @@ test_get_operations(_Config) ->
             %% Test non-existent keys
             lists:foreach(
                 fun(Key) ->
-                    ?assertError({badkey, Key}, b5_trees:get(Key, Tree))
+                    ?assertError({badkey, Key}, b5_trees:get(Key, Tree)),
+                    ?assertEqual(false, b5_trees:is_defined(Key, Tree))
                 end,
                 b5_trees_test_helpers:take_random(NonExistentKeys, 10)
             )
