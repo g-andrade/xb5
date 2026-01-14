@@ -126,7 +126,6 @@ delete(Key, #b5_trees{root = Root, size = Size} = Tree) ->
         size = Size - 1
     }.
 
-%% TODO test
 delete_any(Key, #b5_trees{root = Root, size = Size} = Tree) ->
     case b5_trees_node:is_defined(Key, Root) of
         true ->

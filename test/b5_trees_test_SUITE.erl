@@ -504,6 +504,7 @@ test_smallest_largest_operations(_Config) ->
 test_delete_operations(_Config) ->
     EmptyTree = b5_trees:new(),
     ?assertError({badkey, foobar}, b5_trees:delete(foobar, EmptyTree)),
+    ?assertEqual(EmptyTree, b5_trees:delete_any(foobar, EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
         ?REGULAR_TREE_SIZES,
@@ -843,12 +844,14 @@ test_delete_each(Tree, ExistentMap, NonExistentKeys) ->
                 maps:to_list(maps:remove(Key, ExistentMap)), fun({K, _}) -> K end
             ),
             Tree2 = b5_trees:delete(DeleteKey, Tree),
+            ?assertEqual(Tree2, b5_trees:delete_any(DeleteKey, Tree)),
 
             ?assertEqual(ExpectedListAfter, b5_trees:to_list(Tree2)),
             ?assertEqual(maps:size(ExistentMap) - 1, b5_trees:size(Tree2)),
             ?assertEqual(maps:size(ExistentMap) =:= 1, b5_trees:is_empty(Tree2)),
 
             ?assertError({badkey, Key}, b5_trees:delete(Key, Tree2)),
+            ?assertEqual(Tree2, b5_trees:delete_any(Key, Tree2)),
 
             NonExistentSample = b5_trees_test_helpers:take_random(NonExistentKeys, 20),
             lists:foreach(
@@ -856,7 +859,10 @@ test_delete_each(Tree, ExistentMap, NonExistentKeys) ->
                     NonExistentKey2 = b5_trees_test_helpers:randomly_switch_key_type(
                         NonExistentKey
                     ),
-                    ?assertError({badkey, NonExistentKey2}, b5_trees:delete(NonExistentKey2, Tree2))
+                    ?assertError(
+                        {badkey, NonExistentKey2}, b5_trees:delete(NonExistentKey2, Tree2)
+                    ),
+                    ?assertEqual(Tree2, b5_trees:delete_any(NonExistentKey2, Tree2))
                 end,
                 NonExistentSample
             )
@@ -874,6 +880,7 @@ test_delete_all(Tree, ExistentMap, NonExistentKeys) ->
 test_delete_all_impl(Tree, [{Key, _ExpectedV} | Next], ElementsToExpected, NonExistentKeys) ->
     DeleteKey = b5_trees_test_helpers:randomly_switch_key_type(Key),
     Tree2 = b5_trees:delete(DeleteKey, Tree),
+    ?assertEqual(Tree2, b5_trees:delete_any(DeleteKey, Tree)),
 
     ElementsToExpected2 = lists:keydelete(Key, 1, ElementsToExpected),
     ?assertEqual(ElementsToExpected2, b5_trees:to_list(Tree2)),
@@ -881,12 +888,14 @@ test_delete_all_impl(Tree, [{Key, _ExpectedV} | Next], ElementsToExpected, NonEx
     ?assertEqual(ElementsToExpected2 =:= [], b5_trees:is_empty(Tree2)),
 
     ?assertError({badkey, Key}, b5_trees:delete(Key, Tree2)),
+    ?assertEqual(Tree2, b5_trees:delete_any(Key, Tree)),
 
     NonExistentSample = b5_trees_test_helpers:take_random(NonExistentKeys, 20),
     lists:foreach(
         fun(NonExistentKey) ->
             NonExistentKey2 = b5_trees_test_helpers:randomly_switch_key_type(NonExistentKey),
-            ?assertError({badkey, NonExistentKey2}, b5_trees:delete(NonExistentKey2, Tree2))
+            ?assertError({badkey, NonExistentKey2}, b5_trees:delete(NonExistentKey2, Tree2)),
+            ?assertEqual(Tree2, b5_trees:delete_any(NonExistentKey2, Tree2))
         end,
         NonExistentSample
     ),
@@ -901,7 +910,8 @@ test_delete_all_impl(Tree, [], [], NonExistentKeys) ->
     lists:foreach(
         fun(NonExistentKey) ->
             NonExistentKey2 = b5_trees_test_helpers:randomly_switch_key_type(NonExistentKey),
-            ?assertError({badkey, NonExistentKey2}, b5_trees:delete(NonExistentKey2, Tree))
+            ?assertError({badkey, NonExistentKey2}, b5_trees:delete(NonExistentKey2, Tree)),
+            ?assertEqual(Tree, b5_trees:delete_any(NonExistentKey2, Tree))
         end,
         NonExistentSample
     ).
