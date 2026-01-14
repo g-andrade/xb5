@@ -84,8 +84,6 @@
 
 % empty root
 -define(LEAF0, leaf0).
--define(LEAF0_MATCH, leaf0).
--define(LEAF0_MATCH_ALL, leaf0).
 
 %%%%%%%%
 
@@ -521,7 +519,7 @@ delete(Key, ?INTERNAL1_MATCH_ALL) ->
     delete_INTERNAL1(Key, ?INTERNAL1_ARGS);
 delete(Key, ?LEAF1_MATCH(K1, _)) ->
     delete_LEAF1(Key, K1);
-delete(Key, ?LEAF0_MATCH_ALL) ->
+delete(Key, ?LEAF0) ->
     error_badkey(Key);
 delete(Key, Root) ->
     delete_recur(Key, Root).
@@ -532,7 +530,7 @@ foldl(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
     foldl_recur(Fun, Acc3, C2);
 foldl(Fun, Acc, ?LEAF1_MATCH_ALL) ->
     Fun(K1, V1, Acc);
-foldl(_Fun, Acc, ?LEAF0_MATCH_ALL) ->
+foldl(_Fun, Acc, ?LEAF0) ->
     Acc;
 foldl(Fun, Acc, Root) ->
     foldl_recur(Fun, Acc, Root).
@@ -543,7 +541,7 @@ foldr(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
     foldr_recur(Fun, Acc3, C1);
 foldr(Fun, Acc, ?LEAF1_MATCH_ALL) ->
     Fun(K1, V1, Acc);
-foldr(_Fun, Acc, ?LEAF0_MATCH_ALL) ->
+foldr(_Fun, Acc, ?LEAF0) ->
     Acc;
 foldr(Fun, Acc, Root) ->
     foldr_recur(Fun, Acc, Root).
@@ -552,7 +550,7 @@ get(Key, ?INTERNAL1_MATCH_ALL) ->
     get_INTERNAL1(Key, ?INTERNAL1_ARGS);
 get(Key, ?LEAF1_MATCH_ALL) ->
     get_LEAF1(Key, ?LEAF1_ARGS);
-get(Key, ?LEAF0_MATCH_ALL) ->
+get(Key, ?LEAF0) ->
     error_badkey(Key);
 get(Key, Root) ->
     get_recur(Key, Root).
@@ -561,7 +559,7 @@ insert(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
     insert_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
 insert(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
     insert_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-insert(Key, ValueEval, ValueWrap, ?LEAF0_MATCH_ALL) ->
+insert(Key, ValueEval, ValueWrap, ?LEAF0) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
     ?new_LEAF1(Key, Value);
 insert(Key, ValueEval, ValueWrap, Root) ->
@@ -577,7 +575,7 @@ is_defined(Key, ?INTERNAL1_MATCH(K1, _, C1, C2)) ->
     is_defined_INTERNAL1(Key, K1, C1, C2);
 is_defined(Key, ?LEAF1_MATCH(K1, _)) ->
     is_defined_LEAF1(Key, K1);
-is_defined(_Key, ?LEAF0_MATCH_ALL) ->
+is_defined(_Key, ?LEAF0) ->
     false;
 is_defined(Key, Root) ->
     is_defined_recur(Key, Root).
@@ -598,7 +596,7 @@ keys(?INTERNAL1_MATCH(K1, _, C1, C2)) ->
     keys_recur(C1, [K1 | keys_recur(C2, [])]);
 keys(?LEAF1_MATCH(K1, _)) ->
     [K1];
-keys(?LEAF0_MATCH) ->
+keys(?LEAF0) ->
     [];
 keys(Root) ->
     keys_recur(Root, []).
@@ -607,7 +605,7 @@ larger(Key, ?INTERNAL1_MATCH_ALL) ->
     larger_INTERNAL1(Key, ?INTERNAL1_ARGS);
 larger(Key, ?LEAF1_MATCH_ALL) ->
     larger_LEAF1(Key, ?LEAF1_ARGS);
-larger(_Key, ?LEAF0_MATCH_ALL) ->
+larger(_Key, ?LEAF0) ->
     none;
 larger(Key, Root) ->
     larger_recur(Key, Root).
@@ -616,7 +614,7 @@ largest(?INTERNAL1_MATCH(_, _, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1_MATCH(K1, V1)) ->
     {K1, V1};
-largest(?LEAF0_MATCH) ->
+largest(?LEAF0) ->
     error_empty_tree();
 largest(Root) ->
     largest_recur(Root).
@@ -625,7 +623,7 @@ lookup(Key, ?INTERNAL1_MATCH_ALL) ->
     lookup_INTERNAL1(Key, ?INTERNAL1_ARGS);
 lookup(Key, ?LEAF1_MATCH_ALL) ->
     lookup_LEAF1(Key, ?LEAF1_ARGS);
-lookup(Key, ?LEAF0_MATCH_ALL) ->
+lookup(Key, ?LEAF0) ->
     error_badkey(Key);
 lookup(Key, Root) ->
     lookup_recur(Key, Root).
@@ -641,7 +639,7 @@ map(Fun, ?INTERNAL1_MATCH_ALL) ->
     );
 map(Fun, ?LEAF1_MATCH_ALL) ->
     ?new_LEAF1(K1, Fun(K1, V1));
-map(_Fun, ?LEAF0_MATCH) ->
+map(_Fun, ?LEAF0) ->
     ?LEAF0;
 map(Fun, Root) ->
     map_recur(Fun, Root).
@@ -658,7 +656,7 @@ smaller(Key, ?INTERNAL1_MATCH_ALL) ->
     smaller_INTERNAL1(Key, ?INTERNAL1_ARGS);
 smaller(Key, ?LEAF1_MATCH_ALL) ->
     smaller_LEAF1(Key, ?LEAF1_ARGS);
-smaller(_Key, ?LEAF0_MATCH_ALL) ->
+smaller(_Key, ?LEAF0) ->
     none;
 smaller(Key, Root) ->
     smaller_recur(Key, Root).
@@ -667,7 +665,7 @@ smallest(?INTERNAL1_MATCH(_, _, C1, _)) ->
     smallest_recur(C1);
 smallest(?LEAF1_MATCH(K1, V1)) ->
     {K1, V1};
-smallest(?LEAF0_MATCH) ->
+smallest(?LEAF0) ->
     error_empty_tree();
 smallest(Root) ->
     smallest_recur(Root).
@@ -699,7 +697,7 @@ structural_stats(Root) ->
             Acc3 = structural_stats_set_height(Height, Acc2),
             return_structural_stats(Acc3);
         %
-        ?LEAF0_MATCH ->
+        ?LEAF0 ->
             return_structural_stats(Acc);
         %
         _ ->
@@ -712,7 +710,7 @@ take(Key, ?INTERNAL1_MATCH_ALL) ->
     take_INTERNAL1(Key, ?INTERNAL1_ARGS);
 take(Key, ?LEAF1_MATCH_ALL) ->
     take_LEAF1(Key, ?LEAF1_ARGS);
-take(Key, ?LEAF0_MATCH_ALL) ->
+take(Key, ?LEAF0) ->
     error_badkey(Key);
 take(Key, Root) ->
     take_recur(Key, Root).
@@ -721,7 +719,7 @@ take_largest(?INTERNAL1_MATCH_ALL) ->
     take_largest_INTERNAL1(?INTERNAL1_ARGS);
 take_largest(?LEAF1_MATCH_ALL) ->
     take_largest_LEAF1(?LEAF1_ARGS);
-take_largest(?LEAF0_MATCH_ALL) ->
+take_largest(?LEAF0) ->
     error_empty_tree();
 take_largest(Root) ->
     take_largest_recur(Root).
@@ -730,7 +728,7 @@ take_smallest(?INTERNAL1_MATCH_ALL) ->
     take_smallest_INTERNAL1(?INTERNAL1_ARGS);
 take_smallest(?LEAF1_MATCH_ALL) ->
     take_smallest_LEAF1(?LEAF1_ARGS);
-take_smallest(?LEAF0_MATCH_ALL) ->
+take_smallest(?LEAF0) ->
     error_empty_tree();
 take_smallest(Root) ->
     take_smallest_recur(Root).
@@ -741,7 +739,7 @@ to_list(?INTERNAL1_MATCH_ALL) ->
     to_list_recur(C1, Acc3);
 to_list(?LEAF1_MATCH_ALL) ->
     [{K1, V1}];
-to_list(?LEAF0_MATCH_ALL) ->
+to_list(?LEAF0) ->
     [];
 to_list(Root) ->
     to_list_recur(Root, []).
@@ -750,7 +748,7 @@ update(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
     update_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
 update(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
     update_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-update(Key, _ValueEval, _ValueWrap, ?LEAF0_MATCH_ALL) ->
+update(Key, _ValueEval, _ValueWrap, ?LEAF0) ->
     error_badkey(Key);
 update(Key, ValueEval, ValueWrap, Root) ->
     update_recur(Key, ValueEval, ValueWrap, Root).
@@ -759,7 +757,7 @@ values(?INTERNAL1_MATCH(_, V1, C1, C2)) ->
     values_recur(C1, [V1 | values_recur(C2, [])]);
 values(?LEAF1_MATCH(_, V1)) ->
     [V1];
-values(?LEAF0_MATCH) ->
+values(?LEAF0) ->
     [];
 values(Root) ->
     values_recur(Root, []).
@@ -2945,7 +2943,7 @@ fwd_iterator(?INTERNAL1_MATCH_ALL) ->
 fwd_iterator(?LEAF1_MATCH_ALL) ->
     Iter = [?ITER_PAIR(K1, V1)],
     Iter;
-fwd_iterator(?LEAF0_MATCH) ->
+fwd_iterator(?LEAF0) ->
     Iter = [],
     Iter;
 fwd_iterator(Root) ->
@@ -3005,7 +3003,7 @@ rev_iterator(?INTERNAL1_MATCH_ALL) ->
 rev_iterator(?LEAF1_MATCH_ALL) ->
     Iter = [?ITER_PAIR(K1, V1)],
     Iter;
-rev_iterator(?LEAF0_MATCH) ->
+rev_iterator(?LEAF0) ->
     Iter = [],
     Iter;
 rev_iterator(Root) ->
@@ -3067,7 +3065,7 @@ bound_fwd_iterator(Key, Root) ->
         ?LEAF1_MATCH_ALL ->
             bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS);
         %
-        ?LEAF0_MATCH ->
+        ?LEAF0 ->
             Iter = [],
             Iter;
         %
@@ -3286,7 +3284,7 @@ bound_rev_iterator(Key, Root) ->
         ?LEAF1_MATCH_ALL ->
             bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS);
         %
-        ?LEAF0_MATCH ->
+        ?LEAF0 ->
             Iter = [],
             Iter;
         %
