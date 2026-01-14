@@ -6,6 +6,7 @@
 
 -export([
     delete/2,
+    delete_any/2,
     empty/0,
     enter/3,
     foldl/3,
@@ -43,6 +44,7 @@
 
 -ignore_xref([
     delete/2,
+    delete_any/2,
     empty/0,
     enter/3,
     foldl/3,
@@ -123,6 +125,15 @@ delete(Key, #b5_trees{root = Root, size = Size} = Tree) ->
         root = b5_trees_node:delete(Key, Root),
         size = Size - 1
     }.
+
+%% TODO test
+delete_any(Key, Tree) ->
+    try
+        delete(Key, Tree)
+    catch
+        error:{badkey, K} when K =:= Key ->
+            Tree
+    end.
 
 % TODO make this hidden, merely a convenience function
 -if(?OTP_RELEASE >= 27).
