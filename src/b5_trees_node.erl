@@ -1,6 +1,8 @@
 % TODO document
 -module(b5_trees_node).
 
+-include("src/b5_structural_stats.hrl").
+
 -export([
     delete/2,
     foldl/3,
@@ -372,10 +374,10 @@
     | node_LEAF3(Key, Value)
     | node_LEAF2(Key, Value)).
 
-%-type non_empty_node(Key, Value) ::
-%    (node_INTERNAL1(Key, Value)
-%    | node_LEAF1(Key, Value)
-%    | deep_node(Key, Value)).
+-type nonempty_node(Key, Value) ::
+    (node_INTERNAL1(Key, Value)
+    | node_LEAF1(Key, Value)
+    | deep_node(Key, Value)).
 
 -type node_INTERNAL4(Key, Value) ::
     (?INTERNAL4(
@@ -451,7 +453,7 @@
 
 -type node_LEAF2(Key, Value) :: ?LEAF2(Key, Key, Value, Value).
 
--type node_LEAF1(Key, Value) :: nonempty_improper_list(Key, Value).
+-type node_LEAF1(Key, Value) :: ?LEAF1(Key, Value).
 
 %%%%%%%%%%%
 
@@ -473,48 +475,44 @@
 
 %%%%%%%%%%%
 
-% -type split_result(Key) :: split_internal_result(Key) | leaf_split_result(Key).
-%
-% -type split_internal_result(Key) :: split_result(
-%     Key, node_INTERNAL2(Key), node_INTERNAL2(Key)
-% ).
-%
-% -type leaf_split_result(Key) :: split_result(
-%     Key, node_LEAF2(Key), node_LEAF2(Key)
-% ).
-%
-% -type split_result(Key, SplitL, SplitR) :: ?SPLIT(Key, SplitL, SplitR).
+% -type split_result(Key, Value) :: split_internal_result(Key, Value) | split_leaf_result(Key, Value).
+
+-type split_internal_result(Key, Value) :: split_result(
+    Key, Value, node_INTERNAL2(Key, Value), node_INTERNAL2(Key, Value)
+).
+
+-type split_leaf_result(Key, Value) :: split_result(
+    Key, Value, node_LEAF2(Key, Value), node_LEAF2(Key, Value)
+).
+
+-type split_result(Key, Value, SplitL, SplitR) :: {split, Key, Value, SplitL, SplitR}.
 
 %%%%%%%%%%%
 
-% -opaque iter(Key) :: forward_iter(Key) | reverse_iter(Key).
-% -export_type([iter/1]).
-%
-% -type forward_iter(Key) :: [iterator_step(Key)].
-% -type reverse_iter(Key) :: nonempty_improper_list(reversed, [iterator_step(Key)]).
-
-% -type iterator_step(Key) :: kv_pair(Key) | deep_node(Key).
+-type take_result(Key, Value) :: nonempty_improper_list(kv_pair(Key, Value), t(Key, Value)).
+-export_type([take_result/2]).
 
 %%%%%%%%%%%
+
+-opaque iter(Key, Value) :: forward_iter(Key, Value) | reverse_iter(Key, Value).
+-export_type([iter/2]).
+
+-type forward_iter(Key, Value) :: [iterator_step(Key, Value)].
+-type reverse_iter(Key, Value) :: nonempty_improper_list(reversed, [iterator_step(Key, Value)]).
+
+-type iterator_step(Key, Value) :: kv_pair(Key, Value) | deep_node(Key, Value).
+
+%%%%%%%%%%%
+
+-type kv_pair(Key, Value) :: nonempty_improper_list(Key, Value).
 
 %%%%%%%%%%%%
-
--record(stats_acc, {
-    count_internal4,
-    count_internal3,
-    count_internal2,
-    count_internal1,
-    count_leaf4,
-    count_leaf3,
-    count_leaf2,
-    count_leaf1,
-    height
-}).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-spec delete(Key, t(Key, Value)) -> t(Key, Value).
 delete(Key, ?INTERNAL1_MATCH_ALL) ->
     delete_INTERNAL1(Key, ?INTERNAL1_ARGS);
 delete(Key, ?LEAF1_MATCH(K1, _)) ->
@@ -524,6 +522,11 @@ delete(Key, ?LEAF0) ->
 delete(Key, Root) ->
     delete_recur(Key, Root).
 
+-spec foldl(fun((Key, Value, Acc2) -> Acc1), Acc0, t(Key, Value)) -> AccN when
+    Acc0 :: term(),
+    Acc1 :: term(),
+    Acc2 :: term(),
+    AccN :: term().
 foldl(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
     Acc2 = foldl_recur(Fun, Acc, C1),
     Acc3 = Fun(K1, V1, Acc2),
@@ -535,6 +538,11 @@ foldl(_Fun, Acc, ?LEAF0) ->
 foldl(Fun, Acc, Root) ->
     foldl_recur(Fun, Acc, Root).
 
+-spec foldr(fun((Key, Value, Acc2) -> Acc1), Acc0, t(Key, Value)) -> AccN when
+    Acc0 :: term(),
+    Acc1 :: term(),
+    Acc2 :: term(),
+    AccN :: term().
 foldr(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
     Acc2 = foldr_recur(Fun, Acc, C2),
     Acc3 = Fun(K1, V1, Acc2),
@@ -546,6 +554,7 @@ foldr(_Fun, Acc, ?LEAF0) ->
 foldr(Fun, Acc, Root) ->
     foldr_recur(Fun, Acc, Root).
 
+-spec get(Key, t(Key, Value)) -> Value.
 get(Key, ?INTERNAL1_MATCH_ALL) ->
     get_INTERNAL1(Key, ?INTERNAL1_ARGS);
 get(Key, ?LEAF1_MATCH_ALL) ->
@@ -555,6 +564,9 @@ get(Key, ?LEAF0) ->
 get(Key, Root) ->
     get_recur(Key, Root).
 
+-spec insert
+    (Key, eager, Value, t(Key, Value)) -> t(Key, Value);
+    (Key, lazy, fun(() -> Value), t(Key, Value)) -> t(Key, Value).
 insert(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
     insert_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
 insert(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
@@ -571,6 +583,7 @@ insert(Key, ValueEval, ValueWrap, Root) ->
             UpdatedRoot
     end.
 
+-spec is_defined(Key, t(Key, _)) -> boolean().
 is_defined(Key, ?INTERNAL1_MATCH(K1, _, C1, C2)) ->
     is_defined_INTERNAL1(Key, K1, C1, C2);
 is_defined(Key, ?LEAF1_MATCH(K1, _)) ->
@@ -580,18 +593,21 @@ is_defined(_Key, ?LEAF0) ->
 is_defined(Key, Root) ->
     is_defined_recur(Key, Root).
 
+-spec iterator(t(Key, Value), ordered | reversed) -> iter(Key, Value).
 iterator(Root, ordered) ->
     fwd_iterator(Root);
 iterator(Root, reversed) ->
     Acc = rev_iterator(Root),
     [?REV_ITER_TAG | Acc].
 
+-spec iterator_from(Key, t(Key, Value), ordered | reversed) -> iter(Key, Value).
 iterator_from(Key, Root, ordered) ->
     bound_fwd_iterator(Key, Root);
 iterator_from(Key, Root, reversed) ->
     Acc = bound_rev_iterator(Key, Root),
     [?REV_ITER_TAG | Acc].
 
+-spec keys(t(Key, _)) -> [Key].
 keys(?INTERNAL1_MATCH(K1, _, C1, C2)) ->
     keys_recur(C1, [K1 | keys_recur(C2, [])]);
 keys(?LEAF1_MATCH(K1, _)) ->
@@ -601,6 +617,7 @@ keys(?LEAF0) ->
 keys(Root) ->
     keys_recur(Root, []).
 
+-spec larger(Key, t(Key, Value)) -> {Key, Value} | none.
 larger(Key, ?INTERNAL1_MATCH_ALL) ->
     larger_INTERNAL1(Key, ?INTERNAL1_ARGS);
 larger(Key, ?LEAF1_MATCH_ALL) ->
@@ -610,6 +627,7 @@ larger(_Key, ?LEAF0) ->
 larger(Key, Root) ->
     larger_recur(Key, Root).
 
+-spec largest(t(Key, Value)) -> {Key, Value}.
 largest(?INTERNAL1_MATCH(_, _, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1_MATCH(K1, V1)) ->
@@ -619,6 +637,7 @@ largest(?LEAF0) ->
 largest(Root) ->
     largest_recur(Root).
 
+-spec lookup(Key, t(Key, Value)) -> {value, Value} | none.
 lookup(Key, ?INTERNAL1_MATCH_ALL) ->
     lookup_INTERNAL1(Key, ?INTERNAL1_ARGS);
 lookup(Key, ?LEAF1_MATCH_ALL) ->
@@ -628,6 +647,7 @@ lookup(Key, ?LEAF0) ->
 lookup(Key, Root) ->
     lookup_recur(Key, Root).
 
+-spec map(fun((Key, Value) -> MappedValue), t(Key, Value)) -> t(Key, MappedValue).
 map(Fun, ?INTERNAL1_MATCH_ALL) ->
     ?new_INTERNAL1(
         K1,
@@ -644,6 +664,7 @@ map(_Fun, ?LEAF0) ->
 map(Fun, Root) ->
     map_recur(Fun, Root).
 
+-spec new() -> t(term(), term()).
 new() ->
     ?LEAF0.
 
@@ -652,6 +673,7 @@ next([Head | Tail]) ->
 next([]) ->
     none.
 
+-spec smaller(Key, t(Key, Value)) -> {Key, Value} | none.
 smaller(Key, ?INTERNAL1_MATCH_ALL) ->
     smaller_INTERNAL1(Key, ?INTERNAL1_ARGS);
 smaller(Key, ?LEAF1_MATCH_ALL) ->
@@ -661,6 +683,7 @@ smaller(_Key, ?LEAF0) ->
 smaller(Key, Root) ->
     smaller_recur(Key, Root).
 
+-spec smallest(t(Key, Value)) -> {Key, Value}.
 smallest(?INTERNAL1_MATCH(_, _, C1, _)) ->
     smallest_recur(C1);
 smallest(?LEAF1_MATCH(K1, V1)) ->
@@ -670,42 +693,34 @@ smallest(?LEAF0) ->
 smallest(Root) ->
     smallest_recur(Root).
 
+-spec structural_stats(t(_, _)) -> b5_structural_stats:t().
 structural_stats(Root) ->
-    Acc = #stats_acc{
-        count_internal4 = 0,
-        count_internal3 = 0,
-        count_internal2 = 0,
-        count_internal1 = 0,
-        count_leaf4 = 0,
-        count_leaf3 = 0,
-        count_leaf2 = 0,
-        count_leaf1 = 0,
-        height = 0
-    },
+    Acc = b5_structural_stats:new(),
 
     case Root of
         ?INTERNAL1_MATCH(_, _, C1, C2) ->
             Height = 1,
-            Acc2 = structural_stats_inc(#stats_acc.count_internal1, Acc),
+            Acc2 = b5_structural_stats:inc(#stats_acc.count_internal1, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
-            return_structural_stats(Acc4);
+            b5_structural_stats:return(Acc4);
         %
         ?LEAF1_MATCH(_, _) ->
             Height = 1,
-            Acc2 = structural_stats_inc(#stats_acc.count_leaf1, Acc),
-            Acc3 = structural_stats_set_height(Height, Acc2),
-            return_structural_stats(Acc3);
+            Acc2 = b5_structural_stats:inc(#stats_acc.count_leaf1, Acc),
+            Acc3 = b5_structural_stats:set_height(Height, Acc2),
+            b5_structural_stats:return(Acc3);
         %
         ?LEAF0 ->
-            return_structural_stats(Acc);
+            b5_structural_stats:return(Acc);
         %
         _ ->
             Height = 1,
             Acc2 = structural_stats_recur(Root, Acc, Height),
-            return_structural_stats(Acc2)
+            b5_structural_stats:return(Acc2)
     end.
 
+-spec take(Key, t(Key, Value)) -> take_result(Key, Value) | no_return().
 take(Key, ?INTERNAL1_MATCH_ALL) ->
     take_INTERNAL1(Key, ?INTERNAL1_ARGS);
 take(Key, ?LEAF1_MATCH_ALL) ->
@@ -715,6 +730,7 @@ take(Key, ?LEAF0) ->
 take(Key, Root) ->
     take_recur(Key, Root).
 
+-spec take_largest(t(Key, Value)) -> take_result(Key, Value).
 take_largest(?INTERNAL1_MATCH_ALL) ->
     take_largest_INTERNAL1(?INTERNAL1_ARGS);
 take_largest(?LEAF1_MATCH_ALL) ->
@@ -724,6 +740,7 @@ take_largest(?LEAF0) ->
 take_largest(Root) ->
     take_largest_recur(Root).
 
+-spec take_smallest(t(Key, Value)) -> take_result(Key, Value).
 take_smallest(?INTERNAL1_MATCH_ALL) ->
     take_smallest_INTERNAL1(?INTERNAL1_ARGS);
 take_smallest(?LEAF1_MATCH_ALL) ->
@@ -733,6 +750,7 @@ take_smallest(?LEAF0) ->
 take_smallest(Root) ->
     take_smallest_recur(Root).
 
+-spec to_list(t(Key, Value)) -> [{Key, Value}].
 to_list(?INTERNAL1_MATCH_ALL) ->
     Acc2 = to_list_recur(C2, []),
     Acc3 = [{K1, V1} | Acc2],
@@ -744,6 +762,9 @@ to_list(?LEAF0) ->
 to_list(Root) ->
     to_list_recur(Root, []).
 
+-spec update
+    (Key, eager, Value, t(Key, _)) -> t(Key, Value);
+    (Key, lazy, fun((PrevValue) -> Value), t(Key, PrevValue)) -> t(Key, Value).
 update(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
     update_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
 update(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
@@ -753,6 +774,7 @@ update(Key, _ValueEval, _ValueWrap, ?LEAF0) ->
 update(Key, ValueEval, ValueWrap, Root) ->
     update_recur(Key, ValueEval, ValueWrap, Root).
 
+-spec values(t(_, Value)) -> [Value].
 values(?INTERNAL1_MATCH(_, V1, C1, C2)) ->
     values_recur(C1, [V1 | values_recur(C2, [])]);
 values(?LEAF1_MATCH(_, V1)) ->
@@ -767,14 +789,17 @@ values(Root) ->
 %% ------------------------------------------------------------------
 
 -compile({inline, error_badkey/1}).
+-spec error_badkey(term()) -> no_return().
 error_badkey(Key) ->
     error({badkey, Key}).
 
 -compile({inline, error_empty_tree/0}).
+-spec error_empty_tree() -> no_return().
 error_empty_tree() ->
     error(empty_tree).
 
 -compile({inline, error_key_exists/1}).
+-spec error_key_exists(term()) -> no_return().
 error_key_exists(Key) ->
     error({key_exists, Key}).
 
@@ -2696,6 +2721,27 @@ eval_insert_value(Type, Wrap) ->
 %% Split
 %%
 
+-spec split_internal(
+    K,
+    K,
+    K,
+    K,
+    K,
+    %
+    V,
+    V,
+    V,
+    V,
+    V,
+    %
+    C,
+    C,
+    C,
+    C,
+    C,
+    C
+) -> split_internal_result(K, V) when
+    C :: nonempty_node(K, V).
 -compile({inline, split_internal/16}).
 split_internal(
     K1,
@@ -2725,6 +2771,19 @@ split_internal(
 
     {split, SplitK, SplitV, SplitL, SplitR}.
 
+-spec split_leaf(
+    K,
+    K,
+    K,
+    K,
+    K,
+    %
+    V,
+    V,
+    V,
+    V,
+    V
+) -> split_leaf_result(K, V).
 -compile({inline, split_leaf/10}).
 split_leaf(
     K1,
@@ -4367,138 +4426,38 @@ smallest_recur(Node) ->
 structural_stats_recur(Node, Acc, Height) ->
     case Node of
         ?LEAF2_MATCH(_, _, _, _) ->
-            Acc2 = structural_stats_inc(#stats_acc.count_leaf2, Acc),
-            structural_stats_set_height(Height, Acc2);
+            Acc2 = b5_structural_stats:inc(#stats_acc.count_leaf2, Acc),
+            b5_structural_stats:set_height(Height, Acc2);
         %
         ?LEAF3_MATCH(_, _, _, _, _, _) ->
-            Acc2 = structural_stats_inc(#stats_acc.count_leaf3, Acc),
-            structural_stats_set_height(Height, Acc2);
+            Acc2 = b5_structural_stats:inc(#stats_acc.count_leaf3, Acc),
+            b5_structural_stats:set_height(Height, Acc2);
         %
         ?LEAF4_MATCH(_, _, _, _, _, _, _, _) ->
-            Acc2 = structural_stats_inc(#stats_acc.count_leaf4, Acc),
-            structural_stats_set_height(Height, Acc2);
+            Acc2 = b5_structural_stats:inc(#stats_acc.count_leaf4, Acc),
+            b5_structural_stats:set_height(Height, Acc2);
         %
         ?INTERNAL2_MATCH(_, _, _, _, C1, C2, C3) ->
-            Acc2 = structural_stats_inc(#stats_acc.count_internal2, Acc),
+            Acc2 = b5_structural_stats:inc(#stats_acc.count_internal2, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             _Acc5 = structural_stats_recur(C3, Acc4, Height + 1);
         %
         ?INTERNAL3_MATCH(_, _, _, _, _, _, C1, C2, C3, C4) ->
-            Acc2 = structural_stats_inc(#stats_acc.count_internal3, Acc),
+            Acc2 = b5_structural_stats:inc(#stats_acc.count_internal3, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             Acc5 = structural_stats_recur(C3, Acc4, Height + 1),
             _Acc6 = structural_stats_recur(C4, Acc5, Height + 1);
         %
         ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, C1, C2, C3, C4, C5) ->
-            Acc2 = structural_stats_inc(#stats_acc.count_internal4, Acc),
+            Acc2 = b5_structural_stats:inc(#stats_acc.count_internal4, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             Acc5 = structural_stats_recur(C3, Acc4, Height + 1),
             Acc6 = structural_stats_recur(C4, Acc5, Height + 1),
             _Acc7 = structural_stats_recur(C5, Acc6, Height + 1)
     end.
-
-structural_stats_set_height(Height, #stats_acc{height = RecordHeight} = Acc) ->
-    case RecordHeight of
-        _ when RecordHeight < Height ->
-            Acc#stats_acc{height = Height};
-        %
-        _ when RecordHeight =:= Height ->
-            Acc
-    end.
-
--compile({inline, structural_stats_inc/2}).
-structural_stats_inc(Pos, #stats_acc{} = Acc) ->
-    setelement(Pos, Acc, element(Pos, Acc) + 1).
-
-return_structural_stats(#stats_acc{} = Acc) ->
-    NodeCounts = node_counts(Acc),
-    NodePercentages = node_percentages(NodeCounts),
-    TotalKeys = total_keys(NodeCounts),
-    KeyPercentages = key_percentages(NodeCounts, TotalKeys),
-
-    [
-        {height, Acc#stats_acc.height},
-        {node_counts, NodeCounts},
-        {node_percentages, NodePercentages},
-        {total_keys, TotalKeys},
-        {key_percentages, KeyPercentages}
-    ].
-
-node_counts(#stats_acc{} = Acc) ->
-    [
-        {internal4, Acc#stats_acc.count_internal4},
-        {internal3, Acc#stats_acc.count_internal3},
-        {internal2, Acc#stats_acc.count_internal2},
-        {internal1, Acc#stats_acc.count_internal1},
-        {leaf4, Acc#stats_acc.count_leaf4},
-        {leaf3, Acc#stats_acc.count_leaf3},
-        {leaf2, Acc#stats_acc.count_leaf2},
-        {leaf1, Acc#stats_acc.count_leaf1}
-    ].
-
-node_percentages(NodeCounts) ->
-    Sum = lists:foldl(
-        fun({_Type, Count}, Acc) ->
-            Acc + Count
-        end,
-        0,
-        NodeCounts
-    ),
-
-    %%%
-
-    case Sum of
-        0 ->
-            lists:map(fun({Type, _Count}) -> {Type, 0.0} end, NodeCounts);
-        %
-        TotalCount ->
-            lists:map(
-                fun({Type, Count}) ->
-                    {Type, round_percentage(100.0 * Count / TotalCount)}
-                end,
-                NodeCounts
-            )
-    end.
-
-total_keys(NodeCounts) ->
-    lists:foldl(
-        fun({NodeType, Count}, Acc) ->
-            Acc + (Count * total_keys_in_node_type(NodeType))
-        end,
-        0,
-        NodeCounts
-    ).
-
-key_percentages(NodeCounts, 0 = _TotalKeys) ->
-    lists:map(
-        fun({NodeType, 0}) ->
-            {NodeType, 0.0}
-        end,
-        NodeCounts
-    );
-key_percentages(NodeCounts, TotalKeys) ->
-    lists:map(
-        fun({NodeType, Count}) ->
-            TotalNodeTypeKeys = Count * total_keys_in_node_type(NodeType),
-            {NodeType, round_percentage(100.0 * TotalNodeTypeKeys / TotalKeys)}
-        end,
-        NodeCounts
-    ).
-
-round_percentage(Percentage) ->
-    binary_to_float(float_to_binary(Percentage, [{decimals, 1}])).
-
-total_keys_in_node_type(internal4) -> 4;
-total_keys_in_node_type(internal3) -> 3;
-total_keys_in_node_type(internal2) -> 2;
-total_keys_in_node_type(internal1) -> 1;
-total_keys_in_node_type(leaf4) -> 4;
-total_keys_in_node_type(leaf3) -> 3;
-total_keys_in_node_type(leaf2) -> 2;
-total_keys_in_node_type(leaf1) -> 1.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: take/2
