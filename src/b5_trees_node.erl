@@ -625,6 +625,7 @@ lookup(Key, ?INTERNAL1_MATCH_ALL) ->
 lookup(Key, ?LEAF1_MATCH_ALL) ->
     lookup_LEAF1(Key, ?LEAF1_ARGS);
 lookup(Key, ?LEAF0) ->
+    % FIXME return none, ensure coverage
     error_badkey(Key);
 lookup(Key, Root) ->
     lookup_recur(Key, Root).
