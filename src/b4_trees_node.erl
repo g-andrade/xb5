@@ -104,7 +104,7 @@
     {UpKey, UpValue, UpdatedLeft, UpdatedRight}
 ).
 
--define(MERGED(MergedNode), (MergedNode)).
+-define(MERGED(MergedNode), [MergedNode]).
 
 %%%%%%%
 
@@ -231,7 +231,7 @@
 %%
 
 % defined(TEST)).
--define(NODE_CHECK_ENABLED, true).
+-define(NODE_CHECK_ENABLED, false).
 
 -if(?NODE_CHECK_ENABLED).
 -define(CHECK_NODE(Node), check_node(?LINE, Node)).
@@ -381,7 +381,8 @@
 delete(Key, ?LEAF0) ->
     error_badkey(Key);
 delete(Key, Root) ->
-    delete_recur(Key, Root).
+    UpdatedRoot = delete_recur(Key, Root),
+    maybe_lower_height_after_delete(UpdatedRoot).
 
 -spec foldl(fun((Key, Value, Acc2) -> Acc1), Acc0, t(Key, Value)) -> AccN when
     Acc0 :: term(),
@@ -469,6 +470,8 @@ lookup(Key, Root) ->
     lookup_recur(Key, Root).
 
 -spec map(fun((Key, Value) -> MappedValue), t(Key, Value)) -> t(Key, MappedValue).
+map(_Fun, ?LEAF0) ->
+    ?LEAF0;
 map(Fun, Root) ->
     map_recur(Fun, Root).
 
@@ -511,19 +514,22 @@ structural_stats(Root) ->
 take(Key, ?LEAF0) ->
     error_badkey(Key);
 take(Key, Root) ->
-    take_recur(Key, Root).
+    Result = take_recur(Key, Root),
+    maybe_lower_height_after_take(Result).
 
 -spec take_largest(t(Key, Value)) -> take_result(Key, Value).
 take_largest(?LEAF0) ->
     error_empty_tree();
 take_largest(Root) ->
-    take_largest_recur(Root).
+    Result = take_largest_recur(Root),
+    maybe_lower_height_after_take(Result).
 
 -spec take_smallest(t(Key, Value)) -> take_result(Key, Value).
 take_smallest(?LEAF0) ->
     error_empty_tree();
 take_smallest(Root) ->
-    take_smallest_recur(Root).
+    Result = take_smallest_recur(Root),
+    maybe_lower_height_after_take(Result).
 
 -spec to_list(t(Key, Value)) -> [{Key, Value}].
 to_list(?LEAF0) ->
@@ -1625,7 +1631,7 @@ insert_split_root(Pos, {split, SplitK, SplitV, SplitL, SplitR}, Root) ->
                     C2,
                     C3,
                     SplitL,
-                  SplitR
+                    SplitR
                 )
         end,
 
@@ -1635,7 +1641,7 @@ insert_split_root(Pos, {split, SplitK, SplitV, SplitL, SplitR}, Root) ->
 %% ?LEAF3
 %%
 
--compile({inline, insert_LEAF3 / 6}).
+-compile({inline, insert_LEAF3/6}).
 insert_LEAF3(Key, ValueEval, ValueWrap, K1, K2, K3) ->
     if
         Key < K2 ->
@@ -2812,13 +2818,13 @@ map_recur(Fun, Node) ->
         %
         ?INTERNAL1_MATCH_ALL ->
             ?new_INTERNAL1(
-               K1,
-               %
-               Fun(K1, V1),
-               %
-               map_recur(Fun, C1),
-               map_recur(Fun, C2)
-              )
+                K1,
+                %
+                Fun(K1, V1),
+                %
+                map_recur(Fun, C1),
+                map_recur(Fun, C2)
+            )
     end.
 
 %% ------------------------------------------------------------------
@@ -4130,7 +4136,6 @@ ins_rebalance_into_left_internal(
     ParentV,
     Left
 ) ->
-    % TODO INTERNAL1
     case Left of
         ?INTERNAL2_MATCH(
             LK1,
@@ -4181,6 +4186,42 @@ ins_rebalance_into_left_internal(
         %
         %
         %
+        ?INTERNAL1_MATCH(LK1, LV1, LC1, LC2) ->
+            UpKey = K1,
+            UpValue = V1,
+
+            UpdatedLeft = ?new_INTERNAL2(
+                LK1,
+                ParentK,
+                %
+                LV1,
+                ParentV,
+                %
+                LC1,
+                LC2,
+                C1
+            ),
+
+            UpdatedNode = ?new_INTERNAL3(
+                K2,
+                K3,
+                K4,
+                %
+                V2,
+                V3,
+                V4,
+                %
+                C2,
+                C3,
+                C4,
+                C5
+            ),
+
+            {UpKey, UpValue, UpdatedLeft, UpdatedNode};
+        %
+        %
+        %
+        %
         _ ->
             split_internal(
                 K1,
@@ -4203,10 +4244,13 @@ ins_rebalance_into_left_internal(
 
 -compile({inline, ins_rebalance_into_left_leaf_maybe/7}).
 ins_rebalance_into_left_leaf_maybe(Node, Pos, NewKey, NewValue, ParentK, ParentV, Left) ->
-    % TODO LEAF1
     case Left of
         ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
             UpdatedLeft = ?new_LEAF3(LK1, LK2, ParentK, LV1, LV2, ParentV),
+            ins_rebalance_into_left_leaf(Node, Pos, NewKey, NewValue, UpdatedLeft);
+        %
+        ?LEAF1_MATCH(LK1, LV1) ->
+            UpdatedLeft = ?new_LEAF2(LK1, ParentK, LV1, ParentV),
             ins_rebalance_into_left_leaf(Node, Pos, NewKey, NewValue, UpdatedLeft);
         %
         _ ->
@@ -4431,7 +4475,6 @@ ins_rebalance_into_right_internal(
     ParentV,
     Right
 ) ->
-    % TODO INTERNAL1
     case Right of
         ?INTERNAL2_MATCH(
             RK1,
@@ -4482,6 +4525,42 @@ ins_rebalance_into_right_internal(
         %
         %
         %
+        ?INTERNAL1_MATCH(RK1, RV1, RC1, RC2) ->
+            UpKey = K4,
+            UpValue = V4,
+
+            UpdatedNode = ?new_INTERNAL3(
+                K1,
+                K2,
+                K3,
+                %
+                V1,
+                V2,
+                V3,
+                %
+                C1,
+                C2,
+                C3,
+                C4
+            ),
+
+            UpdatedRight = ?new_INTERNAL2(
+                ParentK,
+                RK1,
+                %
+                ParentV,
+                RV1,
+                %
+                C5,
+                RC1,
+                RC2
+            ),
+
+            {UpKey, UpValue, UpdatedNode, UpdatedRight};
+        %
+        %
+        %
+        %
         _ ->
             split_internal(
                 K1,
@@ -4504,10 +4583,13 @@ ins_rebalance_into_right_internal(
 
 -compile({inline, ins_rebalance_into_right_leaf_maybe/7}).
 ins_rebalance_into_right_leaf_maybe(Node, Pos, NewKey, NewValue, ParentK, ParentV, Right) ->
-    % TODO LEAF1
     case Right of
         ?LEAF2_MATCH(RK1, RK2, RV1, RV2) ->
             UpdatedRight = ?new_LEAF3(ParentK, RK1, RK2, ParentV, RV1, RV2),
+            ins_rebalance_into_right_leaf(Node, Pos, NewKey, NewValue, UpdatedRight);
+        %
+        ?LEAF1_MATCH(RK1, RV1) ->
+            UpdatedRight = ?new_LEAF2(ParentK, RK1, ParentV, RV1),
             ins_rebalance_into_right_leaf(Node, Pos, NewKey, NewValue, UpdatedRight);
         %
         _ ->
@@ -4602,12 +4684,17 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL3_C2 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
-    case del_rebalance_maybe_from_either_sibling(
-           C2,
-           %
-           K1, V1, C1,
-           %
-           K2, V2, C3
+    case
+        del_rebalance_maybe_from_either_sibling(
+            C2,
+            %
+            K1,
+            V1,
+            C1,
+            %
+            K2,
+            V2,
+            C3
         )
     of
         no ->
@@ -4618,22 +4705,28 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
                 with_left ->
                     % MergedC1C2
                     ?new_INTERNAL2(
-                       K2, K3,
-                       %
-                       V2, V3,
-                       %
-                       MergedNode,
-                       C3,
-                       C4
+                        K2,
+                        K3,
+                        %
+                        V2,
+                        V3,
+                        %
+                        MergedNode,
+                        C3,
+                        C4
                     );
                 _ ->
                     % MergedC2C3
                     ?new_INTERNAL2(
-                       K1, K3,
-                       %
-                       V1, V3,
-                       %
-                       C1, MergedNode, C4
+                        K1,
+                        K3,
+                        %
+                        V1,
+                        V3,
+                        %
+                        C1,
+                        MergedNode,
+                        C4
                     )
             end;
         %
@@ -4660,12 +4753,17 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL3_C3 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
-    case del_rebalance_maybe_from_either_sibling(
-           C3,
-           %
-           K2, V2, C2,
-           %
-           K3, V3, C4
+    case
+        del_rebalance_maybe_from_either_sibling(
+            C3,
+            %
+            K2,
+            V2,
+            C2,
+            %
+            K3,
+            V3,
+            C4
         )
     of
         no ->
@@ -4674,22 +4772,30 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
         ?MID_MERGED(Direction, MergedNode) ->
             case Direction of
                 with_left ->
+                    % MergedC2C3
                     ?new_INTERNAL2(
-                       K1, K3,
-                       %
-                       V1, V3,
-                       %
-                       C1,
-                       MergedNode,
-                       C4
+                        K1,
+                        K3,
+                        %
+                        V1,
+                        V3,
+                        %
+                        C1,
+                        MergedNode,
+                        C4
                     );
                 _ ->
+                    % MergedC3C4
                     ?new_INTERNAL2(
-                       K1, K2,
-                       %
-                       V1, V2,
-                       %
-                       C1, C2, MergedNode
+                        K1,
+                        K2,
+                        %
+                        V1,
+                        V2,
+                        %
+                        C1,
+                        C2,
+                        MergedNode
                     )
             end;
         %
@@ -4787,12 +4893,17 @@ del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL2_C2 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
-    case del_rebalance_maybe_from_either_sibling(
-           C2,
-           %
-           K1, V1, C1,
-           %
-           K2, V2, C3
+    case
+        del_rebalance_maybe_from_either_sibling(
+            C2,
+            %
+            K1,
+            V1,
+            C1,
+            %
+            K2,
+            V2,
+            C3
         )
     of
         no ->
@@ -4802,19 +4913,19 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
             case Direction of
                 with_left ->
                     ?new_INTERNAL1(
-                       K2,
-                       V2,
-                       MergedNode,
-                       C3
+                        K2,
+                        V2,
+                        MergedNode,
+                        C3
                     );
                 %
                 _ ->
                     ?new_INTERNAL1(
-                       K1,
-                       V1,
-                       C1,
-                       MergedNode
-                      )
+                        K1,
+                        V1,
+                        C1,
+                        MergedNode
+                    )
             end;
         %
         ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedC1, RebalancedC2) ->
@@ -4837,7 +4948,7 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL2_C3 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
-    case del_rebalance_maybe_from_left_sibling(C3, K2, V1, C2) of
+    case del_rebalance_maybe_from_left_sibling(C3, K2, V2, C2) of
         no ->
             ?INTERNAL2_C3(C3);
         %
@@ -4877,7 +4988,7 @@ del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
 del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, K1, V1, C2) of
         no ->
-            ?INTERNAL1_C2(C2);
+            ?INTERNAL1_C1(C1);
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
@@ -4909,49 +5020,49 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
 
 -compile({inline, del_rebalance_maybe_from_right_sibling/4}).
 del_rebalance_maybe_from_right_sibling(
-  Child,
-  %
-  RParentK,
-  RParentV,
-  Right
+    Child,
+    %
+    RParentK,
+    RParentV,
+    Right
 ) ->
     case Child of
         ?INTERNAL1_MATCH_ALL ->
             del_rebalance_INTERNAL1_from_right_sibling(
-              K1,
-              V1,
-              C1,
-              C2,
-              %
-              RParentK,
-              RParentV,
-              Right
+                K1,
+                V1,
+                C1,
+                C2,
+                %
+                RParentK,
+                RParentV,
+                Right
             );
         %
         ?INTERNAL0_MATCH_ALL ->
             del_rebalance_INTERNAL0_from_right_sibling(
-              C1,
-              %
-              RParentK,
-              RParentV,
-              Right
+                C1,
+                %
+                RParentK,
+                RParentV,
+                Right
             );
         %
         ?LEAF1_MATCH_ALL ->
             del_rebalance_LEAF1_from_right_sibling(
-              K1,
-              V1,
-              %
-              RParentK,
-              RParentV,
-              Right
+                K1,
+                V1,
+                %
+                RParentK,
+                RParentV,
+                Right
             );
         %
         ?LEAF0 ->
             del_rebalance_LEAF0_from_right_sibling(
-              RParentK,
-              RParentV,
-              Right
+                RParentK,
+                RParentV,
+                Right
             );
         %
         _ ->
@@ -4972,23 +5083,23 @@ del_rebalance_INTERNAL1_from_right_sibling(
     RParentK,
     RParentV,
     Right
- ) ->
+) ->
     case Right of
         ?INTERNAL1_MATCH(RK1, RV1, RC1, RC2) ->
             MergedNode = ?new_INTERNAL3(
-                            CKey,
-                            RParentK,
-                            RK1,
-                            %
-                            CValue,
-                            RParentV,
-                            RV1,
-                            %
-                            CLeft,
-                            CRight,
-                            RC1,
-                            RC2
-                           ),
+                CKey,
+                RParentK,
+                RK1,
+                %
+                CValue,
+                RParentV,
+                RV1,
+                %
+                CLeft,
+                CRight,
+                RC1,
+                RC2
+            ),
 
             ?MERGED(MergedNode);
         %
@@ -5005,16 +5116,16 @@ del_rebalance_LEAF1_from_right_sibling(CKey, CValue, RParentK, RParentV, Right) 
     case Right of
         ?LEAF1_MATCH(RK1, RV1) ->
             MergedNode = ?new_LEAF3(
-                            CKey,
-                            RParentK,
-                            RK1,
-                            %
-                            CValue,
-                            RParentV,
-                            RV1
-                           ),
+                CKey,
+                RParentK,
+                RK1,
+                %
+                CValue,
+                RParentV,
+                RV1
+            ),
 
-            ?MID_MERGED(with_right, MergedNode);
+            ?MERGED(MergedNode);
         %
         _ ->
             no
@@ -5148,49 +5259,49 @@ del_rebalance_LEAF0_from_right_sibling(RParentK, RParentV, Right) ->
 
 -compile({inline, del_rebalance_maybe_from_left_sibling/4}).
 del_rebalance_maybe_from_left_sibling(
-  Child,
-  %
-  LParentK,
-  LParentV,
-  Left
+    Child,
+    %
+    LParentK,
+    LParentV,
+    Left
 ) ->
     case Child of
         ?INTERNAL1_MATCH_ALL ->
             del_rebalance_INTERNAL1_from_left_sibling(
-              K1,
-              V1,
-              C1,
-              C2,
-              %
-              LParentK,
-              LParentV,
-              Left
+                K1,
+                V1,
+                C1,
+                C2,
+                %
+                LParentK,
+                LParentV,
+                Left
             );
         %
         ?INTERNAL0_MATCH_ALL ->
             del_rebalance_INTERNAL0_from_left_sibling(
-              C1,
-              %
-              LParentK,
-              LParentV,
-              Left
+                C1,
+                %
+                LParentK,
+                LParentV,
+                Left
             );
         %
         ?LEAF1_MATCH_ALL ->
             del_rebalance_LEAF1_from_left_sibling(
-              K1,
-              V1,
-              %
-              LParentK,
-              LParentV,
-              Left
+                K1,
+                V1,
+                %
+                LParentK,
+                LParentV,
+                Left
             );
         %
         ?LEAF0 ->
             del_rebalance_LEAF0_from_left_sibling(
-              LParentK,
-              LParentV,
-              Left
+                LParentK,
+                LParentV,
+                Left
             );
         %
         _ ->
@@ -5214,22 +5325,22 @@ del_rebalance_INTERNAL1_from_left_sibling(
 ) ->
     case Left of
         ?INTERNAL1_MATCH(LK1, LV1, LC1, LC2) ->
-                    MergedNode = ?new_INTERNAL3(
-                        LK1,
-                        LParentK,
-                        CKey,
-                        %
-                        LV1,
-                        LParentV,
-                        CValue,
-                        %
-                        LC1,
-                        LC2,
-                        CLeft,
-                        CRight
-                    ),
+            MergedNode = ?new_INTERNAL3(
+                LK1,
+                LParentK,
+                CKey,
+                %
+                LV1,
+                LParentV,
+                CValue,
+                %
+                LC1,
+                LC2,
+                CLeft,
+                CRight
+            ),
 
-                    ?MERGED(MergedNode);
+            ?MERGED(MergedNode);
         %
         _ ->
             no
@@ -5241,26 +5352,26 @@ del_rebalance_INTERNAL1_from_left_sibling(
 
 %-compile({inline, del_rebalance_leaf_from_left_sibling/5}).
 del_rebalance_LEAF1_from_left_sibling(
-  CKey,
-  CValue,
-  %
+    CKey,
+    CValue,
+    %
     LParentK,
     LParentV,
     Left
 ) ->
     case Left of
         ?LEAF1_MATCH(LK1, LV1) ->
-                    MergedNode = ?new_LEAF3(
-                        LK1,
-                        LParentK,
-                        CKey,
-                        %
-                        LV1,
-                        LParentV,
-                        CValue
-                    ),
+            MergedNode = ?new_LEAF3(
+                LK1,
+                LParentK,
+                CKey,
+                %
+                LV1,
+                LParentV,
+                CValue
+            ),
 
-                    ?MERGED(MergedNode);
+            ?MERGED(MergedNode);
         _ ->
             no
     end.
@@ -5335,6 +5446,7 @@ del_rebalance_INTERNAL0_from_left_sibling(
                 %
                 V1,
                 V2,
+                %
                 C1,
                 C2,
                 C3
@@ -5396,69 +5508,69 @@ del_rebalance_LEAF0_from_left_sibling(
 
 -compile({inline, del_rebalance_maybe_from_either_sibling/7}).
 del_rebalance_maybe_from_either_sibling(
-  Child,
-  %
-  LParentK,
-  LParentV,
-  Left,
-  %
-  RParentK,
-  RParentV,
-  Right
+    Child,
+    %
+    LParentK,
+    LParentV,
+    Left,
+    %
+    RParentK,
+    RParentV,
+    Right
 ) ->
     case Child of
         ?INTERNAL1_MATCH_ALL ->
             del_rebalance_INTERNAL1_from_either_sibling(
-              K1,
-              V1,
-              C1,
-              C2,
-              %
-              LParentK,
-              LParentV,
-              Left,
-              %
-              RParentK,
-              RParentV,
-              Right
+                K1,
+                V1,
+                C1,
+                C2,
+                %
+                LParentK,
+                LParentV,
+                Left,
+                %
+                RParentK,
+                RParentV,
+                Right
             );
         %
         ?INTERNAL0_MATCH_ALL ->
             del_rebalance_INTERNAL0_from_either_sibling(
-              C1,
-              %
-              LParentK,
-              LParentV,
-              Left,
-              %
-              RParentK,
-              RParentV,
-              Right
+                C1,
+                %
+                LParentK,
+                LParentV,
+                Left,
+                %
+                RParentK,
+                RParentV,
+                Right
             );
         %
         ?LEAF1_MATCH_ALL ->
             del_rebalance_LEAF1_from_either_sibling(
-              K1,
-              V1,
-              %
-              LParentK,
-              LParentV,
-              Left,
-              %
-              RParentK,
-              RParentV,
-              Right
+                K1,
+                V1,
+                %
+                LParentK,
+                LParentV,
+                Left,
+                %
+                RParentK,
+                RParentV,
+                Right
             );
         %
         ?LEAF0 ->
             del_rebalance_LEAF0_from_either_sibling(
-              LParentK,
-              LParentV,
-              Left,
-              %
-              RParentK,
-              RParentV,
-              Right
+                LParentK,
+                LParentV,
+                Left,
+                %
+                RParentK,
+                RParentV,
+                Right
             );
         %
         _ ->
@@ -5486,22 +5598,22 @@ del_rebalance_INTERNAL1_from_either_sibling(
 ) ->
     case Left of
         ?INTERNAL1_MATCH(LK1, LV1, LC1, LC2) ->
-                    MergedNode = ?new_INTERNAL3(
-                        LK1,
-                        LParentK,
-                        CKey,
-                        %
-                        LV1,
-                        LParentV,
-                        CValue,
-                        %
-                        LC1,
-                        LC2,
-                        CLeft,
-                        CRight
-                    ),
+            MergedNode = ?new_INTERNAL3(
+                LK1,
+                LParentK,
+                CKey,
+                %
+                LV1,
+                LParentV,
+                CValue,
+                %
+                LC1,
+                LC2,
+                CLeft,
+                CRight
+            ),
 
-                    ?MID_MERGED(with_left, MergedNode);
+            ?MID_MERGED(with_left, MergedNode);
         %
         %
         %
@@ -5550,17 +5662,17 @@ del_rebalance_LEAF1_from_either_sibling(
 ) ->
     case Left of
         ?LEAF1_MATCH(LK1, LV1) ->
-                    MergedNode = ?new_LEAF3(
-                        LK1,
-                        LParentK,
-                        CKey,
-                        %
-                        LV1,
-                        LParentV,
-                        CValue
-                    ),
+            MergedNode = ?new_LEAF3(
+                LK1,
+                LParentK,
+                CKey,
+                %
+                LV1,
+                LParentV,
+                CValue
+            ),
 
-                    ?MID_MERGED(with_left, MergedNode);
+            ?MID_MERGED(with_left, MergedNode);
         %
         %
         %
@@ -5643,19 +5755,19 @@ del_rebalance_INTERNAL0_from_either_sibling(
         %
         ?INTERNAL2_MATCH(LK1, LK2, LV1, LV2, LC1, LC2, LC3) ->
             MergedNode = ?new_INTERNAL3(
-                            LK1,
-                            LK2,
-                            LParentK,
-                            %
-                            LV1,
-                            LV2,
-                            LParentV,
-                            %
-                            LC1,
-                            LC2,
-                            LC3,
-                            Child
-                           ),
+                LK1,
+                LK2,
+                LParentK,
+                %
+                LV1,
+                LV2,
+                LParentV,
+                %
+                LC1,
+                LC2,
+                LC3,
+                Child
+            ),
 
             ?MID_MERGED(with_left, MergedNode);
         %
@@ -5663,7 +5775,6 @@ del_rebalance_INTERNAL0_from_either_sibling(
         %
         %
         ?INTERNAL3_MATCH(LK1, LK2, LK3, LV1, LV2, LV3, LC1, LC2, LC3, LC4) ->
-
             case Right of
                 ?INTERNAL2_MATCH(RK1, RK2, RV1, RV2, RC1, RC2, RC3) ->
                     MergedNode = ?new_INTERNAL3(
@@ -5689,25 +5800,25 @@ del_rebalance_INTERNAL0_from_either_sibling(
                     MovedC = LC4,
 
                     UpdatedNode = ?new_INTERNAL1(
-                                     LParentK,
-                                     %
-                                     LParentV,
-                                     %
-                                     MovedC,
-                                     Child
-                                    ),
+                        LParentK,
+                        %
+                        LParentV,
+                        %
+                        MovedC,
+                        Child
+                    ),
 
                     UpdatedLeft = ?new_INTERNAL2(
-                                     LK1,
-                                     LK2,
-                                     %
-                                     LV1,
-                                     LV2,
-                                     %
-                                     LC1,
-                                     LC2,
-                                     LC3
-                                    ),
+                        LK1,
+                        LK2,
+                        %
+                        LV1,
+                        LV2,
+                        %
+                        LC1,
+                        LC2,
+                        LC3
+                    ),
 
                     ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedLeft, UpdatedNode)
             end
@@ -5758,7 +5869,7 @@ del_rebalance_LEAF0_from_either_sibling(
         %
         ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
             MergedNode = ?new_LEAF3(
-                LK1, 
+                LK1,
                 LK2,
                 LParentK,
                 %
@@ -5788,7 +5899,7 @@ del_rebalance_LEAF0_from_either_sibling(
                 _ ->
                     UpKey = LK3,
                     UpValue = LV3,
-                    
+
                     UpdatedNode = ?new_LEAF1(
                         LParentK,
                         LParentV
@@ -5806,6 +5917,22 @@ del_rebalance_LEAF0_from_either_sibling(
             end
     end.
 
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Deletion - Lower Tree Height
+%% ------------------------------------------------------------------
+
+-compile({inline, maybe_lower_height_after_delete/1}).
+maybe_lower_height_after_delete(?INTERNAL0(NewRoot)) ->
+    NewRoot;
+maybe_lower_height_after_delete(UpdatedRoot) ->
+    UpdatedRoot.
+
+-compile({inline, maybe_lower_height_after_take/1}).
+maybe_lower_height_after_take(?TAKEN(Taken, ?INTERNAL0(NewRoot))) ->
+    ?TAKEN(Taken, NewRoot);
+maybe_lower_height_after_take(Result) ->
+    Result.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5819,15 +5946,20 @@ del_rebalance_LEAF0_from_either_sibling(
 
 check_node(LineNumber, Node) ->
     Type = node_type(Node),
-    List = to_list(Node),
-    MissortedKeys = check_node_keys(List),
+    try to_list(Node) of
+        List ->
+            MissortedKeys = check_node_keys(List),
 
-    case MissortedKeys of
-        [] ->
-            Node;
-        %
-        [_ | _] ->
-            fail_node_check(LineNumber, Type, Node, {missorted_keys, MissortedKeys})
+            case MissortedKeys of
+                [] ->
+                    Node;
+                %
+                [_ | _] ->
+                    fail_node_check(LineNumber, Type, Node, {missorted_keys, MissortedKeys})
+            end
+    catch
+        error:Reason:Stacktrace ->
+            fail_node_check(LineNumber, Type, Node, {error_converting_to_list, Reason, Stacktrace})
     end.
 
 node_type(Node) ->
