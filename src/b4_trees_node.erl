@@ -4137,51 +4137,51 @@ ins_rebalance_into_left_internal(
     Left
 ) ->
     case Left of
-        ?INTERNAL2_MATCH(
-            LK1,
-            LK2,
-            %
-            LV1,
-            LV2,
-            %
-            LC1,
-            LC2,
-            LC3
-        ) ->
-            UpKey = K1,
-            UpValue = V1,
-
-            UpdatedLeft = ?new_INTERNAL3(
-                LK1,
-                LK2,
-                ParentK,
-                %
-                LV1,
-                LV2,
-                ParentV,
-                %
-                LC1,
-                LC2,
-                LC3,
-                C1
-            ),
-
-            UpdatedNode = ?new_INTERNAL3(
-                K2,
-                K3,
-                K4,
-                %
-                V2,
-                V3,
-                V4,
-                %
-                C2,
-                C3,
-                C4,
-                C5
-            ),
-
-            {UpKey, UpValue, UpdatedLeft, UpdatedNode};
+        %        ?INTERNAL2_MATCH(
+        %            LK1,
+        %            LK2,
+        %            %
+        %            LV1,
+        %            LV2,
+        %            %
+        %            LC1,
+        %            LC2,
+        %            LC3
+        %        ) ->
+        %            UpKey = K1,
+        %            UpValue = V1,
+        %
+        %            UpdatedLeft = ?new_INTERNAL3(
+        %                LK1,
+        %                LK2,
+        %                ParentK,
+        %                %
+        %                LV1,
+        %                LV2,
+        %                ParentV,
+        %                %
+        %                LC1,
+        %                LC2,
+        %                LC3,
+        %                C1
+        %            ),
+        %
+        %            UpdatedNode = ?new_INTERNAL3(
+        %                K2,
+        %                K3,
+        %                K4,
+        %                %
+        %                V2,
+        %                V3,
+        %                V4,
+        %                %
+        %                C2,
+        %                C3,
+        %                C4,
+        %                C5
+        %            ),
+        %
+        %            {UpKey, UpValue, UpdatedLeft, UpdatedNode};
         %
         %
         %
@@ -4245,9 +4245,9 @@ ins_rebalance_into_left_internal(
 -compile({inline, ins_rebalance_into_left_leaf_maybe/7}).
 ins_rebalance_into_left_leaf_maybe(Node, Pos, NewKey, NewValue, ParentK, ParentV, Left) ->
     case Left of
-        ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
-            UpdatedLeft = ?new_LEAF3(LK1, LK2, ParentK, LV1, LV2, ParentV),
-            ins_rebalance_into_left_leaf(Node, Pos, NewKey, NewValue, UpdatedLeft);
+        %        ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
+        %            UpdatedLeft = ?new_LEAF3(LK1, LK2, ParentK, LV1, LV2, ParentV),
+        %            ins_rebalance_into_left_leaf(Node, Pos, NewKey, NewValue, UpdatedLeft);
         %
         ?LEAF1_MATCH(LK1, LV1) ->
             UpdatedLeft = ?new_LEAF2(LK1, ParentK, LV1, ParentV),
@@ -4476,51 +4476,51 @@ ins_rebalance_into_right_internal(
     Right
 ) ->
     case Right of
-        ?INTERNAL2_MATCH(
-            RK1,
-            RK2,
-            %
-            RV1,
-            RV2,
-            %
-            RC1,
-            RC2,
-            RC3
-        ) ->
-            UpKey = K4,
-            UpValue = V4,
-
-            UpdatedNode = ?new_INTERNAL3(
-                K1,
-                K2,
-                K3,
-                %
-                V1,
-                V2,
-                V3,
-                %
-                C1,
-                C2,
-                C3,
-                C4
-            ),
-
-            UpdatedRight = ?new_INTERNAL3(
-                ParentK,
-                RK1,
-                RK2,
-                %
-                ParentV,
-                RV1,
-                RV2,
-                %
-                C5,
-                RC1,
-                RC2,
-                RC3
-            ),
-
-            {UpKey, UpValue, UpdatedNode, UpdatedRight};
+        %        ?INTERNAL2_MATCH(
+        %            RK1,
+        %            RK2,
+        %            %
+        %            RV1,
+        %            RV2,
+        %            %
+        %            RC1,
+        %            RC2,
+        %            RC3
+        %        ) ->
+        %            UpKey = K4,
+        %            UpValue = V4,
+        %
+        %            UpdatedNode = ?new_INTERNAL3(
+        %                K1,
+        %                K2,
+        %                K3,
+        %                %
+        %                V1,
+        %                V2,
+        %                V3,
+        %                %
+        %                C1,
+        %                C2,
+        %                C3,
+        %                C4
+        %            ),
+        %
+        %            UpdatedRight = ?new_INTERNAL3(
+        %                ParentK,
+        %                RK1,
+        %                RK2,
+        %                %
+        %                ParentV,
+        %                RV1,
+        %                RV2,
+        %                %
+        %                C5,
+        %                RC1,
+        %                RC2,
+        %                RC3
+        %            ),
+        %
+        %            {UpKey, UpValue, UpdatedNode, UpdatedRight};
         %
         %
         %
@@ -4584,9 +4584,9 @@ ins_rebalance_into_right_internal(
 -compile({inline, ins_rebalance_into_right_leaf_maybe/7}).
 ins_rebalance_into_right_leaf_maybe(Node, Pos, NewKey, NewValue, ParentK, ParentV, Right) ->
     case Right of
-        ?LEAF2_MATCH(RK1, RK2, RV1, RV2) ->
-            UpdatedRight = ?new_LEAF3(ParentK, RK1, RK2, ParentV, RV1, RV2),
-            ins_rebalance_into_right_leaf(Node, Pos, NewKey, NewValue, UpdatedRight);
+        %?LEAF2_MATCH(RK1, RK2, RV1, RV2) ->
+        %    UpdatedRight = ?new_LEAF3(ParentK, RK1, RK2, ParentV, RV1, RV2),
+        %    ins_rebalance_into_right_leaf(Node, Pos, NewKey, NewValue, UpdatedRight);
         %
         ?LEAF1_MATCH(RK1, RV1) ->
             UpdatedRight = ?new_LEAF2(ParentK, RK1, ParentV, RV1),
