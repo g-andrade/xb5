@@ -2253,6 +2253,7 @@ insert_split_root(Pos, [NewKey | NewValue], Root) ->
     {split, SplitK, SplitV, SplitL, SplitR} =
         case Pos of
             1 ->
+                % FIXME unnecessary
                 split_leaf(
                     NewKey,
                     K1,
