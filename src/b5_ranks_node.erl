@@ -1,5 +1,5 @@
 % TODO document
--module(b5_trees_node).
+-module(b5_ranks_node).
 
 -include("src/b5_structural_stats.hrl").
 
@@ -34,39 +34,44 @@
 %% Macro Definitions: Nodes
 %% ------------------------------------------------------------------
 
-% 7 elements
--define(INTERNAL2(K1, K2, V1, V2, C1, C2, C3), {K1, K2, V1, V2, C1, C2, C3}).
--define(INTERNAL2_MATCH(K1, K2, V1, V2, C1, C2, C3), {K1, K2, V1, V2, C1, C2, C3}).
--define(INTERNAL2_MATCH_ALL, {K1, K2, V1, V2, C1, C2, C3}).
+% 9 elements
+-define(INTERNAL2(K1, K2, O1, O2, V1, V2, C1, C2, C3), {K1, K2, O1, O2, V1, V2, C1, C2, C3}).
+-define(INTERNAL2_MATCH(K1, K2, O1, O2, V1, V2, C1, C2, C3), {K1, K2, O1, O2, V1, V2, C1, C2, C3}).
+-define(INTERNAL2_MATCH_ALL, {K1, K2, O1, O2, V1, V2, C1, C2, C3}).
+-define(INTERNAL2_MATCH_IGN_SIZES, {K1, K2, _, _, V1, V2, C1, C2, C3}).
 
 % 4 elements
 -define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
 -define(LEAF2_MATCH(K1, K2, V1, V2), {K1, K2, V1, V2}).
 -define(LEAF2_MATCH_ALL, {K1, K2, V1, V2}).
 
-% 10 elements
--define(INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
-    {K1, K2, K3, V1, V2, V3, C1, C2, C3, C4}
+% 13 elements
+-define(INTERNAL3(K1, K2, K3, O1, O2, O3, V1, V2, V3, C1, C2, C3, C4),
+    {K1, K2, K3, O1, O2, O3, V1, V2, V3, C1, C2, C3, C4}
 ).
--define(INTERNAL3_MATCH(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
-    {K1, K2, K3, V1, V2, V3, C1, C2, C3, C4}
+-define(INTERNAL3_MATCH(K1, K2, K3, O1, O2, O3, V1, V2, V3, C1, C2, C3, C4),
+    {K1, K2, K3, O1, O2, O3, V1, V2, V3, C1, C2, C3, C4}
 ).
--define(INTERNAL3_MATCH_ALL, {K1, K2, K3, V1, V2, V3, C1, C2, C3, C4}).
+-define(INTERNAL3_MATCH_ALL, {K1, K2, K3, O1, O2, O3, V1, V2, V3, C1, C2, C3, C4}).
+-define(INTERNAL3_MATCH_IGN_SIZES, {K1, K2, K3, _, _, _, V1, V2, V3, C1, C2, C3, C4}).
 
 % 6 elements
 -define(LEAF3(K1, K2, K3, V1, V2, V3), {K1, K2, K3, V1, V2, V3}).
 -define(LEAF3_MATCH(K1, K2, K3, V1, V2, V3), {K1, K2, K3, V1, V2, V3}).
 -define(LEAF3_MATCH_ALL, {K1, K2, K3, V1, V2, V3}).
 
-% 13 elements
--define(INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
-    {K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
+% 17 elements
+-define(INTERNAL4(K1, K2, K3, K4, O1, O2, O3, O4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
+    {K1, K2, K3, K4, O1, O2, O3, O4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
 ).
--define(INTERNAL4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
-    {K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
+-define(INTERNAL4_MATCH(K1, K2, K3, K4, O1, O2, O3, O4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
+    {K1, K2, K3, K4, O1, O2, O3, O4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
 ).
 -define(INTERNAL4_MATCH_ALL,
-    {K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
+    {K1, K2, K3, K4, O1, O2, O3, O4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
+).
+-define(INTERNAL4_MATCH_IGN_SIZES,
+    {K1, K2, K3, K4, _, _, _, _, V1, V2, V3, V4, C1, C2, C3, C4, C5}
 ).
 
 % 8 elements
@@ -75,9 +80,10 @@
 -define(LEAF4_MATCH_ALL, {K1, K2, K3, K4, V1, V2, V3, V4}).
 
 % 5 elements
--define(INTERNAL1(K1, V1, C1, C2), {internal1, K1, V1, C1, C2}).
--define(INTERNAL1_MATCH(K1, V1, C1, C2), {_, K1, V1, C1, C2}).
--define(INTERNAL1_MATCH_ALL, {_, K1, V1, C1, C2}).
+-define(INTERNAL1(K1, V1, O1, C1, C2), {K1, V1, O1, C1, C2}).
+-define(INTERNAL1_MATCH(K1, V1, O1, C1, C2), {K1, V1, O1, C1, C2}).
+-define(INTERNAL1_MATCH_ALL, {K1, V1, O1, C1, C2}).
+-define(INTERNAL1_MATCH_IGN_SIZE, {K1, V1, _, C1, C2}).
 
 % 2 elements
 -define(LEAF1(K1, V1), {K1, V1}).
@@ -103,20 +109,20 @@
 -define(MID_MERGED(MergedNode), [MergedNode]).
 -define(MID_MERGED_MATCH(MergedNode), [MergedNode | _]).
 
-% 4 elements
--define(MID_ROTATED_FROM_RIGHT(UpKey, UpValue, UpdatedNode, UpdatedRight),
-    {UpKey, UpValue, UpdatedNode, UpdatedRight}
-).
 % 5 elements
--define(MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedNode, UpdatedRight),
-    {from_left, UpKey, UpValue, UpdatedNode, UpdatedRight}
+-define(MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight),
+    {UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight}
+).
+% 6 elements
+-define(MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight),
+    {from_left, UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight}
 ).
 
 %%%
 
-% 4 elements
--define(ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedRight),
-    {UpKey, UpValue, UpdatedLeft, UpdatedRight}
+% 5 elements
+-define(ROTATED(UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedRight),
+    {UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedRight}
 ).
 
 -define(MERGED(MergedNode), (MergedNode)).
@@ -132,138 +138,151 @@
 
 %% ?INTERNAL4
 
--define(INTERNAL4_ARGS, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARITY, 13).
--define(INTERNAL4_ARITY_PLUS1, 14).
--define(INTERNAL4_ARITY_PLUS2, 15).
--define(INTERNAL4_ARITY_PLUS3, 16).
--define(INTERNAL4_ARITY_MINUS3, 10).
+-define(INTERNAL4_ARGS, K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARITY, 17).
+-define(INTERNAL4_ARITY_PLUS1, 18).
+-define(INTERNAL4_ARITY_PLUS2, 19).
+-define(INTERNAL4_ARITY_PLUS3, 20).
+-define(INTERNAL4_ARITY_MINUS3, 14).
+-define(INTERNAL4_ARITY_MINUS4, 13).
 
 -define(INTERNAL4_C1(UpdatedC1),
-    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, UpdatedC1, C2, C3, C4, C5)
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, UpdatedC1, C2, C3, C4, C5)
 ).
 -define(INTERNAL4_C2(UpdatedC2),
-    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, UpdatedC2, C3, C4, C5)
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, UpdatedC2, C3, C4, C5)
 ).
 -define(INTERNAL4_C3(UpdatedC3),
-    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, UpdatedC3, C4, C5)
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, UpdatedC3, C4, C5)
 ).
 -define(INTERNAL4_C4(UpdatedC4),
-    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, UpdatedC4, C5)
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, UpdatedC4, C5)
 ).
 -define(INTERNAL4_C5(UpdatedC5),
-    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, UpdatedC5)
+    ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, UpdatedC5)
 ).
 
 -define(INTERNAL4_C1_REBALANCE(UpdatedC1),
-    del_rebalance_INTERNAL4_C1(K1, K2, K3, K4, V1, V2, V3, V4, UpdatedC1, C2, C3, C4, C5)
+    del_rebalance_INTERNAL4_C1(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, UpdatedC1, C2, C3, C4, C5)
 ).
 -define(INTERNAL4_C2_REBALANCE(UpdatedC2),
-    del_rebalance_INTERNAL4_C2(K1, K2, K3, K4, V1, V2, V3, V4, C1, UpdatedC2, C3, C4, C5)
+    del_rebalance_INTERNAL4_C2(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, UpdatedC2, C3, C4, C5)
 ).
 -define(INTERNAL4_C3_REBALANCE(UpdatedC3),
-    del_rebalance_INTERNAL4_C3(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, UpdatedC3, C4, C5)
+    del_rebalance_INTERNAL4_C3(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, UpdatedC3, C4, C5)
 ).
 -define(INTERNAL4_C4_REBALANCE(UpdatedC4),
-    del_rebalance_INTERNAL4_C4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, UpdatedC4, C5)
+    del_rebalance_INTERNAL4_C4(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, UpdatedC4, C5)
 ).
 -define(INTERNAL4_C5_REBALANCE(UpdatedC5),
-    del_rebalance_INTERNAL4_C5(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, UpdatedC5)
+    del_rebalance_INTERNAL4_C5(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, UpdatedC5)
 ).
 
--define(INTERNAL4_ARGS_IGN_K1, _, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_K2, K1, _, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_K3, K1, K2, _, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_K4, K1, K2, K3, _, V1, V2, V3, V4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K1, _, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K2, K1, _, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K3, K1, K2, _, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K4, K1, K2, K3, _, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
 
--define(INTERNAL4_ARGS_IGN_K1_V1, _, K2, K3, K4, _, V2, V3, V4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_K2_V2, K1, _, K3, K4, V1, _, V3, V4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_K3_V3, K1, K2, _, K4, V1, V2, _, V4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_K4_V4, K1, K2, K3, _, V1, V2, V3, _, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K1_V1, _, K2, K3, K4, _, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K2_V2, K1, _, K3, K4, V1, _, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K3_V3, K1, K2, _, K4, V1, V2, _, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_K4_V4, K1, K2, K3, _, V1, V2, V3, _, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+
+-define(INTERNAL4_ARGS_EXCEPT_SIZES, K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5).
 
 %% ?INTERNAL3
 
--define(INTERNAL3_ARGS, K1, K2, K3, V1, V2, V3, C1, C2, C3, C4).
--define(INTERNAL3_ARITY, 10).
--define(INTERNAL3_ARITY_PLUS1, 11).
--define(INTERNAL3_ARITY_PLUS2, 12).
--define(INTERNAL3_ARITY_PLUS3, 13).
--define(INTERNAL3_ARITY_MINUS3, 7).
+-define(INTERNAL3_ARGS, K1, K2, K3, V1, V2, V3, O1, O2, O3, C1, C2, C3, C4).
+-define(INTERNAL3_ARITY, 13).
+-define(INTERNAL3_ARITY_PLUS1, 14).
+-define(INTERNAL3_ARITY_PLUS2, 15).
+-define(INTERNAL3_ARITY_PLUS3, 16).
+-define(INTERNAL3_ARITY_MINUS2, 11).
+-define(INTERNAL3_ARITY_MINUS3, 10).
+-define(INTERNAL3_ARITY_MINUS4, 9).
 
--define(INTERNAL3_C1(UpdatedC1), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, UpdatedC1, C2, C3, C4)).
--define(INTERNAL3_C2(UpdatedC2), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, UpdatedC2, C3, C4)).
--define(INTERNAL3_C3(UpdatedC3), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, UpdatedC3, C4)).
--define(INTERNAL3_C4(UpdatedC4), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, UpdatedC4)).
+-define(INTERNAL3_C1(UpdatedC1), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, O1, O2, O3, UpdatedC1, C2, C3, C4)).
+-define(INTERNAL3_C2(UpdatedC2), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, O1, O2, O3, C1, UpdatedC2, C3, C4)).
+-define(INTERNAL3_C3(UpdatedC3), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, O1, O2, O3, C1, C2, UpdatedC3, C4)).
+-define(INTERNAL3_C4(UpdatedC4), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, O1, O2, O3, C1, C2, C3, UpdatedC4)).
 
 -define(INTERNAL3_C1_REBALANCE(UpdatedC1),
-    del_rebalance_INTERNAL3_C1(K1, K2, K3, V1, V2, V3, UpdatedC1, C2, C3, C4)
+    del_rebalance_INTERNAL3_C1(K1, K2, K3, V1, V2, V3, O1, O2, O3, UpdatedC1, C2, C3, C4)
 ).
 -define(INTERNAL3_C2_REBALANCE(UpdatedC2),
-    del_rebalance_INTERNAL3_C2(K1, K2, K3, V1, V2, V3, C1, UpdatedC2, C3, C4)
+    del_rebalance_INTERNAL3_C2(K1, K2, K3, V1, V2, V3, O1, O2, O3, C1, UpdatedC2, C3, C4)
 ).
 -define(INTERNAL3_C3_REBALANCE(UpdatedC3),
-    del_rebalance_INTERNAL3_C3(K1, K2, K3, V1, V2, V3, C1, C2, UpdatedC3, C4)
+    del_rebalance_INTERNAL3_C3(K1, K2, K3, V1, V2, V3, O1, O2, O3, C1, C2, UpdatedC3, C4)
 ).
 -define(INTERNAL3_C4_REBALANCE(UpdatedC4),
-    del_rebalance_INTERNAL3_C4(K1, K2, K3, V1, V2, V3, C1, C2, C3, UpdatedC4)
+    del_rebalance_INTERNAL3_C4(K1, K2, K3, V1, V2, V3, O1, O2, O3, C1, C2, C3, UpdatedC4)
 ).
 
--define(INTERNAL3_ARGS_IGN_K1, _, K2, K3, V1, V2, V3, C1, C2, C3, C4).
--define(INTERNAL3_ARGS_IGN_K2, K1, _, K3, V1, V2, V3, C1, C2, C3, C4).
--define(INTERNAL3_ARGS_IGN_K3, K1, K2, _, V1, V2, V3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K1, _, K2, K3, V1, V2, V3, O1, O2, O3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K2, K1, _, K3, V1, V2, V3, O1, O2, O3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K3, K1, K2, _, V1, V2, V3, O1, O2, O3, C1, C2, C3, C4).
 
--define(INTERNAL3_ARGS_IGN_K1_V1, _, K2, K3, _, V2, V3, C1, C2, C3, C4).
--define(INTERNAL3_ARGS_IGN_K2_V2, K1, _, K3, V1, _, V3, C1, C2, C3, C4).
--define(INTERNAL3_ARGS_IGN_K3_V3, K1, K2, _, V1, V2, _, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K1_V1, _, K2, K3, _, V2, V3, O1, O2, O3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K2_V2, K1, _, K3, V1, _, V3, O1, O2, O3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_K3_V3, K1, K2, _, V1, V2, _, O1, O2, O3, C1, C2, C3, C4).
+
+-define(INTERNAL3_ARGS_EXCEPT_SIZES, K1, K2, K3, V1, V2, V3, C1, C2, C3, C4).
 
 %% ?INTERNAL2
 
--define(INTERNAL2_ARGS, K1, K2, V1, V2, C1, C2, C3).
--define(INTERNAL2_ARITY, 7).
--define(INTERNAL2_ARITY_PLUS1, 8).
--define(INTERNAL2_ARITY_PLUS2, 9).
--define(INTERNAL2_ARITY_PLUS3, 10).
--define(INTERNAL2_ARITY_MINUS3, 4).
+-define(INTERNAL2_ARGS, K1, K2, V1, V2, O1, O2, C1, C2, C3).
+-define(INTERNAL2_ARITY, 9).
+-define(INTERNAL2_ARITY_PLUS1, 10).
+-define(INTERNAL2_ARITY_PLUS2, 11).
+-define(INTERNAL2_ARITY_PLUS3, 12).
+-define(INTERNAL2_ARITY_MINUS1, 8).
+-define(INTERNAL2_ARITY_MINUS3, 6).
+-define(INTERNAL2_ARITY_MINUS4, 5).
 
--define(INTERNAL2_C1(UpdatedC1), ?new_INTERNAL2(K1, K2, V1, V2, UpdatedC1, C2, C3)).
--define(INTERNAL2_C2(UpdatedC2), ?new_INTERNAL2(K1, K2, V1, V2, C1, UpdatedC2, C3)).
--define(INTERNAL2_C3(UpdatedC3), ?new_INTERNAL2(K1, K2, V1, V2, C1, C2, UpdatedC3)).
+-define(INTERNAL2_C1(UpdatedC1), ?new_INTERNAL2(K1, K2, V1, V2, O1, O2, UpdatedC1, C2, C3)).
+-define(INTERNAL2_C2(UpdatedC2), ?new_INTERNAL2(K1, K2, V1, V2, O1, O2, C1, UpdatedC2, C3)).
+-define(INTERNAL2_C3(UpdatedC3), ?new_INTERNAL2(K1, K2, V1, V2, O1, O2, C1, C2, UpdatedC3)).
 
 -define(INTERNAL2_C1_REBALANCE(UpdatedC1),
-    del_rebalance_INTERNAL2_C1(K1, K2, V1, V2, UpdatedC1, C2, C3)
+    del_rebalance_INTERNAL2_C1(K1, K2, V1, V2, O1, O2, UpdatedC1, C2, C3)
 ).
 -define(INTERNAL2_C2_REBALANCE(UpdatedC2),
-    del_rebalance_INTERNAL2_C2(K1, K2, V1, V2, C1, UpdatedC2, C3)
+    del_rebalance_INTERNAL2_C2(K1, K2, V1, V2, O1, O2, C1, UpdatedC2, C3)
 ).
 -define(INTERNAL2_C3_REBALANCE(UpdatedC3),
-    del_rebalance_INTERNAL2_C3(K1, K2, V1, V2, C1, C2, UpdatedC3)
+    del_rebalance_INTERNAL2_C3(K1, K2, V1, V2, O1, O2, C1, C2, UpdatedC3)
 ).
 
--define(INTERNAL2_ARGS_IGN_K1, _, K2, V1, V2, C1, C2, C3).
--define(INTERNAL2_ARGS_IGN_K2, K1, _, V1, V2, C1, C2, C3).
+-define(INTERNAL2_ARGS_IGN_K1, _, K2, V1, V2, O1, O2, C1, C2, C3).
+-define(INTERNAL2_ARGS_IGN_K2, K1, _, V1, V2, O1, O2, C1, C2, C3).
 
--define(INTERNAL2_ARGS_IGN_K1_V1, _, K2, _, V2, C1, C2, C3).
--define(INTERNAL2_ARGS_IGN_K2_V2, K1, _, V1, _, C1, C2, C3).
+-define(INTERNAL2_ARGS_IGN_K1_V1, _, K2, _, V2, O1, O2, C1, C2, C3).
+-define(INTERNAL2_ARGS_IGN_K2_V2, K1, _, V1, _, O1, O2, C1, C2, C3).
+
+-define(INTERNAL2_ARGS_EXCEPT_SIZES, K1, K2, V1, V2, C1, C2, C3).
 
 %% ?INTERNAL1
 
--define(INTERNAL1_ARGS, K1, V1, C1, C2).
--define(INTERNAL1_ARITY, 4).
--define(INTERNAL1_ARITY_PLUS1, 5).
--define(INTERNAL1_ARITY_PLUS3, 7).
+-define(INTERNAL1_ARGS, K1, V1, O1, C1, C2).
+-define(INTERNAL1_ARITY, 5).
+-define(INTERNAL1_ARITY_PLUS1, 6).
+-define(INTERNAL1_ARITY_PLUS3, 8).
 
--define(INTERNAL1_C1(UpdatedC1), ?new_INTERNAL1(K1, V1, UpdatedC1, C2)).
--define(INTERNAL1_C2(UpdatedC2), ?new_INTERNAL1(K1, V1, C1, UpdatedC2)).
+-define(INTERNAL1_C1(UpdatedC1), ?new_INTERNAL1(K1, V1, O1, UpdatedC1, C2)).
+-define(INTERNAL1_C2(UpdatedC2), ?new_INTERNAL1(K1, V1, O1, C1, UpdatedC2)).
 
--define(INTERNAL1_C1_REBALANCE(UpdatedC1), del_rebalance_INTERNAL1_C1(K1, V1, UpdatedC1, C2)).
--define(INTERNAL1_C2_REBALANCE(UpdatedC2), del_rebalance_INTERNAL1_C2(K1, V1, C1, UpdatedC2)).
+-define(INTERNAL1_C1_REBALANCE(UpdatedC1), del_rebalance_INTERNAL1_C1(K1, V1, O1, UpdatedC1, C2)).
+-define(INTERNAL1_C2_REBALANCE(UpdatedC2), del_rebalance_INTERNAL1_C2(K1, V1, O1, C1, UpdatedC2)).
 
 -define(INTERNAL1_K1_C2_REBALANCE(ReplacementK, ReplacementV, UpdatedC2),
-    del_rebalance_INTERNAL1_C2(ReplacementK, ReplacementV, C1, UpdatedC2)
+    del_rebalance_INTERNAL1_C2(ReplacementK, ReplacementV, O1, C1, UpdatedC2)
 ).
 
--define(INTERNAL1_ARGS_IGN_K1, _, V1, C1, C2).
--define(INTERNAL1_ARGS_IGN_K1_V1, _, _, C1, C2).
+-define(INTERNAL1_ARGS_IGN_K1, _, V1, O1, C1, C2).
+-define(INTERNAL1_ARGS_IGN_K1_V1, _, _, O1, C1, C2).
+
+-define(INTERNAL1_ARGS_EXCEPT_SIZE, K1, V1, C1, C2).
 
 %% ?LEAF4
 
@@ -317,19 +336,19 @@
 
 %
 
--define(new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
-    ?CHECK_NODE_RECUR(?INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5))
+-define(new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5),
+    ?CHECK_NODE_RECUR(?INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, O1, O2, O3, O4, C1, C2, C3, C4, C5))
 ).
 
--define(new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
-    ?CHECK_NODE_RECUR(?INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4))
+-define(new_INTERNAL3(K1, K2, K3, V1, V2, V3, O1, O2, O3, C1, C2, C3, C4),
+    ?CHECK_NODE_RECUR(?INTERNAL3(K1, K2, K3, V1, V2, V3, O1, O2, O3, C1, C2, C3, C4))
 ).
 
--define(new_INTERNAL2(K1, K2, V1, V2, C1, C2, C3),
-    ?CHECK_NODE_RECUR(?INTERNAL2(K1, K2, V1, V2, C1, C2, C3))
+-define(new_INTERNAL2(K1, K2, V1, V2, O1, O2, C1, C2, C3),
+    ?CHECK_NODE_RECUR(?INTERNAL2(K1, K2, V1, V2, O1, O2, C1, C2, C3))
 ).
 
--define(new_INTERNAL1(K1, V1, C1, C2), ?CHECK_NODE(?INTERNAL1(K1, V1, C1, C2))).
+-define(new_INTERNAL1(K1, V1, O1, C1, C2), ?CHECK_NODE(?INTERNAL1(K1, V1, O1, C1, C2))).
 
 %
 
@@ -389,6 +408,10 @@
         Value,
         Value,
         Value,
+        pos_integer(),
+        pos_integer(),
+        pos_integer(),
+        pos_integer(),
         deep_node(Key, Value),
         deep_node(Key, Value),
         deep_node(Key, Value),
@@ -404,6 +427,9 @@
         Value,
         Value,
         Value,
+        pos_integer(),
+        pos_integer(),
+        pos_integer(),
         deep_node(Key, Value),
         deep_node(Key, Value),
         deep_node(Key, Value),
@@ -416,6 +442,8 @@
         Key,
         Value,
         Value,
+        pos_integer(),
+        pos_integer(),
         deep_node(Key, Value),
         deep_node(Key, Value),
         deep_node(Key, Value)
@@ -425,6 +453,7 @@
     (?INTERNAL1(
         Key,
         Value,
+        pos_integer(),
         deep_node(Key, Value),
         deep_node(Key, Value)
     )).
@@ -527,7 +556,7 @@ delete(Key, Root) ->
     Acc1 :: term(),
     Acc2 :: term(),
     AccN :: term().
-foldl(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
+foldl(Fun, Acc, ?INTERNAL1_MATCH_IGN_SIZE) ->
     Acc2 = foldl_recur(Fun, Acc, C1),
     Acc3 = Fun(K1, V1, Acc2),
     foldl_recur(Fun, Acc3, C2);
@@ -543,7 +572,7 @@ foldl(Fun, Acc, Root) ->
     Acc1 :: term(),
     Acc2 :: term(),
     AccN :: term().
-foldr(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
+foldr(Fun, Acc, ?INTERNAL1_MATCH_IGN_SIZE) ->
     Acc2 = foldr_recur(Fun, Acc, C2),
     Acc3 = Fun(K1, V1, Acc2),
     foldr_recur(Fun, Acc3, C1);
@@ -555,8 +584,8 @@ foldr(Fun, Acc, Root) ->
     foldr_recur(Fun, Acc, Root).
 
 -spec get(Key, t(Key, Value)) -> Value.
-get(Key, ?INTERNAL1_MATCH_ALL) ->
-    get_INTERNAL1(Key, ?INTERNAL1_ARGS);
+get(Key, ?INTERNAL1_MATCH_IGN_SIZE) ->
+    get_INTERNAL1(Key, ?INTERNAL1_ARGS_EXCEPT_SIZE);
 get(Key, ?LEAF1_MATCH_ALL) ->
     get_LEAF1(Key, ?LEAF1_ARGS);
 get(Key, ?LEAF0) ->
@@ -584,7 +613,7 @@ insert(Key, ValueEval, ValueWrap, Root) ->
     end.
 
 -spec is_defined(Key, t(Key, _)) -> boolean().
-is_defined(Key, ?INTERNAL1_MATCH(K1, _, C1, C2)) ->
+is_defined(Key, ?INTERNAL1_MATCH(K1, _, _, C1, C2)) ->
     is_defined_INTERNAL1(Key, K1, C1, C2);
 is_defined(Key, ?LEAF1_MATCH(K1, _)) ->
     is_defined_LEAF1(Key, K1);
@@ -608,7 +637,7 @@ iterator_from(Key, Root, reversed) ->
     [?REV_ITER_TAG | Acc].
 
 -spec keys(t(Key, _)) -> [Key].
-keys(?INTERNAL1_MATCH(K1, _, C1, C2)) ->
+keys(?INTERNAL1_MATCH(K1, _, _, C1, C2)) ->
     keys_recur(C1, [K1 | keys_recur(C2, [])]);
 keys(?LEAF1_MATCH(K1, _)) ->
     [K1];
@@ -628,7 +657,7 @@ larger(Key, Root) ->
     larger_recur(Key, Root).
 
 -spec largest(t(Key, Value)) -> {Key, Value}.
-largest(?INTERNAL1_MATCH(_, _, _, C2)) ->
+largest(?INTERNAL1_MATCH(_, _, _, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1_MATCH(K1, V1)) ->
     {K1, V1};
@@ -653,6 +682,8 @@ map(Fun, ?INTERNAL1_MATCH_ALL) ->
         K1,
         %
         Fun(K1, V1),
+        %
+        O1,
         %
         map_recur(Fun, C1),
         map_recur(Fun, C2)
@@ -684,7 +715,7 @@ smaller(Key, Root) ->
     smaller_recur(Key, Root).
 
 -spec smallest(t(Key, Value)) -> {Key, Value}.
-smallest(?INTERNAL1_MATCH(_, _, C1, _)) ->
+smallest(?INTERNAL1_MATCH(_, _, _, C1, _)) ->
     smallest_recur(C1);
 smallest(?LEAF1_MATCH(K1, V1)) ->
     {K1, V1};
@@ -698,7 +729,7 @@ structural_stats(Root) ->
     Acc = b5_structural_stats:new(),
 
     case Root of
-        ?INTERNAL1_MATCH(_, _, C1, C2) ->
+        ?INTERNAL1_MATCH(_, _, _, C1, C2) ->
             Height = 1,
             Acc2 = b5_structural_stats:inc(#stats_acc.count_internal1, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
@@ -751,7 +782,7 @@ take_smallest(Root) ->
     take_smallest_recur(Root).
 
 -spec to_list(t(Key, Value)) -> [{Key, Value}].
-to_list(?INTERNAL1_MATCH_ALL) ->
+to_list(?INTERNAL1_MATCH_IGN_SIZE) ->
     Acc2 = to_list_recur(C2, []),
     Acc3 = [{K1, V1} | Acc2],
     to_list_recur(C1, Acc3);
@@ -775,7 +806,7 @@ update(Key, ValueEval, ValueWrap, Root) ->
     update_recur(Key, ValueEval, ValueWrap, Root).
 
 -spec values(t(_, Value)) -> [Value].
-values(?INTERNAL1_MATCH(_, V1, C1, C2)) ->
+values(?INTERNAL1_MATCH(_, V1, _, C1, C2)) ->
     values_recur(C1, [V1 | values_recur(C2, [])]);
 values(?LEAF1_MATCH(_, V1)) ->
     [V1];
@@ -923,6 +954,11 @@ delete_INTERNAL4_K1(?INTERNAL4_ARGS_IGN_K1_V1) ->
         V3,
         V4,
         %
+        O1,
+        O2,
+        O3,
+        O4,
+        %
         C1,
         UpdatedC2,
         C3,
@@ -944,6 +980,11 @@ delete_INTERNAL4_K2(?INTERNAL4_ARGS_IGN_K2_V2) ->
         ReplacementV,
         V3,
         V4,
+        %
+        O1,
+        O2,
+        O3,
+        O4,
         %
         C1,
         UpdatedC2,
@@ -967,6 +1008,11 @@ delete_INTERNAL4_K3(?INTERNAL4_ARGS_IGN_K3_V3) ->
         ReplacementV,
         V4,
         %
+        O1,
+        O2,
+        O3,
+        O4,
+        %
         C1,
         C2,
         C3,
@@ -988,6 +1034,11 @@ delete_INTERNAL4_K4(?INTERNAL4_ARGS_IGN_K4_V4) ->
         V2,
         V3,
         ReplacementV,
+        %
+        O1,
+        O2,
+        O3,
+        O4,
         %
         C1,
         C2,
@@ -1072,6 +1123,10 @@ delete_INTERNAL3_K1(?INTERNAL3_ARGS_IGN_K1_V1) ->
         V2,
         V3,
         %
+        O1,
+        O2,
+        O3,
+        %
         C1,
         UpdatedC2,
         C3,
@@ -1091,6 +1146,10 @@ delete_INTERNAL3_K2(?INTERNAL3_ARGS_IGN_K2_V2) ->
         ReplacementV,
         V3,
         %
+        O1,
+        O2,
+        O3,
+        %
         C1,
         C2,
         UpdatedC3,
@@ -1109,6 +1168,10 @@ delete_INTERNAL3_K3(?INTERNAL3_ARGS_IGN_K3_V3) ->
         V1,
         V2,
         ReplacementV,
+        %
+        O1,
+        O2,
+        O3,
         %
         C1,
         C2,
@@ -1174,6 +1237,9 @@ delete_INTERNAL2_K1(?INTERNAL2_ARGS_IGN_K1_V1) ->
         ReplacementV,
         V2,
         %
+        O1,
+        O2,
+        %
         C1,
         UpdatedC2,
         C3
@@ -1189,6 +1255,9 @@ delete_INTERNAL2_K2(?INTERNAL2_ARGS_IGN_K2_V2) ->
         %
         V1,
         ReplacementV,
+        %
+        O1,
+        O2,
         %
         C1,
         UpdatedC2,
@@ -1317,18 +1386,18 @@ foldl_recur(Fun, Acc, Node) ->
         ?LEAF4_MATCH_ALL ->
             Fun(K4, V4, Fun(K3, V3, Fun(K2, V2, Fun(K1, V1, Acc))));
         %
-        ?INTERNAL2_MATCH_ALL ->
+        ?INTERNAL2_MATCH_IGN_SIZES ->
             Acc2 = foldl_recur(Fun, Acc, C1),
             Acc3 = foldl_recur(Fun, Fun(K1, V1, Acc2), C2),
             _Acc4 = foldl_recur(Fun, Fun(K2, V2, Acc3), C3);
         %
-        ?INTERNAL3_MATCH_ALL ->
+        ?INTERNAL3_MATCH_IGN_SIZES ->
             Acc2 = foldl_recur(Fun, Acc, C1),
             Acc3 = foldl_recur(Fun, Fun(K1, V1, Acc2), C2),
             Acc4 = foldl_recur(Fun, Fun(K2, V2, Acc3), C3),
             _Acc5 = foldl_recur(Fun, Fun(K3, V3, Acc4), C4);
         %
-        ?INTERNAL4_MATCH_ALL ->
+        ?INTERNAL4_MATCH_IGN_SIZES ->
             Acc2 = foldl_recur(Fun, Acc, C1),
             Acc3 = foldl_recur(Fun, Fun(K1, V1, Acc2), C2),
             Acc4 = foldl_recur(Fun, Fun(K2, V2, Acc3), C3),
@@ -1351,18 +1420,18 @@ foldr_recur(Fun, Acc, Node) ->
         ?LEAF4_MATCH_ALL ->
             Fun(K1, V1, Fun(K2, V2, Fun(K3, V3, Fun(K4, V4, Acc))));
         %
-        ?INTERNAL2_MATCH_ALL ->
+        ?INTERNAL2_MATCH_IGN_SIZES ->
             Acc2 = foldr_recur(Fun, Acc, C3),
             Acc3 = foldr_recur(Fun, Fun(K2, V2, Acc2), C2),
             _Acc4 = foldr_recur(Fun, Fun(K1, V1, Acc3), C1);
         %
-        ?INTERNAL3_MATCH_ALL ->
+        ?INTERNAL3_MATCH_IGN_SIZES ->
             Acc2 = foldr_recur(Fun, Acc, C4),
             Acc3 = foldr_recur(Fun, Fun(K3, V3, Acc2), C3),
             Acc4 = foldr_recur(Fun, Fun(K2, V2, Acc3), C2),
             _Acc5 = foldr_recur(Fun, Fun(K1, V1, Acc4), C1);
         %
-        ?INTERNAL4_MATCH_ALL ->
+        ?INTERNAL4_MATCH_IGN_SIZES ->
             Acc2 = foldr_recur(Fun, Acc, C5),
             Acc3 = foldr_recur(Fun, Fun(K4, V4, Acc2), C4),
             Acc4 = foldr_recur(Fun, Fun(K3, V3, Acc3), C3),
@@ -1377,14 +1446,14 @@ foldr_recur(Fun, Acc, Node) ->
 get_recur(Key, Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH_ALL ->
-            get_INTERNAL2(Key, ?INTERNAL2_ARGS);
+        ?INTERNAL2_MATCH_IGN_SIZES ->
+            get_INTERNAL2(Key, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL3_MATCH_ALL ->
-            get_INTERNAL3(Key, ?INTERNAL3_ARGS);
+        ?INTERNAL3_MATCH_IGN_SIZES ->
+            get_INTERNAL3(Key, ?INTERNAL3_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL4_MATCH_ALL ->
-            get_INTERNAL4(Key, ?INTERNAL4_ARGS);
+        ?INTERNAL4_MATCH_IGN_SIZES ->
+            get_INTERNAL4(Key, ?INTERNAL4_ARGS_EXCEPT_SIZES);
         %
         ?LEAF2_MATCH_ALL ->
             get_LEAF2(Key, ?LEAF2_ARGS);
@@ -1400,8 +1469,8 @@ get_recur(Key, Node) ->
 %% ?INTERNAL4
 %%
 
--compile({inline, get_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-get_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
+-compile({inline, get_INTERNAL4 / ?INTERNAL4_ARITY_MINUS3}).
+get_INTERNAL4(Key, ?INTERNAL4_ARGS_EXCEPT_SIZES) ->
     if
         Key > K2 ->
             %
@@ -1447,8 +1516,8 @@ get_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
 %% ?INTERNAL3
 %%
 
--compile({inline, get_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-get_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
+-compile({inline, get_INTERNAL3 / ?INTERNAL3_ARITY_MINUS2}).
+get_INTERNAL3(Key, ?INTERNAL3_ARGS_EXCEPT_SIZES) ->
     if
         Key < K2 ->
             %
@@ -1484,8 +1553,8 @@ get_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
 %% ?INTERNAL2
 %%
 
--compile({inline, get_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-get_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
+-compile({inline, get_INTERNAL2 / ?INTERNAL2_ARITY_MINUS1}).
+get_INTERNAL2(Key, ?INTERNAL2_ARGS_EXCEPT_SIZES) ->
     if
         Key > K1 ->
             %
@@ -1511,8 +1580,8 @@ get_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
 %% ?INTERNAL1
 %%
 
--compile({inline, get_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-get_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
+-compile({inline, get_INTERNAL1 / ?INTERNAL1_ARITY}).
+get_INTERNAL1(Key, ?INTERNAL1_ARGS_EXCEPT_SIZE) ->
     if
         Key < K1 ->
             get_recur(Key, C1);
@@ -1676,6 +1745,7 @@ insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_right_sibling_maybe(C1, Pos, Args, K1, V1, C2) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
+                    % FIXME continue from here
                     ?new_INTERNAL4(
                         UpKey,
                         K2,
@@ -1686,6 +1756,8 @@ insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                         V2,
                         V3,
                         V4,
+                        %
+
                         %
                         UpdatedC1,
                         UpdatedC2,
@@ -6551,15 +6623,17 @@ ins_rebalance_into_right_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, Up
 -compile({inline, del_rebalance_INTERNAL4_C1 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
     case C1 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_right_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K1,
                 V1,
+                O1,
                 C2
             ),
 
@@ -6572,6 +6646,11 @@ del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
                 V2,
                 V3,
                 V4,
+                %
+                O1,
+                O2, 
+                O3,
+                O4,
                 %
                 C3,
                 C4,
@@ -6598,13 +6677,25 @@ del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
                 V3,
                 V4,
                 %
+                O1,
+                O2,
+                O3,
+                O4,
+                %
                 C3,
                 C4,
                 C5
             );
         %
         UpdatedC1 ->
-            ?INTERNAL4_C1(UpdatedC1)
+            ?new_INTERNAL4(
+               K1, K2, K3, K4,
+               %
+               V1, V2, V3, V4,
+               %
+               O1 - 1, O2 - 1, O3 - 1, O4 - 1,
+               %
+               UpdatedC1, C2, C3, C4, C5)
     end.
 
 -compile({inline, del_rebalance_INTERNAL4_C1_finish / ?INTERNAL4_ARITY_MINUS3}).
@@ -6618,12 +6709,17 @@ del_rebalance_INTERNAL4_C1_finish(
     V3,
     V4,
     %
+    O1,
+    O2,
+    O3,
+    O4,
+    %
     C3,
     C4,
     C5
 ) ->
     case Result of
-        ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
+        ?ROTATED(UpKey, UpValue, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL4(
                 UpKey,
                 K2,
@@ -6634,6 +6730,11 @@ del_rebalance_INTERNAL4_C1_finish(
                 V2,
                 V3,
                 V4,
+                %
+                O1 + MovedSize,
+                O2 - 1,
+                O3 - 1,
+                O4 - 1,
                 %
                 UpdatedC1,
                 UpdatedC2,
@@ -6652,6 +6753,10 @@ del_rebalance_INTERNAL4_C1_finish(
                 V3,
                 V4,
                 %
+                O2,
+                O3,
+                O4,
+                %
                 MergedC1C2,
                 C3,
                 C4,
@@ -6666,15 +6771,17 @@ del_rebalance_INTERNAL4_C1_finish(
 -compile({inline, del_rebalance_INTERNAL4_C2 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
     case C2 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_either_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K1,
                 V1,
+                O1,
                 C1,
                 %
                 K2,
@@ -6693,6 +6800,11 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
                 V2,
                 V3,
                 V4,
+                %
+                O1,
+                O2,
+                O3,
+                O4,
                 %
                 C1,
                 C3,
@@ -6726,6 +6838,11 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
                 V3,
                 V4,
                 %
+                O1,
+                O2,
+                O3,
+                O4,
+                %
                 C1,
                 C3,
                 C4,
@@ -6733,7 +6850,14 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
             );
         %
         UpdatedC2 ->
-            ?INTERNAL4_C2(UpdatedC2)
+            ?new_INTERNAL4(
+               K1, K2, K3, K4,
+               %
+               V1, V2, V3, V4,
+               %
+               O1, O2 - 1, O3 - 1, O4 - 1,
+               %
+               C1, UpdatedC2, C3, C4, C5)
     end.
 
 -compile({inline, del_rebalance_INTERNAL4_C2_finish / ?INTERNAL4_ARITY}).
@@ -6748,6 +6872,11 @@ del_rebalance_INTERNAL4_C2_finish(
     V2,
     V3,
     V4,
+    %
+    O1,
+    O2,
+    O3,
+    O4,
     %
     C1,
     C3,
@@ -6765,13 +6894,17 @@ del_rebalance_INTERNAL4_C2_finish(
                 V3,
                 V4,
                 %
+                O2,
+                O3,
+                O4,
+                %
                 MergedC1C2,
                 C3,
                 C4,
                 C5
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, RebalancedC2, UpdatedC3) ->
+        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL4(
                 K1,
                 UpKey,
@@ -6783,6 +6916,11 @@ del_rebalance_INTERNAL4_C2_finish(
                 V3,
                 V4,
                 %
+                O1,
+                O2 + MovedSize,
+                O3 - 1,
+                O4 - 1,
+                %
                 C1,
                 RebalancedC2,
                 UpdatedC3,
@@ -6790,7 +6928,7 @@ del_rebalance_INTERNAL4_C2_finish(
                 C5
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedC1, RebalancedC2) ->
+        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedC1, RebalancedC2) ->
             ?new_INTERNAL4(
                 UpKey,
                 K2,
@@ -6801,6 +6939,11 @@ del_rebalance_INTERNAL4_C2_finish(
                 V2,
                 V3,
                 V4,
+                %
+                O1 - MovedSize,
+                O2 - 1,
+                O3 - 1,
+                O4 - 1,
                 %
                 UpdatedC1,
                 RebalancedC2,
@@ -6817,15 +6960,17 @@ del_rebalance_INTERNAL4_C2_finish(
 -compile({inline, del_rebalance_INTERNAL4_C3 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
     case C3 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_either_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K2,
                 V2,
+                O2 - O1,
                 C2,
                 %
                 K3,
@@ -6844,6 +6989,11 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
                 V2,
                 V3,
                 V4,
+                %
+                O1,
+                O2,
+                O3,
+                O4,
                 %
                 C1,
                 C2,
@@ -6877,6 +7027,11 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
                 V3,
                 V4,
                 %
+                O1,
+                O2,
+                O3,
+                O4,
+                %
                 C1,
                 C2,
                 C4,
@@ -6884,7 +7039,14 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
             );
         %
         UpdatedC3 ->
-            ?INTERNAL4_C3(UpdatedC3)
+            ?new_INTERNAL4(
+               K1, K2, K3, K4,
+               %
+               V1, V2, V3, V4,
+               %
+               O1, O2, O3 - 1, O4 - 1,
+               %
+               C1, C2, UpdatedC3, C4, C5)
     end.
 
 -compile({inline, del_rebalance_INTERNAL4_C3_finish / ?INTERNAL4_ARITY}).
@@ -6899,6 +7061,11 @@ del_rebalance_INTERNAL4_C3_finish(
     V2,
     V3,
     V4,
+    %
+    O1,
+    O2,
+    O3,
+    O4,
     %
     C1,
     C2,
@@ -6916,13 +7083,17 @@ del_rebalance_INTERNAL4_C3_finish(
                 V3,
                 V4,
                 %
+                O1,
+                O3,
+                O4,
+                %
                 C1,
                 MergedC2C3,
                 C4,
                 C5
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, RebalancedC3, UpdatedC4) ->
+        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, RebalancedC3, UpdatedC4) ->
             ?new_INTERNAL4(
                 K1,
                 K2,
@@ -6934,6 +7105,11 @@ del_rebalance_INTERNAL4_C3_finish(
                 UpValue,
                 V4,
                 %
+                O1,
+                O2,
+                O3 + MovedSize,
+                O4 - 1,
+                %
                 C1,
                 C2,
                 RebalancedC3,
@@ -6941,7 +7117,7 @@ del_rebalance_INTERNAL4_C3_finish(
                 C5
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedC2, RebalancedC3) ->
+        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL4(
                 K1,
                 UpKey,
@@ -6952,6 +7128,11 @@ del_rebalance_INTERNAL4_C3_finish(
                 UpValue,
                 V3,
                 V4,
+                %
+                O1,
+                O2 - MovedSize,
+                O3 - 1,
+                O4 - 1,
                 %
                 C1,
                 UpdatedC2,
@@ -6968,15 +7149,17 @@ del_rebalance_INTERNAL4_C3_finish(
 -compile({inline, del_rebalance_INTERNAL4_C4 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
     case C4 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, Co, CL, CR) ->
             Result = del_rebalance_internal_from_either_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K3,
                 V3,
+                O3 - O2,
                 C3,
                 %
                 K4,
@@ -6995,6 +7178,11 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
                 V2,
                 V3,
                 V4,
+                %
+                O1,
+                O2,
+                O3,
+                O4,
                 %
                 C1,
                 C2,
@@ -7028,6 +7216,11 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
                 V3,
                 V4,
                 %
+                O1,
+                O2,
+                O3,
+                O4,
+                %
                 C1,
                 C2,
                 C3,
@@ -7035,7 +7228,14 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
             );
         %
         UpdatedC4 ->
-            ?INTERNAL4_C4(UpdatedC4)
+            ?new_INTERNAL4(
+               K1, K2, K3, K4,
+               %
+               V1, V2, V3, V4,
+               %
+               O1, O2, O3, O4 - 1,
+               %
+               C1, C2, C3, UpdatedC4, C5)
     end.
 
 -compile({inline, del_rebalance_INTERNAL4_C4_finish / ?INTERNAL4_ARITY}).
@@ -7050,6 +7250,11 @@ del_rebalance_INTERNAL4_C4_finish(
     V2,
     V3,
     V4,
+    %
+    O1,
+    O2,
+    O3,
+    O4,
     %
     C1,
     C2,
@@ -7067,13 +7272,17 @@ del_rebalance_INTERNAL4_C4_finish(
                 V2,
                 V4,
                 %
+                O1,
+                O2,
+                O4,
+                %
                 C1,
                 C2,
                 MergedC3C4,
                 C5
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, RebalancedC4, UpdatedC5) ->
+        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, RebalancedC4, UpdatedC5) ->
             ?new_INTERNAL4(
                 K1,
                 K2,
@@ -7085,6 +7294,11 @@ del_rebalance_INTERNAL4_C4_finish(
                 V3,
                 UpValue,
                 %
+                O1,
+                O2,
+                O3,
+                O4 + MovedSize,
+                %
                 C1,
                 C2,
                 C3,
@@ -7092,7 +7306,7 @@ del_rebalance_INTERNAL4_C4_finish(
                 UpdatedC5
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedC3, RebalancedC4) ->
+        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL4(
                 K1,
                 K2,
@@ -7103,6 +7317,11 @@ del_rebalance_INTERNAL4_C4_finish(
                 V2,
                 UpValue,
                 V4,
+                %
+                O1,
+                O2,
+                O3 - MovedSize,
+                O4 - 1,
                 %
                 C1,
                 C2,
@@ -7119,15 +7338,17 @@ del_rebalance_INTERNAL4_C4_finish(
 -compile({inline, del_rebalance_INTERNAL4_C5 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
     case C5 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_left_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K4,
                 V4,
+                O4 - O3,
                 C4
             ),
 
@@ -7140,6 +7361,11 @@ del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
                 V1,
                 V2,
                 V3,
+                %
+                O1,
+                O2,
+                O3,
+                O4,
                 %
                 C1,
                 C2,
@@ -7165,6 +7391,11 @@ del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
                 V1,
                 V2,
                 V3,
+                %
+                O1,
+                O2,
+                O3,
+                O4,
                 %
                 C1,
                 C2,
@@ -7186,12 +7417,17 @@ del_rebalance_INTERNAL4_C5_finish(
     V2,
     V3,
     %
+    O1,
+    O2,
+    O3,
+    O4,
+    %
     C1,
     C2,
     C3
 ) ->
     case Result of
-        ?ROTATED(UpKey, UpValue, UpdatedC4, RebalancedC5) ->
+        ?ROTATED(UpKey, UpValue, MovedSize, UpdatedC4, RebalancedC5) ->
             ?new_INTERNAL4(
                 K1,
                 K2,
@@ -7202,6 +7438,11 @@ del_rebalance_INTERNAL4_C5_finish(
                 V2,
                 V3,
                 UpValue,
+                %
+                O1,
+                O2,
+                O3,
+                O4 - MovedSize,
                 %
                 C1,
                 C2,
@@ -7219,6 +7460,10 @@ del_rebalance_INTERNAL4_C5_finish(
                 V1,
                 V2,
                 V3,
+                %
+                O1,
+                O2,
+                O3,
                 %
                 C1,
                 C2,
@@ -7238,15 +7483,17 @@ del_rebalance_INTERNAL4_C5_finish(
 -compile({inline, del_rebalance_INTERNAL3_C1 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
     case C1 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_right_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K1,
                 V1,
+                O1,
                 C2
             ),
 
@@ -7257,6 +7504,10 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
                 %
                 V2,
                 V3,
+                %
+                O1, 
+                O2,
+                O3,
                 %
                 C3,
                 C4
@@ -7280,12 +7531,23 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
                 V2,
                 V3,
                 %
+                O1,
+                O2,
+                O3,
+                %
                 C3,
                 C4
             );
         %
         UpdatedC1 ->
-            ?INTERNAL3_C1(UpdatedC1)
+            ?new_INTERNAL3(
+               K1, K2, K3,
+               %
+               V1, V2, V3,
+               %
+               O1 - 1, O2 - 1, O3 - 1,
+               %
+               UpdatedC1, C2, C3, C4)
     end.
 
 -compile({inline, del_rebalance_INTERNAL3_C1_finish / ?INTERNAL3_ARITY_MINUS3}).
@@ -7297,11 +7559,15 @@ del_rebalance_INTERNAL3_C1_finish(
     V2,
     V3,
     %
+    O1, 
+    O2,
+    O3,
+    %
     C3,
     C4
 ) ->
     case Result of
-        ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
+        ?ROTATED(UpKey, UpValue, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL3(
                 UpKey,
                 K2,
@@ -7310,6 +7576,10 @@ del_rebalance_INTERNAL3_C1_finish(
                 UpValue,
                 V2,
                 V3,
+                %
+                O1 + MovedSize,
+                O2 - 1,
+                O3 - 1,
                 %
                 UpdatedC1,
                 UpdatedC2,
@@ -7325,6 +7595,9 @@ del_rebalance_INTERNAL3_C1_finish(
                 V2,
                 V3,
                 %
+                O2,
+                O3,
+                %
                 MergedC1C2,
                 C3,
                 C4
@@ -7338,15 +7611,17 @@ del_rebalance_INTERNAL3_C1_finish(
 -compile({inline, del_rebalance_INTERNAL3_C2 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
     case C2 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_either_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K1,
                 V1,
+                O1,
                 C1,
                 %
                 K2,
@@ -7363,6 +7638,10 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
                 V1,
                 V2,
                 V3,
+                %
+                O1,
+                O2,
+                O3,
                 %
                 C1,
                 C3,
@@ -7393,13 +7672,24 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
                 V2,
                 V3,
                 %
+                O1,
+                O2,
+                O3,
+                %
                 C1,
                 C3,
                 C4
             );
         %
         UpdatedC2 ->
-            ?INTERNAL3_C2(UpdatedC2)
+            ?new_INTERNAL3(
+               K1, K2, K3,
+               %
+               V1, V2, V3,
+               %
+               O1, O2 - 1, O3 - 1,
+               %
+               C1, UpdatedC2, C3, C4)
     end.
 
 -compile({inline, del_rebalance_INTERNAL3_C2_finish / ?INTERNAL3_ARITY}).
@@ -7412,6 +7702,10 @@ del_rebalance_INTERNAL3_C2_finish(
     V1,
     V2,
     V3,
+    %
+    O1,
+    O2,
+    O3,
     %
     C1,
     C3,
@@ -7426,12 +7720,15 @@ del_rebalance_INTERNAL3_C2_finish(
                 V2,
                 V3,
                 %
+                O2,
+                O3,
+                %
                 MergedC1C2,
                 C3,
                 C4
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, RebalancedC2, UpdatedC3) ->
+        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL3(
                 K1,
                 UpKey,
@@ -7441,13 +7738,17 @@ del_rebalance_INTERNAL3_C2_finish(
                 UpValue,
                 V3,
                 %
+                O1,
+                O2 + MovedSize,
+                O3 - 1,
+                %
                 C1,
                 RebalancedC2,
                 UpdatedC3,
                 C4
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedC1, RebalancedC2) ->
+        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedC1, RebalancedC2) ->
             ?new_INTERNAL3(
                 UpKey,
                 K2,
@@ -7456,6 +7757,10 @@ del_rebalance_INTERNAL3_C2_finish(
                 UpValue,
                 V2,
                 V3,
+                %
+                O1 - MovedSize,
+                O2 - 1,
+                O3 - 1,
                 %
                 UpdatedC1,
                 RebalancedC2,
@@ -7471,15 +7776,17 @@ del_rebalance_INTERNAL3_C2_finish(
 -compile({inline, del_rebalance_INTERNAL3_C3 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
     case C3 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_either_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K2,
                 V2,
+                O2 - O1,
                 C2,
                 %
                 K3,
@@ -7496,6 +7803,10 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
                 V1,
                 V2,
                 V3,
+                %
+                O1,
+                O2,
+                O3,
                 %
                 C1,
                 C2,
@@ -7526,13 +7837,24 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
                 V2,
                 V3,
                 %
+                O1,
+                O2,
+                O3,
+                %
                 C1,
                 C2,
                 C4
             );
         %
         UpdatedC3 ->
-            ?INTERNAL3_C3(UpdatedC3)
+            ?new_INTERNAL3(
+               K1, K2, K3,
+               %
+               V1, V2, V3,
+               %
+               O1, O2, O3 - 1,
+               %
+               C1, C2, UpdatedC3, C4)
     end.
 
 -compile({inline, del_rebalance_INTERNAL3_C3_finish / ?INTERNAL3_ARITY}).
@@ -7545,6 +7867,10 @@ del_rebalance_INTERNAL3_C3_finish(
     V1,
     V2,
     V3,
+    %
+    O1,
+    O2,
+    O3,
     %
     C1,
     C2,
@@ -7559,12 +7885,15 @@ del_rebalance_INTERNAL3_C3_finish(
                 V1,
                 V3,
                 %
+                O1,
+                O3,
+                %
                 C1,
                 MergedC2C3,
                 C4
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, RebalancedC3, UpdatedC4) ->
+        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, RebalancedC3, UpdatedC4) ->
             ?new_INTERNAL3(
                 K1,
                 K2,
@@ -7574,13 +7903,17 @@ del_rebalance_INTERNAL3_C3_finish(
                 V2,
                 UpValue,
                 %
+                O1,
+                O2,
+                O3 + MovedSize,
+                %
                 C1,
                 C2,
                 RebalancedC3,
                 UpdatedC4
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedC2, RebalancedC3) ->
+        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL3(
                 K1,
                 UpKey,
@@ -7589,6 +7922,10 @@ del_rebalance_INTERNAL3_C3_finish(
                 V1,
                 UpValue,
                 V3,
+                %
+                O1,
+                O2 - MovedSize,
+                O3 - 1,
                 %
                 C1,
                 UpdatedC2,
@@ -7604,15 +7941,17 @@ del_rebalance_INTERNAL3_C3_finish(
 -compile({inline, del_rebalance_INTERNAL3_C4 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
     case C4 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_left_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K3,
                 V3,
+                O3 - O2,
                 C3
             ),
 
@@ -7623,6 +7962,10 @@ del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
                 %
                 V1,
                 V2,
+                %
+                O1,
+                O2,
+                O3,
                 %
                 C1,
                 C2
@@ -7645,6 +7988,10 @@ del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
                 %
                 V1,
                 V2,
+                %
+                O1,
+                O2,
+                O3,
                 %
                 C1,
                 C2
@@ -7663,11 +8010,15 @@ del_rebalance_INTERNAL3_C4_finish(
     V1,
     V2,
     %
+    O1,
+    O2,
+    O3,
+    %
     C1,
     C2
 ) ->
     case Result of
-        ?ROTATED(UpKey, UpValue, UpdatedC3, RebalancedC4) ->
+        ?ROTATED(UpKey, UpValue, MovedSize, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL3(
                 K1,
                 K2,
@@ -7676,6 +8027,10 @@ del_rebalance_INTERNAL3_C4_finish(
                 V1,
                 V2,
                 UpValue,
+                %
+                O1,
+                O2,
+                O3 - MovedSize,
                 %
                 C1,
                 C2,
@@ -7690,6 +8045,9 @@ del_rebalance_INTERNAL3_C4_finish(
                 %
                 V1,
                 V2,
+                %
+                O1,
+                O2,
                 %
                 C1,
                 C2,
@@ -7708,19 +8066,21 @@ del_rebalance_INTERNAL3_C4_finish(
 -compile({inline, del_rebalance_INTERNAL2_C1 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
     case C1 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_right_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K1,
                 V1,
+                O1,
                 C2
             ),
 
-            del_rebalance_INTERNAL2_C1_finish(Result, K2, V2, C3);
+            del_rebalance_INTERNAL2_C1_finish(Result, K2, V2, O1, O2, C3);
         %
         ?LEAF1_MATCH(CK, CV) ->
             Result = del_rebalance_leaf_from_right_sibling(
@@ -7732,16 +8092,23 @@ del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
                 C2
             ),
 
-            del_rebalance_INTERNAL2_C1_finish(Result, K2, V2, C3);
+            del_rebalance_INTERNAL2_C1_finish(Result, K2, V2, O1, O2, C3);
         %
         UpdatedC1 ->
-            ?INTERNAL2_C1(UpdatedC1)
+            ?new_INTERNAL2(
+               K1, K2,
+               %
+               V1, V2,
+               %
+               O1 - 1, O2 - 1,
+               %
+               UpdatedC1, C2, C3)
     end.
 
 -compile({inline, del_rebalance_INTERNAL2_C1_finish / ?INTERNAL2_ARITY_MINUS3}).
-del_rebalance_INTERNAL2_C1_finish(Result, K2, V2, C3) ->
+del_rebalance_INTERNAL2_C1_finish(Result, K2, V2, O1, O2, C3) ->
     case Result of
-        ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
+        ?ROTATED(UpKey, UpValue, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL2(
                 UpKey,
                 K2,
@@ -7749,13 +8116,21 @@ del_rebalance_INTERNAL2_C1_finish(Result, K2, V2, C3) ->
                 UpValue,
                 V2,
                 %
+                O1 - MovedSize,
+                O2 - 1,
+                %
                 UpdatedC1,
                 UpdatedC2,
                 C3
             );
         %
         ?MERGED(MergedC1C2) ->
-            ?new_INTERNAL1(K2, V2, MergedC1C2, C3)
+            ?new_INTERNAL1(
+               K2, V2, 
+               %
+               O2,
+               %
+               MergedC1C2, C3)
     end.
 
 %%
@@ -7765,15 +8140,17 @@ del_rebalance_INTERNAL2_C1_finish(Result, K2, V2, C3) ->
 -compile({inline, del_rebalance_INTERNAL2_C2 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
     case C2 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_either_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K1,
                 V1,
+                O1,
                 C1,
                 %
                 K2,
@@ -7788,6 +8165,9 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
                 %
                 V1,
                 V2,
+                %
+                O1,
+                O2,
                 %
                 C1,
                 C3
@@ -7815,12 +8195,22 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
                 V1,
                 V2,
                 %
+                O1,
+                O2,
+                %
                 C1,
                 C3
             );
         %
         UpdatedC2 ->
-            ?INTERNAL2_C2(UpdatedC2)
+            ?new_INTERNAL2(
+               K1, K2,
+               %
+               V1, V2,
+               %
+               O1, O2 - 1,
+               %
+               C1, UpdatedC2, C3)
     end.
 
 -compile({inline, del_rebalance_INTERNAL2_C2_finish / ?INTERNAL2_ARITY}).
@@ -7832,6 +8222,9 @@ del_rebalance_INTERNAL2_C2_finish(
     V1,
     V2,
     %
+    O1,
+    O2,
+    %
     C1,
     C3
 ) ->
@@ -7842,11 +8235,13 @@ del_rebalance_INTERNAL2_C2_finish(
                 %
                 V2,
                 %
+                O2,
+                %
                 MergedC1C2,
                 C3
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, RebalancedC2, UpdatedC3) ->
+        ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL2(
                 K1,
                 UpKey,
@@ -7854,18 +8249,24 @@ del_rebalance_INTERNAL2_C2_finish(
                 V1,
                 UpValue,
                 %
+                O1,
+                O2 + MovedSize,
+                %
                 C1,
                 RebalancedC2,
                 UpdatedC3
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedC1, RebalancedC2) ->
+        ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedC1, RebalancedC2) ->
             ?new_INTERNAL2(
                 UpKey,
                 K2,
                 %
                 UpValue,
                 V2,
+                %
+                O1 - MovedSize,
+                O2 - 1,
                 %
                 UpdatedC1,
                 RebalancedC2,
@@ -7880,19 +8281,21 @@ del_rebalance_INTERNAL2_C2_finish(
 -compile({inline, del_rebalance_INTERNAL2_C3 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
     case C3 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_left_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K2,
                 V2,
+                O2 - O1,
                 C2
             ),
 
-            del_rebalance_INTERNAL2_C3_finish(Result, K1, V1, C1);
+            del_rebalance_INTERNAL2_C3_finish(Result, K1, V1, O1, O2, C1);
         %
         ?LEAF1_MATCH(CK, CV) ->
             Result = del_rebalance_leaf_from_left_sibling(
@@ -7904,22 +8307,25 @@ del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
                 C2
             ),
 
-            del_rebalance_INTERNAL2_C3_finish(Result, K1, V1, C1);
+            del_rebalance_INTERNAL2_C3_finish(Result, K1, V1, O1, O2, C1);
         %
         UpdatedC3 ->
             ?INTERNAL2_C3(UpdatedC3)
     end.
 
 -compile({inline, del_rebalance_INTERNAL2_C3_finish / ?INTERNAL2_ARITY_MINUS3}).
-del_rebalance_INTERNAL2_C3_finish(Result, K1, V1, C1) ->
+del_rebalance_INTERNAL2_C3_finish(Result, K1, V1, O1, O2, C1) ->
     case Result of
-        ?ROTATED(UpKey, UpValue, UpdatedC2, RebalancedC3) ->
+        ?ROTATED(UpKey, UpValue, MovedSize, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL2(
                 K1,
                 UpKey,
                 %
                 V1,
                 UpValue,
+                %
+                O1,
+                O2 - MovedSize,
                 %
                 C1,
                 UpdatedC2,
@@ -7931,6 +8337,8 @@ del_rebalance_INTERNAL2_C3_finish(Result, K1, V1, C1) ->
                 K1,
                 %
                 V1,
+                %
+                O1,
                 %
                 C1,
                 MergedC2C3
@@ -7948,19 +8356,21 @@ del_rebalance_INTERNAL2_C3_finish(Result, K1, V1, C1) ->
 -compile({inline, del_rebalance_INTERNAL1_C1 / ?INTERNAL1_ARITY}).
 del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
     case C1 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_right_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K1,
                 V1,
+                O1,
                 C2
             ),
 
-            del_rebalance_INTERNAL1_finish(Result);
+            del_rebalance_INTERNAL1_C1_finish(Result, O1);
         %
         ?LEAF1_MATCH(CK, CV) ->
             Result = del_rebalance_leaf_from_right_sibling(
@@ -7972,12 +8382,29 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
                 C2
             ),
 
-            del_rebalance_INTERNAL1_finish(Result);
+            del_rebalance_INTERNAL1_C1_finish(Result, O1);
         %
         UpdatedC1 ->
-            ?INTERNAL1_C1(UpdatedC1)
+            ?new_INTERNAL1(
+               K1,
+               %
+               V1,
+               %,
+               O1 - 1,
+               %
+               UpdatedC1, C2
+              )
     end.
 
+del_rebalance_INTERNAL1_C1_finish(Result, O1) ->
+    case Result of
+        ?ROTATED(UpKey, UpValue, MovedSize, UpdatedC1, UpdatedC2) ->
+            ?new_INTERNAL1(UpKey, UpValue, O1 + MovedSize, UpdatedC1, UpdatedC2);
+        %
+        ?MERGED(MergedC1C2) ->
+            % Can only happen at root - height is reduced
+            MergedC1C2
+    end.
 %%
 %% C2
 %%
@@ -7985,19 +8412,21 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL1_C2 / ?INTERNAL1_ARITY}).
 del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
     case C2 of
-        ?INTERNAL1_MATCH(CK, CV, CL, CR) ->
+        ?INTERNAL1_MATCH(CK, CV, CO, CL, CR) ->
             Result = del_rebalance_internal_from_left_sibling(
                 CK,
                 CV,
+                CO,
                 CL,
                 CR,
                 %
                 K1,
                 V1,
+                O1,
                 C1
             ),
 
-            del_rebalance_INTERNAL1_finish(Result);
+            del_rebalance_INTERNAL1_C2_finish(Result, O1);
         %
         ?LEAF1_MATCH(CK, CV) ->
             Result = del_rebalance_leaf_from_left_sibling(
@@ -8009,17 +8438,17 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
                 C1
             ),
 
-            del_rebalance_INTERNAL1_finish(Result);
+            del_rebalance_INTERNAL1_C2_finish(Result, O1);
         %
         UpdatedC2 ->
             ?INTERNAL1_C2(UpdatedC2)
     end.
 
 %-compile({inline, del_rebalance_INTERNAL1_finish/?INTERNAL1_ARITY_MINUS2}).
-del_rebalance_INTERNAL1_finish(Result) ->
+del_rebalance_INTERNAL1_C2_finish(Result, O1) ->
     case Result of
-        ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
-            ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
+        ?ROTATED(UpKey, UpValue, MovedSize, UpdatedC1, UpdatedC2) ->
+            ?new_INTERNAL1(UpKey, UpValue, O1 - MovedSize, UpdatedC1, UpdatedC2);
         %
         ?MERGED(MergedC1C2) ->
             % Can only happen at root - height is reduced
@@ -8034,11 +8463,13 @@ del_rebalance_INTERNAL1_finish(Result) ->
 del_rebalance_internal_from_right_sibling(
     CKey,
     CValue,
+    COffset,
     CLeft,
     CRight,
     %
     ParentK,
     ParentV,
+    ParentO,
     Right
 ) ->
     case Right of
@@ -8053,6 +8484,11 @@ del_rebalance_internal_from_right_sibling(
                 ParentV,
                 V1,
                 V2,
+                %
+                COffset,
+                ParentO,
+                ParentO + O1,
+                ParentO + O2,
                 %
                 CLeft,
                 CRight,
@@ -8069,6 +8505,7 @@ del_rebalance_internal_from_right_sibling(
             UpKey = K1,
             UpValue = V1,
             MovedC = C1,
+            MovedSize = O1,
 
             UpdatedNode = ?new_INTERNAL2(
                 CKey,
@@ -8076,6 +8513,9 @@ del_rebalance_internal_from_right_sibling(
                 %
                 CValue,
                 ParentV,
+                %
+                COffset,
+                ParentO,
                 %
                 CLeft,
                 CRight,
@@ -8086,6 +8526,9 @@ del_rebalance_internal_from_right_sibling(
                 K2,
                 K3,
                 %
+                O2 - O1,
+                O3 - O1,
+                %
                 V2,
                 V3,
                 %
@@ -8094,7 +8537,7 @@ del_rebalance_internal_from_right_sibling(
                 C4
             ),
 
-            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight);
+            ?ROTATED(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight);
         %
         %
         %
@@ -8102,6 +8545,7 @@ del_rebalance_internal_from_right_sibling(
             UpKey = K1,
             UpValue = V1,
             MovedC = C1,
+            MovedSize = O1,
 
             UpdatedNode = ?new_INTERNAL2(
                 CKey,
@@ -8109,6 +8553,9 @@ del_rebalance_internal_from_right_sibling(
                 %
                 CValue,
                 ParentV,
+                %
+                COffset,
+                ParentO,
                 %
                 CLeft,
                 CRight,
@@ -8124,13 +8571,17 @@ del_rebalance_internal_from_right_sibling(
                 V3,
                 V4,
                 %
+                O2 - O1,
+                O3 - O1,
+                O4 - O1,
+                %
                 C2,
                 C3,
                 C4,
                 C5
             ),
 
-            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight)
+            ?ROTATED(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight)
         %
         %
     end.
@@ -8157,21 +8608,23 @@ del_rebalance_leaf_from_right_sibling(CKey, CValue, ParentK, ParentV, Right) ->
         ?LEAF3_MATCH_ALL ->
             UpKey = K1,
             UpValue = V1,
+            MovedSize = 0,
 
             UpdatedNode = ?new_LEAF2(CKey, ParentK, CValue, ParentV),
             UpdatedRight = ?new_LEAF2(K2, K3, V2, V3),
 
-            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight);
+            ?ROTATED(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight);
         %
         %
         ?LEAF4_MATCH_ALL ->
             UpKey = K1,
             UpValue = V1,
+            MovedSize = 0,
 
             UpdatedNode = ?new_LEAF2(CKey, ParentK, CValue, ParentV),
             UpdatedRight = ?new_LEAF3(K2, K3, K4, V2, V3, V4),
 
-            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight)
+            ?ROTATED(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight)
         %
         %
     end.
@@ -8184,11 +8637,13 @@ del_rebalance_leaf_from_right_sibling(CKey, CValue, ParentK, ParentV, Right) ->
 del_rebalance_internal_from_left_sibling(
     CKey,
     CValue,
+    COffset,
     CLeft,
     CRight,
     %
     ParentK,
     ParentV,
+    ParentO,
     Left
 ) ->
     case Left of
@@ -8198,6 +8653,12 @@ del_rebalance_internal_from_left_sibling(
                 K2,
                 ParentK,
                 CKey,
+                %
+                %
+                O1,
+                O2,
+                ParentO,
+                ParentO + COffset,
                 %
                 V1,
                 V2,
@@ -8219,6 +8680,7 @@ del_rebalance_internal_from_left_sibling(
             UpKey = K3,
             UpValue = V3,
             MovedC = C4,
+            MovedSize = ParentO - O3,
 
             UpdatedNode = ?new_INTERNAL2(
                 ParentK,
@@ -8226,6 +8688,9 @@ del_rebalance_internal_from_left_sibling(
                 %
                 ParentV,
                 CValue,
+                %
+                MovedSize,
+                MovedSize + COffset,
                 %
                 MovedC,
                 CLeft,
@@ -8236,14 +8701,18 @@ del_rebalance_internal_from_left_sibling(
                 K1,
                 K2,
                 %
+                O1,
+                O2,
+                %
                 V1,
                 V2,
+                %
                 C1,
                 C2,
                 C3
             ),
 
-            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode);
+            ?ROTATED(UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedNode);
         %
         %
         %
@@ -8251,6 +8720,7 @@ del_rebalance_internal_from_left_sibling(
             UpKey = K4,
             UpValue = V4,
             MovedC = C5,
+            MovedSize = ParentO - O4,
 
             UpdatedNode = ?new_INTERNAL2(
                 ParentK,
@@ -8258,6 +8728,9 @@ del_rebalance_internal_from_left_sibling(
                 %
                 ParentV,
                 CValue,
+                %
+                MovedSize,
+                MovedSize + COffset,
                 %
                 MovedC,
                 CLeft,
@@ -8273,13 +8746,17 @@ del_rebalance_internal_from_left_sibling(
                 V2,
                 V3,
                 %
+                O1,
+                O2,
+                O3,
+                %
                 C1,
                 C2,
                 C3,
                 C4
             ),
 
-            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode)
+            ?ROTATED(UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedNode)
         %
         %
     end.
@@ -8312,21 +8789,23 @@ del_rebalance_leaf_from_left_sibling(
         ?LEAF3_MATCH_ALL ->
             UpKey = K3,
             UpValue = V3,
+            MovedSize = 0,
 
             UpdatedNode = ?new_LEAF2(ParentK, CKey, ParentV, CValue),
             UpdatedLeft = ?new_LEAF2(K1, K2, V1, V2),
 
-            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode);
+            ?ROTATED(UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedNode);
         %
         %
         ?LEAF4_MATCH_ALL ->
             UpKey = K4,
             UpValue = V4,
+            MovedSize = 0,
 
             UpdatedNode = ?new_LEAF2(ParentK, CKey, ParentV, CValue),
             UpdatedLeft = ?new_LEAF3(K1, K2, K3, V1, V2, V3),
 
-            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode)
+            ?ROTATED(UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedNode)
     end.
 
 %% ------------------------------------------------------------------
@@ -8337,11 +8816,13 @@ del_rebalance_leaf_from_left_sibling(
 del_rebalance_internal_from_either_sibling(
     CKey,
     CValue,
+    COffset,
     CLeft,
     CRight,
     %
     LParentK,
     LParentV,
+    LParentO,
     Left,
     %
     RParentK,
@@ -8349,7 +8830,15 @@ del_rebalance_internal_from_either_sibling(
     Right
 ) ->
     case Left of
-        ?INTERNAL2_MATCH(LK1, LK2, LV1, LV2, LC1, LC2, LC3) ->
+        ?INTERNAL2_MATCH(
+           LK1, LK2, 
+           %
+           LV1, LV2, 
+           %
+           LO1, LO2,
+           %
+           LC1, LC2, LC3
+          ) ->
             %
             %
             case Right of
@@ -8357,6 +8846,7 @@ del_rebalance_internal_from_either_sibling(
                     UpKey = K1,
                     UpValue = V1,
                     MovedC = C1,
+                    MovedSize = O1,
 
                     UpdatedNode = ?new_INTERNAL2(
                         CKey,
@@ -8364,6 +8854,9 @@ del_rebalance_internal_from_either_sibling(
                         %
                         CValue,
                         RParentV,
+                        %
+                        COffset,
+                        COffset + MovedSize,
                         %
                         CLeft,
                         CRight,
@@ -8377,18 +8870,22 @@ del_rebalance_internal_from_either_sibling(
                         V2,
                         V3,
                         %
+                        O2 - O1,
+                        O3 - O1,
+                        %
                         C2,
                         C3,
                         C4
                     ),
 
-                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, UpdatedNode, UpdatedRight);
+                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight);
                 %
                 %
                 ?INTERNAL4_MATCH_ALL ->
                     UpKey = K1,
                     UpValue = V1,
                     MovedC = C1,
+                    MovedSize = O1,
 
                     UpdatedNode = ?new_INTERNAL2(
                         CKey,
@@ -8396,6 +8893,9 @@ del_rebalance_internal_from_either_sibling(
                         %
                         CValue,
                         RParentV,
+                        %
+                        COffset,
+                        COffset + MovedSize,
                         %
                         CLeft,
                         CRight,
@@ -8411,13 +8911,17 @@ del_rebalance_internal_from_either_sibling(
                         V3,
                         V4,
                         %
+                        O2 - O1,
+                        O3 - O1,
+                        O4 - O1,
+                        %
                         C2,
                         C3,
                         C4,
                         C5
                     ),
 
-                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, UpdatedNode, UpdatedRight);
+                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight);
                 %
                 %
                 _ ->
@@ -8432,6 +8936,11 @@ del_rebalance_internal_from_either_sibling(
                         LV2,
                         LParentV,
                         CValue,
+                        %
+                        LO1,
+                        LO2,
+                        LParentO - LO2,
+                        LParentO,
                         %
                         LC1,
                         LC2,
@@ -8450,6 +8959,7 @@ del_rebalance_internal_from_either_sibling(
             UpKey = K3,
             UpValue = V3,
             MovedC = C4,
+            MovedSize = LParentO - O3,
 
             UpdatedNode = ?new_INTERNAL2(
                 LParentK,
@@ -8457,6 +8967,9 @@ del_rebalance_internal_from_either_sibling(
                 %
                 LParentV,
                 CValue,
+                %
+                MovedSize,
+                MovedSize + O1,
                 %
                 MovedC,
                 CLeft,
@@ -8470,12 +8983,15 @@ del_rebalance_internal_from_either_sibling(
                 V1,
                 V2,
                 %
+                O2 - O1,
+                O3 - O1,
+                %
                 C1,
                 C2,
                 C3
             ),
 
-            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedLeft, UpdatedNode);
+            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedNode);
         %
         %
         %
@@ -8484,6 +9000,7 @@ del_rebalance_internal_from_either_sibling(
             UpKey = K4,
             UpValue = V4,
             MovedC = C5,
+            MovedSize = LParentO - O4,
 
             UpdatedNode = ?new_INTERNAL2(
                 LParentK,
@@ -8491,6 +9008,9 @@ del_rebalance_internal_from_either_sibling(
                 %
                 LParentV,
                 CValue,
+                %
+                MovedSize,
+                MovedSize + O1,
                 %
                 MovedC,
                 CLeft,
@@ -8506,13 +9026,17 @@ del_rebalance_internal_from_either_sibling(
                 V2,
                 V3,
                 %
+                O2 - O1,
+                O3 - O1,
+                O4 - O1,
+                %
                 C1,
                 C2,
                 C3,
                 C4
             ),
 
-            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedLeft, UpdatedNode)
+            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedNode)
     end.
 
 % -compile({inline, del_rebalance_leaf_from_either_sibling/8}).
@@ -8528,6 +9052,8 @@ del_rebalance_leaf_from_either_sibling(
     RParentV,
     Right
 ) ->
+    MovedSize = 0,
+
     case Left of
         ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
             %
@@ -8539,7 +9065,7 @@ del_rebalance_leaf_from_either_sibling(
                     UpdatedNode = ?new_LEAF2(CKey, RParentK, CValue, RParentV),
                     UpdatedRight = ?new_LEAF3(K2, K3, K4, V2, V3, V4),
 
-                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, UpdatedNode, UpdatedRight);
+                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight);
                 %
                 %
                 ?LEAF3_MATCH_ALL ->
@@ -8549,7 +9075,7 @@ del_rebalance_leaf_from_either_sibling(
                     UpdatedNode = ?new_LEAF2(CKey, RParentK, CValue, RParentV),
                     UpdatedRight = ?new_LEAF2(K2, K3, V2, V3),
 
-                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, UpdatedNode, UpdatedRight);
+                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, MovedSize, UpdatedNode, UpdatedRight);
                 %
                 %
                 _ ->
@@ -8578,7 +9104,7 @@ del_rebalance_leaf_from_either_sibling(
             UpdatedNode = ?new_LEAF2(LParentK, CKey, LParentV, CValue),
             UpdatedLeft = ?new_LEAF2(K1, K2, V1, V2),
 
-            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedLeft, UpdatedNode);
+            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedNode);
         %
         %
         %
@@ -8589,7 +9115,7 @@ del_rebalance_leaf_from_either_sibling(
             UpdatedNode = ?new_LEAF2(LParentK, CKey, LParentV, CValue),
             UpdatedLeft = ?new_LEAF3(K1, K2, K3, V1, V2, V3),
 
-            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedLeft, UpdatedNode)
+            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, MovedSize, UpdatedLeft, UpdatedNode)
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
