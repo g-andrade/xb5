@@ -140,19 +140,19 @@
 -define(INTERNAL4_ARITY_PLUS2, 15).
 -define(INTERNAL4_ARITY_PLUS3, 16).
 
--define(INTERNAL4_C1(UpdatedC1),
+-define(INTERNAL4_UPD_C1(UpdatedC1),
     ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, UpdatedC1, C2, C3, C4, C5)
 ).
--define(INTERNAL4_C2(UpdatedC2),
+-define(INTERNAL4_UPD_C2(UpdatedC2),
     ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, UpdatedC2, C3, C4, C5)
 ).
--define(INTERNAL4_C3(UpdatedC3),
+-define(INTERNAL4_UPD_C3(UpdatedC3),
     ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, UpdatedC3, C4, C5)
 ).
--define(INTERNAL4_C4(UpdatedC4),
+-define(INTERNAL4_UPD_C4(UpdatedC4),
     ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, UpdatedC4, C5)
 ).
--define(INTERNAL4_C5(UpdatedC5),
+-define(INTERNAL4_UPD_C5(UpdatedC5),
     ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, UpdatedC5)
 ).
 
@@ -190,10 +190,10 @@
 -define(INTERNAL3_ARITY_PLUS2, 12).
 -define(INTERNAL3_ARITY_PLUS3, 13).
 
--define(INTERNAL3_C1(UpdatedC1), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, UpdatedC1, C2, C3, C4)).
--define(INTERNAL3_C2(UpdatedC2), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, UpdatedC2, C3, C4)).
--define(INTERNAL3_C3(UpdatedC3), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, UpdatedC3, C4)).
--define(INTERNAL3_C4(UpdatedC4), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, UpdatedC4)).
+-define(INTERNAL3_UPD_C1(UpdatedC1), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, UpdatedC1, C2, C3, C4)).
+-define(INTERNAL3_UPD_C2(UpdatedC2), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, UpdatedC2, C3, C4)).
+-define(INTERNAL3_UPD_C3(UpdatedC3), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, UpdatedC3, C4)).
+-define(INTERNAL3_UPD_C4(UpdatedC4), ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, UpdatedC4)).
 
 -define(INTERNAL3_C1_REBALANCE(UpdatedC1),
     del_rebalance_INTERNAL3_C1(K1, K2, K3, V1, V2, V3, UpdatedC1, C2, C3, C4)
@@ -224,9 +224,9 @@
 -define(INTERNAL2_ARITY_PLUS2, 9).
 -define(INTERNAL2_ARITY_PLUS3, 10).
 
--define(INTERNAL2_C1(UpdatedC1), ?new_INTERNAL2(K1, K2, V1, V2, UpdatedC1, C2, C3)).
--define(INTERNAL2_C2(UpdatedC2), ?new_INTERNAL2(K1, K2, V1, V2, C1, UpdatedC2, C3)).
--define(INTERNAL2_C3(UpdatedC3), ?new_INTERNAL2(K1, K2, V1, V2, C1, C2, UpdatedC3)).
+-define(INTERNAL2_UPD_C1(UpdatedC1), ?new_INTERNAL2(K1, K2, V1, V2, UpdatedC1, C2, C3)).
+-define(INTERNAL2_UPD_C2(UpdatedC2), ?new_INTERNAL2(K1, K2, V1, V2, C1, UpdatedC2, C3)).
+-define(INTERNAL2_UPD_C3(UpdatedC3), ?new_INTERNAL2(K1, K2, V1, V2, C1, C2, UpdatedC3)).
 
 -define(INTERNAL2_C1_REBALANCE(UpdatedC1),
     del_rebalance_INTERNAL2_C1(K1, K2, V1, V2, UpdatedC1, C2, C3)
@@ -251,8 +251,8 @@
 -define(INTERNAL1_ARITY_PLUS1, 5).
 -define(INTERNAL1_ARITY_PLUS3, 7).
 
--define(INTERNAL1_C1(UpdatedC1), ?new_INTERNAL1(K1, V1, UpdatedC1, C2)).
--define(INTERNAL1_C2(UpdatedC2), ?new_INTERNAL1(K1, V1, C1, UpdatedC2)).
+-define(INTERNAL1_UPD_C1(UpdatedC1), ?new_INTERNAL1(K1, V1, UpdatedC1, C2)).
+-define(INTERNAL1_UPD_C2(UpdatedC2), ?new_INTERNAL1(K1, V1, C1, UpdatedC2)).
 
 -define(INTERNAL1_C1_REBALANCE(UpdatedC1), del_rebalance_INTERNAL1_C1(K1, V1, UpdatedC1, C2)).
 -define(INTERNAL1_C2_REBALANCE(UpdatedC2), del_rebalance_INTERNAL1_C2(K1, V1, C1, UpdatedC2)).
@@ -1678,7 +1678,7 @@ insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
             end;
         %
         UpdatedC1 ->
-            ?INTERNAL4_C1(UpdatedC1)
+            ?INTERNAL4_UPD_C1(UpdatedC1)
     end.
 
 -compile({inline, insert_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS3}).
@@ -1710,7 +1710,7 @@ insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
             end;
         %
         UpdatedC2 ->
-            ?INTERNAL4_C2(UpdatedC2)
+            ?INTERNAL4_UPD_C2(UpdatedC2)
     end.
 
 -compile({inline, insert_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS3}).
@@ -1742,7 +1742,7 @@ insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
             end;
         %
         UpdatedC3 ->
-            ?INTERNAL4_C3(UpdatedC3)
+            ?INTERNAL4_UPD_C3(UpdatedC3)
     end.
 
 -compile({inline, insert_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS3}).
@@ -1774,7 +1774,7 @@ insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
             end;
         %
         UpdatedC4 ->
-            ?INTERNAL4_C4(UpdatedC4)
+            ?INTERNAL4_UPD_C4(UpdatedC4)
     end.
 
 -compile({inline, insert_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS3}).
@@ -1806,7 +1806,7 @@ insert_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
             end;
         %
         UpdatedC5 ->
-            ?INTERNAL4_C5(UpdatedC5)
+            ?INTERNAL4_UPD_C5(UpdatedC5)
     end.
 
 %%
@@ -1888,7 +1888,7 @@ insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
             end;
         %
         UpdatedC1 ->
-            ?INTERNAL3_C1(UpdatedC1)
+            ?INTERNAL3_UPD_C1(UpdatedC1)
     end.
 
 -compile({inline, insert_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS3}).
@@ -1933,7 +1933,7 @@ insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
             end;
         %
         UpdatedC2 ->
-            ?INTERNAL3_C2(UpdatedC2)
+            ?INTERNAL3_UPD_C2(UpdatedC2)
     end.
 
 -compile({inline, insert_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS3}).
@@ -1978,7 +1978,7 @@ insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
             end;
         %
         UpdatedC3 ->
-            ?INTERNAL3_C3(UpdatedC3)
+            ?INTERNAL3_UPD_C3(UpdatedC3)
     end.
 
 -compile({inline, insert_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS3}).
@@ -2023,7 +2023,7 @@ insert_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
             end;
         %
         UpdatedC4 ->
-            ?INTERNAL3_C4(UpdatedC4)
+            ?INTERNAL3_UPD_C4(UpdatedC4)
     end.
 
 %%
@@ -2089,7 +2089,7 @@ insert_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
             end;
         %
         UpdatedC1 ->
-            ?INTERNAL2_C1(UpdatedC1)
+            ?INTERNAL2_UPD_C1(UpdatedC1)
     end.
 
 -compile({inline, insert_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS3}).
@@ -2128,7 +2128,7 @@ insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
             end;
         %
         UpdatedC2 ->
-            ?INTERNAL2_C2(UpdatedC2)
+            ?INTERNAL2_UPD_C2(UpdatedC2)
     end.
 
 -compile({inline, insert_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS3}).
@@ -2167,7 +2167,7 @@ insert_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
             end;
         %
         UpdatedC3 ->
-            ?INTERNAL2_C3(UpdatedC3)
+            ?INTERNAL2_UPD_C3(UpdatedC3)
     end.
 
 %%
@@ -5270,27 +5270,27 @@ update_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 -compile({inline, update_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS3}).
 update_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     UpdatedC1 = update_recur(Key, ValueEval, ValueWrap, C1),
-    ?INTERNAL4_C1(UpdatedC1).
+    ?INTERNAL4_UPD_C1(UpdatedC1).
 
 -compile({inline, update_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS3}).
 update_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     UpdatedC2 = update_recur(Key, ValueEval, ValueWrap, C2),
-    ?INTERNAL4_C2(UpdatedC2).
+    ?INTERNAL4_UPD_C2(UpdatedC2).
 
 -compile({inline, update_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS3}).
 update_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     UpdatedC3 = update_recur(Key, ValueEval, ValueWrap, C3),
-    ?INTERNAL4_C3(UpdatedC3).
+    ?INTERNAL4_UPD_C3(UpdatedC3).
 
 -compile({inline, update_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS3}).
 update_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     UpdatedC4 = update_recur(Key, ValueEval, ValueWrap, C4),
-    ?INTERNAL4_C4(UpdatedC4).
+    ?INTERNAL4_UPD_C4(UpdatedC4).
 
 -compile({inline, update_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS3}).
 update_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     UpdatedC5 = update_recur(Key, ValueEval, ValueWrap, C5),
-    ?INTERNAL4_C5(UpdatedC5).
+    ?INTERNAL4_UPD_C5(UpdatedC5).
 
 %%
 
@@ -5422,22 +5422,22 @@ update_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 -compile({inline, update_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS3}).
 update_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     UpdatedC1 = update_recur(Key, ValueEval, ValueWrap, C1),
-    ?INTERNAL3_C1(UpdatedC1).
+    ?INTERNAL3_UPD_C1(UpdatedC1).
 
 -compile({inline, update_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS3}).
 update_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     UpdatedC2 = update_recur(Key, ValueEval, ValueWrap, C2),
-    ?INTERNAL3_C2(UpdatedC2).
+    ?INTERNAL3_UPD_C2(UpdatedC2).
 
 -compile({inline, update_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS3}).
 update_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     UpdatedC3 = update_recur(Key, ValueEval, ValueWrap, C3),
-    ?INTERNAL3_C3(UpdatedC3).
+    ?INTERNAL3_UPD_C3(UpdatedC3).
 
 -compile({inline, update_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS3}).
 update_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     UpdatedC4 = update_recur(Key, ValueEval, ValueWrap, C4),
-    ?INTERNAL3_C4(UpdatedC4).
+    ?INTERNAL3_UPD_C4(UpdatedC4).
 
 %%
 
@@ -5528,17 +5528,17 @@ update_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 -compile({inline, update_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS3}).
 update_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     UpdatedC1 = update_recur(Key, ValueEval, ValueWrap, C1),
-    ?INTERNAL2_C1(UpdatedC1).
+    ?INTERNAL2_UPD_C1(UpdatedC1).
 
 -compile({inline, update_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS3}).
 update_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     UpdatedC2 = update_recur(Key, ValueEval, ValueWrap, C2),
-    ?INTERNAL2_C2(UpdatedC2).
+    ?INTERNAL2_UPD_C2(UpdatedC2).
 
 -compile({inline, update_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS3}).
 update_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     UpdatedC3 = update_recur(Key, ValueEval, ValueWrap, C3),
-    ?INTERNAL2_C3(UpdatedC3).
+    ?INTERNAL2_UPD_C3(UpdatedC3).
 
 %%
 
@@ -5594,12 +5594,12 @@ update_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
 -compile({inline, update_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS3}).
 update_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
     UpdatedC1 = update_recur(Key, ValueEval, ValueWrap, C1),
-    ?INTERNAL1_C1(UpdatedC1).
+    ?INTERNAL1_UPD_C1(UpdatedC1).
 
 -compile({inline, update_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS3}).
 update_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
     UpdatedC2 = update_recur(Key, ValueEval, ValueWrap, C2),
-    ?INTERNAL1_C2(UpdatedC2).
+    ?INTERNAL1_UPD_C2(UpdatedC2).
 
 %%
 
@@ -6531,7 +6531,7 @@ ins_rebalance_into_right_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, Up
 del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, K1, V1, C2) of
         no ->
-            ?INTERNAL4_C1(C1);
+            ?INTERNAL4_UPD_C1(C1);
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL4(
@@ -6589,7 +6589,7 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
         )
     of
         no ->
-            ?INTERNAL4_C2(C2);
+            ?INTERNAL4_UPD_C2(C2);
         %
         ?MID_MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL3(
@@ -6666,7 +6666,7 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
         )
     of
         no ->
-            ?INTERNAL4_C3(C3);
+            ?INTERNAL4_UPD_C3(C3);
         %
         ?MID_MERGED_MATCH(MergedC2C3) ->
             ?new_INTERNAL3(
@@ -6743,7 +6743,7 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
         )
     of
         no ->
-            ?INTERNAL4_C4(C4);
+            ?INTERNAL4_UPD_C4(C4);
         %
         ?MID_MERGED_MATCH(MergedC3C4) ->
             ?new_INTERNAL3(
@@ -6808,7 +6808,7 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
 del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C5, K4, V4, C4) of
         no ->
-            ?INTERNAL4_C5(C5);
+            ?INTERNAL4_UPD_C5(C5);
         %
         ?ROTATED(UpKey, UpValue, UpdatedC4, RebalancedC5) ->
             ?new_INTERNAL4(
@@ -6858,7 +6858,7 @@ del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
 del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, K1, V1, C2) of
         no ->
-            ?INTERNAL3_C1(C1);
+            ?INTERNAL3_UPD_C1(C1);
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL3(
@@ -6910,7 +6910,7 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
         )
     of
         no ->
-            ?INTERNAL3_C2(C2);
+            ?INTERNAL3_UPD_C2(C2);
         %
         ?MID_MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL2(
@@ -6978,7 +6978,7 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
         )
     of
         no ->
-            ?INTERNAL3_C3(C3);
+            ?INTERNAL3_UPD_C3(C3);
         %
         ?MID_MERGED_MATCH(MergedC2C3) ->
             ?new_INTERNAL2(
@@ -7034,7 +7034,7 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
 del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C4, K3, V3, C3) of
         no ->
-            ?INTERNAL3_C4(C4);
+            ?INTERNAL3_UPD_C4(C4);
         %
         ?ROTATED(UpKey, UpValue, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL3(
@@ -7078,7 +7078,7 @@ del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
 del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, K1, V1, C2) of
         no ->
-            ?INTERNAL2_C1(C1);
+            ?INTERNAL2_UPD_C1(C1);
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL2(
@@ -7117,7 +7117,7 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
         )
     of
         no ->
-            ?INTERNAL2_C2(C2);
+            ?INTERNAL2_UPD_C2(C2);
         %
         ?MID_MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL1(
@@ -7164,7 +7164,7 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
 del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C3, K2, V2, C2) of
         no ->
-            ?INTERNAL2_C3(C3);
+            ?INTERNAL2_UPD_C3(C3);
         %
         ?ROTATED(UpKey, UpValue, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL2(
@@ -7202,7 +7202,7 @@ del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
 del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, K1, V1, C2) of
         no ->
-            ?INTERNAL1_C1(C1);
+            ?INTERNAL1_UPD_C1(C1);
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
@@ -7220,7 +7220,7 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
 del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C2, K1, V1, C1) of
         no ->
-            ?INTERNAL1_C2(C2);
+            ?INTERNAL1_UPD_C2(C2);
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
