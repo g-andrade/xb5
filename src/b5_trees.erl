@@ -31,6 +31,7 @@
     size/1,
     smaller/2,
     smallest/1,
+    structural_stats/1,
     take/2,
     take_any/2,
     take_largest/1,
@@ -417,6 +418,10 @@ Returns the smallest key-value pair in the tree. The call fails with an
 -spec smallest(Tree) -> {Key, Value} when Tree :: tree(Key, Value).
 smallest(#b5_trees{root = Root}) ->
     b5_trees_node:smallest(Root).
+
+% TODO document
+structural_stats(#b5_trees{root = Root}) ->
+    b5_trees_node:structural_stats(Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc """

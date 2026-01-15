@@ -1,16 +1,20 @@
-% TODO document
+%% @private
 -module(b5_structural_stats).
 
--include("src/b5_structural_stats.hrl").
+%% ------------------------------------------------------------------
+%% API Function Exports
+%% ------------------------------------------------------------------
 
 -export([
     new/0,
     set_height/2,
-    inc/2,
+    inc_count/2,
     return/1
 ]).
 
-%% Types
+%% ------------------------------------------------------------------
+%% Type Definitions
+%% ------------------------------------------------------------------
 
 -type t() :: [stat(), ...].
 -export_type([t/0]).
@@ -40,77 +44,92 @@
     | leaf1).
 -export_type([node_type/0]).
 
--opaque acc() :: #stats_acc{
-    count_internal4 :: non_neg_integer(),
-    count_internal3 :: non_neg_integer(),
-    count_internal2 :: non_neg_integer(),
-    count_internal1 :: non_neg_integer(),
-    count_leaf4 :: non_neg_integer(),
-    count_leaf3 :: non_neg_integer(),
-    count_leaf2 :: non_neg_integer(),
-    count_leaf1 :: non_neg_integer(),
-    height :: non_neg_integer()
+-opaque acc() :: #{
+    node_counts := #{node_type() := non_neg_integer()},
+    height := non_neg_integer()
 }.
 -export_type([acc/0]).
 
-%% API
+%% ------------------------------------------------------------------
+%% API Function Definitions
+%% ------------------------------------------------------------------
 
 -spec new() -> acc().
 new() ->
-    #stats_acc{
-        count_internal4 = 0,
-        count_internal3 = 0,
-        count_internal2 = 0,
-        count_internal1 = 0,
-        count_leaf4 = 0,
-        count_leaf3 = 0,
-        count_leaf2 = 0,
-        count_leaf1 = 0,
-        height = 0
+    #{
+        node_counters => #{
+            internal4 => 0,
+            internal3 => 0,
+            internal2 => 0,
+            internal1 => 0,
+            leaf4 => 0,
+            leaf3 => 0,
+            leaf2 => 0,
+            leaf1 => 0
+        },
+        height => 0
     }.
 
 -spec set_height(pos_integer(), acc()) -> acc().
-set_height(Height, #stats_acc{height = RecordHeight} = Acc) ->
+set_height(Height, #{height := RecordHeight} = Acc) ->
     case RecordHeight of
         _ when RecordHeight < Height ->
-            Acc#stats_acc{height = Height};
+            Acc#{height := Height};
         %
         _ when RecordHeight =:= Height ->
             Acc
     end.
 
--spec inc(pos_integer(), acc()) -> acc().
-inc(Pos, #stats_acc{} = Acc) ->
-    setelement(Pos, Acc, element(Pos, Acc) + 1).
+-spec inc_count(node_type(), acc()) -> acc().
+inc_count(NodeType, #{node_counters := NodeCounters} = Acc) ->
+    Count = map_get(NodeType, NodeCounters),
+    Acc#{node_counters := NodeCounters#{NodeType := Count + 1}}.
 
 -spec return(acc()) -> t().
-return(#stats_acc{} = Acc) ->
-    NodeCounts = node_counts(Acc),
+return(#{node_counters := NodeCounters, height := Height}) ->
+    NodeCounts = node_counts(NodeCounters),
     NodePercentages = node_percentages(NodeCounts),
     TotalKeys = total_keys(NodeCounts),
     KeyPercentages = key_percentages(NodeCounts, TotalKeys),
 
     [
-        {height, Acc#stats_acc.height},
+        {height, Height},
         {node_counts, NodeCounts},
         {node_percentages, NodePercentages},
         {total_keys, TotalKeys},
         {key_percentages, KeyPercentages}
     ].
 
-%% Internal
+%% ------------------------------------------------------------------
+%% Internal Function Definitions
+%% ------------------------------------------------------------------
 
-node_counts(#stats_acc{} = Acc) ->
-    [
-        {internal4, Acc#stats_acc.count_internal4},
-        {internal3, Acc#stats_acc.count_internal3},
-        {internal2, Acc#stats_acc.count_internal2},
-        {internal1, Acc#stats_acc.count_internal1},
-        {leaf4, Acc#stats_acc.count_leaf4},
-        {leaf3, Acc#stats_acc.count_leaf3},
-        {leaf2, Acc#stats_acc.count_leaf2},
-        {leaf1, Acc#stats_acc.count_leaf1}
-    ].
+node_counts(NodeCounters) ->
+    SortedNodeTypes = sort_node_types(maps:keys(NodeCounters)),
+
+    lists:map(
+        fun(NodeType) ->
+            {NodeType, map_get(NodeType, NodeCounters)}
+        end,
+        SortedNodeTypes
+    ).
+
+sort_node_types(NodeTypes) ->
+    WithSortingKeys = node_types_with_sorting_keys(NodeTypes),
+    Sorted = lists:keysort(2, WithSortingKeys),
+    lists:map(fun({NodeType, _}) -> NodeType end, Sorted).
+
+node_types_with_sorting_keys(NodeTypes) ->
+    lists:map(fun(NodeType) -> {NodeType, node_type_sorting_key(NodeType)} end, NodeTypes).
+
+node_type_sorting_key(NodeType) ->
+    case atom_to_list(NodeType) of
+        "internal" ++ ArityStr ->
+            [1 | -list_to_integer(ArityStr)];
+        %
+        "leaf" ++ ArityStr ->
+            [2 | -list_to_integer(ArityStr)]
+    end.
 
 node_percentages(NodeCounts) ->
     Sum = lists:foldl(
