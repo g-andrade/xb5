@@ -50,40 +50,8 @@
 ]).
 
 %% Test constants
--define(REGULAR_TREE_SIZES,
-    lists:seq(1, 50) ++
-        [
-            55,
-            60,
-            65,
-            70,
-            75,
-            80,
-            85,
-            90,
-            95,
-            100,
-            105,
-            110,
-            115,
-            120,
-            125,
-            130,
-            135,
-            140,
-            145,
-            150,
-            155,
-            160,
-            165,
-            170,
-            175,
-            180,
-            185,
-            190,
-            195,
-            200
-        ] ++ [997]
+-define(TREE_SIZES,
+    lists:seq(1, 50) ++ lists:seq(5, 200, 5) ++ [997]
 ).
 
 %% ------------------------------------------------------------------
@@ -153,7 +121,7 @@ test_get_operations(_Config) ->
 
     %% Test with multiple tree sizes
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             logger:notice("Tree: ~p", [Tree]),
 
@@ -185,7 +153,7 @@ test_to_list_operations(_Config) ->
     ?assertEqual([], b5_trees:to_list(EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, _NonExistentKeys) ->
             Expected = b5_trees_test_helpers:sort_by(
                 maps:to_list(ExistentMap),
@@ -239,7 +207,7 @@ test_constituent_parts(_Config) ->
 
 test_insert_operations(_Config) ->
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             ExistentKvs = b5_trees_test_helpers:sort_by(
                 maps:to_list(ExistentMap),
@@ -252,7 +220,7 @@ test_insert_operations(_Config) ->
 
 test_insert_with_operations(_Config) ->
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             ExistentKvs = b5_trees_test_helpers:sort_by(
                 maps:to_list(ExistentMap),
@@ -268,7 +236,7 @@ test_update_operations(_Config) ->
     ?assertError({badkey, foobar}, b5_trees:update(foobar, v, EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             ExistentKvs = b5_trees_test_helpers:sort_by(
                 maps:to_list(ExistentMap),
@@ -286,7 +254,7 @@ test_update_with_3_operations(_Config) ->
     ),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             ExistentKvs = b5_trees_test_helpers:sort_by(
                 maps:to_list(ExistentMap),
@@ -304,7 +272,7 @@ test_update_with_4_operations(_Config) ->
     ),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             ExistentKvs = b5_trees_test_helpers:sort_by(
                 maps:to_list(ExistentMap),
@@ -488,7 +456,7 @@ test_smallest_largest_operations(_Config) ->
     ?assertError(empty_tree, b5_trees:largest(EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, _NonExistentKeys) ->
             {SmallestK, SmallestV} = hd(
                 b5_trees_test_helpers:sort_by(maps:to_list(ExistentMap), fun({K, _}) -> K end)
@@ -507,7 +475,7 @@ test_delete_operations(_Config) ->
     ?assertEqual(EmptyTree, b5_trees:delete_any(foobar, EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             test_delete_each(Tree, ExistentMap, NonExistentKeys),
             test_delete_all(Tree, ExistentMap, NonExistentKeys)
@@ -520,7 +488,7 @@ test_keys_values_operations(_Config) ->
     ?assertEqual([], b5_trees:values(EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             ExpectedKeys = b5_trees_test_helpers:sort_by(maps:keys(ExistentMap), fun(K) -> K end),
             test_keys_impl(Tree, ExpectedKeys, b5_trees_test_helpers:shuffle(NonExistentKeys)),
@@ -538,7 +506,7 @@ test_smaller_larger_operations(_Config) ->
     ?assertEqual(none, b5_trees:larger(any_key, EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             AllKeys = b5_trees_test_helpers:shuffle(maps:keys(ExistentMap) ++ NonExistentKeys),
             test_smaller_impl(Tree, ExistentMap, AllKeys),
@@ -551,7 +519,7 @@ test_take_smallest_operations(_Config) ->
     ?assertError(empty_tree, b5_trees:take_smallest(EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, _NonExistentKeys) ->
             ExistentKvs = b5_trees_test_helpers:sort_by(maps:to_list(ExistentMap), fun({K, _}) ->
                 K
@@ -565,7 +533,7 @@ test_take_largest_operations(_Config) ->
     ?assertError(empty_tree, b5_trees:take_largest(EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, _NonExistentKeys) ->
             ExistentKvs = lists:reverse(
                 b5_trees_test_helpers:sort_by(maps:to_list(ExistentMap), fun({K, _}) -> K end)
@@ -576,7 +544,7 @@ test_take_largest_operations(_Config) ->
 
 test_take_operations(_Config) ->
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             ExistentKvs = b5_trees_test_helpers:shuffle(maps:to_list(ExistentMap)),
             test_take_all(Tree, ExistentKvs, NonExistentKeys)
@@ -588,7 +556,7 @@ test_iterator_operations(_Config) ->
     ?assertEqual(none, b5_trees:next(b5_trees:iterator(EmptyTree))),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, _NonExistentKeys) ->
             Iterator = b5_trees:iterator(Tree),
             ExpectedKvs = b5_trees_test_helpers:sort_by(maps:to_list(ExistentMap), fun({K, _}) ->
@@ -604,7 +572,7 @@ test_iterator_ordered_operations(_Config) ->
     ?assertEqual(none, b5_trees:next(b5_trees:iterator(EmptyTree, ordered))),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, _NonExistentKeys) ->
             Iterator = b5_trees:iterator(Tree, ordered),
             ExpectedKvs = b5_trees_test_helpers:sort_by(maps:to_list(ExistentMap), fun({K, _}) ->
@@ -620,7 +588,7 @@ test_iterator_reversed_operations(_Config) ->
     ?assertEqual(none, b5_trees:next(b5_trees:iterator(EmptyTree, reversed))),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, _NonExistentKeys) ->
             Iterator = b5_trees:iterator(Tree, reversed),
             ExpectedKvs = lists:reverse(
@@ -636,7 +604,7 @@ test_iterator_from_operations(_Config) ->
     ?assertEqual(none, b5_trees:next(b5_trees:iterator_from(any_key, EmptyTree))),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             AllKeys = lists:sort(maps:keys(ExistentMap) ++ NonExistentKeys),
             lists:foreach(
@@ -664,7 +632,7 @@ test_iterator_from_ordered_operations(_Config) ->
     ?assertEqual(none, b5_trees:next(b5_trees:iterator_from(any_key, EmptyTree, ordered))),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             AllKeys = lists:sort(maps:keys(ExistentMap) ++ NonExistentKeys),
             lists:foreach(
@@ -692,7 +660,7 @@ test_iterator_from_reversed_operations(_Config) ->
     ?assertEqual(none, b5_trees:next(b5_trees:iterator_from(any_key, EmptyTree, reversed))),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             AllKeys = lists:sort(maps:keys(ExistentMap) ++ NonExistentKeys),
             lists:foreach(
@@ -725,7 +693,7 @@ test_foldl_foldr_operations(_Config) ->
     ?assertEqual([], b5_trees:foldr(FoldFun, [], EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, _NonExistentKeys) ->
             AccFoldl = b5_trees:foldl(FoldFun, [], Tree),
             ExpectedFoldl = lists:reverse(
@@ -749,7 +717,7 @@ test_map_operations(_Config) ->
     ?assertEqual([], b5_trees:to_list(MappedEmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, _NonExistentKeys) ->
             NewValues = maps:from_list([
                 {K, b5_trees_test_helpers:random_number()}
@@ -769,7 +737,7 @@ test_map_operations(_Config) ->
 
 test_enter_operations(_Config) ->
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             KeysToEnter = b5_trees_test_helpers:shuffle(maps:keys(ExistentMap) ++ NonExistentKeys),
             ExistentKvs = b5_trees_test_helpers:sort_by(maps:to_list(ExistentMap), fun({K, _}) ->
@@ -781,7 +749,7 @@ test_enter_operations(_Config) ->
 
 test_is_defined_operations(_Config) ->
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             maps:fold(
                 fun(Key, _ExpectedValue, _) ->
@@ -801,8 +769,11 @@ test_is_defined_operations(_Config) ->
     ).
 
 test_lookup_operations(_Config) ->
+    EmptyTree = b5_trees:new(),
+    ?assertEqual(none, b5_trees:lookup(foobar, EmptyTree)),
+
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             maps:fold(
                 fun(Key, ExpectedValue, _) ->
@@ -823,7 +794,7 @@ test_lookup_operations(_Config) ->
 
 test_take_any_operations(_Config) ->
     b5_trees_test_helpers:for_each_tree(
-        ?REGULAR_TREE_SIZES,
+        ?TREE_SIZES,
         fun(Tree, ExistentMap, NonExistentKeys) ->
             ExistentKvs = b5_trees_test_helpers:shuffle(maps:to_list(ExistentMap)),
             test_take_any_impl(Tree, ExistentKvs, NonExistentKeys)
