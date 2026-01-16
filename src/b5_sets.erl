@@ -244,14 +244,17 @@ union(#b5_sets{root = Root1, size = Size1}, #b5_sets{root = Root2, size = Size2}
 %% ------------------------------------------------------------------
 
 -compile({inline, error_badkey/1}).
+-spec error_badkey(_) -> no_return().
 error_badkey(Elem) ->
     error({badkey, Elem}).
 
 -compile({inline, error_empty_set/0}).
+-spec error_empty_set() -> no_return().
 error_empty_set() ->
     error(empty_set).
 
 -compile({inline, error_key_exists/1}).
+-spec error_key_exists(_) -> no_return().
 error_key_exists(Elem) ->
     error({key_exists, Elem}).
 

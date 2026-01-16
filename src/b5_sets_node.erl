@@ -439,9 +439,11 @@
 -type forward_iter(Elem) :: [iterator_step(Elem)].
 -type reverse_iter(Elem) :: nonempty_improper_list(reversed, [iterator_step(Elem)]).
 
--type iterator_step(Elem) :: [Elem, ...].
+-type iterator_step(Elem) ::
+    (iter_elem(Elem)
+    | deep_node(Elem)).
 
-%%%%%%%%%%%
+-type iter_elem(Elem) :: [Elem, ...].
 
 %%%%%%%%%%%%
 
@@ -449,7 +451,7 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
--spec delete_att(Elem, t(Elem)) -> none | t(Elem).
+-spec delete_att(_, t(Elem)) -> none | t(Elem).
 delete_att(Elem, ?INTERNAL1_MATCH_ALL) ->
     delete_att_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 delete_att(Elem, ?LEAF1_MATCH_ALL) ->
@@ -459,7 +461,7 @@ delete_att(_Elem, ?LEAF0) ->
 delete_att(Elem, Root) ->
     delete_att_recur(Elem, Root).
 
--spec difference(t(Elem), t(Elem)) -> nonempty_improper_list(non_neg_integer(), t(Elem)).
+-spec difference(t(Elem1), t(_)) -> nonempty_improper_list(non_neg_integer(), t(Elem1)).
 difference(Root1, Root2) ->
     RemovedCount = 0,
 
@@ -474,6 +476,7 @@ difference(Root1, Root2) ->
             difference_recur(Iter, MaxElem, RemovedCount, Root1)
     end.
 
+-spec does_root_look_legit(term(), term()) -> boolean().
 does_root_look_legit(Root, 0) ->
     Root =:= ?LEAF0;
 does_root_look_legit(Root, Size) when is_integer(Size) ->
@@ -508,16 +511,29 @@ does_root_look_legit(Root, Size) when is_integer(Size) ->
 does_root_look_legit(_, _) ->
     false.
 
+-spec filter(fun((Elem) -> boolean()), t(Elem)) ->
+    nonempty_improper_list(FilteredSize, t(Elem))
+when
+    FilteredSize :: non_neg_integer().
 filter(Fun, Root) ->
     Count = 0,
     Filtered = new(),
     filter_root(Fun, Count, Root, Filtered).
 
+-spec filtermap(fun((Elem) -> {true, MappedElem} | boolean()), t(Elem)) ->
+    nonempty_improper_list(FilteredSize, t(Elem | MappedElem))
+when
+    FilteredSize :: non_neg_integer().
 filtermap(Fun, Root) ->
     Count = 0,
     Filtered = new(),
     filtermap_root(Fun, Count, Root, Filtered).
 
+-spec fold(fun((Elem, Acc1) -> Acc2), Acc0, t(Elem)) -> AccN when
+    Acc0 :: term(),
+    Acc1 :: term(),
+    Acc2 :: term(),
+    AccN :: term().
 fold(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
     Acc2 = fold_recur(Fun, Acc, C1),
     Acc3 = Fun(E1, Acc2),
@@ -529,7 +545,7 @@ fold(_Fun, Acc, ?LEAF0) ->
 fold(Fun, Acc, Root) ->
     fold_recur(Fun, Acc, Root).
 
--spec insert_att(Elem, t(Elem)) -> none | t(Elem).
+-spec insert_att(NewElem, t(PrevElem)) -> none | t(NewElem | PrevElem).
 insert_att(Elem, ?INTERNAL1_MATCH_ALL) ->
     insert_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 insert_att(Elem, ?LEAF1_MATCH_ALL) ->
@@ -545,7 +561,8 @@ insert_att(Elem, Root) ->
             UpdatedRoot
     end.
 
--spec intersection(t(Elem), t(Elem)) -> nonempty_improper_list(non_neg_integer(), t(Elem)).
+-spec intersection(t(Elem1), t(Elem2)) ->
+    nonempty_improper_list(non_neg_integer(), t(Elem1 | Elem2)).
 intersection(Root1, Root2) ->
     NewRoot = new(),
     Count = 0,
@@ -561,6 +578,7 @@ intersection(Root1, Root2) ->
             [Count | NewRoot]
     end.
 
+-spec is_disjoint(t(_), non_neg_integer(), t(_), non_neg_integer()) -> boolean().
 is_disjoint(Root1, Size1, Root2, Size2) ->
     case Size1 < Size2 of
         true ->
@@ -570,11 +588,13 @@ is_disjoint(Root1, Size1, Root2, Size2) ->
             is_disjoint_root(Root2, Root1)
     end.
 
+-spec is_equal(t(_), t(_)) -> boolean().
 is_equal(Root1, Root2) ->
     Iter1 = fwd_iterator(Root1),
     Iter2 = fwd_iterator(Root2),
     is_equal_recur(Iter1, Iter2).
 
+-spec is_member(_, t(_)) -> boolean().
 is_member(Elem, ?INTERNAL1_MATCH_ALL) ->
     is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 is_member(Elem, ?LEAF1_MATCH_ALL) ->
@@ -584,22 +604,26 @@ is_member(_Elem, ?LEAF0) ->
 is_member(Elem, Root) ->
     is_member_recur(Elem, Root).
 
+-spec is_subset(t(_), t(_)) -> boolean().
 is_subset(Root1, Root2) ->
     Iter1 = fwd_iterator(Root1),
     is_subset_recur(Iter1, Root2).
 
+-spec iterator(t(Elem), ordered | reversed) -> iter(Elem).
 iterator(Root, ordered) ->
     fwd_iterator(Root);
 iterator(Root, reversed) ->
     Acc = rev_iterator(Root),
     [?REV_ITER_TAG | Acc].
 
+-spec iterator_from(_, t(Elem), ordered | reversed) -> iter(Elem).
 iterator_from(Elem, Root, ordered) ->
     bound_fwd_iterator(Elem, Root);
 iterator_from(Elem, Root, reversed) ->
     Acc = bound_rev_iterator(Elem, Root),
     [?REV_ITER_TAG | Acc].
 
+-spec larger(_, t(Elem)) -> {found, Elem} | none.
 larger(Elem, ?INTERNAL1_MATCH_ALL) ->
     larger_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 larger(Elem, ?LEAF1_MATCH_ALL) ->
@@ -609,6 +633,7 @@ larger(_Elem, ?LEAF0) ->
 larger(Elem, Root) ->
     larger_recur(Elem, Root).
 
+-spec largest(t(Elem)) -> Elem.
 largest(?INTERNAL1_MATCH(_, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1_MATCH(E1)) ->
@@ -616,22 +641,28 @@ largest(?LEAF1_MATCH(E1)) ->
 largest(Root) ->
     largest_recur(Root).
 
+-spec map(fun((Elem) -> MappedElem), t(Elem)) -> nonempty_improper_list(NewSize, t(MappedElem)) when
+    NewSize :: non_neg_integer().
 map(Fun, Node) ->
     Count = 0,
     Acc = [Count | new()],
     map_root(Fun, Node, Acc).
 
+-spec new() -> t(_).
 new() ->
     ?LEAF0.
 
+-spec next(iter(Elem)) -> {Elem, iter(Elem)} | none.
 next([Head | Tail]) ->
     next(Head, Tail);
 next([]) ->
     none.
 
+-spec singleton(Elem) -> t(Elem).
 singleton(Elem) ->
     ?LEAF1(Elem).
 
+-spec smaller(_, t(Elem)) -> {found, Elem} | none.
 smaller(Elem, ?INTERNAL1_MATCH_ALL) ->
     smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 smaller(Elem, ?LEAF1_MATCH_ALL) ->
@@ -641,6 +672,7 @@ smaller(_Elem, ?LEAF0) ->
 smaller(Elem, Root) ->
     smaller_recur(Elem, Root).
 
+-spec smallest(t(Elem)) -> Elem.
 smallest(?INTERNAL1_MATCH(_, C1, _)) ->
     smallest_recur(C1);
 smallest(?LEAF1_MATCH(E1)) ->
@@ -675,6 +707,7 @@ structural_stats(Root) ->
             b5_structural_stats:return(Acc2)
     end.
 
+-spec take_largest(t(Elem)) -> take_result(Elem).
 take_largest(?INTERNAL1_MATCH_ALL) ->
     take_largest_INTERNAL1(?INTERNAL1_ARGS);
 take_largest(?LEAF1_MATCH_ALL) ->
@@ -682,6 +715,7 @@ take_largest(?LEAF1_MATCH_ALL) ->
 take_largest(Root) ->
     take_largest_recur(Root).
 
+-spec take_smallest(t(Elem)) -> take_result(Elem).
 take_smallest(?INTERNAL1_MATCH_ALL) ->
     take_smallest_INTERNAL1(?INTERNAL1_ARGS);
 take_smallest(?LEAF1_MATCH_ALL) ->
@@ -689,6 +723,7 @@ take_smallest(?LEAF1_MATCH_ALL) ->
 take_smallest(Root) ->
     take_smallest_recur(Root).
 
+-spec to_list(t(Elem)) -> [Elem].
 to_list(?INTERNAL1_MATCH_ALL) ->
     Acc2 = to_list_recur(C2, []),
     Acc3 = [E1 | Acc2],
@@ -700,6 +735,12 @@ to_list(?LEAF0) ->
 to_list(Root) ->
     to_list_recur(Root, []).
 
+-spec union(t(Elem1), Size1, t(Elem2), Size2) ->
+    nonempty_improper_list(NewSize, t(Elem1 | Elem2))
+when
+    Size1 :: non_neg_integer(),
+    Size2 :: non_neg_integer(),
+    NewSize :: non_neg_integer().
 union(Root1, Size1, Root2, Size2) ->
     case Size1 > Size2 of
         true ->
