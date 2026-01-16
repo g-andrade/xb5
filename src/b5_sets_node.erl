@@ -6,13 +6,13 @@
 %% ------------------------------------------------------------------
 
 -export([
-    delete/2,
+    delete_att/2,
     difference/2,
     does_root_look_legit/2,
     filter/2,
     filtermap/2,
     fold/3,
-    insert/2,
+    insert_att/2,
     intersection/2,
     is_disjoint/4,
     is_equal/2,
@@ -25,6 +25,7 @@
     map/2,
     new/0,
     next/1,
+    singleton/1,
     smaller/2,
     smallest/1,
     structural_stats/1,
@@ -448,27 +449,29 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-delete(Elem, ?INTERNAL1_MATCH_ALL) ->
-    delete_INTERNAL1(Elem, ?INTERNAL1_ARGS);
-delete(Elem, ?LEAF1_MATCH_ALL) ->
-    delete_LEAF1(Elem, ?LEAF1_ARGS);
-delete(Elem, ?LEAF0) ->
-    error_badkey(Elem);
-delete(Elem, Root) ->
-    delete_recur(Elem, Root).
+-spec delete_att(Elem, t(Elem)) -> none | t(Elem).
+delete_att(Elem, ?INTERNAL1_MATCH_ALL) ->
+    delete_att_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+delete_att(Elem, ?LEAF1_MATCH_ALL) ->
+    delete_att_LEAF1(Elem, ?LEAF1_ARGS);
+delete_att(_Elem, ?LEAF0) ->
+    none;
+delete_att(Elem, Root) ->
+    delete_att_recur(Elem, Root).
 
 -spec difference(t(Elem), t(Elem)) -> nonempty_improper_list(non_neg_integer(), t(Elem)).
 difference(Root1, Root2) ->
     RemovedCount = 0,
 
-    try smallest(Root1) of
-        MinElem ->
+    case Root1 of
+        ?LEAF0 ->
+            [RemovedCount | Root1];
+        %
+        _ ->
+            MinElem = smallest(Root1),
             MaxElem = largest(Root1),
             Iter = iterator_from(MinElem, Root2, ordered),
             difference_recur(Iter, MaxElem, RemovedCount, Root1)
-    catch
-        error:empty_set ->
-            [RemovedCount | Root1]
     end.
 
 does_root_look_legit(Root, 0) ->
@@ -526,14 +529,15 @@ fold(_Fun, Acc, ?LEAF0) ->
 fold(Fun, Acc, Root) ->
     fold_recur(Fun, Acc, Root).
 
-insert(Elem, ?INTERNAL1_MATCH_ALL) ->
+-spec insert_att(Elem, t(Elem)) -> none | t(Elem).
+insert_att(Elem, ?INTERNAL1_MATCH_ALL) ->
     insert_INTERNAL1(Elem, ?INTERNAL1_ARGS);
-insert(Elem, ?LEAF1_MATCH_ALL) ->
+insert_att(Elem, ?LEAF1_MATCH_ALL) ->
     insert_LEAF1(Elem, ?LEAF1_ARGS);
-insert(Elem, ?LEAF0) ->
+insert_att(Elem, ?LEAF0) ->
     ?new_LEAF1(Elem);
-insert(Elem, Root) ->
-    case insert_recur(Elem, Root) of
+insert_att(Elem, Root) ->
+    case insert_att_recur(Elem, Root) of
         ?SPLIT_MATCH(Pos, Args) ->
             insert_split_root(Elem, Pos, Args, Root);
         %
@@ -546,13 +550,14 @@ intersection(Root1, Root2) ->
     NewRoot = new(),
     Count = 0,
 
-    try max(smallest(Root1), smallest(Root2)) of
-        MinElem ->
+    case Root1 =:= ?LEAF0 orelse Root2 =:= ?LEAF0 of
+        false ->
+            MinElem = max(smallest(Root1), smallest(Root2)),
             IterA = bound_fwd_iterator(MinElem, Root1),
             IterB = bound_fwd_iterator(MinElem, Root2),
-            intersection_recur(IterA, IterB, Count, NewRoot)
-    catch
-        error:empty_set ->
+            intersection_recur(IterA, IterB, Count, NewRoot);
+        %
+        _ ->
             [Count | NewRoot]
     end.
 
@@ -608,8 +613,6 @@ largest(?INTERNAL1_MATCH(_, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1_MATCH(E1)) ->
     E1;
-largest(?LEAF0) ->
-    error_empty_set();
 largest(Root) ->
     largest_recur(Root).
 
@@ -626,6 +629,9 @@ next([Head | Tail]) ->
 next([]) ->
     none.
 
+singleton(Elem) ->
+    ?LEAF1(Elem).
+
 smaller(Elem, ?INTERNAL1_MATCH_ALL) ->
     smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 smaller(Elem, ?LEAF1_MATCH_ALL) ->
@@ -639,8 +645,6 @@ smallest(?INTERNAL1_MATCH(_, C1, _)) ->
     smallest_recur(C1);
 smallest(?LEAF1_MATCH(E1)) ->
     E1;
-smallest(?LEAF0) ->
-    error_empty_set();
 smallest(Root) ->
     smallest_recur(Root).
 
@@ -675,8 +679,6 @@ take_largest(?INTERNAL1_MATCH_ALL) ->
     take_largest_INTERNAL1(?INTERNAL1_ARGS);
 take_largest(?LEAF1_MATCH_ALL) ->
     take_largest_LEAF1(?LEAF1_ARGS);
-take_largest(?LEAF0) ->
-    error_empty_set();
 take_largest(Root) ->
     take_largest_recur(Root).
 
@@ -684,8 +686,6 @@ take_smallest(?INTERNAL1_MATCH_ALL) ->
     take_smallest_INTERNAL1(?INTERNAL1_ARGS);
 take_smallest(?LEAF1_MATCH_ALL) ->
     take_smallest_LEAF1(?LEAF1_ARGS);
-take_smallest(?LEAF0) ->
-    error_empty_set();
 take_smallest(Root) ->
     take_smallest_recur(Root).
 
@@ -710,53 +710,37 @@ union(Root1, Size1, Root2, Size2) ->
     end.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: Exceptions
+%% Internal Function Definitions: delete_att/2
 %% ------------------------------------------------------------------
 
--compile({inline, error_badkey/1}).
-error_badkey(Elem) ->
-    error({badkey, Elem}).
-
--compile({inline, error_empty_set/0}).
-error_empty_set() ->
-    error(empty_set).
-
--compile({inline, error_key_exists/1}).
-error_key_exists(Elem) ->
-    error({key_exists, Elem}).
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: delete/2
-%% ------------------------------------------------------------------
-
-delete_recur(Elem, Node) ->
+delete_att_recur(Elem, Node) ->
     case Node of
         %
         ?INTERNAL2_MATCH_ALL ->
-            delete_INTERNAL2(Elem, ?INTERNAL2_ARGS);
+            delete_att_INTERNAL2(Elem, ?INTERNAL2_ARGS);
         %
         ?INTERNAL3_MATCH_ALL ->
-            delete_INTERNAL3(Elem, ?INTERNAL3_ARGS);
+            delete_att_INTERNAL3(Elem, ?INTERNAL3_ARGS);
         %
         ?INTERNAL4_MATCH_ALL ->
-            delete_INTERNAL4(Elem, ?INTERNAL4_ARGS);
+            delete_att_INTERNAL4(Elem, ?INTERNAL4_ARGS);
         %
         ?LEAF2_MATCH_ALL ->
-            delete_LEAF2(Elem, ?LEAF2_ARGS);
+            delete_att_LEAF2(Elem, ?LEAF2_ARGS);
         %
         ?LEAF3_MATCH_ALL ->
-            delete_LEAF3(Elem, ?LEAF3_ARGS);
+            delete_att_LEAF3(Elem, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            delete_LEAF4(Elem, ?LEAF4_ARGS)
+            delete_att_LEAF4(Elem, ?LEAF4_ARGS)
     end.
 
 %%
 %% ?INTERNAL4
 %%
 
--compile({inline, delete_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
+-compile({inline, delete_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
     if
         Elem > E2 ->
             %
@@ -765,73 +749,73 @@ delete_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
                     %
                     if
                         Elem > E3 ->
-                            delete_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS);
+                            delete_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS);
                         %
                         Elem < E3 ->
-                            delete_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS);
+                            delete_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS);
                         %
                         true ->
-                            delete_INTERNAL4_E3(?INTERNAL4_ARGS)
+                            delete_att_INTERNAL4_E3(?INTERNAL4_ARGS)
                     end;
                 %
                 Elem > E4 ->
-                    delete_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS);
+                    delete_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    delete_INTERNAL4_E4(?INTERNAL4_ARGS)
+                    delete_att_INTERNAL4_E4(?INTERNAL4_ARGS)
             end;
         %
         Elem < E2 ->
             %
             if
                 Elem < E1 ->
-                    delete_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS);
+                    delete_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS);
                 %
                 Elem > E1 ->
-                    delete_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS);
+                    delete_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    delete_INTERNAL4_E1(?INTERNAL4_ARGS)
+                    delete_att_INTERNAL4_E1(?INTERNAL4_ARGS)
             end;
         %
         true ->
-            delete_INTERNAL4_E2(?INTERNAL4_ARGS)
+            delete_att_INTERNAL4_E2(?INTERNAL4_ARGS)
     end.
 
--compile({inline, delete_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
-    UpdatedC1 = delete_recur(Elem, C1),
+-compile({inline, delete_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
+    UpdatedC1 = delete_att_recur(Elem, C1),
 
     ?INTERNAL4_C1_REBALANCE(UpdatedC1).
 
--compile({inline, delete_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
-    UpdatedC2 = delete_recur(Elem, C2),
+-compile({inline, delete_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
+    UpdatedC2 = delete_att_recur(Elem, C2),
 
     ?INTERNAL4_C2_REBALANCE(UpdatedC2).
 
--compile({inline, delete_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
-    UpdatedC3 = delete_recur(Elem, C3),
+-compile({inline, delete_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
+    UpdatedC3 = delete_att_recur(Elem, C3),
 
     ?INTERNAL4_C3_REBALANCE(UpdatedC3).
 
--compile({inline, delete_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
-    UpdatedC4 = delete_recur(Elem, C4),
+-compile({inline, delete_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
+    UpdatedC4 = delete_att_recur(Elem, C4),
 
     ?INTERNAL4_C4_REBALANCE(UpdatedC4).
 
--compile({inline, delete_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
-    UpdatedC5 = delete_recur(Elem, C5),
+-compile({inline, delete_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
+    UpdatedC5 = delete_att_recur(Elem, C5),
 
     ?INTERNAL4_C5_REBALANCE(UpdatedC5).
 
 %%
 
--compile({inline, delete_INTERNAL4_E1 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_E1(?INTERNAL4_ARGS_IGN_E1) ->
+-compile({inline, delete_att_INTERNAL4_E1 / ?INTERNAL4_ARITY}).
+delete_att_INTERNAL4_E1(?INTERNAL4_ARGS_IGN_E1) ->
     ?TAKEN(ReplacementE, UpdatedC2) = take_smallest_recur(C2),
 
     del_rebalance_INTERNAL4_C2(
@@ -847,8 +831,8 @@ delete_INTERNAL4_E1(?INTERNAL4_ARGS_IGN_E1) ->
         C5
     ).
 
--compile({inline, delete_INTERNAL4_E2 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_E2(?INTERNAL4_ARGS_IGN_E2) ->
+-compile({inline, delete_att_INTERNAL4_E2 / ?INTERNAL4_ARITY}).
+delete_att_INTERNAL4_E2(?INTERNAL4_ARGS_IGN_E2) ->
     ?TAKEN(ReplacementE, UpdatedC2) = take_largest_recur(C2),
 
     del_rebalance_INTERNAL4_C2(
@@ -864,8 +848,8 @@ delete_INTERNAL4_E2(?INTERNAL4_ARGS_IGN_E2) ->
         C5
     ).
 
--compile({inline, delete_INTERNAL4_E3 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_E3(?INTERNAL4_ARGS_IGN_E3) ->
+-compile({inline, delete_att_INTERNAL4_E3 / ?INTERNAL4_ARITY}).
+delete_att_INTERNAL4_E3(?INTERNAL4_ARGS_IGN_E3) ->
     ?TAKEN(ReplacementE, UpdatedC4) = take_smallest_recur(C4),
 
     del_rebalance_INTERNAL4_C4(
@@ -881,8 +865,8 @@ delete_INTERNAL4_E3(?INTERNAL4_ARGS_IGN_E3) ->
         C5
     ).
 
--compile({inline, delete_INTERNAL4_E4 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_E4(?INTERNAL4_ARGS_IGN_E4) ->
+-compile({inline, delete_att_INTERNAL4_E4 / ?INTERNAL4_ARITY}).
+delete_att_INTERNAL4_E4(?INTERNAL4_ARGS_IGN_E4) ->
     ?TAKEN(ReplacementE, UpdatedC4) = take_largest_recur(C4),
 
     del_rebalance_INTERNAL4_C4(
@@ -902,67 +886,67 @@ delete_INTERNAL4_E4(?INTERNAL4_ARGS_IGN_E4) ->
 %% ?INTERNAL3
 %%
 
--compile({inline, delete_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
+-compile({inline, delete_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
     if
         Elem < E2 ->
             %
             if
                 Elem < E1 ->
-                    delete_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS);
+                    delete_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS);
                 %
                 Elem > E1 ->
-                    delete_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS);
+                    delete_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    delete_INTERNAL3_E1(?INTERNAL3_ARGS)
+                    delete_att_INTERNAL3_E1(?INTERNAL3_ARGS)
             end;
         %
         Elem > E2 ->
             %
             if
                 Elem < E3 ->
-                    delete_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS);
+                    delete_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS);
                 %
                 Elem > E3 ->
-                    delete_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS);
+                    delete_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    delete_INTERNAL3_E3(?INTERNAL3_ARGS)
+                    delete_att_INTERNAL3_E3(?INTERNAL3_ARGS)
             end;
         %
         true ->
-            delete_INTERNAL3_E2(?INTERNAL3_ARGS)
+            delete_att_INTERNAL3_E2(?INTERNAL3_ARGS)
     end.
 
--compile({inline, delete_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
-    UpdatedC1 = delete_recur(Elem, C1),
+-compile({inline, delete_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
+    UpdatedC1 = delete_att_recur(Elem, C1),
 
     ?INTERNAL3_C1_REBALANCE(UpdatedC1).
 
--compile({inline, delete_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
-    UpdatedC2 = delete_recur(Elem, C2),
+-compile({inline, delete_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
+    UpdatedC2 = delete_att_recur(Elem, C2),
 
     ?INTERNAL3_C2_REBALANCE(UpdatedC2).
 
--compile({inline, delete_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
-    UpdatedC3 = delete_recur(Elem, C3),
+-compile({inline, delete_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
+    UpdatedC3 = delete_att_recur(Elem, C3),
 
     ?INTERNAL3_C3_REBALANCE(UpdatedC3).
 
--compile({inline, delete_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
-    UpdatedC4 = delete_recur(Elem, C4),
+-compile({inline, delete_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
+    UpdatedC4 = delete_att_recur(Elem, C4),
 
     ?INTERNAL3_C4_REBALANCE(UpdatedC4).
 
 %%
 
--compile({inline, delete_INTERNAL3_E1 / ?INTERNAL3_ARITY}).
-delete_INTERNAL3_E1(?INTERNAL3_ARGS_IGN_E1) ->
+-compile({inline, delete_att_INTERNAL3_E1 / ?INTERNAL3_ARITY}).
+delete_att_INTERNAL3_E1(?INTERNAL3_ARGS_IGN_E1) ->
     ?TAKEN(ReplacementE, UpdatedC2) = take_smallest_recur(C2),
 
     del_rebalance_INTERNAL3_C2(
@@ -976,8 +960,8 @@ delete_INTERNAL3_E1(?INTERNAL3_ARGS_IGN_E1) ->
         C4
     ).
 
--compile({inline, delete_INTERNAL3_E2 / ?INTERNAL3_ARITY}).
-delete_INTERNAL3_E2(?INTERNAL3_ARGS_IGN_E2) ->
+-compile({inline, delete_att_INTERNAL3_E2 / ?INTERNAL3_ARITY}).
+delete_att_INTERNAL3_E2(?INTERNAL3_ARGS_IGN_E2) ->
     ?TAKEN(ReplacementE, UpdatedC3) = take_smallest_recur(C3),
 
     del_rebalance_INTERNAL3_C3(
@@ -991,8 +975,8 @@ delete_INTERNAL3_E2(?INTERNAL3_ARGS_IGN_E2) ->
         C4
     ).
 
--compile({inline, delete_INTERNAL3_E3 / ?INTERNAL3_ARITY}).
-delete_INTERNAL3_E3(?INTERNAL3_ARGS_IGN_E3) ->
+-compile({inline, delete_att_INTERNAL3_E3 / ?INTERNAL3_ARITY}).
+delete_att_INTERNAL3_E3(?INTERNAL3_ARGS_IGN_E3) ->
     ?TAKEN(ReplacementE, UpdatedC3) = take_largest_recur(C3),
 
     del_rebalance_INTERNAL3_C3(
@@ -1010,51 +994,51 @@ delete_INTERNAL3_E3(?INTERNAL3_ARGS_IGN_E3) ->
 %% ?INTERNAL2
 %%
 
--compile({inline, delete_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-delete_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
+-compile({inline, delete_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
+delete_att_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
     if
         Elem > E1 ->
             %
             if
                 Elem < E2 ->
-                    delete_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS);
+                    delete_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS);
                 %
                 Elem > E2 ->
-                    delete_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS);
+                    delete_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS);
                 %
                 true ->
-                    delete_INTERNAL2_E2(?INTERNAL2_ARGS)
+                    delete_att_INTERNAL2_E2(?INTERNAL2_ARGS)
             end;
         %
         Elem < E1 ->
-            delete_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS);
+            delete_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS);
         %
         true ->
-            delete_INTERNAL2_E1(?INTERNAL2_ARGS)
+            delete_att_INTERNAL2_E1(?INTERNAL2_ARGS)
     end.
 
--compile({inline, delete_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
-delete_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
-    UpdatedC1 = delete_recur(Elem, C1),
+-compile({inline, delete_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
+delete_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
+    UpdatedC1 = delete_att_recur(Elem, C1),
 
     ?INTERNAL2_C1_REBALANCE(UpdatedC1).
 
--compile({inline, delete_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
-delete_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
-    UpdatedC2 = delete_recur(Elem, C2),
+-compile({inline, delete_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
+delete_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
+    UpdatedC2 = delete_att_recur(Elem, C2),
 
     ?INTERNAL2_C2_REBALANCE(UpdatedC2).
 
--compile({inline, delete_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
-delete_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
-    UpdatedC3 = delete_recur(Elem, C3),
+-compile({inline, delete_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
+delete_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
+    UpdatedC3 = delete_att_recur(Elem, C3),
 
     ?INTERNAL2_C3_REBALANCE(UpdatedC3).
 
 %%
 
--compile({inline, delete_INTERNAL2_E1 / ?INTERNAL2_ARITY}).
-delete_INTERNAL2_E1(?INTERNAL2_ARGS_IGN_E1) ->
+-compile({inline, delete_att_INTERNAL2_E1 / ?INTERNAL2_ARITY}).
+delete_att_INTERNAL2_E1(?INTERNAL2_ARGS_IGN_E1) ->
     ?TAKEN(ReplacementE, UpdatedC2) = take_smallest_recur(C2),
 
     del_rebalance_INTERNAL2_C2(
@@ -1066,8 +1050,8 @@ delete_INTERNAL2_E1(?INTERNAL2_ARGS_IGN_E1) ->
         C3
     ).
 
--compile({inline, delete_INTERNAL2_E2 / ?INTERNAL2_ARITY}).
-delete_INTERNAL2_E2(?INTERNAL2_ARGS_IGN_E2) ->
+-compile({inline, delete_att_INTERNAL2_E2 / ?INTERNAL2_ARITY}).
+delete_att_INTERNAL2_E2(?INTERNAL2_ARGS_IGN_E2) ->
     ?TAKEN(ReplacementE, UpdatedC2) = take_largest_recur(C2),
 
     del_rebalance_INTERNAL2_C2(
@@ -1083,31 +1067,31 @@ delete_INTERNAL2_E2(?INTERNAL2_ARGS_IGN_E2) ->
 %% ?INTERNAL1
 %%
 
--compile({inline, delete_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-delete_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+-compile({inline, delete_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+delete_att_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     if
         Elem < E1 ->
-            delete_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS);
+            delete_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS);
         %
         Elem > E1 ->
-            delete_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS);
+            delete_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS);
         %
         true ->
-            delete_INTERNAL1_E1(?INTERNAL1_ARGS)
+            delete_att_INTERNAL1_E1(?INTERNAL1_ARGS)
     end.
 
--compile({inline, delete_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
-delete_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
-    UpdatedC1 = delete_recur(Elem, C1),
+-compile({inline, delete_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
+delete_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
+    UpdatedC1 = delete_att_recur(Elem, C1),
     ?INTERNAL1_C1_REBALANCE(UpdatedC1).
 
--compile({inline, delete_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
-delete_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
-    UpdatedC2 = delete_recur(Elem, C2),
+-compile({inline, delete_att_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
+delete_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
+    UpdatedC2 = delete_att_recur(Elem, C2),
     ?INTERNAL1_C2_REBALANCE(UpdatedC2).
 
--compile({inline, delete_INTERNAL1_E1 / ?INTERNAL1_ARITY}).
-delete_INTERNAL1_E1(?INTERNAL1_ARGS_IGN_E1) ->
+-compile({inline, delete_att_INTERNAL1_E1 / ?INTERNAL1_ARITY}).
+delete_att_INTERNAL1_E1(?INTERNAL1_ARGS_IGN_E1) ->
     ?TAKEN(ReplacementE, UpdatedC2) = take_smallest_recur(C2),
     ?INTERNAL1_E1_C2_REBALANCE(ReplacementE, UpdatedC2).
 
@@ -1115,8 +1099,8 @@ delete_INTERNAL1_E1(?INTERNAL1_ARGS_IGN_E1) ->
 %% ?LEAF4
 %%
 
--compile({inline, delete_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-delete_LEAF4(Elem, ?LEAF4_ARGS) ->
+-compile({inline, delete_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
+delete_att_LEAF4(Elem, ?LEAF4_ARGS) ->
     if
         Elem == E1 ->
             ?new_LEAF3(E2, E3, E4);
@@ -1131,15 +1115,15 @@ delete_LEAF4(Elem, ?LEAF4_ARGS) ->
             ?new_LEAF3(E1, E2, E3);
         %
         true ->
-            error_badkey(Elem)
+            none
     end.
 
 %%
 %% ?LEAF3
 %%
 
--compile({inline, delete_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-delete_LEAF3(Elem, ?LEAF3_ARGS) ->
+-compile({inline, delete_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
+delete_att_LEAF3(Elem, ?LEAF3_ARGS) ->
     if
         Elem == E1 ->
             ?new_LEAF2(E2, E3);
@@ -1151,15 +1135,15 @@ delete_LEAF3(Elem, ?LEAF3_ARGS) ->
             ?new_LEAF2(E1, E2);
         %
         true ->
-            error_badkey(Elem)
+            none
     end.
 
 %%
 %% ?LEAF2
 %%
 
--compile({inline, delete_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-delete_LEAF2(Elem, ?LEAF2_ARGS) ->
+-compile({inline, delete_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
+delete_att_LEAF2(Elem, ?LEAF2_ARGS) ->
     if
         Elem == E1 ->
             ?new_LEAF1(E2);
@@ -1168,21 +1152,21 @@ delete_LEAF2(Elem, ?LEAF2_ARGS) ->
             ?new_LEAF1(E1);
         %
         true ->
-            error_badkey(Elem)
+            none
     end.
 
 %%
 %% ?LEAF1
 %%
 
--compile({inline, delete_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-delete_LEAF1(Elem, ?LEAF1_ARGS) ->
+-compile({inline, delete_att_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
     if
         Elem == E1 ->
             ?LEAF0;
         %
         true ->
-            error_badkey(Elem)
+            none
     end.
 
 %% ------------------------------------------------------------------
@@ -1201,19 +1185,18 @@ difference_recur(?ITER_ELEM(Elem), Next, MaxElem, Count, Root) ->
     % always come from internal nodes (25% of total), which makes it a good
     % periodic check for MaxElem (without doing it for every element).
     %
-    try delete(Elem, Root) of
-        UpdatedRoot ->
-            difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
-    catch
-        error:{badkey, K} when K =:= Elem ->
-            %
+    case delete_att(Elem, Root) of
+        none ->
             case Elem =< MaxElem of
                 true ->
                     difference_recur(Next, MaxElem, Count, Root);
                 _ ->
                     % No more elements can be removed
                     [Count | Root]
-            end
+            end;
+        %
+        UpdatedRoot ->
+            difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
     end;
 difference_recur(Node, Next, MaxElem, Count, Root) ->
     case Node of
@@ -1284,11 +1267,8 @@ difference_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Next, MaxElem, Co
 
     [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
 
-    try delete(E1, Root2) of
-        Root3 ->
-            difference_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Next, MaxElem, Count2 + 1, Root3)
-    catch
-        error:{badkey, K} when K =:= E1 ->
+    case delete_att(E1, Root2) of
+        none ->
             case E1 =< MaxElem of
                 true ->
                     difference_internal_batch3(
@@ -1297,7 +1277,10 @@ difference_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Next, MaxElem, Co
                 _ ->
                     % No point in continuing, no more elements can be removed
                     [Count2 | Root2]
-            end
+            end;
+        %
+        Root3 ->
+            difference_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Next, MaxElem, Count2 + 1, Root3)
     end.
 
 %% INTERNAL3
@@ -1306,12 +1289,12 @@ difference_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Next, MaxElem, Co
 difference_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Next, MaxElem, Count, Root) ->
     [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
 
-    try delete(E1, Root2) of
+    case delete_att(E1, Root2) of
+        none ->
+            difference_internal_batch2(E2, E3, C2, C3, C4, Next, MaxElem, Count2, Root2);
+        %
         Root3 ->
             difference_internal_batch2(E2, E3, C2, C3, C4, Next, MaxElem, Count2 + 1, Root3)
-    catch
-        error:{badkey, K} when K =:= E1 ->
-            difference_internal_batch2(E2, E3, C2, C3, C4, Next, MaxElem, Count2, Root2)
     end.
 
 %% INTERNAL2
@@ -1320,12 +1303,12 @@ difference_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Next, MaxElem, Count, Roo
 difference_internal_batch2(E1, E2, C1, C2, C3, Next, MaxElem, Count, Root) ->
     [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
 
-    try delete(E1, Root2) of
+    case delete_att(E1, Root2) of
+        none ->
+            difference_internal_batch1(E2, C2, C3, Next, MaxElem, Count2, Root2);
+        %
         Root3 ->
             difference_internal_batch1(E2, C2, C3, Next, MaxElem, Count2 + 1, Root3)
-    catch
-        error:{badkey, K} when K =:= E1 ->
-            difference_internal_batch1(E2, C2, C3, Next, MaxElem, Count2, Root2)
     end.
 
 %% INTERNAL1
@@ -1334,12 +1317,12 @@ difference_internal_batch2(E1, E2, C1, C2, C3, Next, MaxElem, Count, Root) ->
 difference_internal_batch1(E1, C1, C2, Next, MaxElem, Count, Root) ->
     [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
 
-    try delete(E1, Root2) of
+    case delete_att(E1, Root2) of
+        none ->
+            difference_recur(C2, Next, MaxElem, Count2, Root2);
+        %
         Root3 ->
             difference_recur(C2, Next, MaxElem, Count2 + 1, Root3)
-    catch
-        error:{badkey, K} when K =:= E1 ->
-            difference_recur(C2, Next, MaxElem, Count2, Root2)
     end.
 
 %% LEAF4
@@ -1352,52 +1335,52 @@ difference_leaf_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root) ->
     %
     % Therefore, they're a good period check for MaxElem.
 
-    try delete(E1, Root) of
-        UpdatedRoot ->
-            difference_leaf_batch3(E2, E3, E4, Next, MaxElem, Count + 1, UpdatedRoot)
-    catch
-        error:{badkey, K} when K =:= E1 ->
+    case delete_att(E1, Root) of
+        none ->
             case E1 =< MaxElem of
                 true ->
                     difference_leaf_batch3(E2, E3, E4, Next, MaxElem, Count, Root);
                 _ ->
                     % No point in continuing, no more elements can be removed
                     [Count | Root]
-            end
+            end;
+        %
+        UpdatedRoot ->
+            difference_leaf_batch3(E2, E3, E4, Next, MaxElem, Count + 1, UpdatedRoot)
     end.
 
 %% LEAF3
 
 -compile({inline, difference_leaf_batch3/7}).
 difference_leaf_batch3(E1, E2, E3, Next, MaxElem, Count, Root) ->
-    try delete(E1, Root) of
+    case delete_att(E1, Root) of
+        none ->
+            difference_leaf_batch2(E2, E3, Next, MaxElem, Count, Root);
+        %
         UpdatedRoot ->
             difference_leaf_batch2(E2, E3, Next, MaxElem, Count + 1, UpdatedRoot)
-    catch
-        error:{badkey, K} when K =:= E1 ->
-            difference_leaf_batch2(E2, E3, Next, MaxElem, Count, Root)
     end.
 
 %% LEAF2
 
 -compile({inline, difference_leaf_batch2/6}).
 difference_leaf_batch2(E1, E2, Next, MaxElem, Count, Root) ->
-    try delete(E1, Root) of
+    case delete_att(E1, Root) of
+        none ->
+            difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root);
+        %
         UpdatedRoot ->
             difference_leaf_batch2_E2(E2, Next, MaxElem, Count + 1, UpdatedRoot)
-    catch
-        error:{badkey, K} when K =:= E1 ->
-            difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root)
     end.
 
 -compile({inline, difference_leaf_batch2_E2/5}).
 difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root) ->
-    try delete(E2, Root) of
+    case delete_att(E2, Root) of
+        none ->
+            difference_recur(Next, MaxElem, Count, Root);
+        %
         UpdatedRoot ->
             difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
-    catch
-        error:{badkey, K} when K =:= E2 ->
-            difference_recur(Next, MaxElem, Count, Root)
     end.
 
 %% ------------------------------------------------------------------
@@ -1449,7 +1432,7 @@ filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
     case Fun(E1) of
         true ->
             filter_internal_batch3(
-                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, insert(E1, Filtered2)
+                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, insert_att(E1, Filtered2)
             );
         %
         false ->
@@ -1464,7 +1447,7 @@ filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
 
     case Fun(E1) of
         true ->
-            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, insert(E1, Filtered2));
+            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, insert_att(E1, Filtered2));
         %
         false ->
             filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2)
@@ -1478,7 +1461,7 @@ filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
 
     case Fun(E1) of
         true ->
-            filter_internal_batch1(Fun, E2, C2, C3, Count2 + 1, insert(E1, Filtered2));
+            filter_internal_batch1(Fun, E2, C2, C3, Count2 + 1, insert_att(E1, Filtered2));
         %
         false ->
             filter_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2)
@@ -1492,7 +1475,7 @@ filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
 
     case Fun(E1) of
         true ->
-            filter_recur(Fun, C2, Count2 + 1, insert(E1, Filtered2));
+            filter_recur(Fun, C2, Count2 + 1, insert_att(E1, Filtered2));
         %
         false ->
             filter_recur(Fun, C2, Count2, Filtered2)
@@ -1504,7 +1487,7 @@ filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
 filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            filter_leaf_batch3(Fun, E2, E3, E4, Count + 1, insert(E1, Filtered));
+            filter_leaf_batch3(Fun, E2, E3, E4, Count + 1, insert_att(E1, Filtered));
         %
         false ->
             filter_leaf_batch3(Fun, E2, E3, E4, Count, Filtered)
@@ -1516,7 +1499,7 @@ filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
 filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            filter_leaf_batch2(Fun, E2, E3, Count + 1, insert(E1, Filtered));
+            filter_leaf_batch2(Fun, E2, E3, Count + 1, insert_att(E1, Filtered));
         %
         false ->
             filter_leaf_batch2(Fun, E2, E3, Count, Filtered)
@@ -1528,7 +1511,7 @@ filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
 filter_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            filter_single_element(Fun, E2, Count + 1, insert(E1, Filtered));
+            filter_single_element(Fun, E2, Count + 1, insert_att(E1, Filtered));
         %
         false ->
             filter_single_element(Fun, E2, Count, Filtered)
@@ -1540,7 +1523,7 @@ filter_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
 filter_single_element(Fun, E1, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            [Count + 1 | insert(E1, Filtered)];
+            [Count + 1 | insert_att(E1, Filtered)];
         %
         false ->
             [Count | Filtered]
@@ -1601,14 +1584,14 @@ filtermap_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filter
         True ->
             Elem = filtermap_true(True, E1),
 
-            try insert(Elem, Filtered2) of
+            case insert_att(Elem, Filtered2) of
+                none ->
+                    filtermap_internal_batch3(Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2);
+                %
                 Filtered3 ->
                     filtermap_internal_batch3(
                         Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, Filtered3
                     )
-            catch
-                error:{key_exists, K} when K =:= Elem ->
-                    filtermap_internal_batch3(Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2)
             end
     end.
 
@@ -1625,12 +1608,12 @@ filtermap_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
         True ->
             Elem = filtermap_true(True, E1),
 
-            try insert(Elem, Filtered2) of
+            case insert_att(Elem, Filtered2) of
+                none ->
+                    filtermap_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2);
+                %
                 Filtered3 ->
                     filtermap_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, Filtered3)
-            catch
-                error:{key_exists, K} when K =:= Elem ->
-                    filtermap_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2)
             end
     end.
 
@@ -1647,12 +1630,12 @@ filtermap_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
         True ->
             Elem = filtermap_true(True, E1),
 
-            try insert(Elem, Filtered2) of
+            case insert_att(Elem, Filtered2) of
+                none ->
+                    filtermap_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2);
+                %
                 Filtered3 ->
                     filtermap_internal_batch1(Fun, E2, C2, C3, Count2 + 1, Filtered3)
-            catch
-                error:{key_exists, K} when K =:= Elem ->
-                    filtermap_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2)
             end
     end.
 
@@ -1669,12 +1652,12 @@ filtermap_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
         True ->
             Elem = filtermap_true(True, E1),
 
-            try insert(Elem, Filtered2) of
+            case insert_att(Elem, Filtered2) of
+                none ->
+                    filtermap_recur(Fun, C2, Count2, Filtered2);
+                %
                 Filtered3 ->
                     filtermap_recur(Fun, C2, Count2 + 1, Filtered3)
-            catch
-                error:{key_exists, K} when K =:= Elem ->
-                    filtermap_recur(Fun, C2, Count2, Filtered2)
             end
     end.
 
@@ -1689,12 +1672,12 @@ filtermap_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
         True ->
             Elem = filtermap_true(True, E1),
 
-            try insert(Elem, Filtered) of
+            case insert_att(Elem, Filtered) of
+                none ->
+                    filtermap_leaf_batch3(Fun, E2, E3, E4, Count, Filtered);
+                %
                 Filtered2 ->
                     filtermap_leaf_batch3(Fun, E2, E3, E4, Count + 1, Filtered2)
-            catch
-                error:{key_exists, K} when K =:= Elem ->
-                    filtermap_leaf_batch3(Fun, E2, E3, E4, Count, Filtered)
             end
     end.
 
@@ -1709,12 +1692,12 @@ filtermap_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
         True ->
             Elem = filtermap_true(True, E1),
 
-            try insert(Elem, Filtered) of
+            case insert_att(Elem, Filtered) of
+                none ->
+                    filtermap_leaf_batch2(Fun, E2, E3, Count, Filtered);
+                %
                 Filtered2 ->
                     filtermap_leaf_batch2(Fun, E2, E3, Count + 1, Filtered2)
-            catch
-                error:{key_exists, K} when K =:= Elem ->
-                    filtermap_leaf_batch2(Fun, E2, E3, Count, Filtered)
             end
     end.
 
@@ -1729,12 +1712,12 @@ filtermap_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
         True ->
             Elem = filtermap_true(True, E1),
 
-            try insert(Elem, Filtered) of
+            case insert_att(Elem, Filtered) of
+                none ->
+                    filtermap_single_element(Fun, E2, Count, Filtered);
+                %
                 Filtered2 ->
                     filtermap_single_element(Fun, E2, Count + 1, Filtered2)
-            catch
-                error:{key_exists, K} when K =:= Elem ->
-                    filtermap_single_element(Fun, E2, Count, Filtered)
             end
     end.
 
@@ -1749,12 +1732,12 @@ filtermap_single_element(Fun, E1, Count, Filtered) ->
         True ->
             Elem = filtermap_true(True, E1),
 
-            try insert(Elem, Filtered) of
+            case insert_att(Elem, Filtered) of
+                none ->
+                    [Count | Filtered];
+                %
                 Filtered2 ->
                     [Count + 1 | Filtered2]
-            catch
-                error:{key_exists, K} when K =:= Elem ->
-                    [Count | Filtered]
             end
     end.
 
@@ -1805,10 +1788,10 @@ fold_recur(Fun, Acc, Node) ->
     end.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: insert/2
+%% Internal Function Definitions: insert_att/2
 %% ------------------------------------------------------------------
 
-insert_recur(Elem, Node) ->
+insert_att_recur(Elem, Node) ->
     case Node of
         ?INTERNAL2_MATCH_ALL ->
             insert_INTERNAL2(Elem, ?INTERNAL2_ARGS);
@@ -1849,14 +1832,14 @@ insert_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
                             insert_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS);
                         %
                         true ->
-                            error_key_exists(Elem)
+                            none
                     end;
                 %
                 Elem > E4 ->
                     insert_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         Elem < E2 ->
@@ -1869,16 +1852,16 @@ insert_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
                     insert_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         true ->
-            error_key_exists(Elem)
+            none
     end.
 
 -compile({inline, insert_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
 insert_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
-    case insert_recur(Elem, C1) of
+    case insert_att_recur(Elem, C1) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
                 {UpElem, UpdatedC1, UpdatedC2} ->
@@ -1899,13 +1882,16 @@ insert_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
                     ?SPLIT(1, Split)
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC1 ->
             ?INTERNAL4_UPD_C1(UpdatedC1)
     end.
 
 -compile({inline, insert_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
 insert_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
-    case insert_recur(Elem, C2) of
+    case insert_att_recur(Elem, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
                 {UpElem, UpdatedC1, UpdatedC2} ->
@@ -1926,13 +1912,16 @@ insert_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
                     ?SPLIT(2, Split)
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC2 ->
             ?INTERNAL4_UPD_C2(UpdatedC2)
     end.
 
 -compile({inline, insert_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
 insert_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
-    case insert_recur(Elem, C3) of
+    case insert_att_recur(Elem, C3) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2) of
                 {UpElem, UpdatedC2, UpdatedC3} ->
@@ -1953,13 +1942,16 @@ insert_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
                     ?SPLIT(3, Split)
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC3 ->
             ?INTERNAL4_UPD_C3(UpdatedC3)
     end.
 
 -compile({inline, insert_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
 insert_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
-    case insert_recur(Elem, C4) of
+    case insert_att_recur(Elem, C4) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C4, Pos, Args, E3, C3) of
                 {UpElem, UpdatedC3, UpdatedC4} ->
@@ -1980,13 +1972,16 @@ insert_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
                     ?SPLIT(4, Split)
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC4 ->
             ?INTERNAL4_UPD_C4(UpdatedC4)
     end.
 
 -compile({inline, insert_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
 insert_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
-    case insert_recur(Elem, C5) of
+    case insert_att_recur(Elem, C5) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C5, Pos, Args, E4, C4) of
                 {UpElem, UpdatedC4, UpdatedC5} ->
@@ -2006,6 +2001,9 @@ insert_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
                 Split ->
                     ?SPLIT(5, Split)
             end;
+        %
+        none ->
+            none;
         %
         UpdatedC5 ->
             ?INTERNAL4_UPD_C5(UpdatedC5)
@@ -2028,7 +2026,7 @@ insert_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
                     insert_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         Elem > E2 ->
@@ -2041,16 +2039,16 @@ insert_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
                     insert_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         true ->
-            error_key_exists(Elem)
+            none
     end.
 
 -compile({inline, insert_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
 insert_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
-    case insert_recur(Elem, C1) of
+    case insert_att_recur(Elem, C1) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
                 {UpElem, UpdatedC1, UpdatedC2} ->
@@ -2080,13 +2078,16 @@ insert_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC1 ->
             ?INTERNAL3_UPD_C1(UpdatedC1)
     end.
 
 -compile({inline, insert_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
 insert_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
-    case insert_recur(Elem, C2) of
+    case insert_att_recur(Elem, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
                 {UpElem, UpdatedC1, UpdatedC2} ->
@@ -2116,13 +2117,16 @@ insert_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC2 ->
             ?INTERNAL3_UPD_C2(UpdatedC2)
     end.
 
 -compile({inline, insert_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
 insert_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
-    case insert_recur(Elem, C3) of
+    case insert_att_recur(Elem, C3) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2) of
                 {UpElem, UpdatedC2, UpdatedC3} ->
@@ -2152,13 +2156,16 @@ insert_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC3 ->
             ?INTERNAL3_UPD_C3(UpdatedC3)
     end.
 
 -compile({inline, insert_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
 insert_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
-    case insert_recur(Elem, C4) of
+    case insert_att_recur(Elem, C4) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C4, Pos, Args, E3, C3) of
                 {UpElem, UpdatedC3, UpdatedC4} ->
@@ -2188,6 +2195,9 @@ insert_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC4 ->
             ?INTERNAL3_UPD_C4(UpdatedC4)
     end.
@@ -2209,19 +2219,19 @@ insert_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
                     insert_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         Elem < E1 ->
             insert_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS);
         %
         true ->
-            error_key_exists(Elem)
+            none
     end.
 
 -compile({inline, insert_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
 insert_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
-    case insert_recur(Elem, C1) of
+    case insert_att_recur(Elem, C1) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
                 {UpElem, UpdatedC1, UpdatedC2} ->
@@ -2247,13 +2257,16 @@ insert_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC1 ->
             ?INTERNAL2_UPD_C1(UpdatedC1)
     end.
 
 -compile({inline, insert_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
 insert_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
-    case insert_recur(Elem, C2) of
+    case insert_att_recur(Elem, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
                 {UpElem, UpdatedC1, UpdatedC2} ->
@@ -2279,13 +2292,16 @@ insert_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC2 ->
             ?INTERNAL2_UPD_C2(UpdatedC2)
     end.
 
 -compile({inline, insert_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
 insert_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
-    case insert_recur(Elem, C3) of
+    case insert_att_recur(Elem, C3) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2) of
                 {UpElem, UpdatedC2, UpdatedC3} ->
@@ -2311,6 +2327,9 @@ insert_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC3 ->
             ?INTERNAL2_UPD_C3(UpdatedC3)
     end.
@@ -2329,12 +2348,12 @@ insert_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
             insert_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS);
         %
         true ->
-            error_key_exists(Elem)
+            none
     end.
 
 -compile({inline, insert_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
 insert_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
-    case insert_recur(Elem, C1) of
+    case insert_att_recur(Elem, C1) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
                 {UpElem, UpdatedC1, UpdatedC2} ->
@@ -2351,13 +2370,16 @@ insert_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC1 ->
             ?new_INTERNAL1(E1, UpdatedC1, C2)
     end.
 
 -compile({inline, insert_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
 insert_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
-    case insert_recur(Elem, C2) of
+    case insert_att_recur(Elem, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
                 {UpElem, UpdatedC1, UpdatedC2} ->
@@ -2373,6 +2395,9 @@ insert_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
                         SplitR
                     )
             end;
+        %
+        none ->
+            none;
         %
         UpdatedC2 ->
             ?new_INTERNAL1(E1, C1, UpdatedC2)
@@ -2398,14 +2423,14 @@ insert_LEAF4(Elem, ?LEAF4_ARGS) ->
                             ?SPLIT(3, []);
                         %
                         true ->
-                            error_key_exists(Elem)
+                            none
                     end;
                 %
                 Elem > E4 ->
                     ?SPLIT(5, []);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         Elem < E2 ->
@@ -2418,11 +2443,11 @@ insert_LEAF4(Elem, ?LEAF4_ARGS) ->
                     ?SPLIT(2, []);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         true ->
-            error_key_exists(Elem)
+            none
     end.
 
 %%
@@ -2442,7 +2467,7 @@ insert_LEAF3(Elem, ?LEAF3_ARGS) ->
                     insert_LEAF3_POS2(Elem, ?LEAF3_ARGS);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         Elem > E2 ->
@@ -2455,11 +2480,11 @@ insert_LEAF3(Elem, ?LEAF3_ARGS) ->
                     insert_LEAF3_POS4(Elem, ?LEAF3_ARGS);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         true ->
-            error_key_exists(Elem)
+            none
     end.
 
 -compile({inline, insert_LEAF3_POS1 / ?LEAF3_ARITY_PLUS1}).
@@ -2495,14 +2520,14 @@ insert_LEAF2(Elem, ?LEAF2_ARGS) ->
                     insert_LEAF2_POS3(Elem, ?LEAF2_ARGS);
                 %
                 true ->
-                    error_key_exists(Elem)
+                    none
             end;
         %
         Elem < E1 ->
             insert_LEAF2_POS1(Elem, ?LEAF2_ARGS);
         %
         true ->
-            error_key_exists(Elem)
+            none
     end.
 
 -compile({inline, insert_LEAF2_POS1 / ?LEAF2_ARITY_PLUS1}).
@@ -2531,7 +2556,7 @@ insert_LEAF1(Elem, ?LEAF1_ARGS) ->
             insert_LEAF1_POS2(Elem, ?LEAF1_ARGS);
         %
         true ->
-            error_key_exists(Elem)
+            none
     end.
 
 -compile({inline, insert_LEAF1_POS1 / ?LEAF1_ARITY_PLUS1}).
@@ -2586,7 +2611,7 @@ intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root) ->
             intersection_iterB(ElemA, NextA, NextB, Count, Root);
         %
         true ->
-            UpdatedRoot = insert(ElemA, Root),
+            UpdatedRoot = insert_att(ElemA, Root),
             UpdatedCount = Count + 1,
             intersection_recur(NextA, NextB, UpdatedCount, UpdatedRoot)
     end.
@@ -2595,16 +2620,13 @@ intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root) ->
 %% Internal Function Definitions: is_disjoint/2
 %% ------------------------------------------------------------------
 
+is_disjoint_root(_Root1, ?LEAF0) ->
+    true;
 is_disjoint_root(Root1, Root2) ->
-    try smallest(Root2) of
-        MinElem ->
-            MaxElem = largest(Root2),
-            Iter = bound_fwd_iterator(MinElem, Root1),
-            is_disjoint_recur(Iter, Root2, MaxElem)
-    catch
-        error:empty_set ->
-            true
-    end.
+    MinElem = smallest(Root2),
+    MaxElem = largest(Root2),
+    Iter = bound_fwd_iterator(MinElem, Root1),
+    is_disjoint_recur(Iter, Root2, MaxElem).
 
 is_disjoint_recur([Head | Tail], Root2, MaxElem) ->
     is_disjoint_iter(Head, Tail, Root2, MaxElem);
@@ -3747,12 +3769,12 @@ map_recur(Fun, Node, Acc) ->
 map_elem(Fun, Elem, [Count | Root] = Acc) ->
     Mapped = Fun(Elem),
 
-    try insert(Mapped, Root) of
+    case insert_att(Mapped, Root) of
+        none ->
+            Acc;
+        %
         UpdatedRoot ->
             [Count + 1 | UpdatedRoot]
-    catch
-        error:{key_exists, K} when K =:= Mapped ->
-            Acc
     end.
 
 %% ------------------------------------------------------------------
@@ -4341,12 +4363,12 @@ union_recur(Node, Size, Root) ->
 union_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Size, Root) ->
     [Size2 | Root2] = union_recur(C1, Size, Root),
 
-    try insert(E1, Root2) of
+    case insert_att(E1, Root2) of
+        none ->
+            union_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Size2, Root2);
+        %
         Root3 ->
             union_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Size2 + 1, Root3)
-    catch
-        error:{key_exists, K} when K =:= E1 ->
-            union_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Size2, Root2)
     end.
 
 %% INTERNAL3
@@ -4355,12 +4377,12 @@ union_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Size, Root) ->
 union_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Size, Root) ->
     [Size2 | Root2] = union_recur(C1, Size, Root),
 
-    try insert(E1, Root2) of
+    case insert_att(E1, Root2) of
+        none ->
+            union_internal_batch2(E2, E3, C2, C3, C4, Size2, Root2);
+        %
         Root3 ->
             union_internal_batch2(E2, E3, C2, C3, C4, Size2 + 1, Root3)
-    catch
-        error:{key_exists, K} when K =:= E1 ->
-            union_internal_batch2(E2, E3, C2, C3, C4, Size2, Root2)
     end.
 
 %% INTERNAL2
@@ -4369,12 +4391,12 @@ union_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Size, Root) ->
 union_internal_batch2(E1, E2, C1, C2, C3, Size, Root) ->
     [Size2 | Root2] = union_recur(C1, Size, Root),
 
-    try insert(E1, Root2) of
+    case insert_att(E1, Root2) of
+        none ->
+            union_internal_batch1(E2, C2, C3, Size2, Root2);
+        %
         Root3 ->
             union_internal_batch1(E2, C2, C3, Size2 + 1, Root3)
-    catch
-        error:{key_exists, K} when K =:= E1 ->
-            union_internal_batch1(E2, C2, C3, Size2, Root2)
     end.
 
 %% INTERNAL1
@@ -4383,60 +4405,60 @@ union_internal_batch2(E1, E2, C1, C2, C3, Size, Root) ->
 union_internal_batch1(E1, C1, C2, Size, Root) ->
     [Size2 | Root2] = union_recur(C1, Size, Root),
 
-    try insert(E1, Root2) of
+    case insert_att(E1, Root2) of
+        none ->
+            union_recur(C2, Size2, Root2);
+        %
         Root3 ->
             union_recur(C2, Size2 + 1, Root3)
-    catch
-        error:{key_exists, K} when K =:= E1 ->
-            union_recur(C2, Size2, Root2)
     end.
 
 %% LEAF4
 
 -compile({inline, union_leaf_batch4/6}).
 union_leaf_batch4(E1, E2, E3, E4, Size, Root) ->
-    try insert(E1, Root) of
+    case insert_att(E1, Root) of
+        none ->
+            union_leaf_batch3(E2, E3, E4, Size, Root);
+        %
         UpdatedRoot ->
             union_leaf_batch3(E2, E3, E4, Size + 1, UpdatedRoot)
-    catch
-        error:{key_exists, K} when K =:= E1 ->
-            union_leaf_batch3(E2, E3, E4, Size, Root)
     end.
 
 %% LEAF3
 
 -compile({inline, union_leaf_batch3/5}).
 union_leaf_batch3(E1, E2, E3, Size, Root) ->
-    try insert(E1, Root) of
+    case insert_att(E1, Root) of
+        none ->
+            union_leaf_batch2(E2, E3, Size, Root);
+        %
         UpdatedRoot ->
             union_leaf_batch2(E2, E3, Size + 1, UpdatedRoot)
-    catch
-        error:{key_exists, K} when K =:= E1 ->
-            union_leaf_batch2(E2, E3, Size, Root)
     end.
 
 %% LEAF2
 
 -compile({inline, union_leaf_batch2/4}).
 union_leaf_batch2(E1, E2, Size, Root) ->
-    try insert(E1, Root) of
+    case insert_att(E1, Root) of
+        none ->
+            union_single_element(E2, Size, Root);
+        %
         UpdatedRoot ->
             union_single_element(E2, Size + 1, UpdatedRoot)
-    catch
-        error:{key_exists, K} when K =:= E1 ->
-            union_single_element(E2, Size, Root)
     end.
 
 %% LEAF1
 
 -compile({inline, union_single_element/3}).
 union_single_element(E1, Size, Root) ->
-    try insert(E1, Root) of
+    case insert_att(E1, Root) of
+        none ->
+            [Size | Root];
+        %
         UpdatedRoot ->
             [Size + 1 | UpdatedRoot]
-    catch
-        error:{key_exists, K} when K =:= E1 ->
-            [Size | Root]
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -4460,38 +4482,38 @@ insert_split_root(NewElem, Pos, [], Root) ->
     case Pos of
         1 ->
             ?new_INTERNAL1(
-               E2,
-               ?new_LEAF2(NewElem, E1),
-               ?new_LEAF2(E3, E4)
-              );
+                E2,
+                ?new_LEAF2(NewElem, E1),
+                ?new_LEAF2(E3, E4)
+            );
         %
         2 ->
             ?new_INTERNAL1(
-               E2,
-               ?new_LEAF2(E1, NewElem),
-               ?new_LEAF2(E3, E4)
-              );
+                E2,
+                ?new_LEAF2(E1, NewElem),
+                ?new_LEAF2(E3, E4)
+            );
         %
         3 ->
             ?new_INTERNAL1(
-               NewElem,
-               ?new_LEAF2(E1, E2),
-               ?new_LEAF2(E3, E4)
-              );
+                NewElem,
+                ?new_LEAF2(E1, E2),
+                ?new_LEAF2(E3, E4)
+            );
         %
         4 ->
             ?new_INTERNAL1(
-               E3,
-               ?new_LEAF2(E1, E2),
-               ?new_LEAF2(NewElem, E4)
-              );
+                E3,
+                ?new_LEAF2(E1, E2),
+                ?new_LEAF2(NewElem, E4)
+            );
         %
         5 ->
             ?new_INTERNAL1(
-               E3,
-               ?new_LEAF2(E1, E2),
-               ?new_LEAF2(E4, NewElem)
-              )
+                E3,
+                ?new_LEAF2(E1, E2),
+                ?new_LEAF2(E4, NewElem)
+            )
     end;
 insert_split_root(_NewElem, Pos, {split, SplitE, SplitL, SplitR}, Root) ->
     ?INTERNAL4_MATCH_ALL = Root,
@@ -5180,6 +5202,9 @@ del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
         no ->
             ?INTERNAL4_UPD_C1(C1);
         %
+        none ->
+            none;
+        %
         ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL4(
                 UpElem,
@@ -5226,6 +5251,9 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
     of
         no ->
             ?INTERNAL4_UPD_C2(C2);
+        %
+        none ->
+            none;
         %
         ?MID_MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL3(
@@ -5288,6 +5316,9 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
         no ->
             ?INTERNAL4_UPD_C3(C3);
         %
+        none ->
+            none;
+        %
         ?MID_MERGED_MATCH(MergedC2C3) ->
             ?new_INTERNAL3(
                 E1,
@@ -5349,6 +5380,9 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
         no ->
             ?INTERNAL4_UPD_C4(C4);
         %
+        none ->
+            none;
+        %
         ?MID_MERGED_MATCH(MergedC3C4) ->
             ?new_INTERNAL3(
                 E1,
@@ -5400,6 +5434,9 @@ del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
         no ->
             ?INTERNAL4_UPD_C5(C5);
         %
+        none ->
+            none;
+        %
         ?ROTATED(UpElem, UpdatedC4, RebalancedC5) ->
             ?new_INTERNAL4(
                 E1,
@@ -5440,6 +5477,9 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, E1, C2) of
         no ->
             ?INTERNAL3_UPD_C1(C1);
+        %
+        none ->
+            none;
         %
         ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL3(
@@ -5483,6 +5523,9 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
     of
         no ->
             ?INTERNAL3_UPD_C2(C2);
+        %
+        none ->
+            none;
         %
         ?MID_MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL2(
@@ -5539,6 +5582,9 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
         no ->
             ?INTERNAL3_UPD_C3(C3);
         %
+        none ->
+            none;
+        %
         ?MID_MERGED_MATCH(MergedC2C3) ->
             ?new_INTERNAL2(
                 E1,
@@ -5584,6 +5630,9 @@ del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
         no ->
             ?INTERNAL3_UPD_C4(C4);
         %
+        none ->
+            none;
+        %
         ?ROTATED(UpElem, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL3(
                 E1,
@@ -5621,6 +5670,9 @@ del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
         no ->
             ?INTERNAL2_UPD_C1(C1);
         %
+        none ->
+            none;
+        %
         ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL2(
                 UpElem,
@@ -5654,6 +5706,9 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
     of
         no ->
             ?INTERNAL2_UPD_C2(C2);
+        %
+        none ->
+            none;
         %
         ?MID_MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL1(
@@ -5694,6 +5749,9 @@ del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
         no ->
             ?INTERNAL2_UPD_C3(C3);
         %
+        none ->
+            none;
+        %
         ?ROTATED(UpElem, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL2(
                 E1,
@@ -5727,6 +5785,9 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
         no ->
             ?INTERNAL1_UPD_C1(C1);
         %
+        none ->
+            none;
+        %
         ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(UpElem, UpdatedC1, UpdatedC2);
         %
@@ -5745,6 +5806,9 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
         no ->
             ?INTERNAL1_UPD_C2(C2);
         %
+        none ->
+            none;
+        %
         ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(UpElem, UpdatedC1, UpdatedC2);
         %
@@ -5760,7 +5824,7 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
 -compile({inline, del_rebalance_maybe_from_right_sibling/3}).
 del_rebalance_maybe_from_right_sibling(Child, RParentE, Right) ->
     case Child of
-        ?INTERNAL1_MATCH(CElem,  Cright, CRight) ->
+        ?INTERNAL1_MATCH(CElem, Cright, CRight) ->
             del_rebalance_internal_from_right_sibling(
                 CElem,
 
@@ -5779,6 +5843,9 @@ del_rebalance_maybe_from_right_sibling(Child, RParentE, Right) ->
                 RParentE,
                 Right
             );
+        %
+        none ->
+            none;
         %
         _ ->
             no
@@ -5869,7 +5936,7 @@ del_rebalance_internal_from_right_sibling(
     end.
 
 %-compile({inline, del_rebalance_leaf_from_right_sibling/5}).
-del_rebalance_leaf_from_right_sibling(CElem,  RParentE, Right) ->
+del_rebalance_leaf_from_right_sibling(CElem, RParentE, Right) ->
     case Right of
         ?LEAF2_MATCH_ALL ->
             MergedNode = ?new_LEAF4(
@@ -5909,7 +5976,7 @@ del_rebalance_leaf_from_right_sibling(CElem,  RParentE, Right) ->
 -compile({inline, del_rebalance_maybe_from_left_sibling/3}).
 del_rebalance_maybe_from_left_sibling(Child, LParentE, Left) ->
     case Child of
-        ?INTERNAL1_MATCH(CElem,  CLeft, CRight) ->
+        ?INTERNAL1_MATCH(CElem, CLeft, CRight) ->
             del_rebalance_internal_from_left_sibling(
                 CElem,
 
@@ -5928,6 +5995,9 @@ del_rebalance_maybe_from_left_sibling(Child, LParentE, Left) ->
                 LParentE,
                 Left
             );
+        %
+        none ->
+            none;
         %
         _ ->
             no
@@ -6069,7 +6139,7 @@ del_rebalance_maybe_from_either_sibling(
     Right
 ) ->
     case Child of
-        ?INTERNAL1_MATCH(CElem,  CLeft, CRight) ->
+        ?INTERNAL1_MATCH(CElem, CLeft, CRight) ->
             del_rebalance_internal_from_either_sibling(
                 CElem,
 
@@ -6094,6 +6164,9 @@ del_rebalance_maybe_from_either_sibling(
                 RParentE,
                 Right
             );
+        %
+        none ->
+            none;
         %
         _ ->
             no
@@ -6372,7 +6445,7 @@ recur_node_type(Node) ->
         ?INTERNAL3(_, _, _, _, _, _, _) ->
             'INTERNAL3';
         %
-        ?INTERNAL4( _, _, _, _, _, _, _, _, _) ->
+        ?INTERNAL4(_, _, _, _, _, _, _, _, _) ->
             'INTERNAL4';
         %
         ?LEAF2(_, _) ->

@@ -4,8 +4,6 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
-% TODO adapt insert tweaks from tree
-
 -export([
     add/2,
     % `sets' compatibility alias
@@ -66,12 +64,13 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-add(Element, Set) ->
-    try
-        insert(Element, Set)
-    catch
-        error:{key_exists, K} when K =:= Element ->
-            Set
+add(Element, #b5_sets{size = Size, root = Root} = Set) ->
+    case b5_sets_node:insert_att(Element, Root) of
+        none ->
+            Set;
+        %
+        UpdatedRoot ->
+            Set#b5_sets{size = Size + 1, root = UpdatedRoot}
     end.
 
 add_element(Element, Set) ->
@@ -81,15 +80,21 @@ del_element(Element, Set) ->
     delete_any(Element, Set).
 
 delete(Element, #b5_sets{size = Size, root = Root} = Set) ->
-    UpdatedRoot = b5_sets_node:delete(Element, Root),
-    Set#b5_sets{size = Size - 1, root = UpdatedRoot}.
+    case b5_sets_node:delete_att(Element, Root) of
+        none ->
+            error_badkey(Element);
+        %
+        UpdatedRoot ->
+            Set#b5_sets{size = Size - 1, root = UpdatedRoot}
+    end.
 
-delete_any(Element, Set) ->
-    try
-        delete(Element, Set)
-    catch
-        error:{badkey, K} when K =:= Element ->
-            Set
+delete_any(Element, #b5_sets{size = Size, root = Root} = Set) ->
+    case b5_sets_node:delete_att(Element, Root) of
+        none ->
+            Set;
+        %
+        UpdatedRoot ->
+            Set#b5_sets{size = Size + 1, root = UpdatedRoot}
     end.
 
 difference(#b5_sets{size = Size1, root = Root1} = Set1, #b5_sets{root = Root2}) ->
@@ -120,8 +125,13 @@ from_ordset(Ordset) ->
     from_list(List).
 
 insert(Element, #b5_sets{size = Size, root = Root} = Set) ->
-    UpdatedRoot = b5_sets_node:insert(Element, Root),
-    Set#b5_sets{size = Size + 1, root = UpdatedRoot}.
+    case b5_sets_node:insert_att(Element, Root) of
+        none ->
+            error_key_exists(Element);
+        %
+        UpdatedRoot ->
+            Set#b5_sets{size = Size + 1, root = UpdatedRoot}
+    end.
 
 intersection([#b5_sets{size = Size1, root = Root1} | Others]) ->
     intersection_recur(Root1, Size1, Others);
@@ -170,8 +180,10 @@ iterator_from(Element, #b5_sets{root = Root}, Order) ->
 larger(Element, #b5_sets{root = Root}) ->
     b5_sets_node:larger(Element, Root).
 
-largest(#b5_sets{root = Root}) ->
-    b5_sets_node:largest(Root).
+largest(#b5_sets{size = Size, root = Root}) when Size =/= 0 ->
+    b5_sets_node:largest(Root);
+largest(#b5_sets{}) ->
+    error_empty_set().
 
 map(Fun, #b5_sets{root = Root}) ->
     [NewSize | MappedRoot] = b5_sets_node:map(Fun, Root),
@@ -184,7 +196,7 @@ next(Iter) ->
     b5_sets_node:next(Iter).
 
 singleton(Element) ->
-    #b5_sets{size = 1, root = b5_sets_node:insert(Element, b5_sets_node:new())}.
+    #b5_sets{size = 1, root = b5_sets_node:singleton(Element)}.
 
 size(#b5_sets{size = Size}) ->
     Size.
@@ -192,8 +204,10 @@ size(#b5_sets{size = Size}) ->
 smaller(Element, #b5_sets{root = Root}) ->
     b5_sets_node:smaller(Element, Root).
 
-smallest(#b5_sets{root = Root}) ->
-    b5_sets_node:smallest(Root).
+smallest(#b5_sets{size = Size, root = Root}) when Size =/= 0 ->
+    b5_sets_node:smallest(Root);
+smallest(#b5_sets{}) ->
+    error_empty_set().
 
 structural_stats(#b5_sets{root = Root}) ->
     b5_sets_node:structural_stats(Root).
@@ -201,13 +215,17 @@ structural_stats(#b5_sets{root = Root}) ->
 subtract(Set1, Set2) ->
     difference(Set1, Set2).
 
-take_largest(#b5_sets{root = Root, size = Size} = Set) ->
+take_largest(#b5_sets{size = Size, root = Root} = Set) when Size =/= 0 ->
     [Largest | UpdatedRoot] = b5_sets_node:take_largest(Root),
-    {Largest, Set#b5_sets{root = UpdatedRoot, size = Size - 1}}.
+    {Largest, Set#b5_sets{root = UpdatedRoot, size = Size - 1}};
+take_largest(#b5_sets{}) ->
+    error_empty_set().
 
-take_smallest(#b5_sets{root = Root, size = Size} = Set) ->
+take_smallest(#b5_sets{size = Size, root = Root} = Set) when Size =/= 0 ->
     [Smallest | UpdatedRoot] = b5_sets_node:take_smallest(Root),
-    {Smallest, Set#b5_sets{root = UpdatedRoot, size = Size - 1}}.
+    {Smallest, Set#b5_sets{root = UpdatedRoot, size = Size - 1}};
+take_smallest(#b5_sets{}) ->
+    error_empty_set().
 
 to_list(#b5_sets{root = Root}) ->
     b5_sets_node:to_list(Root).
@@ -225,14 +243,26 @@ union(#b5_sets{root = Root1, size = Size1}, #b5_sets{root = Root2, size = Size2}
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
+-compile({inline, error_badkey/1}).
+error_badkey(Elem) ->
+    error({badkey, Elem}).
+
+-compile({inline, error_empty_set/0}).
+error_empty_set() ->
+    error(empty_set).
+
+-compile({inline, error_key_exists/1}).
+error_key_exists(Elem) ->
+    error({key_exists, Elem}).
+
 from_list_recur([Element | Next], Root, Size) ->
-    try b5_sets_node:insert(Element, Root) of
+    case b5_sets_node:insert_att(Element, Root) of
+        none ->
+            from_list_recur(Next, Root, Size);
+        %
         UpdatedRoot ->
             UpdatedSize = Size + 1,
             from_list_recur(Next, UpdatedRoot, UpdatedSize)
-    catch
-        error:{key_exists, K} when K =:= Element ->
-            from_list_recur(Next, Root, Size)
     end;
 from_list_recur([], Root, Size) ->
     #b5_sets{size = Size, root = Root}.
