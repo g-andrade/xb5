@@ -6,11 +6,11 @@
 %% ------------------------------------------------------------------
 
 -export([
-    delete/2,
+    delete_att/2,
     foldl/3,
     foldr/3,
     get/2,
-    insert/4,
+    insert_att/4,
     is_defined/2,
     iterator/2,
     iterator_from/3,
@@ -24,11 +24,11 @@
     smaller/2,
     smallest/1,
     structural_stats/1,
-    take/2,
+    take_att/2,
     take_largest/1,
     take_smallest/1,
     to_list/1,
-    update/4,
+    update_att/4,
     values/1
 ]).
 
@@ -491,15 +491,15 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
--spec delete(Key, t(Key, Value)) -> t(Key, Value).
-delete(Key, ?INTERNAL1_MATCH_ALL) ->
-    delete_INTERNAL1(Key, ?INTERNAL1_ARGS);
-delete(Key, ?LEAF1_MATCH(K1, _)) ->
-    delete_LEAF1(Key, K1);
-delete(Key, ?LEAF0) ->
-    error_badkey(Key);
-delete(Key, Root) ->
-    delete_recur(Key, Root).
+-spec delete_att(Key, t(Key, Value)) -> none | t(Key, Value).
+delete_att(Key, ?INTERNAL1_MATCH_ALL) ->
+    delete_att_INTERNAL1(Key, ?INTERNAL1_ARGS);
+delete_att(Key, ?LEAF1_MATCH(K1, _)) ->
+    delete_att_LEAF1(Key, K1);
+delete_att(_Key, ?LEAF0) ->
+    none;
+delete_att(Key, Root) ->
+    delete_att_recur(Key, Root).
 
 -spec foldl(fun((Key, Value, Acc2) -> Acc1), Acc0, t(Key, Value)) -> AccN when
     Acc0 :: term(),
@@ -543,18 +543,18 @@ get(Key, ?LEAF0) ->
 get(Key, Root) ->
     get_recur(Key, Root).
 
--spec insert
-    (Key, eager, Value, t(Key, Value)) -> t(Key, Value);
-    (Key, lazy, fun(() -> Value), t(Key, Value)) -> t(Key, Value).
-insert(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
-    insert_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
-insert(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
-    insert_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-insert(Key, ValueEval, ValueWrap, ?LEAF0) ->
+-spec insert_att
+    (Key, eager, Value, t(Key, Value)) -> none | t(Key, Value);
+    (Key, lazy, fun(() -> Value), t(Key, Value)) -> none | t(Key, Value).
+insert_att(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
+    insert_att_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+insert_att(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
+    insert_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
+insert_att(Key, ValueEval, ValueWrap, ?LEAF0) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
     ?new_LEAF1(Key, Value);
-insert(Key, ValueEval, ValueWrap, Root) ->
-    case insert_recur(Key, ValueEval, ValueWrap, Root) of
+insert_att(Key, ValueEval, ValueWrap, Root) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, Root) of
         ?SPLIT_MATCH(Pos, Args) ->
             insert_split_root(Pos, Args, Root);
         %
@@ -611,8 +611,6 @@ largest(?INTERNAL1_MATCH(_, _, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1_MATCH(K1, V1)) ->
     {K1, V1};
-largest(?LEAF0) ->
-    error_empty_tree();
 largest(Root) ->
     largest_recur(Root).
 
@@ -667,8 +665,6 @@ smallest(?INTERNAL1_MATCH(_, _, C1, _)) ->
     smallest_recur(C1);
 smallest(?LEAF1_MATCH(K1, V1)) ->
     {K1, V1};
-smallest(?LEAF0) ->
-    error_empty_tree();
 smallest(Root) ->
     smallest_recur(Root).
 
@@ -699,23 +695,21 @@ structural_stats(Root) ->
             b5_structural_stats:return(Acc2)
     end.
 
--spec take(Key, t(Key, Value)) -> take_result(Key, Value) | no_return().
-take(Key, ?INTERNAL1_MATCH_ALL) ->
-    take_INTERNAL1(Key, ?INTERNAL1_ARGS);
-take(Key, ?LEAF1_MATCH_ALL) ->
-    take_LEAF1(Key, ?LEAF1_ARGS);
-take(Key, ?LEAF0) ->
-    error_badkey(Key);
-take(Key, Root) ->
-    take_recur(Key, Root).
+-spec take_att(Key, t(Key, Value)) -> none | take_result(Key, Value) | no_return().
+take_att(Key, ?INTERNAL1_MATCH_ALL) ->
+    take_att_INTERNAL1(Key, ?INTERNAL1_ARGS);
+take_att(Key, ?LEAF1_MATCH_ALL) ->
+    take_att_LEAF1(Key, ?LEAF1_ARGS);
+take_att(_Key, ?LEAF0) ->
+    none;
+take_att(Key, Root) ->
+    take_att_recur(Key, Root).
 
 -spec take_largest(t(Key, Value)) -> take_result(Key, Value).
 take_largest(?INTERNAL1_MATCH_ALL) ->
     take_largest_INTERNAL1(?INTERNAL1_ARGS);
 take_largest(?LEAF1_MATCH_ALL) ->
     take_largest_LEAF1(?LEAF1_ARGS);
-take_largest(?LEAF0) ->
-    error_empty_tree();
 take_largest(Root) ->
     take_largest_recur(Root).
 
@@ -724,8 +718,6 @@ take_smallest(?INTERNAL1_MATCH_ALL) ->
     take_smallest_INTERNAL1(?INTERNAL1_ARGS);
 take_smallest(?LEAF1_MATCH_ALL) ->
     take_smallest_LEAF1(?LEAF1_ARGS);
-take_smallest(?LEAF0) ->
-    error_empty_tree();
 take_smallest(Root) ->
     take_smallest_recur(Root).
 
@@ -741,17 +733,17 @@ to_list(?LEAF0) ->
 to_list(Root) ->
     to_list_recur(Root, []).
 
--spec update
-    (Key, eager, Value, t(Key, _)) -> t(Key, Value);
-    (Key, lazy, fun((PrevValue) -> Value), t(Key, PrevValue)) -> t(Key, Value).
-update(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
-    update_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
-update(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
-    update_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-update(Key, _ValueEval, _ValueWrap, ?LEAF0) ->
-    error_badkey(Key);
-update(Key, ValueEval, ValueWrap, Root) ->
-    update_recur(Key, ValueEval, ValueWrap, Root).
+-spec update_att
+    (Key, eager, Value, t(Key, _)) -> none | t(Key, Value);
+    (Key, lazy, fun((PrevValue) -> Value), t(Key, PrevValue)) -> none | t(Key, Value).
+update_att(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
+    update_att_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+update_att(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
+    update_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
+update_att(_Key, _ValueEval, _ValueWrap, ?LEAF0) ->
+    none;
+update_att(Key, ValueEval, ValueWrap, Root) ->
+    update_att_recur(Key, ValueEval, ValueWrap, Root).
 
 -spec values(t(_, Value)) -> [Value].
 values(?INTERNAL1_MATCH(_, V1, C1, C2)) ->
@@ -764,56 +756,37 @@ values(Root) ->
     values_recur(Root, []).
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: Exceptions
+%% Internal Function Definitions: delete_att/2
 %% ------------------------------------------------------------------
 
--compile({inline, error_badkey/1}).
--spec error_badkey(term()) -> no_return().
-error_badkey(Key) ->
-    error({badkey, Key}).
-
--compile({inline, error_empty_tree/0}).
--spec error_empty_tree() -> no_return().
-error_empty_tree() ->
-    error(empty_tree).
-
--compile({inline, error_key_exists/1}).
--spec error_key_exists(term()) -> no_return().
-error_key_exists(Key) ->
-    error({key_exists, Key}).
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: delete/2
-%% ------------------------------------------------------------------
-
-delete_recur(Key, Node) ->
+delete_att_recur(Key, Node) ->
     case Node of
         %
         ?INTERNAL2_MATCH_ALL ->
-            delete_INTERNAL2(Key, ?INTERNAL2_ARGS);
+            delete_att_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
         ?INTERNAL3_MATCH_ALL ->
-            delete_INTERNAL3(Key, ?INTERNAL3_ARGS);
+            delete_att_INTERNAL3(Key, ?INTERNAL3_ARGS);
         %
         ?INTERNAL4_MATCH_ALL ->
-            delete_INTERNAL4(Key, ?INTERNAL4_ARGS);
+            delete_att_INTERNAL4(Key, ?INTERNAL4_ARGS);
         %
         ?LEAF2_MATCH_ALL ->
-            delete_LEAF2(Key, ?LEAF2_ARGS);
+            delete_att_LEAF2(Key, ?LEAF2_ARGS);
         %
         ?LEAF3_MATCH_ALL ->
-            delete_LEAF3(Key, ?LEAF3_ARGS);
+            delete_att_LEAF3(Key, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            delete_LEAF4(Key, ?LEAF4_ARGS)
+            delete_att_LEAF4(Key, ?LEAF4_ARGS)
     end.
 
 %%
 %% ?INTERNAL4
 %%
 
--compile({inline, delete_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
+-compile({inline, delete_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
     if
         Key > K2 ->
             %
@@ -822,73 +795,73 @@ delete_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
                     %
                     if
                         Key > K3 ->
-                            delete_INTERNAL4_C4(Key, ?INTERNAL4_ARGS);
+                            delete_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS);
                         %
                         Key < K3 ->
-                            delete_INTERNAL4_C3(Key, ?INTERNAL4_ARGS);
+                            delete_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS);
                         %
                         true ->
-                            delete_INTERNAL4_K3(?INTERNAL4_ARGS)
+                            delete_att_INTERNAL4_K3(?INTERNAL4_ARGS)
                     end;
                 %
                 Key > K4 ->
-                    delete_INTERNAL4_C5(Key, ?INTERNAL4_ARGS);
+                    delete_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    delete_INTERNAL4_K4(?INTERNAL4_ARGS)
+                    delete_att_INTERNAL4_K4(?INTERNAL4_ARGS)
             end;
         %
         Key < K2 ->
             %
             if
                 Key < K1 ->
-                    delete_INTERNAL4_C1(Key, ?INTERNAL4_ARGS);
+                    delete_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS);
                 %
                 Key > K1 ->
-                    delete_INTERNAL4_C2(Key, ?INTERNAL4_ARGS);
+                    delete_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    delete_INTERNAL4_K1(?INTERNAL4_ARGS)
+                    delete_att_INTERNAL4_K1(?INTERNAL4_ARGS)
             end;
         %
         true ->
-            delete_INTERNAL4_K2(?INTERNAL4_ARGS)
+            delete_att_INTERNAL4_K2(?INTERNAL4_ARGS)
     end.
 
--compile({inline, delete_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C1(Key, ?INTERNAL4_ARGS) ->
-    UpdatedC1 = delete_recur(Key, C1),
+-compile({inline, delete_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS) ->
+    UpdatedC1 = delete_att_recur(Key, C1),
 
     ?INTERNAL4_C1_REBALANCE(UpdatedC1).
 
--compile({inline, delete_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C2(Key, ?INTERNAL4_ARGS) ->
-    UpdatedC2 = delete_recur(Key, C2),
+-compile({inline, delete_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS) ->
+    UpdatedC2 = delete_att_recur(Key, C2),
 
     ?INTERNAL4_C2_REBALANCE(UpdatedC2).
 
--compile({inline, delete_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C3(Key, ?INTERNAL4_ARGS) ->
-    UpdatedC3 = delete_recur(Key, C3),
+-compile({inline, delete_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS) ->
+    UpdatedC3 = delete_att_recur(Key, C3),
 
     ?INTERNAL4_C3_REBALANCE(UpdatedC3).
 
--compile({inline, delete_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C4(Key, ?INTERNAL4_ARGS) ->
-    UpdatedC4 = delete_recur(Key, C4),
+-compile({inline, delete_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS) ->
+    UpdatedC4 = delete_att_recur(Key, C4),
 
     ?INTERNAL4_C4_REBALANCE(UpdatedC4).
 
--compile({inline, delete_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
-delete_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
-    UpdatedC5 = delete_recur(Key, C5),
+-compile({inline, delete_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
+delete_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
+    UpdatedC5 = delete_att_recur(Key, C5),
 
     ?INTERNAL4_C5_REBALANCE(UpdatedC5).
 
 %%
 
--compile({inline, delete_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_K1(?INTERNAL4_ARGS_IGN_K1_V1) ->
+-compile({inline, delete_att_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
+delete_att_INTERNAL4_K1(?INTERNAL4_ARGS_IGN_K1_V1) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     del_rebalance_INTERNAL4_C2(
@@ -909,8 +882,8 @@ delete_INTERNAL4_K1(?INTERNAL4_ARGS_IGN_K1_V1) ->
         C5
     ).
 
--compile({inline, delete_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_K2(?INTERNAL4_ARGS_IGN_K2_V2) ->
+-compile({inline, delete_att_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
+delete_att_INTERNAL4_K2(?INTERNAL4_ARGS_IGN_K2_V2) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
 
     del_rebalance_INTERNAL4_C2(
@@ -931,8 +904,8 @@ delete_INTERNAL4_K2(?INTERNAL4_ARGS_IGN_K2_V2) ->
         C5
     ).
 
--compile({inline, delete_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_K3(?INTERNAL4_ARGS_IGN_K3_V3) ->
+-compile({inline, delete_att_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
+delete_att_INTERNAL4_K3(?INTERNAL4_ARGS_IGN_K3_V3) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_smallest_recur(C4),
 
     del_rebalance_INTERNAL4_C4(
@@ -953,8 +926,8 @@ delete_INTERNAL4_K3(?INTERNAL4_ARGS_IGN_K3_V3) ->
         C5
     ).
 
--compile({inline, delete_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
-delete_INTERNAL4_K4(?INTERNAL4_ARGS_IGN_K4_V4) ->
+-compile({inline, delete_att_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
+delete_att_INTERNAL4_K4(?INTERNAL4_ARGS_IGN_K4_V4) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_largest_recur(C4),
 
     del_rebalance_INTERNAL4_C4(
@@ -979,67 +952,67 @@ delete_INTERNAL4_K4(?INTERNAL4_ARGS_IGN_K4_V4) ->
 %% ?INTERNAL3
 %%
 
--compile({inline, delete_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
+-compile({inline, delete_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
     if
         Key < K2 ->
             %
             if
                 Key < K1 ->
-                    delete_INTERNAL3_C1(Key, ?INTERNAL3_ARGS);
+                    delete_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS);
                 %
                 Key > K1 ->
-                    delete_INTERNAL3_C2(Key, ?INTERNAL3_ARGS);
+                    delete_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    delete_INTERNAL3_K1(?INTERNAL3_ARGS)
+                    delete_att_INTERNAL3_K1(?INTERNAL3_ARGS)
             end;
         %
         Key > K2 ->
             %
             if
                 Key < K3 ->
-                    delete_INTERNAL3_C3(Key, ?INTERNAL3_ARGS);
+                    delete_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS);
                 %
                 Key > K3 ->
-                    delete_INTERNAL3_C4(Key, ?INTERNAL3_ARGS);
+                    delete_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    delete_INTERNAL3_K3(?INTERNAL3_ARGS)
+                    delete_att_INTERNAL3_K3(?INTERNAL3_ARGS)
             end;
         %
         true ->
-            delete_INTERNAL3_K2(?INTERNAL3_ARGS)
+            delete_att_INTERNAL3_K2(?INTERNAL3_ARGS)
     end.
 
--compile({inline, delete_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3_C1(Key, ?INTERNAL3_ARGS) ->
-    UpdatedC1 = delete_recur(Key, C1),
+-compile({inline, delete_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS) ->
+    UpdatedC1 = delete_att_recur(Key, C1),
 
     ?INTERNAL3_C1_REBALANCE(UpdatedC1).
 
--compile({inline, delete_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3_C2(Key, ?INTERNAL3_ARGS) ->
-    UpdatedC2 = delete_recur(Key, C2),
+-compile({inline, delete_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS) ->
+    UpdatedC2 = delete_att_recur(Key, C2),
 
     ?INTERNAL3_C2_REBALANCE(UpdatedC2).
 
--compile({inline, delete_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3_C3(Key, ?INTERNAL3_ARGS) ->
-    UpdatedC3 = delete_recur(Key, C3),
+-compile({inline, delete_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS) ->
+    UpdatedC3 = delete_att_recur(Key, C3),
 
     ?INTERNAL3_C3_REBALANCE(UpdatedC3).
 
--compile({inline, delete_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
-delete_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
-    UpdatedC4 = delete_recur(Key, C4),
+-compile({inline, delete_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
+delete_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
+    UpdatedC4 = delete_att_recur(Key, C4),
 
     ?INTERNAL3_C4_REBALANCE(UpdatedC4).
 
 %%
 
--compile({inline, delete_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
-delete_INTERNAL3_K1(?INTERNAL3_ARGS_IGN_K1_V1) ->
+-compile({inline, delete_att_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
+delete_att_INTERNAL3_K1(?INTERNAL3_ARGS_IGN_K1_V1) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     del_rebalance_INTERNAL3_C2(
@@ -1057,8 +1030,8 @@ delete_INTERNAL3_K1(?INTERNAL3_ARGS_IGN_K1_V1) ->
         C4
     ).
 
--compile({inline, delete_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
-delete_INTERNAL3_K2(?INTERNAL3_ARGS_IGN_K2_V2) ->
+-compile({inline, delete_att_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
+delete_att_INTERNAL3_K2(?INTERNAL3_ARGS_IGN_K2_V2) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
 
     del_rebalance_INTERNAL3_C3(
@@ -1076,8 +1049,8 @@ delete_INTERNAL3_K2(?INTERNAL3_ARGS_IGN_K2_V2) ->
         C4
     ).
 
--compile({inline, delete_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
-delete_INTERNAL3_K3(?INTERNAL3_ARGS_IGN_K3_V3) ->
+-compile({inline, delete_att_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
+delete_att_INTERNAL3_K3(?INTERNAL3_ARGS_IGN_K3_V3) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
 
     del_rebalance_INTERNAL3_C3(
@@ -1099,51 +1072,51 @@ delete_INTERNAL3_K3(?INTERNAL3_ARGS_IGN_K3_V3) ->
 %% ?INTERNAL2
 %%
 
--compile({inline, delete_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-delete_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
+-compile({inline, delete_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
+delete_att_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
     if
         Key > K1 ->
             %
             if
                 Key < K2 ->
-                    delete_INTERNAL2_C2(Key, ?INTERNAL2_ARGS);
+                    delete_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS);
                 %
                 Key > K2 ->
-                    delete_INTERNAL2_C3(Key, ?INTERNAL2_ARGS);
+                    delete_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS);
                 %
                 true ->
-                    delete_INTERNAL2_K2(?INTERNAL2_ARGS)
+                    delete_att_INTERNAL2_K2(?INTERNAL2_ARGS)
             end;
         %
         Key < K1 ->
-            delete_INTERNAL2_C1(Key, ?INTERNAL2_ARGS);
+            delete_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS);
         %
         true ->
-            delete_INTERNAL2_K1(?INTERNAL2_ARGS)
+            delete_att_INTERNAL2_K1(?INTERNAL2_ARGS)
     end.
 
--compile({inline, delete_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
-delete_INTERNAL2_C1(Key, ?INTERNAL2_ARGS) ->
-    UpdatedC1 = delete_recur(Key, C1),
+-compile({inline, delete_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
+delete_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS) ->
+    UpdatedC1 = delete_att_recur(Key, C1),
 
     ?INTERNAL2_C1_REBALANCE(UpdatedC1).
 
--compile({inline, delete_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
-delete_INTERNAL2_C2(Key, ?INTERNAL2_ARGS) ->
-    UpdatedC2 = delete_recur(Key, C2),
+-compile({inline, delete_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
+delete_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS) ->
+    UpdatedC2 = delete_att_recur(Key, C2),
 
     ?INTERNAL2_C2_REBALANCE(UpdatedC2).
 
--compile({inline, delete_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
-delete_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
-    UpdatedC3 = delete_recur(Key, C3),
+-compile({inline, delete_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
+delete_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
+    UpdatedC3 = delete_att_recur(Key, C3),
 
     ?INTERNAL2_C3_REBALANCE(UpdatedC3).
 
 %%
 
--compile({inline, delete_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
-delete_INTERNAL2_K1(?INTERNAL2_ARGS_IGN_K1_V1) ->
+-compile({inline, delete_att_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
+delete_att_INTERNAL2_K1(?INTERNAL2_ARGS_IGN_K1_V1) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     del_rebalance_INTERNAL2_C2(
@@ -1158,8 +1131,8 @@ delete_INTERNAL2_K1(?INTERNAL2_ARGS_IGN_K1_V1) ->
         C3
     ).
 
--compile({inline, delete_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
-delete_INTERNAL2_K2(?INTERNAL2_ARGS_IGN_K2_V2) ->
+-compile({inline, delete_att_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
+delete_att_INTERNAL2_K2(?INTERNAL2_ARGS_IGN_K2_V2) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
 
     del_rebalance_INTERNAL2_C2(
@@ -1178,31 +1151,31 @@ delete_INTERNAL2_K2(?INTERNAL2_ARGS_IGN_K2_V2) ->
 %% ?INTERNAL1
 %%
 
--compile({inline, delete_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-delete_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
+-compile({inline, delete_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+delete_att_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
     if
         Key < K1 ->
-            delete_INTERNAL1_C1(Key, ?INTERNAL1_ARGS);
+            delete_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS);
         %
         Key > K1 ->
-            delete_INTERNAL1_C2(Key, ?INTERNAL1_ARGS);
+            delete_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS);
         %
         true ->
-            delete_INTERNAL1_K1(?INTERNAL1_ARGS)
+            delete_att_INTERNAL1_K1(?INTERNAL1_ARGS)
     end.
 
--compile({inline, delete_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
-delete_INTERNAL1_C1(Key, ?INTERNAL1_ARGS) ->
-    UpdatedC1 = delete_recur(Key, C1),
+-compile({inline, delete_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
+delete_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS) ->
+    UpdatedC1 = delete_att_recur(Key, C1),
     ?INTERNAL1_C1_REBALANCE(UpdatedC1).
 
--compile({inline, delete_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
-delete_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
-    UpdatedC2 = delete_recur(Key, C2),
+-compile({inline, delete_att_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
+delete_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
+    UpdatedC2 = delete_att_recur(Key, C2),
     ?INTERNAL1_C2_REBALANCE(UpdatedC2).
 
--compile({inline, delete_INTERNAL1_K1 / ?INTERNAL1_ARITY}).
-delete_INTERNAL1_K1(?INTERNAL1_ARGS_IGN_K1_V1) ->
+-compile({inline, delete_att_INTERNAL1_K1 / ?INTERNAL1_ARITY}).
+delete_att_INTERNAL1_K1(?INTERNAL1_ARGS_IGN_K1_V1) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     ?INTERNAL1_K1_C2_REBALANCE(ReplacementK, ReplacementV, UpdatedC2).
@@ -1211,8 +1184,8 @@ delete_INTERNAL1_K1(?INTERNAL1_ARGS_IGN_K1_V1) ->
 %% ?LEAF4
 %%
 
--compile({inline, delete_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-delete_LEAF4(Key, ?LEAF4_ARGS) ->
+-compile({inline, delete_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
+delete_att_LEAF4(Key, ?LEAF4_ARGS) ->
     if
         Key == K1 ->
             ?new_LEAF3(K2, K3, K4, V2, V3, V4);
@@ -1227,15 +1200,15 @@ delete_LEAF4(Key, ?LEAF4_ARGS) ->
             ?new_LEAF3(K1, K2, K3, V1, V2, V3);
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%
 %% ?LEAF3
 %%
 
--compile({inline, delete_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-delete_LEAF3(Key, ?LEAF3_ARGS) ->
+-compile({inline, delete_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
+delete_att_LEAF3(Key, ?LEAF3_ARGS) ->
     if
         Key == K1 ->
             ?new_LEAF2(K2, K3, V2, V3);
@@ -1247,15 +1220,15 @@ delete_LEAF3(Key, ?LEAF3_ARGS) ->
             ?new_LEAF2(K1, K2, V1, V2);
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%
 %% ?LEAF2
 %%
 
--compile({inline, delete_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-delete_LEAF2(Key, ?LEAF2_ARGS) ->
+-compile({inline, delete_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
+delete_att_LEAF2(Key, ?LEAF2_ARGS) ->
     if
         Key == K1 ->
             ?new_LEAF1(K2, V2);
@@ -1264,21 +1237,21 @@ delete_LEAF2(Key, ?LEAF2_ARGS) ->
             ?new_LEAF1(K1, V1);
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%
 %% ?LEAF1
 %%
 
--compile({inline, delete_LEAF1/2}).
-delete_LEAF1(Key, K1) ->
+-compile({inline, delete_att_LEAF1/2}).
+delete_att_LEAF1(Key, K1) ->
     if
         Key == K1 ->
             ?LEAF0;
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %% ------------------------------------------------------------------
@@ -1577,37 +1550,44 @@ get_LEAF1(Key, ?LEAF1_ARGS) ->
             error_badkey(Key)
     end.
 
+%%
+
+-compile({inline, error_badkey/1}).
+-spec error_badkey(term()) -> no_return().
+error_badkey(Key) ->
+    error({badkey, Key}).
+
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: insert/2
+%% Internal Function Definitions: insert_att/2
 %% ------------------------------------------------------------------
 
-insert_recur(Key, ValueEval, ValueWrap, Node) ->
+insert_att_recur(Key, ValueEval, ValueWrap, Node) ->
     case Node of
         ?INTERNAL2_MATCH_ALL ->
-            insert_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+            insert_att_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
         %
         ?INTERNAL3_MATCH_ALL ->
-            insert_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+            insert_att_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
         %
         ?INTERNAL4_MATCH_ALL ->
-            insert_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+            insert_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
         %
         ?LEAF2_MATCH_ALL ->
-            insert_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
+            insert_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
         %
         ?LEAF3_MATCH_ALL ->
-            insert_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
+            insert_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH(K1, K2, K3, K4, _, _, _, _) ->
-            insert_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4)
+            insert_att_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4)
     end.
 
 %%
 %% ?INTERNAL4
 %%
 
--compile({inline, insert_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
-insert_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+-compile({inline, insert_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
+insert_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     if
         Key > K2 ->
             %
@@ -1616,42 +1596,42 @@ insert_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                     %
                     if
                         Key > K3 ->
-                            insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                            insert_att_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                         %
                         Key < K3 ->
-                            insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                            insert_att_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                         %
                         true ->
-                            error_key_exists(Key)
+                            none
                     end;
                 %
                 Key > K4 ->
-                    insert_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                    insert_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         Key < K2 ->
             %
             if
                 Key < K1 ->
-                    insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                    insert_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                 %
                 Key > K1 ->
-                    insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                    insert_att_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         true ->
-            error_key_exists(Key)
+            none
     end.
 
--compile({inline, insert_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS3}).
-insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C1) of
+-compile({inline, insert_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS3}).
+insert_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C1) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_right_sibling_maybe(C1, Pos, Args, K1, V1, C2) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
@@ -1677,13 +1657,16 @@ insert_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                     ?SPLIT(1, Split)
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC1 ->
             ?INTERNAL4_UPD_C1(UpdatedC1)
     end.
 
--compile({inline, insert_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS3}).
-insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C2) of
+-compile({inline, insert_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS3}).
+insert_att_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C2, Pos, Args, K1, V1, C1) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
@@ -1709,13 +1692,16 @@ insert_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                     ?SPLIT(2, Split)
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC2 ->
             ?INTERNAL4_UPD_C2(UpdatedC2)
     end.
 
--compile({inline, insert_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS3}).
-insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C3) of
+-compile({inline, insert_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS3}).
+insert_att_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C3) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C3, Pos, Args, K2, V2, C2) of
                 {UpKey, UpValue, UpdatedC2, UpdatedC3} ->
@@ -1741,13 +1727,16 @@ insert_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                     ?SPLIT(3, Split)
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC3 ->
             ?INTERNAL4_UPD_C3(UpdatedC3)
     end.
 
--compile({inline, insert_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS3}).
-insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C4) of
+-compile({inline, insert_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS3}).
+insert_att_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C4) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C4, Pos, Args, K3, V3, C3) of
                 {UpKey, UpValue, UpdatedC3, UpdatedC4} ->
@@ -1773,13 +1762,16 @@ insert_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                     ?SPLIT(4, Split)
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC4 ->
             ?INTERNAL4_UPD_C4(UpdatedC4)
     end.
 
--compile({inline, insert_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS3}).
-insert_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C5) of
+-compile({inline, insert_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS3}).
+insert_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C5) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C5, Pos, Args, K4, V4, C4) of
                 {UpKey, UpValue, UpdatedC4, UpdatedC5} ->
@@ -1805,6 +1797,9 @@ insert_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                     ?SPLIT(5, Split)
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC5 ->
             ?INTERNAL4_UPD_C5(UpdatedC5)
     end.
@@ -1813,42 +1808,42 @@ insert_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 %% ?INTERNAL3
 %%
 
--compile({inline, insert_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
-insert_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+-compile({inline, insert_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
+insert_att_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     if
         Key < K2 ->
             %
             if
                 Key < K1 ->
-                    insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+                    insert_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
                 %
                 Key > K1 ->
-                    insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+                    insert_att_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         Key > K2 ->
             %
             if
                 Key < K3 ->
-                    insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+                    insert_att_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
                 %
                 Key > K3 ->
-                    insert_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+                    insert_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         true ->
-            error_key_exists(Key)
+            none
     end.
 
--compile({inline, insert_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS3}).
-insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C1) of
+-compile({inline, insert_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS3}).
+insert_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C1) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_right_sibling_maybe(C1, Pos, Args, K1, V1, C2) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
@@ -1887,13 +1882,16 @@ insert_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC1 ->
             ?INTERNAL3_UPD_C1(UpdatedC1)
     end.
 
--compile({inline, insert_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS3}).
-insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C2) of
+-compile({inline, insert_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS3}).
+insert_att_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C2, Pos, Args, K1, V1, C1) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
@@ -1932,13 +1930,16 @@ insert_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC2 ->
             ?INTERNAL3_UPD_C2(UpdatedC2)
     end.
 
--compile({inline, insert_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS3}).
-insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C3) of
+-compile({inline, insert_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS3}).
+insert_att_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C3) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C3, Pos, Args, K2, V2, C2) of
                 {UpKey, UpValue, UpdatedC2, UpdatedC3} ->
@@ -1977,13 +1978,16 @@ insert_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC3 ->
             ?INTERNAL3_UPD_C3(UpdatedC3)
     end.
 
--compile({inline, insert_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS3}).
-insert_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C4) of
+-compile({inline, insert_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS3}).
+insert_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C4) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C4, Pos, Args, K3, V3, C3) of
                 {UpKey, UpValue, UpdatedC3, UpdatedC4} ->
@@ -2022,6 +2026,9 @@ insert_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC4 ->
             ?INTERNAL3_UPD_C4(UpdatedC4)
     end.
@@ -2030,32 +2037,32 @@ insert_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 %% ?INTERNAL2
 %%
 
--compile({inline, insert_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
-insert_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
+-compile({inline, insert_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
+insert_att_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     if
         Key > K1 ->
             %
             if
                 Key < K2 ->
-                    insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+                    insert_att_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
                 %
                 Key > K2 ->
-                    insert_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+                    insert_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         Key < K1 ->
-            insert_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+            insert_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
         %
         true ->
-            error_key_exists(Key)
+            none
     end.
 
--compile({inline, insert_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS3}).
-insert_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C1) of
+-compile({inline, insert_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS3}).
+insert_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C1) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_right_sibling_maybe(C1, Pos, Args, K1, V1, C2) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
@@ -2088,13 +2095,16 @@ insert_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC1 ->
             ?INTERNAL2_UPD_C1(UpdatedC1)
     end.
 
--compile({inline, insert_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS3}).
-insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C2) of
+-compile({inline, insert_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS3}).
+insert_att_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C2, Pos, Args, K1, V1, C1) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
@@ -2127,13 +2137,16 @@ insert_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC2 ->
             ?INTERNAL2_UPD_C2(UpdatedC2)
     end.
 
--compile({inline, insert_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS3}).
-insert_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C3) of
+-compile({inline, insert_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS3}).
+insert_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C3) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C3, Pos, Args, K2, V2, C2) of
                 {UpKey, UpValue, UpdatedC2, UpdatedC3} ->
@@ -2166,6 +2179,9 @@ insert_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC3 ->
             ?INTERNAL2_UPD_C3(UpdatedC3)
     end.
@@ -2174,22 +2190,22 @@ insert_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 %% ?INTERNAL1
 %%
 
--compile({inline, insert_INTERNAL1 / ?INTERNAL1_ARITY_PLUS3}).
-insert_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
+-compile({inline, insert_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS3}).
+insert_att_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
     if
         Key < K1 ->
-            insert_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+            insert_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
         %
         Key > K1 ->
-            insert_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+            insert_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
         %
         true ->
-            error_key_exists(Key)
+            none
     end.
 
--compile({inline, insert_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS3}).
-insert_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C1) of
+-compile({inline, insert_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS3}).
+insert_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C1) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_right_sibling_maybe(C1, Pos, Args, K1, V1, C2) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
@@ -2209,13 +2225,16 @@ insert_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
                     )
             end;
         %
+        none ->
+            none;
+        %
         UpdatedC1 ->
             ?new_INTERNAL1(K1, V1, UpdatedC1, C2)
     end.
 
--compile({inline, insert_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS3}).
-insert_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
-    case insert_recur(Key, ValueEval, ValueWrap, C2) of
+-compile({inline, insert_att_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS3}).
+insert_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
+    case insert_att_recur(Key, ValueEval, ValueWrap, C2) of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(C2, Pos, Args, K1, V1, C1) of
                 {UpKey, UpValue, UpdatedC1, UpdatedC2} ->
@@ -2233,6 +2252,9 @@ insert_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
                         SplitR
                     )
             end;
+        %
+        none ->
+            none;
         %
         UpdatedC2 ->
             ?new_INTERNAL1(K1, V1, C1, UpdatedC2)
@@ -2437,8 +2459,8 @@ insert_split_root(Pos, {split, SplitK, SplitV, SplitL, SplitR}, Root) ->
 %% ?LEAF4
 %%
 
--compile({inline, insert_LEAF4/7}).
-insert_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4) ->
+-compile({inline, insert_att_LEAF4/7}).
+insert_att_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4) ->
     if
         Key > K2 ->
             %
@@ -2455,7 +2477,7 @@ insert_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4) ->
                             ?SPLIT(3, [Key | Value]);
                         %
                         true ->
-                            error_key_exists(Key)
+                            none
                     end;
                 %
                 Key > K4 ->
@@ -2463,7 +2485,7 @@ insert_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4) ->
                     ?SPLIT(5, [Key | Value]);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         Key < K2 ->
@@ -2478,52 +2500,52 @@ insert_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4) ->
                     ?SPLIT(2, [Key | Value]);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         true ->
-            error_key_exists(Key)
+            none
     end.
 
 %%
 %% ?LEAF3
 %%
 
--compile({inline, insert_LEAF3 / ?LEAF3_ARITY_PLUS3}).
-insert_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3 / ?LEAF3_ARITY_PLUS3}).
+insert_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
     if
         Key < K2 ->
             %
             if
                 Key < K1 ->
-                    insert_LEAF3_POS1(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
+                    insert_att_LEAF3_POS1(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
                 %
                 Key > K1 ->
-                    insert_LEAF3_POS2(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
+                    insert_att_LEAF3_POS2(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         Key > K2 ->
             %
             if
                 Key < K3 ->
-                    insert_LEAF3_POS3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
+                    insert_att_LEAF3_POS3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
                 %
                 Key > K3 ->
-                    insert_LEAF3_POS4(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
+                    insert_att_LEAF3_POS4(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         true ->
-            error_key_exists(Key)
+            none
     end.
 
--compile({inline, insert_LEAF3_POS1 / ?LEAF3_ARITY_PLUS3}).
-insert_LEAF3_POS1(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3_POS1 / ?LEAF3_ARITY_PLUS3}).
+insert_att_LEAF3_POS1(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
 
     ?new_LEAF4(
@@ -2538,8 +2560,8 @@ insert_LEAF3_POS1(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
         V3
     ).
 
--compile({inline, insert_LEAF3_POS2 / ?LEAF3_ARITY_PLUS3}).
-insert_LEAF3_POS2(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3_POS2 / ?LEAF3_ARITY_PLUS3}).
+insert_att_LEAF3_POS2(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
 
     ?new_LEAF4(
@@ -2554,8 +2576,8 @@ insert_LEAF3_POS2(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
         V3
     ).
 
--compile({inline, insert_LEAF3_POS3 / ?LEAF3_ARITY_PLUS3}).
-insert_LEAF3_POS3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3_POS3 / ?LEAF3_ARITY_PLUS3}).
+insert_att_LEAF3_POS3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
 
     ?new_LEAF4(
@@ -2570,8 +2592,8 @@ insert_LEAF3_POS3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
         V3
     ).
 
--compile({inline, insert_LEAF3_POS4 / ?LEAF3_ARITY_PLUS3}).
-insert_LEAF3_POS4(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3_POS4 / ?LEAF3_ARITY_PLUS3}).
+insert_att_LEAF3_POS4(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
 
     ?new_LEAF4(
@@ -2590,31 +2612,31 @@ insert_LEAF3_POS4(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
 %% ?LEAF2
 %%
 
--compile({inline, insert_LEAF2 / ?LEAF2_ARITY_PLUS3}).
-insert_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
+-compile({inline, insert_att_LEAF2 / ?LEAF2_ARITY_PLUS3}).
+insert_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
     if
         Key > K1 ->
             %
             if
                 Key < K2 ->
-                    insert_LEAF2_POS2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
+                    insert_att_LEAF2_POS2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
                 %
                 Key > K2 ->
-                    insert_LEAF2_POS3(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
+                    insert_att_LEAF2_POS3(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
                 %
                 true ->
-                    error_key_exists(Key)
+                    none
             end;
         %
         Key < K1 ->
-            insert_LEAF2_POS1(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
+            insert_att_LEAF2_POS1(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
         %
         true ->
-            error_key_exists(Key)
+            none
     end.
 
--compile({inline, insert_LEAF2_POS1 / ?LEAF2_ARITY_PLUS3}).
-insert_LEAF2_POS1(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
+-compile({inline, insert_att_LEAF2_POS1 / ?LEAF2_ARITY_PLUS3}).
+insert_att_LEAF2_POS1(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
 
     ?new_LEAF3(
@@ -2627,8 +2649,8 @@ insert_LEAF2_POS1(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
         V2
     ).
 
--compile({inline, insert_LEAF2_POS2 / ?LEAF2_ARITY_PLUS3}).
-insert_LEAF2_POS2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
+-compile({inline, insert_att_LEAF2_POS2 / ?LEAF2_ARITY_PLUS3}).
+insert_att_LEAF2_POS2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
 
     ?new_LEAF3(
@@ -2641,8 +2663,8 @@ insert_LEAF2_POS2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
         V2
     ).
 
--compile({inline, insert_LEAF2_POS3 / ?LEAF2_ARITY_PLUS3}).
-insert_LEAF2_POS3(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
+-compile({inline, insert_att_LEAF2_POS3 / ?LEAF2_ARITY_PLUS3}).
+insert_att_LEAF2_POS3(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
 
     ?new_LEAF3(
@@ -2659,27 +2681,27 @@ insert_LEAF2_POS3(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
 %% ?LEAF1
 %%
 
--compile({inline, insert_LEAF1 / ?LEAF1_ARITY_PLUS3}).
-insert_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
+-compile({inline, insert_att_LEAF1 / ?LEAF1_ARITY_PLUS3}).
+insert_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
     if
         Key < K1 ->
-            insert_LEAF1_POS1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
+            insert_att_LEAF1_POS1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
         %
         Key > K1 ->
-            insert_LEAF1_POS2(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
+            insert_att_LEAF1_POS2(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
         %
         true ->
-            error_key_exists(Key)
+            none
     end.
 
--compile({inline, insert_LEAF1_POS1 / ?LEAF1_ARITY_PLUS3}).
-insert_LEAF1_POS1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
+-compile({inline, insert_att_LEAF1_POS1 / ?LEAF1_ARITY_PLUS3}).
+insert_att_LEAF1_POS1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
 
     ?new_LEAF2(Key, K1, Value, V1).
 
--compile({inline, insert_LEAF1_POS2 / ?LEAF1_ARITY_PLUS3}).
-insert_LEAF1_POS2(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
+-compile({inline, insert_att_LEAF1_POS2 / ?LEAF1_ARITY_PLUS3}).
+insert_att_LEAF1_POS2(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
 
     ?new_LEAF2(K1, Key, V1, Value).
@@ -4440,37 +4462,37 @@ structural_stats_recur(Node, Acc, Height) ->
     end.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: take/2
+%% Internal Function Definitions: take_att/2
 %% ------------------------------------------------------------------
 
-take_recur(Key, Node) ->
+take_att_recur(Key, Node) ->
     case Node of
         %
         ?INTERNAL2_MATCH_ALL ->
-            take_INTERNAL2(Key, ?INTERNAL2_ARGS);
+            take_att_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
         ?INTERNAL3_MATCH_ALL ->
-            take_INTERNAL3(Key, ?INTERNAL3_ARGS);
+            take_att_INTERNAL3(Key, ?INTERNAL3_ARGS);
         %
         ?INTERNAL4_MATCH_ALL ->
-            take_INTERNAL4(Key, ?INTERNAL4_ARGS);
+            take_att_INTERNAL4(Key, ?INTERNAL4_ARGS);
         %
         ?LEAF2_MATCH_ALL ->
-            take_LEAF2(Key, ?LEAF2_ARGS);
+            take_att_LEAF2(Key, ?LEAF2_ARGS);
         %
         ?LEAF3_MATCH_ALL ->
-            take_LEAF3(Key, ?LEAF3_ARGS);
+            take_att_LEAF3(Key, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            take_LEAF4(Key, ?LEAF4_ARGS)
+            take_att_LEAF4(Key, ?LEAF4_ARGS)
     end.
 
 %%
 %% ?INTERNAL4
 %%
 
--compile({inline, take_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-take_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
+-compile({inline, take_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
+take_att_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
     if
         Key > K2 ->
             %
@@ -4479,73 +4501,93 @@ take_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
                     %
                     if
                         Key > K3 ->
-                            take_INTERNAL4_C4(Key, ?INTERNAL4_ARGS);
+                            take_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS);
                         %
                         Key < K3 ->
-                            take_INTERNAL4_C3(Key, ?INTERNAL4_ARGS);
+                            take_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS);
                         %
                         true ->
-                            take_INTERNAL4_K3(?INTERNAL4_ARGS)
+                            take_att_INTERNAL4_K3(?INTERNAL4_ARGS)
                     end;
                 %
                 Key > K4 ->
-                    take_INTERNAL4_C5(Key, ?INTERNAL4_ARGS);
+                    take_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    take_INTERNAL4_K4(?INTERNAL4_ARGS)
+                    take_att_INTERNAL4_K4(?INTERNAL4_ARGS)
             end;
         %
         Key < K2 ->
             %
             if
                 Key < K1 ->
-                    take_INTERNAL4_C1(Key, ?INTERNAL4_ARGS);
+                    take_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS);
                 %
                 Key > K1 ->
-                    take_INTERNAL4_C2(Key, ?INTERNAL4_ARGS);
+                    take_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    take_INTERNAL4_K1(?INTERNAL4_ARGS)
+                    take_att_INTERNAL4_K1(?INTERNAL4_ARGS)
             end;
         %
         true ->
-            take_INTERNAL4_K2(?INTERNAL4_ARGS)
+            take_att_INTERNAL4_K2(?INTERNAL4_ARGS)
     end.
 
--compile({inline, take_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
-take_INTERNAL4_C1(Key, ?INTERNAL4_ARGS) ->
-    ?TAKEN(Pair, UpdatedC1) = take_recur(Key, C1),
+-compile({inline, take_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
+take_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS) ->
+    case take_att_recur(Key, C1) of
+        ?TAKEN(Pair, UpdatedC1) ->
+            ?TAKEN(Pair, ?INTERNAL4_C1_REBALANCE(UpdatedC1));
+        %
+        none ->
+            none
+    end.
 
-    ?TAKEN(Pair, ?INTERNAL4_C1_REBALANCE(UpdatedC1)).
+-compile({inline, take_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
+take_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS) ->
+    case take_att_recur(Key, C2) of
+        ?TAKEN(Pair, UpdatedC2) ->
+            ?TAKEN(Pair, ?INTERNAL4_C2_REBALANCE(UpdatedC2));
+        %
+        none ->
+            none
+    end.
 
--compile({inline, take_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
-take_INTERNAL4_C2(Key, ?INTERNAL4_ARGS) ->
-    ?TAKEN(Pair, UpdatedC2) = take_recur(Key, C2),
+-compile({inline, take_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
+take_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS) ->
+    case take_att_recur(Key, C3) of
+        ?TAKEN(Pair, UpdatedC3) ->
+            ?TAKEN(Pair, ?INTERNAL4_C3_REBALANCE(UpdatedC3));
+        %
+        none ->
+            none
+    end.
 
-    ?TAKEN(Pair, ?INTERNAL4_C2_REBALANCE(UpdatedC2)).
+-compile({inline, take_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
+take_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS) ->
+    case take_att_recur(Key, C4) of
+        ?TAKEN(Pair, UpdatedC4) ->
+            ?TAKEN(Pair, ?INTERNAL4_C4_REBALANCE(UpdatedC4));
+        %
+        none ->
+            none
+    end.
 
--compile({inline, take_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
-take_INTERNAL4_C3(Key, ?INTERNAL4_ARGS) ->
-    ?TAKEN(Pair, UpdatedC3) = take_recur(Key, C3),
-
-    ?TAKEN(Pair, ?INTERNAL4_C3_REBALANCE(UpdatedC3)).
-
--compile({inline, take_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
-take_INTERNAL4_C4(Key, ?INTERNAL4_ARGS) ->
-    ?TAKEN(Pair, UpdatedC4) = take_recur(Key, C4),
-
-    ?TAKEN(Pair, ?INTERNAL4_C4_REBALANCE(UpdatedC4)).
-
--compile({inline, take_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
-take_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
-    ?TAKEN(Pair, UpdatedC5) = take_recur(Key, C5),
-
-    ?TAKEN(Pair, ?INTERNAL4_C5_REBALANCE(UpdatedC5)).
+-compile({inline, take_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
+take_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
+    case take_att_recur(Key, C5) of
+        ?TAKEN(Pair, UpdatedC5) ->
+            ?TAKEN(Pair, ?INTERNAL4_C5_REBALANCE(UpdatedC5));
+        %
+        none ->
+            none
+    end.
 
 %%
 
--compile({inline, take_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
-take_INTERNAL4_K1(?INTERNAL4_ARGS) ->
+-compile({inline, take_att_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
+take_att_INTERNAL4_K1(?INTERNAL4_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     ?TAKEN_PAIR(
@@ -4570,8 +4612,8 @@ take_INTERNAL4_K1(?INTERNAL4_ARGS) ->
         )
     ).
 
--compile({inline, take_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
-take_INTERNAL4_K2(?INTERNAL4_ARGS) ->
+-compile({inline, take_att_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
+take_att_INTERNAL4_K2(?INTERNAL4_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
 
     ?TAKEN_PAIR(
@@ -4596,8 +4638,8 @@ take_INTERNAL4_K2(?INTERNAL4_ARGS) ->
         )
     ).
 
--compile({inline, take_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
-take_INTERNAL4_K3(?INTERNAL4_ARGS) ->
+-compile({inline, take_att_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
+take_att_INTERNAL4_K3(?INTERNAL4_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
 
     ?TAKEN_PAIR(
@@ -4622,8 +4664,8 @@ take_INTERNAL4_K3(?INTERNAL4_ARGS) ->
         )
     ).
 
--compile({inline, take_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
-take_INTERNAL4_K4(?INTERNAL4_ARGS) ->
+-compile({inline, take_att_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
+take_att_INTERNAL4_K4(?INTERNAL4_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_largest_recur(C4),
 
     ?TAKEN_PAIR(
@@ -4652,67 +4694,83 @@ take_INTERNAL4_K4(?INTERNAL4_ARGS) ->
 %% ?INTERNAL3
 %%
 
--compile({inline, take_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-take_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
+-compile({inline, take_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
+take_att_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
     if
         Key < K2 ->
             %
             if
                 Key < K1 ->
-                    take_INTERNAL3_C1(Key, ?INTERNAL3_ARGS);
+                    take_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS);
                 %
                 Key > K1 ->
-                    take_INTERNAL3_C2(Key, ?INTERNAL3_ARGS);
+                    take_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    take_INTERNAL3_K1(?INTERNAL3_ARGS)
+                    take_att_INTERNAL3_K1(?INTERNAL3_ARGS)
             end;
         %
         Key > K2 ->
             %
             if
                 Key < K3 ->
-                    take_INTERNAL3_C3(Key, ?INTERNAL3_ARGS);
+                    take_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS);
                 %
                 Key > K3 ->
-                    take_INTERNAL3_C4(Key, ?INTERNAL3_ARGS);
+                    take_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    take_INTERNAL3_K3(?INTERNAL3_ARGS)
+                    take_att_INTERNAL3_K3(?INTERNAL3_ARGS)
             end;
         %
         true ->
-            take_INTERNAL3_K2(?INTERNAL3_ARGS)
+            take_att_INTERNAL3_K2(?INTERNAL3_ARGS)
     end.
 
--compile({inline, take_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
-take_INTERNAL3_C1(Key, ?INTERNAL3_ARGS) ->
-    ?TAKEN(Pair, UpdatedC1) = take_recur(Key, C1),
+-compile({inline, take_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
+take_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS) ->
+    case take_att_recur(Key, C1) of
+        ?TAKEN(Pair, UpdatedC1) ->
+            ?TAKEN(Pair, ?INTERNAL3_C1_REBALANCE(UpdatedC1));
+        %
+        none ->
+            none
+    end.
 
-    ?TAKEN(Pair, ?INTERNAL3_C1_REBALANCE(UpdatedC1)).
+-compile({inline, take_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
+take_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS) ->
+    case take_att_recur(Key, C2) of
+        ?TAKEN(Pair, UpdatedC2) ->
+            ?TAKEN(Pair, ?INTERNAL3_C2_REBALANCE(UpdatedC2));
+        %
+        none ->
+            none
+    end.
 
--compile({inline, take_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
-take_INTERNAL3_C2(Key, ?INTERNAL3_ARGS) ->
-    ?TAKEN(Pair, UpdatedC2) = take_recur(Key, C2),
+-compile({inline, take_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
+take_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS) ->
+    case take_att_recur(Key, C3) of
+        ?TAKEN(Pair, UpdatedC3) ->
+            ?TAKEN(Pair, ?INTERNAL3_C3_REBALANCE(UpdatedC3));
+        %
+        none ->
+            none
+    end.
 
-    ?TAKEN(Pair, ?INTERNAL3_C2_REBALANCE(UpdatedC2)).
-
--compile({inline, take_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
-take_INTERNAL3_C3(Key, ?INTERNAL3_ARGS) ->
-    ?TAKEN(Pair, UpdatedC3) = take_recur(Key, C3),
-
-    ?TAKEN(Pair, ?INTERNAL3_C3_REBALANCE(UpdatedC3)).
-
--compile({inline, take_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
-take_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
-    ?TAKEN(Pair, UpdatedC4) = take_recur(Key, C4),
-
-    ?TAKEN(Pair, ?INTERNAL3_C4_REBALANCE(UpdatedC4)).
+-compile({inline, take_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
+take_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
+    case take_att_recur(Key, C4) of
+        ?TAKEN(Pair, UpdatedC4) ->
+            ?TAKEN(Pair, ?INTERNAL3_C4_REBALANCE(UpdatedC4));
+        %
+        none ->
+            none
+    end.
 
 %%
 
--compile({inline, take_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
-take_INTERNAL3_K1(?INTERNAL3_ARGS) ->
+-compile({inline, take_att_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
+take_att_INTERNAL3_K1(?INTERNAL3_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     ?TAKEN_PAIR(
@@ -4734,8 +4792,8 @@ take_INTERNAL3_K1(?INTERNAL3_ARGS) ->
         )
     ).
 
--compile({inline, take_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
-take_INTERNAL3_K2(?INTERNAL3_ARGS) ->
+-compile({inline, take_att_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
+take_att_INTERNAL3_K2(?INTERNAL3_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
 
     ?TAKEN_PAIR(
@@ -4757,8 +4815,8 @@ take_INTERNAL3_K2(?INTERNAL3_ARGS) ->
         )
     ).
 
--compile({inline, take_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
-take_INTERNAL3_K3(?INTERNAL3_ARGS) ->
+-compile({inline, take_att_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
+take_att_INTERNAL3_K3(?INTERNAL3_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
 
     ?TAKEN_PAIR(
@@ -4784,51 +4842,63 @@ take_INTERNAL3_K3(?INTERNAL3_ARGS) ->
 %% ?INTERNAL2
 %%
 
--compile({inline, take_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-take_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
+-compile({inline, take_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
+take_att_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
     if
         Key > K1 ->
             %
             if
                 Key < K2 ->
-                    take_INTERNAL2_C2(Key, ?INTERNAL2_ARGS);
+                    take_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS);
                 %
                 Key > K2 ->
-                    take_INTERNAL2_C3(Key, ?INTERNAL2_ARGS);
+                    take_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS);
                 %
                 true ->
-                    take_INTERNAL2_K2(?INTERNAL2_ARGS)
+                    take_att_INTERNAL2_K2(?INTERNAL2_ARGS)
             end;
         %
         Key < K1 ->
-            take_INTERNAL2_C1(Key, ?INTERNAL2_ARGS);
+            take_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS);
         %
         true ->
-            take_INTERNAL2_K1(?INTERNAL2_ARGS)
+            take_att_INTERNAL2_K1(?INTERNAL2_ARGS)
     end.
 
--compile({inline, take_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
-take_INTERNAL2_C1(Key, ?INTERNAL2_ARGS) ->
-    ?TAKEN(Pair, UpdatedC1) = take_recur(Key, C1),
+-compile({inline, take_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
+take_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS) ->
+    case take_att_recur(Key, C1) of
+        ?TAKEN(Pair, UpdatedC1) ->
+            ?TAKEN(Pair, ?INTERNAL2_C1_REBALANCE(UpdatedC1));
+        %
+        none ->
+            none
+    end.
 
-    ?TAKEN(Pair, ?INTERNAL2_C1_REBALANCE(UpdatedC1)).
+-compile({inline, take_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
+take_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS) ->
+    case take_att_recur(Key, C2) of
+        ?TAKEN(Pair, UpdatedC2) ->
+            ?TAKEN(Pair, ?INTERNAL2_C2_REBALANCE(UpdatedC2));
+        %
+        none ->
+            none
+    end.
 
--compile({inline, take_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
-take_INTERNAL2_C2(Key, ?INTERNAL2_ARGS) ->
-    ?TAKEN(Pair, UpdatedC2) = take_recur(Key, C2),
-
-    ?TAKEN(Pair, ?INTERNAL2_C2_REBALANCE(UpdatedC2)).
-
--compile({inline, take_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
-take_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
-    ?TAKEN(Pair, UpdatedC3) = take_recur(Key, C3),
-
-    ?TAKEN(Pair, ?INTERNAL2_C3_REBALANCE(UpdatedC3)).
+-compile({inline, take_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
+take_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
+    case take_att_recur(Key, C3) of
+        ?TAKEN(Pair, UpdatedC3) ->
+            ?TAKEN(Pair, ?INTERNAL2_C3_REBALANCE(UpdatedC3));
+        %
+        none ->
+            none
+    end.
 
 %%
 
--compile({inline, take_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
-take_INTERNAL2_K1(?INTERNAL2_ARGS) ->
+-compile({inline, take_att_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
+take_att_INTERNAL2_K1(?INTERNAL2_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     ?TAKEN_PAIR(
@@ -4847,8 +4917,8 @@ take_INTERNAL2_K1(?INTERNAL2_ARGS) ->
         )
     ).
 
--compile({inline, take_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
-take_INTERNAL2_K2(?INTERNAL2_ARGS) ->
+-compile({inline, take_att_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
+take_att_INTERNAL2_K2(?INTERNAL2_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
 
     ?TAKEN_PAIR(
@@ -4871,31 +4941,41 @@ take_INTERNAL2_K2(?INTERNAL2_ARGS) ->
 %% ?INTERNAL1
 %%
 
--compile({inline, take_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-take_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
+-compile({inline, take_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+take_att_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
     if
         Key < K1 ->
-            take_INTERNAL1_C1(Key, ?INTERNAL1_ARGS);
+            take_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS);
         %
         Key > K1 ->
-            take_INTERNAL1_C2(Key, ?INTERNAL1_ARGS);
+            take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS);
         %
         true ->
-            take_INTERNAL1_K1(?INTERNAL1_ARGS)
+            take_att_INTERNAL1_K1(?INTERNAL1_ARGS)
     end.
 
--compile({inline, take_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
-take_INTERNAL1_C1(Key, ?INTERNAL1_ARGS) ->
-    ?TAKEN(Pair, UpdatedC1) = take_recur(Key, C1),
-    ?TAKEN(Pair, ?INTERNAL1_C1_REBALANCE(UpdatedC1)).
+-compile({inline, take_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
+take_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS) ->
+    case take_att_recur(Key, C1) of
+        ?TAKEN(Pair, UpdatedC1) ->
+            ?TAKEN(Pair, ?INTERNAL1_C1_REBALANCE(UpdatedC1));
+        %
+        none ->
+            none
+    end.
 
--compile({inline, take_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
-take_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
-    ?TAKEN(Pair, UpdatedC2) = take_recur(Key, C2),
-    ?TAKEN(Pair, ?INTERNAL1_C2_REBALANCE(UpdatedC2)).
+-compile({inline, take_att_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
+take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
+    case take_att_recur(Key, C2) of
+        ?TAKEN(Pair, UpdatedC2) ->
+            ?TAKEN(Pair, ?INTERNAL1_C2_REBALANCE(UpdatedC2));
+        %
+        none ->
+            none
+    end.
 
--compile({inline, take_INTERNAL1_K1 / ?INTERNAL1_ARITY}).
-take_INTERNAL1_K1(?INTERNAL1_ARGS) ->
+-compile({inline, take_att_INTERNAL1_K1 / ?INTERNAL1_ARITY}).
+take_att_INTERNAL1_K1(?INTERNAL1_ARGS) ->
     ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
 
     ?TAKEN_PAIR(K1, V1, ?INTERNAL1_K1_C2_REBALANCE(ReplacementK, ReplacementV, UpdatedC2)).
@@ -4904,8 +4984,8 @@ take_INTERNAL1_K1(?INTERNAL1_ARGS) ->
 %% ?LEAF4
 %%
 
--compile({inline, take_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-take_LEAF4(Key, ?LEAF4_ARGS) ->
+-compile({inline, take_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
+take_att_LEAF4(Key, ?LEAF4_ARGS) ->
     if
         Key == K1 ->
             ?TAKEN_PAIR(K1, V1, ?new_LEAF3(K2, K3, K4, V2, V3, V4));
@@ -4920,15 +5000,15 @@ take_LEAF4(Key, ?LEAF4_ARGS) ->
             ?TAKEN_PAIR(K4, V4, ?new_LEAF3(K1, K2, K3, V1, V2, V3));
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%
 %% ?LEAF3
 %%
 
--compile({inline, take_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-take_LEAF3(Key, ?LEAF3_ARGS) ->
+-compile({inline, take_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
+take_att_LEAF3(Key, ?LEAF3_ARGS) ->
     if
         Key == K1 ->
             ?TAKEN_PAIR(K1, V1, ?new_LEAF2(K2, K3, V2, V3));
@@ -4940,15 +5020,15 @@ take_LEAF3(Key, ?LEAF3_ARGS) ->
             ?TAKEN_PAIR(K3, V3, ?new_LEAF2(K1, K2, V1, V2));
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%
 %% ?LEAF2
 %%
 
--compile({inline, take_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-take_LEAF2(Key, ?LEAF2_ARGS) ->
+-compile({inline, take_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
+take_att_LEAF2(Key, ?LEAF2_ARGS) ->
     if
         Key == K1 ->
             ?TAKEN_PAIR(K1, V1, ?new_LEAF1(K2, V2));
@@ -4957,21 +5037,21 @@ take_LEAF2(Key, ?LEAF2_ARGS) ->
             ?TAKEN_PAIR(K2, V2, ?new_LEAF1(K1, V1));
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%
 %% ?LEAF1
 %%
 
--compile({inline, take_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-take_LEAF1(Key, ?LEAF1_ARGS) ->
+-compile({inline, take_att_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+take_att_LEAF1(Key, ?LEAF1_ARGS) ->
     if
         Key == K1 ->
             ?TAKEN_PAIR(K1, V1, ?LEAF0);
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %% ------------------------------------------------------------------
@@ -5197,36 +5277,36 @@ to_list_recur(Node, Acc) ->
     end.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: update/2
+%% Internal Function Definitions: update_att/2
 %% ------------------------------------------------------------------
 
-update_recur(Key, ValueEval, ValueWrap, Node) ->
+update_att_recur(Key, ValueEval, ValueWrap, Node) ->
     case Node of
         ?INTERNAL2_MATCH_ALL ->
-            update_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+            update_att_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
         %
         ?INTERNAL3_MATCH_ALL ->
-            update_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+            update_att_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
         %
         ?INTERNAL4_MATCH_ALL ->
-            update_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+            update_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
         %
         ?LEAF2_MATCH_ALL ->
-            update_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
+            update_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
         %
         ?LEAF3_MATCH_ALL ->
-            update_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
+            update_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            update_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS)
+            update_att_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS)
     end.
 
 %%
 %% ?INTERNAL4
 %%
 
--compile({inline, update_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+-compile({inline, update_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
     if
         Key > K2 ->
             %
@@ -5235,68 +5315,93 @@ update_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
                     %
                     if
                         Key > K3 ->
-                            update_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                            update_att_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                         %
                         Key < K3 ->
-                            update_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                            update_att_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                         %
                         true ->
-                            update_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
+                            update_att_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
                     end;
                 %
                 Key > K4 ->
-                    update_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                    update_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    update_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
+                    update_att_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
             end;
         %
         Key < K2 ->
             %
             if
                 Key < K1 ->
-                    update_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                    update_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                 %
                 Key > K1 ->
-                    update_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
+                    update_att_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    update_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
+                    update_att_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
             end;
         %
         true ->
-            update_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
+            update_att_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
     end.
 
--compile({inline, update_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    UpdatedC1 = update_recur(Key, ValueEval, ValueWrap, C1),
-    ?INTERNAL4_UPD_C1(UpdatedC1).
+-compile({inline, update_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C1) of
+        none ->
+            none;
+        %
+        UpdatedC1 ->
+            ?INTERNAL4_UPD_C1(UpdatedC1)
+    end.
 
--compile({inline, update_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    UpdatedC2 = update_recur(Key, ValueEval, ValueWrap, C2),
-    ?INTERNAL4_UPD_C2(UpdatedC2).
+-compile({inline, update_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C2) of
+        none ->
+            none;
+        %
+        UpdatedC2 ->
+            ?INTERNAL4_UPD_C2(UpdatedC2)
+    end.
 
--compile({inline, update_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    UpdatedC3 = update_recur(Key, ValueEval, ValueWrap, C3),
-    ?INTERNAL4_UPD_C3(UpdatedC3).
+-compile({inline, update_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C3) of
+        none ->
+            none;
+        %
+        UpdatedC3 ->
+            ?INTERNAL4_UPD_C3(UpdatedC3)
+    end.
 
--compile({inline, update_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    UpdatedC4 = update_recur(Key, ValueEval, ValueWrap, C4),
-    ?INTERNAL4_UPD_C4(UpdatedC4).
+-compile({inline, update_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C4) of
+        none ->
+            none;
+        %
+        UpdatedC4 ->
+            ?INTERNAL4_UPD_C4(UpdatedC4)
+    end.
 
--compile({inline, update_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    UpdatedC5 = update_recur(Key, ValueEval, ValueWrap, C5),
-    ?INTERNAL4_UPD_C5(UpdatedC5).
+-compile({inline, update_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C5) of
+        none ->
+            none;
+        %
+        UpdatedC5 ->
+            ?INTERNAL4_UPD_C5(UpdatedC5)
+    end.
 
 %%
 
--compile({inline, update_INTERNAL4_K1 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K1) ->
+-compile({inline, update_att_INTERNAL4_K1 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K1) ->
     Value = eval_update_value(ValueEval, ValueWrap, V1),
 
     ?new_INTERNAL4(
@@ -5317,8 +5422,8 @@ update_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K1) ->
         C5
     ).
 
--compile({inline, update_INTERNAL4_K2 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K2) ->
+-compile({inline, update_att_INTERNAL4_K2 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K2) ->
     Value = eval_update_value(ValueEval, ValueWrap, V2),
 
     ?new_INTERNAL4(
@@ -5339,8 +5444,8 @@ update_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K2) ->
         C5
     ).
 
--compile({inline, update_INTERNAL4_K3 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K3) ->
+-compile({inline, update_att_INTERNAL4_K3 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K3) ->
     Value = eval_update_value(ValueEval, ValueWrap, V3),
 
     ?new_INTERNAL4(
@@ -5361,8 +5466,8 @@ update_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K3) ->
         C5
     ).
 
--compile({inline, update_INTERNAL4_K4 / ?INTERNAL4_ARITY_PLUS3}).
-update_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K4) ->
+-compile({inline, update_att_INTERNAL4_K4 / ?INTERNAL4_ARITY_PLUS3}).
+update_att_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K4) ->
     Value = eval_update_value(ValueEval, ValueWrap, V4),
 
     ?new_INTERNAL4(
@@ -5387,63 +5492,83 @@ update_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K4) ->
 %% ?INTERNAL3
 %%
 
--compile({inline, update_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
-update_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+-compile({inline, update_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
+update_att_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
     if
         Key < K2 ->
             %
             if
                 Key < K1 ->
-                    update_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+                    update_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
                 %
                 Key > K1 ->
-                    update_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+                    update_att_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    update_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
+                    update_att_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
             end;
         %
         Key > K2 ->
             %
             if
                 Key < K3 ->
-                    update_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+                    update_att_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
                 %
                 Key > K3 ->
-                    update_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
+                    update_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    update_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
+                    update_att_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
             end;
         %
         true ->
-            update_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
+            update_att_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
     end.
 
--compile({inline, update_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS3}).
-update_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    UpdatedC1 = update_recur(Key, ValueEval, ValueWrap, C1),
-    ?INTERNAL3_UPD_C1(UpdatedC1).
+-compile({inline, update_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS3}).
+update_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C1) of
+        none ->
+            none;
+        %
+        UpdatedC1 ->
+            ?INTERNAL3_UPD_C1(UpdatedC1)
+    end.
 
--compile({inline, update_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS3}).
-update_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    UpdatedC2 = update_recur(Key, ValueEval, ValueWrap, C2),
-    ?INTERNAL3_UPD_C2(UpdatedC2).
+-compile({inline, update_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS3}).
+update_att_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C2) of
+        none ->
+            none;
+        %
+        UpdatedC2 ->
+            ?INTERNAL3_UPD_C2(UpdatedC2)
+    end.
 
--compile({inline, update_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS3}).
-update_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    UpdatedC3 = update_recur(Key, ValueEval, ValueWrap, C3),
-    ?INTERNAL3_UPD_C3(UpdatedC3).
+-compile({inline, update_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS3}).
+update_att_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C3) of
+        none ->
+            none;
+        %
+        UpdatedC3 ->
+            ?INTERNAL3_UPD_C3(UpdatedC3)
+    end.
 
--compile({inline, update_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS3}).
-update_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    UpdatedC4 = update_recur(Key, ValueEval, ValueWrap, C4),
-    ?INTERNAL3_UPD_C4(UpdatedC4).
+-compile({inline, update_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS3}).
+update_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C4) of
+        none ->
+            none;
+        %
+        UpdatedC4 ->
+            ?INTERNAL3_UPD_C4(UpdatedC4)
+    end.
 
 %%
 
--compile({inline, update_INTERNAL3_K1 / ?INTERNAL3_ARITY_PLUS3}).
-update_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K1) ->
+-compile({inline, update_att_INTERNAL3_K1 / ?INTERNAL3_ARITY_PLUS3}).
+update_att_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K1) ->
     Value = eval_update_value(ValueEval, ValueWrap, V1),
 
     ?new_INTERNAL3(
@@ -5461,8 +5586,8 @@ update_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K1) ->
         C4
     ).
 
--compile({inline, update_INTERNAL3_K2 / ?INTERNAL3_ARITY_PLUS3}).
-update_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K2) ->
+-compile({inline, update_att_INTERNAL3_K2 / ?INTERNAL3_ARITY_PLUS3}).
+update_att_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K2) ->
     Value = eval_update_value(ValueEval, ValueWrap, V2),
 
     ?new_INTERNAL3(
@@ -5480,8 +5605,8 @@ update_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K2) ->
         C4
     ).
 
--compile({inline, update_INTERNAL3_K3 / ?INTERNAL3_ARITY_PLUS3}).
-update_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K3) ->
+-compile({inline, update_att_INTERNAL3_K3 / ?INTERNAL3_ARITY_PLUS3}).
+update_att_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K3) ->
     Value = eval_update_value(ValueEval, ValueWrap, V3),
 
     ?new_INTERNAL3(
@@ -5503,48 +5628,63 @@ update_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K3) ->
 %% ?INTERNAL2
 %%
 
--compile({inline, update_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
-update_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
+-compile({inline, update_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
+update_att_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
     if
         Key > K1 ->
             %
             if
                 Key < K2 ->
-                    update_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+                    update_att_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
                 %
                 Key > K2 ->
-                    update_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+                    update_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
                 %
                 true ->
-                    update_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS)
+                    update_att_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS)
             end;
         %
         Key < K1 ->
-            update_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+            update_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
         %
         true ->
-            update_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS)
+            update_att_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS)
     end.
 
--compile({inline, update_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS3}).
-update_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    UpdatedC1 = update_recur(Key, ValueEval, ValueWrap, C1),
-    ?INTERNAL2_UPD_C1(UpdatedC1).
+-compile({inline, update_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS3}).
+update_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C1) of
+        none ->
+            none;
+        %
+        UpdatedC1 ->
+            ?INTERNAL2_UPD_C1(UpdatedC1)
+    end.
 
--compile({inline, update_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS3}).
-update_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    UpdatedC2 = update_recur(Key, ValueEval, ValueWrap, C2),
-    ?INTERNAL2_UPD_C2(UpdatedC2).
+-compile({inline, update_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS3}).
+update_att_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C2) of
+        none ->
+            none;
+        %
+        UpdatedC2 ->
+            ?INTERNAL2_UPD_C2(UpdatedC2)
+    end.
 
--compile({inline, update_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS3}).
-update_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    UpdatedC3 = update_recur(Key, ValueEval, ValueWrap, C3),
-    ?INTERNAL2_UPD_C3(UpdatedC3).
+-compile({inline, update_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS3}).
+update_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C3) of
+        none ->
+            none;
+        %
+        UpdatedC3 ->
+            ?INTERNAL2_UPD_C3(UpdatedC3)
+    end.
 
 %%
 
--compile({inline, update_INTERNAL2_K1 / ?INTERNAL2_ARITY_PLUS3}).
-update_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K1) ->
+-compile({inline, update_att_INTERNAL2_K1 / ?INTERNAL2_ARITY_PLUS3}).
+update_att_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K1) ->
     Value = eval_update_value(ValueEval, ValueWrap, V1),
 
     ?new_INTERNAL2(
@@ -5559,8 +5699,8 @@ update_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K1) ->
         C3
     ).
 
--compile({inline, update_INTERNAL2_K2 / ?INTERNAL2_ARITY_PLUS3}).
-update_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K2) ->
+-compile({inline, update_att_INTERNAL2_K2 / ?INTERNAL2_ARITY_PLUS3}).
+update_att_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K2) ->
     Value = eval_update_value(ValueEval, ValueWrap, V2),
 
     ?new_INTERNAL2(
@@ -5579,33 +5719,43 @@ update_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K2) ->
 %% ?INTERNAL1
 %%
 
--compile({inline, update_INTERNAL1 / ?INTERNAL1_ARITY_PLUS3}).
-update_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
+-compile({inline, update_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS3}).
+update_att_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
     if
         Key < K1 ->
-            update_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+            update_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
         %
         Key > K1 ->
-            update_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+            update_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
         %
         true ->
-            update_INTERNAL1_K1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS)
+            update_att_INTERNAL1_K1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS)
     end.
 
--compile({inline, update_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS3}).
-update_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
-    UpdatedC1 = update_recur(Key, ValueEval, ValueWrap, C1),
-    ?INTERNAL1_UPD_C1(UpdatedC1).
+-compile({inline, update_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS3}).
+update_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C1) of
+        none ->
+            none;
+        %
+        UpdatedC1 ->
+            ?INTERNAL1_UPD_C1(UpdatedC1)
+    end.
 
--compile({inline, update_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS3}).
-update_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
-    UpdatedC2 = update_recur(Key, ValueEval, ValueWrap, C2),
-    ?INTERNAL1_UPD_C2(UpdatedC2).
+-compile({inline, update_att_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS3}).
+update_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
+    case update_att_recur(Key, ValueEval, ValueWrap, C2) of
+        none ->
+            none;
+        %
+        UpdatedC2 ->
+            ?INTERNAL1_UPD_C2(UpdatedC2)
+    end.
 
 %%
 
--compile({inline, update_INTERNAL1_K1 / ?INTERNAL1_ARITY_PLUS3}).
-update_INTERNAL1_K1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS_IGN_K1) ->
+-compile({inline, update_att_INTERNAL1_K1 / ?INTERNAL1_ARITY_PLUS3}).
+update_att_INTERNAL1_K1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS_IGN_K1) ->
     Value = eval_update_value(ValueEval, ValueWrap, V1),
 
     ?new_INTERNAL1(
@@ -5621,8 +5771,8 @@ update_INTERNAL1_K1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS_IGN_K1) ->
 %% ?LEAF4
 %%
 
--compile({inline, update_LEAF4 / ?LEAF4_ARITY_PLUS3}).
-update_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
+-compile({inline, update_att_LEAF4 / ?LEAF4_ARITY_PLUS3}).
+update_att_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
     if
         Key == K1 ->
             Value = eval_update_value(ValueEval, ValueWrap, V1),
@@ -5681,15 +5831,15 @@ update_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
             );
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%
 %% ?LEAF3
 %%
 
--compile({inline, update_LEAF3 / ?LEAF3_ARITY_PLUS3}).
-update_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
+-compile({inline, update_att_LEAF3 / ?LEAF3_ARITY_PLUS3}).
+update_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
     if
         Key == K1 ->
             Value = eval_update_value(ValueEval, ValueWrap, V1),
@@ -5728,15 +5878,15 @@ update_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
             );
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%
 %% ?LEAF2
 %%
 
--compile({inline, update_LEAF2 / ?LEAF2_ARITY_PLUS3}).
-update_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
+-compile({inline, update_att_LEAF2 / ?LEAF2_ARITY_PLUS3}).
+update_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
     if
         Key == K1 ->
             Value = eval_update_value(ValueEval, ValueWrap, V1),
@@ -5759,15 +5909,15 @@ update_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
             );
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%
 %% ?LEAF1
 %%
 
--compile({inline, update_LEAF1 / ?LEAF1_ARITY_PLUS3}).
-update_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
+-compile({inline, update_att_LEAF1 / ?LEAF1_ARITY_PLUS3}).
+update_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
     if
         Key == K1 ->
             Value = eval_update_value(ValueEval, ValueWrap, V1),
@@ -5778,7 +5928,7 @@ update_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
             );
         %
         true ->
-            error_badkey(Key)
+            none
     end.
 
 %%%
@@ -5790,7 +5940,6 @@ eval_update_value(Type, Wrap, Prev) ->
             Wrap;
         %
         lazy ->
-            % FIXME do we still need this?
             Wrap(Prev)
     end.
 
@@ -6531,8 +6680,11 @@ ins_rebalance_into_right_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, Up
 -compile({inline, del_rebalance_INTERNAL4_C1 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, K1, V1, C2) of
-        no ->
+        balanced ->
             ?INTERNAL4_UPD_C1(C1);
+        %
+        none ->
+            none;
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL4(
@@ -6589,8 +6741,11 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
             C3
         )
     of
-        no ->
+        balanced ->
             ?INTERNAL4_UPD_C2(C2);
+        %
+        none ->
+            none;
         %
         ?MID_MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL3(
@@ -6666,8 +6821,11 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
             C4
         )
     of
-        no ->
+        balanced ->
             ?INTERNAL4_UPD_C3(C3);
+        %
+        none ->
+            none;
         %
         ?MID_MERGED_MATCH(MergedC2C3) ->
             ?new_INTERNAL3(
@@ -6743,8 +6901,11 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
             C5
         )
     of
-        no ->
+        balanced ->
             ?INTERNAL4_UPD_C4(C4);
+        %
+        none ->
+            none;
         %
         ?MID_MERGED_MATCH(MergedC3C4) ->
             ?new_INTERNAL3(
@@ -6808,8 +6969,11 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL4_C5 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C5, K4, V4, C4) of
-        no ->
+        balanced ->
             ?INTERNAL4_UPD_C5(C5);
+        %
+        none ->
+            none;
         %
         ?ROTATED(UpKey, UpValue, UpdatedC4, RebalancedC5) ->
             ?new_INTERNAL4(
@@ -6858,8 +7022,11 @@ del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL3_C1 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, K1, V1, C2) of
-        no ->
+        balanced ->
             ?INTERNAL3_UPD_C1(C1);
+        %
+        none ->
+            none;
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL3(
@@ -6910,8 +7077,11 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
             C3
         )
     of
-        no ->
+        balanced ->
             ?INTERNAL3_UPD_C2(C2);
+        %
+        none ->
+            none;
         %
         ?MID_MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL2(
@@ -6978,8 +7148,11 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
             C4
         )
     of
-        no ->
+        balanced ->
             ?INTERNAL3_UPD_C3(C3);
+        %
+        none ->
+            none;
         %
         ?MID_MERGED_MATCH(MergedC2C3) ->
             ?new_INTERNAL2(
@@ -7034,8 +7207,11 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL3_C4 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C4, K3, V3, C3) of
-        no ->
+        balanced ->
             ?INTERNAL3_UPD_C4(C4);
+        %
+        none ->
+            none;
         %
         ?ROTATED(UpKey, UpValue, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL3(
@@ -7078,8 +7254,11 @@ del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL2_C1 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, K1, V1, C2) of
-        no ->
+        balanced ->
             ?INTERNAL2_UPD_C1(C1);
+        %
+        none ->
+            none;
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL2(
@@ -7117,8 +7296,11 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
             C3
         )
     of
-        no ->
+        balanced ->
             ?INTERNAL2_UPD_C2(C2);
+        %
+        none ->
+            none;
         %
         ?MID_MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL1(
@@ -7164,8 +7346,11 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL2_C3 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C3, K2, V2, C2) of
-        no ->
+        balanced ->
             ?INTERNAL2_UPD_C3(C3);
+        %
+        none ->
+            none;
         %
         ?ROTATED(UpKey, UpValue, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL2(
@@ -7202,8 +7387,11 @@ del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL1_C1 / ?INTERNAL1_ARITY}).
 del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, K1, V1, C2) of
-        no ->
+        balanced ->
             ?INTERNAL1_UPD_C1(C1);
+        %
+        none ->
+            none;
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
@@ -7220,8 +7408,11 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL1_C2 / ?INTERNAL1_ARITY}).
 del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C2, K1, V1, C1) of
-        no ->
+        balanced ->
             ?INTERNAL1_UPD_C2(C2);
+        %
+        none ->
+            none;
         %
         ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
@@ -7260,8 +7451,11 @@ del_rebalance_maybe_from_right_sibling(Child, RParentK, RParentV, Right) ->
                 Right
             );
         %
+        none ->
+            none;
+        %
         _ ->
-            no
+            balanced
     end.
 
 %-compile({inline, del_rebalance_internal_from_right_sibling/7}).
@@ -7439,8 +7633,11 @@ del_rebalance_maybe_from_left_sibling(Child, LParentK, LParentV, Left) ->
                 Left
             );
         %
+        none ->
+            none;
+        %
         _ ->
-            no
+            balanced
     end.
 
 %-compile({inline, del_rebalance_internal_from_left_sibling/7}).
@@ -7639,8 +7836,11 @@ del_rebalance_maybe_from_either_sibling(
                 Right
             );
         %
+        none ->
+            none;
+        %
         _ ->
-            no
+            balanced
     end.
 
 %-compile({inline, del_rebalance_internal_from_either_sibling/10}).

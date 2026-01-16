@@ -122,21 +122,27 @@ Returns the new tree.
 -spec delete(Key, Tree) -> UpdatedTree when
     Key :: term(), Value :: term(), Tree :: tree(Key, Value), UpdatedTree :: tree(Key, Value).
 delete(Key, #b5_trees{root = Root, size = Size} = Tree) ->
-    Tree#b5_trees{
-        root = b5_trees_node:delete(Key, Root),
-        size = Size - 1
-    }.
+    case b5_trees_node:delete_att(Key, Root) of
+        none ->
+            error_badkey(Key);
+        %
+        UpdatedRoot ->
+            Tree#b5_trees{
+                root = UpdatedRoot,
+                size = Size - 1
+            }
+    end.
 
 delete_any(Key, #b5_trees{root = Root, size = Size} = Tree) ->
-    case b5_trees_node:is_defined(Key, Root) of
-        true ->
-            Tree#b5_trees{
-                root = b5_trees_node:delete(Key, Root),
-                size = Size - 1
-            };
+    case b5_trees_node:delete_att(Key, Root) of
+        none ->
+            Tree;
         %
-        false ->
-            Tree
+        UpdatedRoot ->
+            Tree#b5_trees{
+                root = UpdatedRoot,
+                size = Size - 1
+            }
     end.
 
 % TODO make this hidden, merely a convenience function
@@ -155,14 +161,14 @@ Returns the new tree.
 -endif.
 -spec enter(Key, Value, tree(Key, Value)) -> tree(Key, Value).
 enter(Key, Value, #b5_trees{size = Size, root = Root} = Tree) ->
-    case b5_trees_node:is_defined(Key, Root) of
-        true ->
-            UpdatedRoot = b5_trees_node:update(Key, eager, Value, Root),
+    case b5_trees_node:insert_att(Key, eager, Value, Root) of
+        none ->
+            UpdatedRoot = b5_trees_node:update_att(Key, eager, Value, Root),
             Tree#b5_trees{root = UpdatedRoot};
         %
-        false ->
+        UpdatedRoot ->
             Tree#b5_trees{
-                root = b5_trees_node:insert(Key, eager, Value, Root),
+                root = UpdatedRoot,
                 size = Size + 1
             }
     end.
@@ -222,10 +228,16 @@ tree.
 -spec insert(Key, Value, Tree) -> UpdatedTree when
     Tree :: tree(Key, Value), UpdatedTree :: tree(Key, Value).
 insert(Key, Value, #b5_trees{size = Size, root = Root} = Tree) ->
-    Tree#b5_trees{
-        size = Size + 1,
-        root = b5_trees_node:insert(Key, eager, Value, Root)
-    }.
+    case b5_trees_node:insert_att(Key, eager, Value, Root) of
+        none ->
+            error_key_exists(Key);
+        %
+        UpdatedRoot ->
+            Tree#b5_trees{
+                size = Size + 1,
+                root = UpdatedRoot
+            }
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -244,10 +256,16 @@ present in the tree.
     Fun :: fun(() -> Value),
     UpdatedTree :: tree(Key, Value).
 insert_with(Key, Fun, #b5_trees{size = Size, root = Root} = Tree) ->
-    Tree#b5_trees{
-        size = Size + 1,
-        root = b5_trees_node:insert(Key, lazy, Fun, Root)
-    }.
+    case b5_trees_node:insert_att(Key, lazy, Fun, Root) of
+        none ->
+            error_key_exists(Key);
+        %
+        UpdatedRoot ->
+            Tree#b5_trees{
+                size = Size + 1,
+                root = UpdatedRoot
+            }
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc "Returns `true` if `Key` is present in `Tree`, otherwise `false`.".
@@ -350,8 +368,10 @@ Returns the largest key-value pair in the tree. The call fails with an
 """.
 -endif.
 -spec largest(Tree) -> {Key, Value} when Tree :: tree(Key, Value).
-largest(#b5_trees{root = Root}) ->
-    b5_trees_node:largest(Root).
+largest(#b5_trees{size = Size, root = Root}) when Size =/= 0 ->
+    b5_trees_node:largest(Root);
+largest(#b5_trees{}) ->
+    error_empty_tree().
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -416,8 +436,10 @@ Returns the smallest key-value pair in the tree. The call fails with an
 """.
 -endif.
 -spec smallest(Tree) -> {Key, Value} when Tree :: tree(Key, Value).
-smallest(#b5_trees{root = Root}) ->
-    b5_trees_node:smallest(Root).
+smallest(#b5_trees{size = Size, root = Root}) when Size =/= 0 ->
+    b5_trees_node:smallest(Root);
+smallest(#b5_trees{}) ->
+    error_empty_tree().
 
 % TODO document
 structural_stats(#b5_trees{root = Root}) ->
@@ -435,11 +457,16 @@ key is not present in the tree.
     Tree2 :: tree(Key, Value).
 
 take(Key, #b5_trees{size = Size, root = Root} = Tree) ->
-    [TakenPair | UpdatedRoot] = b5_trees_node:take(Key, Root),
-    UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
+    case b5_trees_node:take_att(Key, Root) of
+        none ->
+            error_badkey(Key);
+        %
+        [TakenPair | UpdatedRoot] ->
+            UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
 
-    [_ | Value] = TakenPair,
-    {Value, UpdatedTree}.
+            [_ | Value] = TakenPair,
+            {Value, UpdatedTree}
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -453,16 +480,15 @@ Returns `error` if the node with the key is not present in the tree.
     Tree2 :: tree(Key, Value).
 
 take_any(Key, #b5_trees{size = Size, root = Root} = Tree) ->
-    case b5_trees_node:is_defined(Key, Root) of
-        true ->
-            [TakenPair | UpdatedRoot] = b5_trees_node:take(Key, Root),
+    case b5_trees_node:take_att(Key, Root) of
+        none ->
+            error;
+        %
+        [TakenPair | UpdatedRoot] ->
             UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
 
             [_ | Value] = TakenPair,
-            {Value, UpdatedTree};
-        %
-        false ->
-            error
+            {Value, UpdatedTree}
     end.
 
 -if(?OTP_RELEASE >= 27).
@@ -477,12 +503,14 @@ if the tree is empty.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take_largest(#b5_trees{size = Size, root = Root} = Tree) ->
+take_largest(#b5_trees{size = Size, root = Root} = Tree) when Size =/= 0 ->
     [TakenPair | UpdatedRoot] = b5_trees_node:take_largest(Root),
     UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
 
     [Key | Value] = TakenPair,
-    {Key, Value, UpdatedTree}.
+    {Key, Value, UpdatedTree};
+take_largest(#b5_trees{}) ->
+    error_empty_tree().
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -496,12 +524,14 @@ exception if the tree is empty.
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take_smallest(#b5_trees{size = Size, root = Root} = Tree) ->
+take_smallest(#b5_trees{size = Size, root = Root} = Tree) when Size =/= 0 ->
     [TakenPair | UpdatedRoot] = b5_trees_node:take_smallest(Root),
     UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
 
     [Key | Value] = TakenPair,
-    {Key, Value, UpdatedTree}.
+    {Key, Value, UpdatedTree};
+take_smallest(#b5_trees{}) ->
+    error_empty_tree().
 
 -if(?OTP_RELEASE >= 27).
 -doc "Converts a tree into an ordered list of key-value tuples.".
@@ -522,7 +552,13 @@ fails with a `{badkey, Key}` exception if the key is not present in the tree.
     Tree2 :: tree(Key, Value).
 
 update(Key, Value, #b5_trees{root = Root} = Tree) ->
-    Tree#b5_trees{root = b5_trees_node:update(Key, eager, Value, Root)}.
+    case b5_trees_node:update_att(Key, eager, Value, Root) of
+        none ->
+            error_badkey(Key);
+        %
+        UpdatedRoot ->
+            Tree#b5_trees{root = UpdatedRoot}
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -541,7 +577,13 @@ the tree.
     Tree2 :: tree(Key, Value | Value2).
 
 update_with(Key, Fun, #b5_trees{root = Root} = Tree) ->
-    Tree#b5_trees{root = b5_trees_node:update(Key, lazy, Fun, Root)}.
+    case b5_trees_node:update_att(Key, lazy, Fun, Root) of
+        none ->
+            error_badkey(Key);
+        %
+        UpdatedRoot ->
+            Tree#b5_trees{root = UpdatedRoot}
+    end.
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -557,17 +599,15 @@ If the key does not exist, `Init` is inserted as the value.
     Tree2 :: tree(Key, Value | Value2 | Init).
 
 update_with(Key, Fun, Init, #b5_trees{root = Root} = Tree) ->
-    case b5_trees_node:lookup(Key, Root) of
-        {value, PrevValue} ->
-            UpdatedValue = Fun(PrevValue),
-            UpdatedRoot = b5_trees_node:update(Key, eager, UpdatedValue, Root),
-            Tree#b5_trees{root = UpdatedRoot};
-        %
+    case b5_trees_node:update_att(Key, lazy, Fun, Root) of
         none ->
             Tree#b5_trees{
-                root = b5_trees_node:insert(Key, eager, Init, Root),
+                root = b5_trees_node:insert_att(Key, eager, Init, Root),
                 size = Tree#b5_trees.size + 1
-            }
+            };
+        %
+        UpdatedRoot ->
+            Tree#b5_trees{root = UpdatedRoot}
     end.
 
 -if(?OTP_RELEASE >= 27).
@@ -615,3 +655,22 @@ to_constituent_parts(#b5_trees{root = Root, size = Size}) when is_integer(Size),
     {ok, #{root => Root, size => Size}};
 to_constituent_parts(_) ->
     error.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions
+%% ------------------------------------------------------------------
+
+-compile({inline, error_badkey/1}).
+-spec error_badkey(term()) -> no_return().
+error_badkey(Key) ->
+    error({badkey, Key}).
+
+-compile({inline, error_empty_tree/0}).
+-spec error_empty_tree() -> no_return().
+error_empty_tree() ->
+    error(empty_tree).
+
+-compile({inline, error_key_exists/1}).
+-spec error_key_exists(term()) -> no_return().
+error_key_exists(Key) ->
+    error({key_exists, Key}).
