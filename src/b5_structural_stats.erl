@@ -45,7 +45,7 @@
 -export_type([node_type/0]).
 
 -opaque acc() :: #{
-    node_counts := #{node_type() := non_neg_integer()},
+    node_counters := #{node_type() := non_neg_integer()},
     height := non_neg_integer()
 }.
 -export_type([acc/0]).
