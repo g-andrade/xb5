@@ -5865,11 +5865,10 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
 -compile({inline, del_rebalance_maybe_from_right_sibling/3}).
 del_rebalance_maybe_from_right_sibling(Child, RParentE, Right) ->
     case Child of
-        ?INTERNAL1_MATCH(CElem, Cright, CRight) ->
+        ?INTERNAL1_MATCH(CElem, CLeft, CRight) ->
             del_rebalance_internal_from_right_sibling(
                 CElem,
-
-                Cright,
+                CLeft,
                 CRight,
                 %
                 RParentE,
@@ -5895,7 +5894,6 @@ del_rebalance_maybe_from_right_sibling(Child, RParentE, Right) ->
 %-compile({inline, del_rebalance_internal_from_right_sibling/7}).
 del_rebalance_internal_from_right_sibling(
     CElem,
-
     CLeft,
     CRight,
     %

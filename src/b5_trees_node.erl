@@ -7429,11 +7429,11 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
 -compile({inline, del_rebalance_maybe_from_right_sibling/4}).
 del_rebalance_maybe_from_right_sibling(Child, RParentK, RParentV, Right) ->
     case Child of
-        ?INTERNAL1_MATCH(CKey, CValue, Cright, CRight) ->
+        ?INTERNAL1_MATCH(CKey, CValue, CLeft, CRight) ->
             del_rebalance_internal_from_right_sibling(
                 CKey,
                 CValue,
-                Cright,
+                CLeft,
                 CRight,
                 %
                 RParentK,
