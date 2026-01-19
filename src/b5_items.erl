@@ -27,6 +27,7 @@
     larger/2,
     largest/1,
     map/2,
+    merge/2,
     new/0,
     new/1,
     next/1,
@@ -162,6 +163,17 @@ largest(#b5_items{}) ->
 map(Fun, #b5_items{root = Root}) ->
     [NewSize | MappedRoot] = b5_items_node:map(Fun, Root),
     #b5_items{size = NewSize, root = MappedRoot}.
+
+merge(#b5_items{unique = Unique, size = Size1, root = Root1}, #b5_items{size = Size2, root = Root2}) ->
+    case Unique of
+        false ->
+            MergedRoot = b5_items_node:merge(Size1, Root1, Size2, Root2),
+            #b5_items{unique = false, size = Size1 + Size2, root = MergedRoot};
+        %
+        true ->
+            [MergedSize | MergedRoot] = b5_items_node:merge_unique(Size1, Root1, Size2, Root2),
+            #b5_items{unique = true, size = MergedSize, root = MergedRoot}
+    end.
 
 new() ->
     new([]).

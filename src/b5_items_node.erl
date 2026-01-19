@@ -19,6 +19,8 @@
     larger/2,
     largest/1,
     map/2,
+    merge/4,
+    merge_unique/4,
     new/0,
     next/1,
     nth/2,
@@ -599,6 +601,21 @@ map(Fun, Node) ->
     Count = 0,
     Acc = [Count | new()],
     map_root(Fun, Node, Acc).
+
+-spec merge(non_neg_integer(), t(Elem1), non_neg_integer(), t(Elem2)) -> t(Elem1 | Elem2).
+merge(Size1, Root1, Size2, Root2) when Size1 < Size2 ->
+    merge_root(Root1, Root2);
+merge(_Size1, Root1, _Size2, Root2) ->
+    merge_root(Root2, Root1).
+
+-spec merge_unique(non_neg_integer(), t(Elem1), non_neg_integer(), t(Elem2)) ->
+    nonempty_improper_list(MergedSize, t(Elem1 | Elem2))
+when
+    MergedSize :: non_neg_integer().
+merge_unique(Size1, Root1, Size2, Root2) when Size1 < Size2 ->
+    merge_unique_root(Root1, [Size2 | Root2]);
+merge_unique(Size1, Root1, _Size2, Root2) ->
+    merge_unique_root(Root2, [Size1 | Root1]).
 
 -spec new() -> t(_).
 new() ->
@@ -3526,6 +3543,121 @@ map_elem(Fun, Elem, [Count | Root] = Acc) ->
         %
         UpdatedRoot ->
             [Count + 1 | UpdatedRoot]
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: merge/2
+%% ------------------------------------------------------------------
+
+merge_root(Node, Acc) ->
+    case Node of
+        ?INTERNAL1_MATCH_NO_SIZES ->
+            Acc2 = merge_recur(C1, Acc),
+            Acc3 = add(E1, Acc2),
+            _Acc4 = add(C2, Acc3);
+        %
+        ?LEAF1_MATCH_ALL ->
+            _Acc2 = add(E1, Acc);
+        %
+        ?LEAF0 ->
+            Acc;
+        %
+        _ ->
+            merge_recur(Node, Acc)
+    end.
+
+merge_recur(Node, Acc) ->
+    % TODO optimize like in filter, filtermerge, union, etc
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            add(E2, add(E1, Acc));
+        %
+        ?LEAF3_MATCH_ALL ->
+            add(E3, add(E2, add(E1, Acc)));
+        %
+        ?LEAF4_MATCH_ALL ->
+            add(E4, add(E3, add(E2, add(E1, Acc))));
+        %
+        ?INTERNAL2_MATCH_NO_SIZES ->
+            Acc2 = add(E1, merge_recur(C1, Acc)),
+            Acc3 = add(E2, merge_recur(C2, Acc2)),
+            _Acc3 = merge_recur(C3, Acc3);
+        %
+        ?INTERNAL3_MATCH_NO_SIZES ->
+            Acc2 = add(E1, merge_recur(C1, Acc)),
+            Acc3 = add(E2, merge_recur(C2, Acc2)),
+            Acc4 = add(E3, merge_recur(C3, Acc3)),
+            _Acc5 = merge_recur(C4, Acc4);
+        %
+        %
+        ?INTERNAL4_MATCH_NO_SIZES ->
+            Acc2 = add(E1, merge_recur(C1, Acc)),
+            Acc3 = add(E2, merge_recur(C2, Acc2)),
+            Acc4 = add(E3, merge_recur(C3, Acc3)),
+            Acc5 = add(E4, merge_recur(C4, Acc4)),
+            _Acc6 = merge_recur(C5, Acc5)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: merge/2
+%% ------------------------------------------------------------------
+
+merge_unique_root(Node, Acc) ->
+    case Node of
+        ?INTERNAL1_MATCH_NO_SIZES ->
+            Acc2 = merge_unique_recur(C1, Acc),
+            Acc3 = maybe_merge(E1, Acc2),
+            _Acc4 = maybe_merge(C2, Acc3);
+        %
+        ?LEAF1_MATCH_ALL ->
+            _Acc2 = maybe_merge(E1, Acc);
+        %
+        ?LEAF0 ->
+            Acc;
+        %
+        _ ->
+            merge_unique_recur(Node, Acc)
+    end.
+
+merge_unique_recur(Node, Acc) ->
+    % TODO optimize like in filter, filtermerge, union, etc
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            maybe_merge(E2, maybe_merge(E1, Acc));
+        %
+        ?LEAF3_MATCH_ALL ->
+            maybe_merge(E3, maybe_merge(E2, maybe_merge(E1, Acc)));
+        %
+        ?LEAF4_MATCH_ALL ->
+            maybe_merge(E4, maybe_merge(E3, maybe_merge(E2, maybe_merge(E1, Acc))));
+        %
+        ?INTERNAL2_MATCH_NO_SIZES ->
+            Acc2 = maybe_merge(E1, merge_unique_recur(C1, Acc)),
+            Acc3 = maybe_merge(E2, merge_unique_recur(C2, Acc2)),
+            _Acc3 = merge_unique_recur(C3, Acc3);
+        %
+        ?INTERNAL3_MATCH_NO_SIZES ->
+            Acc2 = maybe_merge(E1, merge_unique_recur(C1, Acc)),
+            Acc3 = maybe_merge(E2, merge_unique_recur(C2, Acc2)),
+            Acc4 = maybe_merge(E3, merge_unique_recur(C3, Acc3)),
+            _Acc5 = merge_unique_recur(C4, Acc4);
+        %
+        %
+        ?INTERNAL4_MATCH_NO_SIZES ->
+            Acc2 = maybe_merge(E1, merge_unique_recur(C1, Acc)),
+            Acc3 = maybe_merge(E2, merge_unique_recur(C2, Acc2)),
+            Acc4 = maybe_merge(E3, merge_unique_recur(C3, Acc3)),
+            Acc5 = maybe_merge(E4, merge_unique_recur(C4, Acc4)),
+            _Acc6 = merge_unique_recur(C5, Acc5)
+    end.
+
+maybe_merge(Elem, [Size | Root] = Acc) ->
+    case insert_att(Elem, Root) of
+        none ->
+            Acc;
+        %
+        UpdatedRoot ->
+            [Size + 1 | UpdatedRoot]
     end.
 
 %% ------------------------------------------------------------------
