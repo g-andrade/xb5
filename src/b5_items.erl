@@ -30,6 +30,7 @@
     new/0,
     new/1,
     next/1,
+    nth/2,
     size/1,
     smaller/2,
     smallest/1,
@@ -170,6 +171,9 @@ new(Opts) ->
 
 next(Iter) ->
     b5_items_node:next(Iter).
+
+nth(N, #b5_items{size = Size, root = Root}) when is_integer(N), N >= 1, N =< Size ->
+    b5_items_node:nth(N, Root).
 
 size(#b5_items{size = Size}) ->
     Size.

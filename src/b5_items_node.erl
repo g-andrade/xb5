@@ -21,6 +21,7 @@
     map/2,
     new/0,
     next/1,
+    nth/2,
     smaller/2,
     smallest/1,
     structural_stats/1,
@@ -608,6 +609,14 @@ next([Head | Tail]) ->
     next(Head, Tail);
 next([]) ->
     none.
+
+-spec nth(_, t(_)) -> boolean().
+nth(N, ?INTERNAL1_MATCH_ALL) ->
+    nth_INTERNAL1(N, ?INTERNAL1_ARGS);
+nth(N, ?LEAF1_MATCH_ALL) ->
+    nth_LEAF1(N, ?LEAF1_ARGS);
+nth(N, Root) ->
+    nth_recur(N, Root).
 
 -spec smaller(_, t(Elem)) -> {found, Elem} | none.
 smaller(Elem, ?INTERNAL1_MATCH_NO_SIZES) ->
@@ -3555,6 +3564,200 @@ rev_next(Head, Tail) ->
             [?ITER_ELEM(Elem) | NewTail] = rev_iterator_recur(Node, Tail),
             Iter2 = [?REV_ITER_TAG | NewTail],
             {Elem, Iter2}
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: nth/2
+%% ------------------------------------------------------------------
+
+nth_recur(N, Node) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            nth_INTERNAL2(N, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            nth_INTERNAL3(N, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            nth_INTERNAL4(N, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            nth_LEAF2(N, ?LEAF2_ARGS);
+        %
+        ?LEAF3_MATCH_ALL ->
+            nth_LEAF3(N, ?LEAF3_ARGS);
+        %
+        ?LEAF4_MATCH_ALL ->
+            nth_LEAF4(N, ?LEAF4_ARGS)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, nth_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
+nth_INTERNAL4(N, ?INTERNAL4_ARGS) ->
+    if
+        N < O3 ->
+            if
+                N > O1 ->
+                    if
+                        N < O2 ->
+                            nth_recur(N - O1, C2);
+                        %
+                        N > O2 ->
+                            nth_recur(N - O2, C3);
+                        %
+                        true ->
+                            E2
+                    end;
+                %
+                N < O1 ->
+                    nth_recur(N, C1);
+                %
+                true ->
+                    E1
+            end;
+        %
+        N > O3 ->
+            if
+                N < O4 ->
+                    nth_recur(N - O3, C4);
+                %
+                N > O4 ->
+                    nth_recur(N - O4, C5);
+                %
+                true ->
+                    E4
+            end;
+        %
+        true ->
+            E3
+    end.
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, nth_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
+nth_INTERNAL3(N, ?INTERNAL3_ARGS) ->
+    if
+        N < O2 ->
+            if
+                N < O1 ->
+                    nth_recur(N, C1);
+                %
+                N > O1 ->
+                    nth_recur(N - O1, C2);
+                %
+                true ->
+                    E1
+            end;
+        %
+        N > O2 ->
+            if
+                N < O3 ->
+                    nth_recur(N - O2, C3);
+                %
+                N > O3 ->
+                    nth_recur(N - O3, C4);
+                %
+                true ->
+                    E3
+            end;
+        %
+        true ->
+            E2
+    end.
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, nth_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
+nth_INTERNAL2(N, ?INTERNAL2_ARGS) ->
+    if
+        N > O1 ->
+            if
+                N < O2 ->
+                    nth_recur(N - O1, C2);
+                %
+                N > O2 ->
+                    nth_recur(N - O2, C3);
+                %
+                true ->
+                    E2
+            end;
+        %
+        N < O1 ->
+            nth_recur(N, C1);
+        %
+        true ->
+            E1
+    end.
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, nth_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+nth_INTERNAL1(N, ?INTERNAL1_ARGS) ->
+    if
+        N < O1 ->
+            nth_recur(N, C1);
+        %
+        N > O1 ->
+            nth_recur(N - O1, C2);
+        %
+        true ->
+            E1
+    end.
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, nth_LEAF4 / ?LEAF4_ARITY_PLUS1}).
+nth_LEAF4(N, ?LEAF4_ARGS) ->
+    case N of
+        1 -> E1;
+        2 -> E2;
+        3 -> E3;
+        4 -> E4
+    end.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, nth_LEAF3 / ?LEAF3_ARITY_PLUS1}).
+nth_LEAF3(N, ?LEAF3_ARGS) ->
+    case N of
+        1 -> E1;
+        2 -> E2;
+        3 -> E3
+    end.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, nth_LEAF2 / ?LEAF2_ARITY_PLUS1}).
+nth_LEAF2(N, ?LEAF2_ARGS) ->
+    case N of
+        1 -> E1;
+        2 -> E2
+    end.
+
+%%
+%% ?LEAF1
+%%
+
+-compile({inline, nth_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+nth_LEAF1(N, ?LEAF1_ARGS) ->
+    case N of
+        1 -> E1
     end.
 
 %% ------------------------------------------------------------------
