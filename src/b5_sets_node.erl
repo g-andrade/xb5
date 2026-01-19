@@ -284,8 +284,8 @@
 -define(NODE_CHECK_ENABLED, false).
 
 -if(?NODE_CHECK_ENABLED).
--define(CHECK_NODE(Node), check_node(?LINE, Node)).
--define(CHECK_NODE_RECUR(Node), check_node_recur(?LINE, Node)).
+-define(CHECK_NODE(Node), check_node(?LINE, Node, top)).
+-define(CHECK_NODE_RECUR(Node), check_node(?LINE, Node, recur)).
 -else.
 -define(CHECK_NODE(Node), Node).
 -define(CHECK_NODE_RECUR(Node), Node).
@@ -6433,25 +6433,38 @@ del_rebalance_leaf_from_either_sibling(
 
 -if(?NODE_CHECK_ENABLED).
 
-check_node(LineNumber, Node) ->
-    Type = node_type(Node),
-    try to_list(Node) of
-        List ->
-            check_node_keys(LineNumber, Type, Node, List)
+check_node(LineNumber, Node, Variant) ->
+    try do_check_node(LineNumber, Node, Variant) of
+        ok ->
+            Node
     catch
-        error:Reason:Stacktrace ->
-            fail_node_check(LineNumber, Type, Node, {error_converting_to_list, Reason, Stacktrace})
+        error:{bad_node, _} = Reason:Stacktrace ->
+            erlang:raise(error, Reason, Stacktrace);
+        %
+        Class:Reason:Stacktrace ->
+            fail_node_check(LineNumber, unknown, Node, {Class, Reason, Stacktrace})
     end.
 
-check_node_keys(LineNumber, Type, Node, List) ->
-    MissortedKeys = check_node_keys(List),
+do_check_node(LineNumber, Node, Variant) ->
+    Type = node_type(Node, Variant),
+    check_node_elements(LineNumber, Type, Node),
+    ok.
 
-    case MissortedKeys of
+node_type(Node, top) ->
+    node_type(Node);
+node_type(Node, recur) ->
+    recur_node_type(Node).
+
+check_node_elements(LineNumber, Type, Node) ->
+    List = to_list(Node),
+    MissortedElements = check_node_elements(List),
+
+    case MissortedElements of
         [] ->
             Node;
         %
         [_ | _] ->
-            fail_node_check(LineNumber, Type, Node, {missorted_keys, MissortedKeys})
+            fail_node_check(LineNumber, Type, Node, {missorted_elements, MissortedElements})
     end.
 
 node_type(Node) ->
@@ -6464,16 +6477,6 @@ node_type(Node) ->
         %
         _ ->
             recur_node_type(Node)
-    end.
-
-check_node_recur(LineNumber, Node) ->
-    Type = node_type(Node),
-    try to_list_recur(Node, []) of
-        List ->
-            check_node_keys(LineNumber, Type, Node, List)
-    catch
-        error:Reason:Stacktrace ->
-            fail_node_check(LineNumber, Type, Node, {error_converting_to_list, Reason, Stacktrace})
     end.
 
 recur_node_type(Node) ->
@@ -6507,20 +6510,20 @@ fail_node_check(LineNumber, Type, Node, Reason) ->
         ]}
     ).
 
-check_node_keys([H | T]) ->
-    check_node_keys(H, T);
-check_node_keys([]) ->
+check_node_elements([H | T]) ->
+    check_node_elements(H, T);
+check_node_elements([]) ->
     [].
 
-check_node_keys(E1, [E2 | Next]) ->
+check_node_elements(E1, [E2 | Next]) ->
     case E1 >= E2 of
         false ->
-            check_node_keys(E2, Next);
+            check_node_elements(E2, Next);
         %
         true ->
-            [{E1, E2} | check_node_keys(E2, Next)]
+            [{E1, E2} | check_node_elements(E2, Next)]
     end;
-check_node_keys(_, []) ->
+check_node_elements(_, []) ->
     [].
 
 % -if(?NODE_CHECK_ENABLED).
