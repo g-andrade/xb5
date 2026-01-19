@@ -4106,22 +4106,22 @@ ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS) ->
         %
         UpdatedC1 ->
             ?new_INTERNAL4(
-               E1,
-               E2,
-               E3,
-               E4,
-               %
-               O1 + 1,
-               O2 + 1,
-               O3 + 1,
-               O4 + 1,
-               %
-               UpdatedC1,
-               C2,
-               C3,
-               C4,
-               C5
-              )
+                E1,
+                E2,
+                E3,
+                E4,
+                %
+                O1 + 1,
+                O2 + 1,
+                O3 + 1,
+                O4 + 1,
+                %
+                UpdatedC1,
+                C2,
+                C3,
+                C4,
+                C5
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS2}).
@@ -4157,22 +4157,22 @@ ins_rebalance_INTERNAL4_C2(Result, Elem, ?INTERNAL4_ARGS) ->
         %
         UpdatedC2 ->
             ?new_INTERNAL4(
-               E1,
-               E2,
-               E3,
-               E4,
-               %
-               O1,
-               O2 + 1,
-               O3 + 1,
-               O4 + 1,
-               %
-               C1,
-               UpdatedC2,
-               C3,
-               C4,
-               C5
-              )
+                E1,
+                E2,
+                E3,
+                E4,
+                %
+                O1,
+                O2 + 1,
+                O3 + 1,
+                O4 + 1,
+                %
+                C1,
+                UpdatedC2,
+                C3,
+                C4,
+                C5
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS2}).
@@ -4208,22 +4208,22 @@ ins_rebalance_INTERNAL4_C3(Result, Elem, ?INTERNAL4_ARGS) ->
         %
         UpdatedC3 ->
             ?new_INTERNAL4(
-               E1,
-               E2,
-               E3,
-               E4,
-               %
-               O1,
-               O2,
-               O3 + 1,
-               O4 + 1,
-               %
-               C1,
-               C2,
-               UpdatedC3,
-               C4,
-               C5
-              )
+                E1,
+                E2,
+                E3,
+                E4,
+                %
+                O1,
+                O2,
+                O3 + 1,
+                O4 + 1,
+                %
+                C1,
+                C2,
+                UpdatedC3,
+                C4,
+                C5
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS2}).
@@ -4241,7 +4241,7 @@ ins_rebalance_INTERNAL4_C4(Result, Elem, ?INTERNAL4_ARGS) ->
                         O1,
                         O2,
                         O3 + MovedSize,
-                        O4 + 1 ,
+                        O4 + 1,
                         %
                         C1,
                         C2,
@@ -4259,21 +4259,22 @@ ins_rebalance_INTERNAL4_C4(Result, Elem, ?INTERNAL4_ARGS) ->
         %
         UpdatedC4 ->
             ?new_INTERNAL4(
-               E1,
-               E2,
-               E3,
-               E4,
-               %
-               O1,
-               O2,
-               O3,
-               O4 + 1,
-               %
-               C1,
-               C2,
-               C3,
-               UpdatedC4,
-               C5)
+                E1,
+                E2,
+                E3,
+                E4,
+                %
+                O1,
+                O2,
+                O3,
+                O4 + 1,
+                %
+                C1,
+                C2,
+                C3,
+                UpdatedC4,
+                C5
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS2}).
@@ -4361,18 +4362,19 @@ ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS) ->
         %
         UpdatedC1 ->
             ?new_INTERNAL3(
-               E1,
-               E2,
-               E3,
-               %
-               O1 + 1,
-               O2 + 1,
-               O3 + 1,
-               %
-               UpdatedC1,
-               C2,
-               C3,
-               C4)
+                E1,
+                E2,
+                E3,
+                %
+                O1 + 1,
+                O2 + 1,
+                O3 + 1,
+                %
+                UpdatedC1,
+                C2,
+                C3,
+                C4
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS2}).
@@ -4422,18 +4424,19 @@ ins_rebalance_INTERNAL3_C2(Result, Elem, ?INTERNAL3_ARGS) ->
         %
         UpdatedC2 ->
             ?new_INTERNAL3(
-               E1,
-               E2,
-               E3,
-               %
-               O1,
-               O2 + 1,
-               O3 + 1,
-               %
-               C1,
-               UpdatedC2,
-               C3,
-               C4)
+                E1,
+                E2,
+                E3,
+                %
+                O1,
+                O2 + 1,
+                O3 + 1,
+                %
+                C1,
+                UpdatedC2,
+                C3,
+                C4
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS2}).
@@ -4482,18 +4485,19 @@ ins_rebalance_INTERNAL3_C3(Result, Elem, ?INTERNAL3_ARGS) ->
         %
         UpdatedC3 ->
             ?new_INTERNAL3(
-               E1,
-               E2,
-               E3,
-               %
-               O1,
-               O2,
-               O3 + 1,
-               %
-               C1,
-               C2,
-               UpdatedC3,
-               C4)
+                E1,
+                E2,
+                E3,
+                %
+                O1,
+                O2,
+                O3 + 1,
+                %
+                C1,
+                C2,
+                UpdatedC3,
+                C4
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS2}).
@@ -4588,16 +4592,16 @@ ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS) ->
         %
         UpdatedC1 ->
             ?new_INTERNAL2(
-               E1,
-               E2,
-               %
-               O1 + 1,
-               O2 + 1,
-               %
-               UpdatedC1,
-               C2,
-               C3
-              )
+                E1,
+                E2,
+                %
+                O1 + 1,
+                O2 + 1,
+                %
+                UpdatedC1,
+                C2,
+                C3
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS2}).
@@ -4640,15 +4644,16 @@ ins_rebalance_INTERNAL2_C2(Result, Elem, ?INTERNAL2_ARGS) ->
         %
         UpdatedC2 ->
             ?new_INTERNAL2(
-               E1,
-               E2,
-               %
-               O1,
-               O2 + 1,
-               %
-               C1,
-               UpdatedC2,
-               C3)
+                E1,
+                E2,
+                %
+                O1,
+                O2 + 1,
+                %
+                C1,
+                UpdatedC2,
+                C3
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS2}).
@@ -4704,11 +4709,13 @@ ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS) ->
             case ins_rebalance_into_right_sibling_maybe(Elem, C1, O1, Pos, Args, E1, C2) of
                 {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
                     ?new_INTERNAL1(
-                       UpElem,
-                       %
-                       O1 - MovedSize,
-                       %
-                       UpdatedC1, UpdatedC2);
+                        UpElem,
+                        %
+                        O1 - MovedSize,
+                        %
+                        UpdatedC1,
+                        UpdatedC2
+                    );
                 %
                 {split, SplitE, SplitO, SplitL, SplitR} ->
                     ?new_INTERNAL2(
@@ -4729,11 +4736,13 @@ ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS) ->
         %
         UpdatedC1 ->
             ?new_INTERNAL1(
-               E1,
-               %
-               O1 + 1,
-               %
-               UpdatedC1, C2)
+                E1,
+                %
+                O1 + 1,
+                %
+                UpdatedC1,
+                C2
+            )
     end.
 
 -compile({inline, ins_rebalance_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS2}).
@@ -4743,11 +4752,13 @@ ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1, O1) of
                 {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
                     ?new_INTERNAL1(
-                       UpElem,
-                       %
-                       O1 + MovedSize,
-                       %
-                       UpdatedC1, UpdatedC2);
+                        UpElem,
+                        %
+                        O1 + MovedSize,
+                        %
+                        UpdatedC1,
+                        UpdatedC2
+                    );
                 %
                 {split, SplitE, SplitO, SplitL, SplitR} ->
                     ?new_INTERNAL2(
@@ -4768,11 +4779,13 @@ ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS) ->
         %
         UpdatedC2 ->
             ?new_INTERNAL1(
-               E1,
-               %
-               O1,
-               %
-               C1, UpdatedC2)
+                E1,
+                %
+                O1,
+                %
+                C1,
+                UpdatedC2
+            )
     end.
 
 %% ------------------------------------------------------------------
@@ -4830,113 +4843,113 @@ insert_split_root(_NewElem, Pos, {split, SplitE, SplitO, SplitL, SplitR}, Root) 
     case Pos of
         1 ->
             insert_split_root_internal(
-              SplitE,
-              E1,
-              E2,
-              E3,
-              E4,
-              %
-              SplitO,
-              O1 + 1,
-              O2 + 1,
-              O3 + 1,
-              O4 + 1,
-              %
-              SplitL,
-              SplitR,
-              C2,
-              C3,
-              C4,
-              C5
-             );
+                SplitE,
+                E1,
+                E2,
+                E3,
+                E4,
+                %
+                SplitO,
+                O1 + 1,
+                O2 + 1,
+                O3 + 1,
+                O4 + 1,
+                %
+                SplitL,
+                SplitR,
+                C2,
+                C3,
+                C4,
+                C5
+            );
         %
         2 ->
             insert_split_root_internal(
-              E1,
-              SplitE,
-              E2,
-              E3,
-              E4,
-              %
-              O1,
-              O1 + SplitO,
-              O2 + 1,
-              O3 + 1,
-              O4 + 1,
-              %
-              C1,
-              SplitL,
-              SplitR,
-              C3,
-              C4,
-              C5
-             );
+                E1,
+                SplitE,
+                E2,
+                E3,
+                E4,
+                %
+                O1,
+                O1 + SplitO,
+                O2 + 1,
+                O3 + 1,
+                O4 + 1,
+                %
+                C1,
+                SplitL,
+                SplitR,
+                C3,
+                C4,
+                C5
+            );
         %
         3 ->
             insert_split_root_internal(
-              E1,
-              E2,
-              SplitE,
-              E3,
-              E4,
-              %
-              O1,
-              O2,
-              O2 + SplitO,
-              O3 + 1,
-              O4 + 1,
-              %
-              C1,
-              C2,
-              SplitL,
-              SplitR,
-              C4,
-              C5
-             );
+                E1,
+                E2,
+                SplitE,
+                E3,
+                E4,
+                %
+                O1,
+                O2,
+                O2 + SplitO,
+                O3 + 1,
+                O4 + 1,
+                %
+                C1,
+                C2,
+                SplitL,
+                SplitR,
+                C4,
+                C5
+            );
         %
         4 ->
             insert_split_root_internal(
-              E1,
-              E2,
-              E3,
-              SplitE,
-              E4,
-              %
-              O1,
-              O2,
-              O3,
-              O3 + SplitO,
-              O4 + 1,
-              %
-              C1,
-              C2,
-              C3,
-              SplitL,
-              SplitR,
-              C5
-             );
+                E1,
+                E2,
+                E3,
+                SplitE,
+                E4,
+                %
+                O1,
+                O2,
+                O3,
+                O3 + SplitO,
+                O4 + 1,
+                %
+                C1,
+                C2,
+                C3,
+                SplitL,
+                SplitR,
+                C5
+            );
         %
         5 ->
             insert_split_root_internal(
-              E1,
-              E2,
-              E3,
-              E4,
-              SplitE,
-              %
-              O1,
-              O2,
-              O3,
-              O4,
-              O4 + SplitO,
-              %
-              C1,
-              C2,
-              C3,
-              C4,
-              SplitL,
-              SplitR
-             )
+                E1,
+                E2,
+                E3,
+                E4,
+                SplitE,
+                %
+                O1,
+                O2,
+                O3,
+                O4,
+                O4 + SplitO,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                SplitL,
+                SplitR
+            )
     end.
 
 -spec insert_split_root_internal(
@@ -4985,22 +4998,28 @@ insert_split_root_internal(
     SplitO = O3,
 
     SplitL = ?new_INTERNAL2(
-                E1, E2,
-                %
-                O1,
-                O2,
-                %
-                C1, C2, C3
-               ),
+        E1,
+        E2,
+        %
+        O1,
+        O2,
+        %
+        C1,
+        C2,
+        C3
+    ),
 
     SplitR = ?new_INTERNAL2(
-                E4, E5,
-                %
-                O4 - O3,
-                O5 - O3,
-                %
-                C4, C5, C6
-               ),
+        E4,
+        E5,
+        %
+        O4 - O3,
+        O5 - O3,
+        %
+        C4,
+        C5,
+        C6
+    ),
 
     ?new_INTERNAL1(SplitE, SplitO, SplitL, SplitR).
 
@@ -5099,22 +5118,28 @@ split_internal(
     SplitO = O3,
 
     SplitL = ?new_INTERNAL2(
-                E1, E2,
-                %
-                O1,
-                O2,
-                %
-                C1, C2, C3
-               ),
+        E1,
+        E2,
+        %
+        O1,
+        O2,
+        %
+        C1,
+        C2,
+        C3
+    ),
 
     SplitR = ?new_INTERNAL2(
-                E4, E5,
-                %
-                O4 - O3,
-                O5 - O3,
-                %
-                C4, C5, C6
-               ),
+        E4,
+        E5,
+        %
+        O4 - O3,
+        O5 - O3,
+        %
+        C4,
+        C5,
+        C6
+    ),
 
     {split, SplitE, SplitO, SplitL, SplitR}.
 
@@ -5768,22 +5793,22 @@ del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
         no ->
             ?new_INTERNAL4(
-               E1,
-               E2,
-               E3,
-               E4,
-               %
-               UpdatedO1,
-               UpdatedO2,
-               UpdatedO3,
-               UpdatedO4,
-               %
-               C1,
-               C2,
-               C3,
-               C4,
-               C5
-              );
+                E1,
+                E2,
+                E3,
+                E4,
+                %
+                UpdatedO1,
+                UpdatedO2,
+                UpdatedO3,
+                UpdatedO4,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                C5
+            );
         %
         none ->
             none;
@@ -5849,22 +5874,22 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
     of
         no ->
             ?new_INTERNAL4(
-               E1,
-               E2,
-               E3,
-               E4,
-               %
-               O1,
-               UpdatedO2,
-               UpdatedO3,
-               UpdatedO4,
-               %
-               C1,
-               C2,
-               C3,
-               C4,
-               C5
-              );
+                E1,
+                E2,
+                E3,
+                E4,
+                %
+                O1,
+                UpdatedO2,
+                UpdatedO3,
+                UpdatedO4,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                C5
+            );
         %
         none ->
             none;
@@ -5911,7 +5936,7 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
                 E3,
                 E4,
                 %
-                O1  - MovedSize,
+                O1 - MovedSize,
                 UpdatedO2,
                 UpdatedO3,
                 UpdatedO4,
@@ -5948,22 +5973,22 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
     of
         no ->
             ?new_INTERNAL4(
-               E1,
-               E2,
-               E3,
-               E4,
-               %
-               O1,
-               O2,
-               UpdatedO3,
-               UpdatedO4,
-               %
-               C1,
-               C2,
-               C3,
-               C4,
-               C5
-              );
+                E1,
+                E2,
+                E3,
+                E4,
+                %
+                O1,
+                O2,
+                UpdatedO3,
+                UpdatedO4,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                C5
+            );
         %
         none ->
             none;
@@ -6046,22 +6071,22 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
     of
         no ->
             ?new_INTERNAL4(
-               E1,
-               E2,
-               E3,
-               E4,
-               %
-               O1,
-               O2,
-               O3,
-               UpdatedO4,
-               %
-               C1,
-               C2,
-               C3,
-               C4,
-               C5
-              );
+                E1,
+                E2,
+                E3,
+                E4,
+                %
+                O1,
+                O2,
+                O3,
+                UpdatedO4,
+                %
+                C1,
+                C2,
+                C3,
+                C4,
+                C5
+            );
         %
         none ->
             none;
@@ -6187,18 +6212,19 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
         no ->
             ?new_INTERNAL3(
-               E1,
-               E2,
-               E3,
-               %
-               UpdatedO1,
-               UpdatedO2,
-               UpdatedO3,
-               %
-               C1,
-               C2,
-               C3,
-               C4);
+                E1,
+                E2,
+                E3,
+                %
+                UpdatedO1,
+                UpdatedO2,
+                UpdatedO3,
+                %
+                C1,
+                C2,
+                C3,
+                C4
+            );
         %
         none ->
             none;
@@ -6257,18 +6283,19 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
     of
         no ->
             ?new_INTERNAL3(
-               E1,
-               E2,
-               E3,
-               %
-               O1,
-               UpdatedO2,
-               UpdatedO3,
-               %
-               C1,
-               C2,
-               C3,
-               C4);
+                E1,
+                E2,
+                E3,
+                %
+                O1,
+                UpdatedO2,
+                UpdatedO3,
+                %
+                C1,
+                C2,
+                C3,
+                C4
+            );
         %
         none ->
             none;
@@ -6342,18 +6369,19 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
     of
         no ->
             ?new_INTERNAL3(
-               E1,
-               E2,
-               E3,
-               %
-               O1,
-               O2,
-               UpdatedO3,
-               %
-               C1,
-               C2,
-               C3,
-               C4);
+                E1,
+                E2,
+                E3,
+                %
+                O1,
+                O2,
+                UpdatedO3,
+                %
+                C1,
+                C2,
+                C3,
+                C4
+            );
         %
         none ->
             none;
@@ -6463,11 +6491,16 @@ del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
         no ->
             ?new_INTERNAL2(
-               E1, E2,
-               %
-               UpdatedO1, UpdatedO2,
-               %
-               C1, C2, C3);
+                E1,
+                E2,
+                %
+                UpdatedO1,
+                UpdatedO2,
+                %
+                C1,
+                C2,
+                C3
+            );
         %
         none ->
             none;
@@ -6487,11 +6520,13 @@ del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
         %
         ?MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL1(
-               E2,
-               %
-               UpdatedO2,
-               %
-               MergedC1C2, C3)
+                E2,
+                %
+                UpdatedO2,
+                %
+                MergedC1C2,
+                C3
+            )
     end.
 
 %%
@@ -6517,11 +6552,16 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
     of
         no ->
             ?new_INTERNAL2(
-               E1, E2,
-               %
-               O1, UpdatedO2,
-               %
-               C1, C2, C3);
+                E1,
+                E2,
+                %
+                O1,
+                UpdatedO2,
+                %
+                C1,
+                C2,
+                C3
+            );
         %
         none ->
             none;
@@ -6615,22 +6655,26 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
     case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
         no ->
             ?new_INTERNAL1(
-               E1,
-               %
-               UpdatedO1,
-               %
-               C1, C2);
+                E1,
+                %
+                UpdatedO1,
+                %
+                C1,
+                C2
+            );
         %
         none ->
             none;
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(
-               UpElem,
-               %
-               UpdatedO1 + MovedSize,
-               %
-               UpdatedC1, UpdatedC2);
+                UpElem,
+                %
+                UpdatedO1 + MovedSize,
+                %
+                UpdatedC1,
+                UpdatedC2
+            );
         %
         ?MERGED_MATCH(MergedC1C2) ->
             % Can only happen at root - height is reduced
@@ -6652,11 +6696,13 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(
-               UpElem,
-               %
-               O1 - MovedSize,
-               %
-               UpdatedC1, UpdatedC2);
+                UpElem,
+                %
+                O1 - MovedSize,
+                %
+                UpdatedC1,
+                UpdatedC2
+            );
         %
         ?MERGED_MATCH(MergedC1C2) ->
             % Can only happen at root - height is reduced
@@ -6822,7 +6868,6 @@ del_rebalance_leaf_from_right_sibling(CElem, RParentE, Right) ->
             UpElem = E1,
             MovedSize = 1,
 
-
             UpdatedNode = ?new_LEAF2(CElem, RParentE),
             UpdatedRight = ?new_LEAF2(E2, E3),
 
@@ -6832,7 +6877,6 @@ del_rebalance_leaf_from_right_sibling(CElem, RParentE, Right) ->
         ?LEAF4_MATCH_ALL ->
             UpElem = E1,
             MovedSize = 1,
-
 
             UpdatedNode = ?new_LEAF2(CElem, RParentE),
             UpdatedRight = ?new_LEAF3(E2, E3, E4),
@@ -7089,12 +7133,16 @@ del_rebalance_internal_from_either_sibling(
 ) ->
     case Left of
         ?INTERNAL2_MATCH(
-           LE1, LE2,
-           %
-           LO1, LO2,
-           %
-           LC1, LC2, LC3
-          ) ->
+            LE1,
+            LE2,
+            %
+            LO1,
+            LO2,
+            %
+            LC1,
+            LC2,
+            LC3
+        ) ->
             %
             %
             case Right of
