@@ -200,13 +200,9 @@ foldr(Fun, Acc0, #b5_trees{root = Root}) ->
 -endif.
 -spec from_list([{Key, Value}]) -> tree(Key, Value).
 from_list(List) ->
-    lists:foldl(
-        fun({K, V}, Acc) ->
-            enter(K, V, Acc)
-        end,
-        new(),
-        List
-    ).
+    Size = 0,
+    Root = b5_trees_node:new(),
+    from_list_recur(List, Size, Root).
 
 -if(?OTP_RELEASE >= 27).
 -doc """
@@ -674,3 +670,15 @@ error_empty_tree() ->
 -spec error_key_exists(term()) -> no_return().
 error_key_exists(Key) ->
     error({key_exists, Key}).
+
+from_list_recur([{Key, Value} | Next], Size, Root) ->
+    case b5_trees_node:insert_att(Key, eager, Value, Root) of
+        none ->
+            UpdatedRoot = b5_trees_node:update_att(Key, eager, Value, Root),
+            from_list_recur(Next, Size, UpdatedRoot);
+        %
+        UpdatedRoot ->
+            from_list_recur(Next, Size + 1, UpdatedRoot)
+    end;
+from_list_recur([], Size, Root) ->
+    #b5_trees{size = Size, root = Root}.
