@@ -133,6 +133,8 @@ delete(Key, #b5_trees{root = Root, size = Size} = Tree) ->
             }
     end.
 
+-spec delete_any(Key, Tree) -> UpdatedTree when
+    Key :: term(), Value :: term(), Tree :: tree(Key, Value), UpdatedTree :: tree(Key, Value).
 delete_any(Key, #b5_trees{root = Root, size = Size} = Tree) ->
     case b5_trees_node:delete_att(Key, Root) of
         none ->
@@ -210,7 +212,7 @@ Retrieves the value stored with `Key` in `Tree`. The call fails with a
 `{badkey, Key}` exception if the key is not present in the tree.
 """.
 -endif.
--spec get(Key, Tree) -> Value when Key :: term(), Tree :: tree(Key, Value).
+-spec get(Key, Tree) -> Value | no_return() when Key :: term(), Tree :: tree(Key, Value).
 get(Key, #b5_trees{root = Root}) ->
     b5_trees_node:get(Key, Root).
 
@@ -363,7 +365,7 @@ Returns the largest key-value pair in the tree. The call fails with an
 `empty_tree` exception if the tree is empty.
 """.
 -endif.
--spec largest(Tree) -> {Key, Value} when Tree :: tree(Key, Value).
+-spec largest(Tree) -> {Key, Value} | no_return() when Tree :: tree(Key, Value).
 largest(#b5_trees{size = Size, root = Root}) when Size =/= 0 ->
     b5_trees_node:largest(Root);
 largest(#b5_trees{}) ->
@@ -431,7 +433,7 @@ Returns the smallest key-value pair in the tree. The call fails with an
 `empty_tree` exception if the tree is empty.
 """.
 -endif.
--spec smallest(Tree) -> {Key, Value} when Tree :: tree(Key, Value).
+-spec smallest(Tree) -> {Key, Value} | no_return() when Tree :: tree(Key, Value).
 smallest(#b5_trees{size = Size, root = Root}) when Size =/= 0 ->
     b5_trees_node:smallest(Root);
 smallest(#b5_trees{}) ->
@@ -495,7 +497,7 @@ the corresponding node deleted. The call fails with an `empty_tree` exception
 if the tree is empty.
 """.
 -endif.
--spec take_largest(Tree) -> {Key, Value, Tree2} when
+-spec take_largest(Tree) -> {Key, Value, Tree2} | no_return() when
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
@@ -516,7 +518,7 @@ the the corresponding node deleted. The call fails with an `empty_tree`
 exception if the tree is empty.
 """.
 -endif.
--spec take_smallest(Tree) -> {Key, Value, Tree2} when
+-spec take_smallest(Tree) -> {Key, Value, Tree2} | no_return() when
     Tree :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 

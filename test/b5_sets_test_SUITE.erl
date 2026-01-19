@@ -151,7 +151,7 @@ end_per_suite(_Config) ->
 %% ------------------------------------------------------------------
 
 test_new_function(_Config) ->
-    Set = b5_sets:new(),
+    Set = new_empty_set(),
     ?assertEqual(0, b5_sets:size(Set)),
     ?assertEqual(Set, b5_sets:empty()),
     ?assertEqual(true, b5_sets:is_empty(Set)),
@@ -256,7 +256,7 @@ test_insert_operations(_Config) ->
 test_delete_operations(_Config) ->
     foreach_set(fun(RefSet, TestSet) ->
         %% Delete existing elements
-        fold_randomly_retyped_shuffled_elements(
+        _ = fold_randomly_retyped_shuffled_elements(
             fun(Element, {RefAcc, TestAcc}) ->
                 UpdatedRef = gb_sets:delete(Element, RefAcc),
                 UpdatedSet = b5_sets:delete(Element, TestAcc),
@@ -285,7 +285,7 @@ test_delete_operations(_Config) ->
 test_delete_any_operations(_Config) ->
     foreach_set(fun(RefSet, TestSet) ->
         %% Delete existing elements
-        fold_randomly_retyped_shuffled_elements(
+        _ = fold_randomly_retyped_shuffled_elements(
             fun(Element, {RefAcc, TestAcc}) ->
                 UpdatedRef = gb_sets:delete(Element, RefAcc),
                 UpdatedSet = b5_sets:delete(Element, TestAcc),
@@ -1104,7 +1104,7 @@ test_filtermap_operations(_Config) ->
 %% ------------------------------------------------------------------
 
 test_compatibility_aliases(_Config) ->
-    Set1 = b5_sets:new(),
+    Set1 = new_empty_set(),
 
     %% add_element/2 should behave like add/2
     Set2 = b5_sets:add_element(42, Set1),
@@ -1133,7 +1133,7 @@ test_compatibility_aliases(_Config) ->
 
 test_empty_set_exceptions(_Config) ->
     % TODO we may not need this
-    EmptySet = b5_sets:new(),
+    EmptySet = new_empty_set(),
 
     %% Test operations on empty sets
     ?assertError({badkey, arbitrary_element}, b5_sets:delete(arbitrary_element, EmptySet)),
@@ -1322,3 +1322,6 @@ diff_lists([A | NextA], [B | NextB]) ->
     end;
 diff_lists([], []) ->
     [].
+
+new_empty_set() ->
+    b5_trees_util:dialyzer_opaque_term(b5_sets:new()).

@@ -115,7 +115,7 @@ test_from_list_repeated_keys(_Config) ->
     ?assertEqual([{1.0, c}, {2, b}, {4, d}], b5_trees:to_list(Tree)).
 
 test_get_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertError({badkey, foobar}, b5_trees:get(foobar, EmptyTree)),
     ?assertEqual(false, b5_trees:is_defined(foobar, EmptyTree)),
 
@@ -149,7 +149,7 @@ test_get_operations(_Config) ->
     ).
 
 test_to_list_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual([], b5_trees:to_list(EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
@@ -166,7 +166,7 @@ test_to_list_operations(_Config) ->
 test_empty_function(_Config) ->
     %% Test that empty/0 is equivalent to new/0
     EmptyTree1 = b5_trees:empty(),
-    EmptyTree2 = b5_trees:new(),
+    EmptyTree2 = new_empty_tree(),
     ?assertEqual(EmptyTree2, EmptyTree1),
     ?assert(b5_trees:is_empty(EmptyTree1)),
     ?assertEqual(0, b5_trees:size(EmptyTree1)),
@@ -174,7 +174,7 @@ test_empty_function(_Config) ->
 
 test_constituent_parts(_Config) ->
     %% Test the low-level constituent parts API
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
 
     %% Test empty tree round-trip
     {ok, Parts1} = b5_trees:to_constituent_parts(EmptyTree),
@@ -187,7 +187,7 @@ test_constituent_parts(_Config) ->
     {ok, Parts2} = b5_trees:to_constituent_parts(Tree),
     ?assertMatch(#{root := _, size := 3}, Parts2),
     ReconstructedTree = b5_trees:from_constituent_parts(Parts2),
-    ?assertEqual(Tree, ReconstructedTree),
+    assert_trees_exactly_equal(Tree, ReconstructedTree),
     ?assertEqual(b5_trees:to_list(Tree), b5_trees:to_list(ReconstructedTree)),
     ?assertEqual(b5_trees:size(Tree), b5_trees:size(ReconstructedTree)),
 
@@ -232,7 +232,7 @@ test_insert_with_operations(_Config) ->
     ).
 
 test_update_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertError({badkey, foobar}, b5_trees:update(foobar, v, EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
@@ -247,7 +247,7 @@ test_update_operations(_Config) ->
     ).
 
 test_update_with_3_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertError(
         {badkey, foobar},
         b5_trees:update_with(foobar, fun(V) -> V end, EmptyTree)
@@ -265,7 +265,7 @@ test_update_with_3_operations(_Config) ->
     ).
 
 test_update_with_4_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertError(
         {badkey, foobar},
         b5_trees:update_with(foobar, fun(V) -> V end, EmptyTree)
@@ -451,7 +451,7 @@ test_updates_with4(Tree, ExistentAttempts, ExistentKvs, NonExistentKeys) ->
 %% ------------------------------------------------------------------
 
 test_smallest_largest_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertError(empty_tree, b5_trees:smallest(EmptyTree)),
     ?assertError(empty_tree, b5_trees:largest(EmptyTree)),
 
@@ -470,7 +470,7 @@ test_smallest_largest_operations(_Config) ->
     ).
 
 test_delete_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertError({badkey, foobar}, b5_trees:delete(foobar, EmptyTree)),
     ?assertEqual(EmptyTree, b5_trees:delete_any(foobar, EmptyTree)),
 
@@ -483,7 +483,7 @@ test_delete_operations(_Config) ->
     ).
 
 test_keys_values_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual([], b5_trees:keys(EmptyTree)),
     ?assertEqual([], b5_trees:values(EmptyTree)),
 
@@ -501,7 +501,7 @@ test_keys_values_operations(_Config) ->
     ).
 
 test_smaller_larger_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual(none, b5_trees:smaller(any_key, EmptyTree)),
     ?assertEqual(none, b5_trees:larger(any_key, EmptyTree)),
 
@@ -515,7 +515,7 @@ test_smaller_larger_operations(_Config) ->
     ).
 
 test_take_smallest_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertError(empty_tree, b5_trees:take_smallest(EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
@@ -529,7 +529,7 @@ test_take_smallest_operations(_Config) ->
     ).
 
 test_take_largest_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertError(empty_tree, b5_trees:take_largest(EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
@@ -552,7 +552,7 @@ test_take_operations(_Config) ->
     ).
 
 test_iterator_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual(none, b5_trees:next(b5_trees:iterator(EmptyTree))),
 
     b5_trees_test_helpers:for_each_tree(
@@ -568,7 +568,7 @@ test_iterator_operations(_Config) ->
     ).
 
 test_iterator_ordered_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual(none, b5_trees:next(b5_trees:iterator(EmptyTree, ordered))),
 
     b5_trees_test_helpers:for_each_tree(
@@ -584,7 +584,7 @@ test_iterator_ordered_operations(_Config) ->
     ).
 
 test_iterator_reversed_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual(none, b5_trees:next(b5_trees:iterator(EmptyTree, reversed))),
 
     b5_trees_test_helpers:for_each_tree(
@@ -600,7 +600,7 @@ test_iterator_reversed_operations(_Config) ->
     ).
 
 test_iterator_from_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual(none, b5_trees:next(b5_trees:iterator_from(any_key, EmptyTree))),
 
     b5_trees_test_helpers:for_each_tree(
@@ -628,7 +628,7 @@ test_iterator_from_operations(_Config) ->
     ).
 
 test_iterator_from_ordered_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual(none, b5_trees:next(b5_trees:iterator_from(any_key, EmptyTree, ordered))),
 
     b5_trees_test_helpers:for_each_tree(
@@ -656,7 +656,7 @@ test_iterator_from_ordered_operations(_Config) ->
     ).
 
 test_iterator_from_reversed_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual(none, b5_trees:next(b5_trees:iterator_from(any_key, EmptyTree, reversed))),
 
     b5_trees_test_helpers:for_each_tree(
@@ -688,7 +688,7 @@ test_iterator_from_reversed_operations(_Config) ->
 test_foldl_foldr_operations(_Config) ->
     FoldFun = fun(K, V, Acc) -> [{K, V} | Acc] end,
 
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual([], b5_trees:foldl(FoldFun, [], EmptyTree)),
     ?assertEqual([], b5_trees:foldr(FoldFun, [], EmptyTree)),
 
@@ -710,7 +710,7 @@ test_foldl_foldr_operations(_Config) ->
     ).
 
 test_map_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     MappedEmptyTree = b5_trees:map(fun b5_trees_test_helpers:error_not_to_be_called/2, EmptyTree),
     ?assertEqual(0, b5_trees:size(MappedEmptyTree)),
     ?assert(b5_trees:is_empty(MappedEmptyTree)),
@@ -769,7 +769,7 @@ test_is_defined_operations(_Config) ->
     ).
 
 test_lookup_operations(_Config) ->
-    EmptyTree = b5_trees:new(),
+    EmptyTree = new_empty_tree(),
     ?assertEqual(none, b5_trees:lookup(foobar, EmptyTree)),
 
     b5_trees_test_helpers:for_each_tree(
@@ -815,14 +815,14 @@ test_delete_each(Tree, ExistentMap, NonExistentKeys) ->
                 maps:to_list(maps:remove(Key, ExistentMap)), fun({K, _}) -> K end
             ),
             Tree2 = b5_trees:delete(DeleteKey, Tree),
-            ?assertEqual(Tree2, b5_trees:delete_any(DeleteKey, Tree)),
+            assert_trees_exactly_equal(Tree2, b5_trees:delete_any(DeleteKey, Tree)),
 
             ?assertEqual(ExpectedListAfter, b5_trees:to_list(Tree2)),
             ?assertEqual(maps:size(ExistentMap) - 1, b5_trees:size(Tree2)),
             ?assertEqual(maps:size(ExistentMap) =:= 1, b5_trees:is_empty(Tree2)),
 
             ?assertError({badkey, Key}, b5_trees:delete(Key, Tree2)),
-            ?assertEqual(Tree2, b5_trees:delete_any(Key, Tree2)),
+            assert_trees_exactly_equal(Tree2, b5_trees:delete_any(Key, Tree2)),
 
             NonExistentSample = b5_trees_test_helpers:take_random(NonExistentKeys, 20),
             lists:foreach(
@@ -833,7 +833,7 @@ test_delete_each(Tree, ExistentMap, NonExistentKeys) ->
                     ?assertError(
                         {badkey, NonExistentKey2}, b5_trees:delete(NonExistentKey2, Tree2)
                     ),
-                    ?assertEqual(Tree2, b5_trees:delete_any(NonExistentKey2, Tree2))
+                    assert_trees_exactly_equal(Tree2, b5_trees:delete_any(NonExistentKey2, Tree2))
                 end,
                 NonExistentSample
             )
@@ -851,7 +851,7 @@ test_delete_all(Tree, ExistentMap, NonExistentKeys) ->
 test_delete_all_impl(Tree, [{Key, _ExpectedV} | Next], ElementsToExpected, NonExistentKeys) ->
     DeleteKey = b5_trees_test_helpers:randomly_switch_key_type(Key),
     Tree2 = b5_trees:delete(DeleteKey, Tree),
-    ?assertEqual(Tree2, b5_trees:delete_any(DeleteKey, Tree)),
+    assert_trees_exactly_equal(Tree2, b5_trees:delete_any(DeleteKey, Tree)),
 
     ElementsToExpected2 = lists:keydelete(Key, 1, ElementsToExpected),
     ?assertEqual(ElementsToExpected2, b5_trees:to_list(Tree2)),
@@ -859,14 +859,14 @@ test_delete_all_impl(Tree, [{Key, _ExpectedV} | Next], ElementsToExpected, NonEx
     ?assertEqual(ElementsToExpected2 =:= [], b5_trees:is_empty(Tree2)),
 
     ?assertError({badkey, Key}, b5_trees:delete(Key, Tree2)),
-    ?assertEqual(Tree2, b5_trees:delete_any(Key, Tree)),
+    assert_trees_exactly_equal(Tree2, b5_trees:delete_any(Key, Tree)),
 
     NonExistentSample = b5_trees_test_helpers:take_random(NonExistentKeys, 20),
     lists:foreach(
         fun(NonExistentKey) ->
             NonExistentKey2 = b5_trees_test_helpers:randomly_switch_key_type(NonExistentKey),
             ?assertError({badkey, NonExistentKey2}, b5_trees:delete(NonExistentKey2, Tree2)),
-            ?assertEqual(Tree2, b5_trees:delete_any(NonExistentKey2, Tree2))
+            assert_trees_exactly_equal(Tree2, b5_trees:delete_any(NonExistentKey2, Tree2))
         end,
         NonExistentSample
     ),
@@ -882,7 +882,7 @@ test_delete_all_impl(Tree, [], [], NonExistentKeys) ->
         fun(NonExistentKey) ->
             NonExistentKey2 = b5_trees_test_helpers:randomly_switch_key_type(NonExistentKey),
             ?assertError({badkey, NonExistentKey2}, b5_trees:delete(NonExistentKey2, Tree)),
-            ?assertEqual(Tree, b5_trees:delete_any(NonExistentKey2, Tree))
+            assert_trees_exactly_equal(Tree, b5_trees:delete_any(NonExistentKey2, Tree))
         end,
         NonExistentSample
     ).
@@ -1053,3 +1053,12 @@ test_enter_impl(Tree, [Key | NextKeys], ExistentKvs, NonExistentKeys) ->
     test_enter_impl(Tree2, NextKeys, ExistentKvs2, NonExistentKeys);
 test_enter_impl(_Tree, [], _ExistentKvs, _NonExistentKeys) ->
     ok.
+
+new_empty_tree() ->
+    b5_trees_util:dialyzer_opaque_term(b5_trees:new()).
+
+assert_trees_exactly_equal(Tree1, Tree2) ->
+    ?assertEqual(
+        b5_trees_util:dialyzer_opaque_term(Tree1),
+        b5_trees_util:dialyzer_opaque_term(Tree2)
+    ).

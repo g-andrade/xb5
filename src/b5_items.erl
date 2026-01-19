@@ -56,7 +56,7 @@ add(Element, #b5_items{unique = Unique, size = Size, root = Root} = Items) ->
             Items#b5_items{size = Size + 1, root = UpdatedRoot};
         %
         true ->
-            case b5_items_node:insert(Element, Root) of
+            case b5_items_node:insert_att(Element, Root) of
                 none ->
                     Items;
                 %

@@ -433,14 +433,14 @@
 %%%%%%%%%%%
 
 -type split_internal_result(Elem) :: split_result(
-    Elem, node_INTERNAL2(Elem), node_INTERNAL2(Elem)
+    Elem, pos_integer(), node_INTERNAL2(Elem), node_INTERNAL2(Elem)
 ).
 
 -type split_leaf_result(Elem) :: split_result(
-    Elem, node_LEAF2(Elem), node_LEAF2(Elem)
+    Elem, 3, node_LEAF2(Elem), node_LEAF2(Elem)
 ).
 
--type split_result(Elem, SplitL, SplitR) :: {split, Elem, pos_integer(), SplitL, SplitR}.
+-type split_result(Elem, SplitO, SplitL, SplitR) :: {split, Elem, SplitO, SplitL, SplitR}.
 
 %%%%%%%%%%%
 
@@ -618,7 +618,7 @@ merge_unique(Size1, Root1, _Size2, Root2) ->
 
 -spec new() -> t(_).
 new() ->
-    ?LEAF0.
+    b5_trees_util:dialyzer_opaque_term(?LEAF0).
 
 -spec next(iter(Elem)) -> {Elem, iter(Elem)} | none.
 next([Head | Tail]) ->
@@ -5301,7 +5301,7 @@ insert_split_root(_NewElem, Pos, {split, SplitE, SplitO, SplitL, SplitR}, Root) 
     C,
     C,
     C
-) -> split_internal_result(E) when
+) -> node_INTERNAL1(E) when
     C :: nonempty_node(E).
 -compile({inline, insert_split_root_internal/16}).
 insert_split_root_internal(

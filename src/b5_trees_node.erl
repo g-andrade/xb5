@@ -533,7 +533,7 @@ foldr(_Fun, Acc, ?LEAF0) ->
 foldr(Fun, Acc, Root) ->
     foldr_recur(Fun, Acc, Root).
 
--spec get(Key, t(Key, Value)) -> Value.
+-spec get(Key, t(Key, Value)) -> Value | no_return().
 get(Key, ?INTERNAL1_MATCH_ALL) ->
     get_INTERNAL1(Key, ?INTERNAL1_ARGS);
 get(Key, ?LEAF1_MATCH_ALL) ->
@@ -6060,7 +6060,7 @@ insert_split_root(Pos, {split, SplitK, SplitV, SplitL, SplitR}, Root) ->
     C,
     C,
     C
-) -> split_internal_result(K, V) when
+) -> node_INTERNAL1(K, V) when
     C :: nonempty_node(K, V).
 -compile({inline, insert_split_root_internal/16}).
 insert_split_root_internal(

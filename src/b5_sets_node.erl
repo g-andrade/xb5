@@ -4741,7 +4741,7 @@ insert_split_root(_NewElem, Pos, {split, SplitE, SplitL, SplitR}, Root) ->
     C,
     C,
     C
-) -> split_internal_result(E) when
+) -> node_INTERNAL1(E) when
     C :: nonempty_node(E).
 -compile({inline, insert_split_root_internal/11}).
 insert_split_root_internal(
