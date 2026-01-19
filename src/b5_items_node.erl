@@ -440,8 +440,7 @@
     Elem, node_LEAF2(Elem), node_LEAF2(Elem)
 ).
 
-% FIXME
--type split_result(Elem, SplitL, SplitR) :: {split, Elem, SplitL, SplitR}.
+-type split_result(Elem, SplitL, SplitR) :: {split, Elem, pos_integer(), SplitL, SplitR}.
 
 %%%%%%%%%%%
 
@@ -4717,7 +4716,6 @@ ins_rebalance_INTERNAL3_C2(Result, Elem, ?INTERNAL3_ARGS) ->
     case Result of
         ?SPLIT_MATCH(Pos, Args) ->
             case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1, O1) of
-                % FIXME continue here
                 {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
                     ?new_INTERNAL3(
                         UpElem,
@@ -5127,7 +5125,6 @@ ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS) ->
 %% Internal Function Definitions: Insertion - Node Split
 %% ------------------------------------------------------------------
 
--compile({inline, insert_split_root/4}).
 insert_split_root(NewElem, Pos, [], Root) ->
     ?LEAF4_MATCH_ALL = Root,
 
