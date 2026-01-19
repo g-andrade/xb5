@@ -3886,10 +3886,8 @@ nth_LEAF2(N, ?LEAF2_ARGS) ->
 %%
 
 -compile({inline, nth_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-nth_LEAF1(N, ?LEAF1_ARGS) ->
-    case N of
-        1 -> E1
-    end.
+nth_LEAF1(1, ?LEAF1_ARGS) ->
+    E1.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: smaller/2

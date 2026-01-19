@@ -162,7 +162,10 @@ map(Fun, #b5_items{root = Root}) ->
     [NewSize | MappedRoot] = b5_items_node:map(Fun, Root),
     #b5_items{size = NewSize, root = MappedRoot}.
 
-merge(#b5_items{unique = Unique, size = Size1, root = Root1}, #b5_items{size = Size2, root = Root2}) ->
+merge(
+    #b5_items{unique = Unique, size = Size1, root = Root1},
+    #b5_items{size = Size2, root = Root2}
+) ->
     case Unique of
         false ->
             MergedRoot = b5_items_node:merge(Size1, Root1, Size2, Root2),

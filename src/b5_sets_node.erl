@@ -1901,27 +1901,27 @@ insert_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
             none
     end.
 
--compile({inline, insert_att_INTERNAL4_C1/?INTERNAL4_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
 insert_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
     Result = insert_att_recur(Elem, C1),
     ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS).
 
--compile({inline, insert_att_INTERNAL4_C2/?INTERNAL4_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
 insert_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
     Result = insert_att_recur(Elem, C2),
     ins_rebalance_INTERNAL4_C2(Result, Elem, ?INTERNAL4_ARGS).
 
--compile({inline, insert_att_INTERNAL4_C3/?INTERNAL4_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
 insert_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
     Result = insert_att_recur(Elem, C3),
     ins_rebalance_INTERNAL4_C3(Result, Elem, ?INTERNAL4_ARGS).
 
--compile({inline, insert_att_INTERNAL4_C4/?INTERNAL4_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
 insert_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
     Result = insert_att_recur(Elem, C4),
     ins_rebalance_INTERNAL4_C4(Result, Elem, ?INTERNAL4_ARGS).
 
--compile({inline, insert_att_INTERNAL4_C5/?INTERNAL4_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
 insert_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
     Result = insert_att_recur(Elem, C5),
     ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS).
@@ -1963,22 +1963,22 @@ insert_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
             none
     end.
 
--compile({inline, insert_att_INTERNAL3_C1/?INTERNAL3_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
 insert_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
     Result = insert_att_recur(Elem, C1),
     ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS).
 
--compile({inline, insert_att_INTERNAL3_C2/?INTERNAL3_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
 insert_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
     Result = insert_att_recur(Elem, C2),
     ins_rebalance_INTERNAL3_C2(Result, Elem, ?INTERNAL3_ARGS).
 
--compile({inline, insert_att_INTERNAL3_C3/?INTERNAL3_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
 insert_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
     Result = insert_att_recur(Elem, C3),
     ins_rebalance_INTERNAL3_C3(Result, Elem, ?INTERNAL3_ARGS).
 
--compile({inline, insert_att_INTERNAL3_C4/?INTERNAL3_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
 insert_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
     Result = insert_att_recur(Elem, C4),
     ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS).
@@ -2010,17 +2010,17 @@ insert_att_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
             none
     end.
 
--compile({inline, insert_att_INTERNAL2_C1/?INTERNAL2_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
 insert_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
     Result = insert_att_recur(Elem, C1),
     ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS).
 
--compile({inline, insert_att_INTERNAL2_C2/?INTERNAL2_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
 insert_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
     Result = insert_att_recur(Elem, C2),
     ins_rebalance_INTERNAL2_C2(Result, Elem, ?INTERNAL2_ARGS).
 
--compile({inline, insert_att_INTERNAL2_C3/?INTERNAL2_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
 insert_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
     Result = insert_att_recur(Elem, C3),
     ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS).
@@ -2042,12 +2042,12 @@ insert_att_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
             none
     end.
 
--compile({inline, insert_att_INTERNAL1_C1/?INTERNAL1_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
 insert_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
     Result = insert_att_recur(Elem, C1),
     ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS).
 
--compile({inline, insert_att_INTERNAL1_C2/?INTERNAL1_ARITY_PLUS1}).
+-compile({inline, insert_att_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
 insert_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
     Result = insert_att_recur(Elem, C2),
     ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS).
