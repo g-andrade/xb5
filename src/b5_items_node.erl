@@ -33,50 +33,56 @@
 %% Macro Definitions: Nodes
 %% ------------------------------------------------------------------
 
-% 6 elements
--define(INTERNAL2(E1, E2, C1, C2, C3), {internal2, E1, E2, C1, C2, C3}).
--define(INTERNAL2_MATCH(E1, E2, C1, C2, C3), {_, E1, E2, C1, C2, C3}).
--define(INTERNAL2_MATCH_ALL, {_, E1, E2, C1, C2, C3}).
+% 7 elements
+-define(INTERNAL2(E1, E2, O1, O2, C1, C2, C3), {E1, E2, O1, O2, C1, C2, C3}).
+-define(INTERNAL2_MATCH(E1, E2, O1, O2, C1, C2, C3), {E1, E2, O1, O2, C1, C2, C3}).
+-define(INTERNAL2_MATCH_ALL, {E1, E2, O1, O2, C1, C2, C3}).
+-define(INTERNAL2_MATCH_NO_SIZES, {E1, E2, _, _, C1, C2, C3}).
 
 % 2 elements
 -define(LEAF2(E1, E2), {E1, E2}).
 -define(LEAF2_MATCH(E1, E2), {E1, E2}).
 -define(LEAF2_MATCH_ALL, {E1, E2}).
 
-% 7 elements
--define(INTERNAL3(E1, E2, E3, C1, C2, C3, C4),
-    {E1, E2, E3, C1, C2, C3, C4}
+% 10 elements
+-define(INTERNAL3(E1, E2, E3, O1, O2, O3, C1, C2, C3, C4),
+    {E1, E2, E3, O1, O2, O3, C1, C2, C3, C4}
 ).
--define(INTERNAL3_MATCH(E1, E2, E3, C1, C2, C3, C4),
-    {E1, E2, E3, C1, C2, C3, C4}
+-define(INTERNAL3_MATCH(E1, E2, E3, O1, O2, O3, C1, C2, C3, C4),
+    {E1, E2, E3, O1, O2, O3, C1, C2, C3, C4}
 ).
--define(INTERNAL3_MATCH_ALL, {E1, E2, E3, C1, C2, C3, C4}).
+-define(INTERNAL3_MATCH_ALL, {E1, E2, E3, O1, O2, O3, C1, C2, C3, C4}).
+-define(INTERNAL3_MATCH_NO_SIZES, {E1, E2, E3, _, _, _, C1, C2, C3, C4}).
 
 % 3 elements
 -define(LEAF3(E1, E2, E3), {E1, E2, E3}).
 -define(LEAF3_MATCH(E1, E2, E3), {E1, E2, E3}).
 -define(LEAF3_MATCH_ALL, {E1, E2, E3}).
 
-% 9 elements
--define(INTERNAL4(E1, E2, E3, E4, C1, C2, C3, C4, C5),
-    {E1, E2, E3, E4, C1, C2, C3, C4, C5}
+% 13 elements
+-define(INTERNAL4(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5),
+    {E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5}
 ).
--define(INTERNAL4_MATCH(E1, E2, E3, E4, C1, C2, C3, C4, C5),
-    {E1, E2, E3, E4, C1, C2, C3, C4, C5}
+-define(INTERNAL4_MATCH(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5),
+    {E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5}
 ).
 -define(INTERNAL4_MATCH_ALL,
-    {E1, E2, E3, E4, C1, C2, C3, C4, C5}
+    {E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5}
+).
+-define(INTERNAL4_MATCH_NO_SIZES,
+    {E1, E2, E3, E4, _, _, _, _, C1, C2, C3, C4, C5}
 ).
 
-% 5 elements
--define(LEAF4(E1, E2, E3, E4), {leaf4, E1, E2, E3, E4}).
--define(LEAF4_MATCH(E1, E2, E3, E4), {_, E1, E2, E3, E4}).
--define(LEAF4_MATCH_ALL, {_, E1, E2, E3, E4}).
-
 % 4 elements
--define(INTERNAL1(E1, C1, C2), {internal1, E1, C1, C2}).
--define(INTERNAL1_MATCH(E1, C1, C2), {_, E1, C1, C2}).
--define(INTERNAL1_MATCH_ALL, {_, E1, C1, C2}).
+-define(LEAF4(E1, E2, E3, E4), {E1, E2, E3, E4}).
+-define(LEAF4_MATCH(E1, E2, E3, E4), {E1, E2, E3, E4}).
+-define(LEAF4_MATCH_ALL, {E1, E2, E3, E4}).
+
+% 5 elements
+-define(INTERNAL1(E1, O1, C1, C2), {internal1, E1, O1, C1, C2}).
+-define(INTERNAL1_MATCH(E1, O1, C1, C2), {_, E1, O1, C1, C2}).
+-define(INTERNAL1_MATCH_ALL, {_, E1, O1, C1, C2}).
+-define(INTERNAL1_MATCH_NO_SIZES, {_, E1, _, C1, C2}).
 
 % 1 element
 -define(LEAF1(E1), {E1}).
@@ -99,23 +105,24 @@
 -define(MID_MERGED(MergedNode), [MergedNode]).
 -define(MID_MERGED_MATCH(MergedNode), [MergedNode | _]).
 
-% 3 elements
--define(MID_ROTATED_FROM_RIGHT(UpElem, UpdatedNode, UpdatedRight),
-    {UpElem, UpdatedNode, UpdatedRight}
-).
 % 4 elements
--define(MID_ROTATED_FROM_LEFT(UpElem, UpdatedNode, UpdatedRight),
-    {from_left, UpElem, UpdatedNode, UpdatedRight}
+-define(MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight),
+    {UpElem, MovedSize, UpdatedNode, UpdatedRight}
+).
+% 5 elements
+-define(MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedNode, UpdatedRight),
+    {from_left, UpElem, MovedSize, UpdatedNode, UpdatedRight}
 ).
 
 %%%
 
-% 3 elements
--define(ROTATED(UpElem, UpdatedLeft, UpdatedRight),
-    {UpElem, UpdatedLeft, UpdatedRight}
+% 4 elements
+-define(ROTATED(UpElem, MovedSize, UpdatedLeft, UpdatedRight),
+    {UpElem, MovedSize, UpdatedLeft, UpdatedRight}
 ).
 
--define(MERGED(MergedNode), (MergedNode)).
+-define(MERGED(MergedNode), ([MergedNode])).
+-define(MERGED_MATCH(MergedNode), ([MergedNode | _])).
 
 %%%%%%%
 
@@ -128,118 +135,116 @@
 
 %% ?INTERNAL4
 
--define(INTERNAL4_ARGS, E1, E2, E3, E4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARITY, 9).
--define(INTERNAL4_ARITY_PLUS1, 10).
--define(INTERNAL4_ARITY_PLUS2, 11).
+-define(INTERNAL4_ARGS, E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARITY, 13).
+-define(INTERNAL4_ARITY_PLUS1, 14).
+-define(INTERNAL4_ARITY_PLUS2, 15).
 
--define(INTERNAL4_UPD_C1(UpdatedC1),
-    ?new_INTERNAL4(E1, E2, E3, E4, UpdatedC1, C2, C3, C4, C5)
-).
--define(INTERNAL4_UPD_C2(UpdatedC2),
-    ?new_INTERNAL4(E1, E2, E3, E4, C1, UpdatedC2, C3, C4, C5)
-).
--define(INTERNAL4_UPD_C3(UpdatedC3),
-    ?new_INTERNAL4(E1, E2, E3, E4, C1, C2, UpdatedC3, C4, C5)
-).
--define(INTERNAL4_UPD_C4(UpdatedC4),
-    ?new_INTERNAL4(E1, E2, E3, E4, C1, C2, C3, UpdatedC4, C5)
-).
+-define(INTERNAL4_ARGS_EXCEPT_SIZES, E1, E2, E3, E4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARITY_EXCEPT_SIZES_PLUS1, 10).
+-define(INTERNAL4_ARITY_EXCEPT_SIZES_PLUS2, 11).
+
 -define(INTERNAL4_UPD_C5(UpdatedC5),
-    ?new_INTERNAL4(E1, E2, E3, E4, C1, C2, C3, C4, UpdatedC5)
+    ?new_INTERNAL4(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, UpdatedC5)
 ).
 
 -define(INTERNAL4_C1_REBALANCE(UpdatedC1),
-    del_rebalance_INTERNAL4_C1(E1, E2, E3, E4, UpdatedC1, C2, C3, C4, C5)
+    del_rebalance_INTERNAL4_C1(E1, E2, E3, E4, O1, O2, O3, O4, UpdatedC1, C2, C3, C4, C5)
 ).
 -define(INTERNAL4_C2_REBALANCE(UpdatedC2),
-    del_rebalance_INTERNAL4_C2(E1, E2, E3, E4, C1, UpdatedC2, C3, C4, C5)
+    del_rebalance_INTERNAL4_C2(E1, E2, E3, E4, O1, O2, O3, O4, C1, UpdatedC2, C3, C4, C5)
 ).
 -define(INTERNAL4_C3_REBALANCE(UpdatedC3),
-    del_rebalance_INTERNAL4_C3(E1, E2, E3, E4, C1, C2, UpdatedC3, C4, C5)
+    del_rebalance_INTERNAL4_C3(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, UpdatedC3, C4, C5)
 ).
 -define(INTERNAL4_C4_REBALANCE(UpdatedC4),
-    del_rebalance_INTERNAL4_C4(E1, E2, E3, E4, C1, C2, C3, UpdatedC4, C5)
+    del_rebalance_INTERNAL4_C4(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, UpdatedC4, C5)
 ).
 -define(INTERNAL4_C5_REBALANCE(UpdatedC5),
-    del_rebalance_INTERNAL4_C5(E1, E2, E3, E4, C1, C2, C3, C4, UpdatedC5)
+    del_rebalance_INTERNAL4_C5(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, UpdatedC5)
 ).
 
--define(INTERNAL4_ARGS_IGN_E1, _, E2, E3, E4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_E2, E1, _, E3, E4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_E3, E1, E2, _, E4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARGS_IGN_E4, E1, E2, E3, _, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_E1, _, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_E2, E1, _, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_E3, E1, E2, _, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARGS_IGN_E4, E1, E2, E3, _, O1, O2, O3, O4, C1, C2, C3, C4, C5).
 
 %% ?INTERNAL3
 
--define(INTERNAL3_ARGS, E1, E2, E3, C1, C2, C3, C4).
--define(INTERNAL3_ARITY, 7).
--define(INTERNAL3_ARITY_PLUS1, 8).
--define(INTERNAL3_ARITY_PLUS2, 9).
+-define(INTERNAL3_ARGS, E1, E2, E3, O1, O2, O3, C1, C2, C3, C4).
+-define(INTERNAL3_ARITY, 10).
+-define(INTERNAL3_ARITY_PLUS1, 11).
+-define(INTERNAL3_ARITY_PLUS2, 12).
 
--define(INTERNAL3_UPD_C1(UpdatedC1), ?new_INTERNAL3(E1, E2, E3, UpdatedC1, C2, C3, C4)).
--define(INTERNAL3_UPD_C2(UpdatedC2), ?new_INTERNAL3(E1, E2, E3, C1, UpdatedC2, C3, C4)).
--define(INTERNAL3_UPD_C3(UpdatedC3), ?new_INTERNAL3(E1, E2, E3, C1, C2, UpdatedC3, C4)).
--define(INTERNAL3_UPD_C4(UpdatedC4), ?new_INTERNAL3(E1, E2, E3, C1, C2, C3, UpdatedC4)).
+-define(INTERNAL3_ARGS_EXCEPT_SIZES, E1, E2, E3, C1, C2, C3, C4).
+-define(INTERNAL3_ARITY_EXCEPT_SIZES_PLUS1, 8).
+-define(INTERNAL3_ARITY_EXCEPT_SIZES_PLUS2, 9).
+
+-define(INTERNAL3_UPD_C4(UpdatedC4), ?new_INTERNAL3(E1, E2, E3, O1, O2, O3, C1, C2, C3, UpdatedC4)).
 
 -define(INTERNAL3_C1_REBALANCE(UpdatedC1),
-    del_rebalance_INTERNAL3_C1(E1, E2, E3, UpdatedC1, C2, C3, C4)
+    del_rebalance_INTERNAL3_C1(E1, E2, E3, O1, O2, O3, UpdatedC1, C2, C3, C4)
 ).
 -define(INTERNAL3_C2_REBALANCE(UpdatedC2),
-    del_rebalance_INTERNAL3_C2(E1, E2, E3, C1, UpdatedC2, C3, C4)
+    del_rebalance_INTERNAL3_C2(E1, E2, E3, O1, O2, O3, C1, UpdatedC2, C3, C4)
 ).
 -define(INTERNAL3_C3_REBALANCE(UpdatedC3),
-    del_rebalance_INTERNAL3_C3(E1, E2, E3, C1, C2, UpdatedC3, C4)
+    del_rebalance_INTERNAL3_C3(E1, E2, E3, O1, O2, O3, C1, C2, UpdatedC3, C4)
 ).
 -define(INTERNAL3_C4_REBALANCE(UpdatedC4),
-    del_rebalance_INTERNAL3_C4(E1, E2, E3, C1, C2, C3, UpdatedC4)
+    del_rebalance_INTERNAL3_C4(E1, E2, E3, O1, O2, O3, C1, C2, C3, UpdatedC4)
 ).
 
--define(INTERNAL3_ARGS_IGN_E1, _, E2, E3, C1, C2, C3, C4).
--define(INTERNAL3_ARGS_IGN_E2, E1, _, E3, C1, C2, C3, C4).
--define(INTERNAL3_ARGS_IGN_E3, E1, E2, _, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_E1, _, E2, E3, O1, O2, O3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_E2, E1, _, E3, O1, O2, O3, C1, C2, C3, C4).
+-define(INTERNAL3_ARGS_IGN_E3, E1, E2, _, O1, O2, O3, C1, C2, C3, C4).
 
 %% ?INTERNAL2
 
--define(INTERNAL2_ARGS, E1, E2, C1, C2, C3).
--define(INTERNAL2_ARITY, 5).
--define(INTERNAL2_ARITY_PLUS1, 6).
--define(INTERNAL2_ARITY_PLUS2, 7).
+-define(INTERNAL2_ARGS, E1, E2, O1, O2, C1, C2, C3).
+-define(INTERNAL2_ARITY, 7).
+-define(INTERNAL2_ARITY_PLUS1, 8).
+-define(INTERNAL2_ARITY_PLUS2, 9).
 
--define(INTERNAL2_UPD_C1(UpdatedC1), ?new_INTERNAL2(E1, E2, UpdatedC1, C2, C3)).
--define(INTERNAL2_UPD_C2(UpdatedC2), ?new_INTERNAL2(E1, E2, C1, UpdatedC2, C3)).
--define(INTERNAL2_UPD_C3(UpdatedC3), ?new_INTERNAL2(E1, E2, C1, C2, UpdatedC3)).
+-define(INTERNAL2_ARGS_EXCEPT_SIZES, E1, E2, C1, C2, C3).
+-define(INTERNAL2_ARITY_EXCEPT_SIZES_PLUS1, 6).
+-define(INTERNAL2_ARITY_EXCEPT_SIZES_PLUS2, 7).
+
+-define(INTERNAL2_UPD_C3(UpdatedC3), ?new_INTERNAL2(E1, E2, O1, O2, C1, C2, UpdatedC3)).
 
 -define(INTERNAL2_C1_REBALANCE(UpdatedC1),
-    del_rebalance_INTERNAL2_C1(E1, E2, UpdatedC1, C2, C3)
+    del_rebalance_INTERNAL2_C1(E1, E2, O1, O2, UpdatedC1, C2, C3)
 ).
 -define(INTERNAL2_C2_REBALANCE(UpdatedC2),
-    del_rebalance_INTERNAL2_C2(E1, E2, C1, UpdatedC2, C3)
+    del_rebalance_INTERNAL2_C2(E1, E2, O1, O2, C1, UpdatedC2, C3)
 ).
 -define(INTERNAL2_C3_REBALANCE(UpdatedC3),
-    del_rebalance_INTERNAL2_C3(E1, E2, C1, C2, UpdatedC3)
+    del_rebalance_INTERNAL2_C3(E1, E2, O1, O2, C1, C2, UpdatedC3)
 ).
 
--define(INTERNAL2_ARGS_IGN_E1, _, E2, C1, C2, C3).
--define(INTERNAL2_ARGS_IGN_E2, E1, _, C1, C2, C3).
+-define(INTERNAL2_ARGS_IGN_E1, _, E2, O1, O2, C1, C2, C3).
+-define(INTERNAL2_ARGS_IGN_E2, E1, _, O1, O2, C1, C2, C3).
 
 %% ?INTERNAL1
 
--define(INTERNAL1_ARGS, E1, C1, C2).
--define(INTERNAL1_ARITY, 3).
--define(INTERNAL1_ARITY_PLUS1, 4).
+-define(INTERNAL1_ARGS, E1, O1, C1, C2).
+-define(INTERNAL1_ARITY, 4).
+-define(INTERNAL1_ARITY_PLUS1, 5).
+-define(INTERNAL1_ARITY_PLUS2, 6).
 
--define(INTERNAL1_UPD_C1(UpdatedC1), ?new_INTERNAL1(E1, UpdatedC1, C2)).
--define(INTERNAL1_UPD_C2(UpdatedC2), ?new_INTERNAL1(E1, C1, UpdatedC2)).
+-define(INTERNAL1_ARGS_EXCEPT_SIZES, E1, C1, C2).
+-define(INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1, 4).
 
--define(INTERNAL1_C1_REBALANCE(UpdatedC1), del_rebalance_INTERNAL1_C1(E1, UpdatedC1, C2)).
--define(INTERNAL1_C2_REBALANCE(UpdatedC2), del_rebalance_INTERNAL1_C2(E1, C1, UpdatedC2)).
+-define(INTERNAL1_UPD_C2(UpdatedC2), ?new_INTERNAL1(E1, O1, C1, UpdatedC2)).
+
+-define(INTERNAL1_C1_REBALANCE(UpdatedC1), del_rebalance_INTERNAL1_C1(E1, O1, UpdatedC1, C2)).
+-define(INTERNAL1_C2_REBALANCE(UpdatedC2), del_rebalance_INTERNAL1_C2(E1, O1, C1, UpdatedC2)).
 
 -define(INTERNAL1_E1_C2_REBALANCE(ReplacementE, UpdatedC2),
-    del_rebalance_INTERNAL1_C2(ReplacementE, C1, UpdatedC2)
+    del_rebalance_INTERNAL1_C2(ReplacementE, O1, C1, UpdatedC2)
 ).
 
--define(INTERNAL1_ARGS_IGN_E1, _, C1, C2).
+-define(INTERNAL1_ARGS_IGN_E1, _, O1, C1, C2).
 
 %% ?LEAF4
 
@@ -278,8 +283,12 @@
 -define(NODE_CHECK_ENABLED, false).
 
 -if(?NODE_CHECK_ENABLED).
+
+-include_lib("stdlib/include/assert.hrl").
+
 -define(CHECK_NODE(Node), check_node(?LINE, Node)).
 -define(CHECK_NODE_RECUR(Node), check_node_recur(?LINE, Node)).
+
 -else.
 -define(CHECK_NODE(Node), Node).
 -define(CHECK_NODE_RECUR(Node), Node).
@@ -287,19 +296,19 @@
 
 %
 
--define(new_INTERNAL4(E1, E2, E3, E4, C1, C2, C3, C4, C5),
-    ?CHECK_NODE_RECUR(?INTERNAL4(E1, E2, E3, E4, C1, C2, C3, C4, C5))
+-define(new_INTERNAL4(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5),
+    ?CHECK_NODE_RECUR(?INTERNAL4(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5))
 ).
 
--define(new_INTERNAL3(E1, E2, E3, C1, C2, C3, C4),
-    ?CHECK_NODE_RECUR(?INTERNAL3(E1, E2, E3, C1, C2, C3, C4))
+-define(new_INTERNAL3(E1, E2, E3, O1, O2, O3, C1, C2, C3, C4),
+    ?CHECK_NODE_RECUR(?INTERNAL3(E1, E2, E3, O1, O2, O3, C1, C2, C3, C4))
 ).
 
--define(new_INTERNAL2(E1, E2, C1, C2, C3),
-    ?CHECK_NODE_RECUR(?INTERNAL2(E1, E2, C1, C2, C3))
+-define(new_INTERNAL2(E1, E2, O1, O2, C1, C2, C3),
+    ?CHECK_NODE_RECUR(?INTERNAL2(E1, E2, O1, O2, C1, C2, C3))
 ).
 
--define(new_INTERNAL1(E1, C1, C2), ?CHECK_NODE(?INTERNAL1(E1, C1, C2))).
+-define(new_INTERNAL1(E1, O1, C1, C2), ?CHECK_NODE(?INTERNAL1(E1, O1, C1, C2))).
 
 %
 
@@ -355,6 +364,10 @@
         Elem,
         Elem,
         Elem,
+        pos_integer(),
+        pos_integer(),
+        pos_integer(),
+        pos_integer(),
         deep_node(Elem),
         deep_node(Elem),
         deep_node(Elem),
@@ -367,6 +380,9 @@
         Elem,
         Elem,
         Elem,
+        pos_integer(),
+        pos_integer(),
+        pos_integer(),
         deep_node(Elem),
         deep_node(Elem),
         deep_node(Elem),
@@ -377,6 +393,8 @@
     (?INTERNAL2(
         Elem,
         Elem,
+        pos_integer(),
+        pos_integer(),
         deep_node(Elem),
         deep_node(Elem),
         deep_node(Elem)
@@ -385,6 +403,7 @@
 -type node_INTERNAL1(Elem) ::
     (?INTERNAL1(
         Elem,
+        pos_integer(),
         deep_node(Elem),
         deep_node(Elem)
     )).
@@ -418,6 +437,7 @@
     Elem, node_LEAF2(Elem), node_LEAF2(Elem)
 ).
 
+% FIXME
 -type split_result(Elem, SplitL, SplitR) :: {split, Elem, SplitL, SplitR}.
 
 %%%%%%%%%%%
@@ -503,7 +523,7 @@ filtermap_unique(Fun, Root) ->
     Acc1 :: term(),
     Acc2 :: term(),
     AccN :: term().
-fold(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
+fold(Fun, Acc, ?INTERNAL1_MATCH_NO_SIZES) ->
     Acc2 = fold_recur(Fun, Acc, C1),
     Acc3 = Fun(E1, Acc2),
     fold_recur(Fun, Acc3, C2);
@@ -516,9 +536,9 @@ fold(Fun, Acc, Root) ->
 
 -spec insert_att(NewElem, t(PrevElem)) -> none | t(NewElem | PrevElem).
 insert_att(Elem, ?INTERNAL1_MATCH_ALL) ->
-    insert_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+    insert_att_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 insert_att(Elem, ?LEAF1_MATCH_ALL) ->
-    insert_LEAF1(Elem, ?LEAF1_ARGS);
+    insert_att_LEAF1(Elem, ?LEAF1_ARGS);
 insert_att(Elem, ?LEAF0) ->
     ?new_LEAF1(Elem);
 insert_att(Elem, Root) ->
@@ -531,8 +551,8 @@ insert_att(Elem, Root) ->
     end.
 
 -spec is_member(_, t(_)) -> boolean().
-is_member(Elem, ?INTERNAL1_MATCH_ALL) ->
-    is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+is_member(Elem, ?INTERNAL1_MATCH_NO_SIZES) ->
+    is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
 is_member(Elem, ?LEAF1_MATCH_ALL) ->
     is_member_LEAF1(Elem, ?LEAF1_ARGS);
 is_member(_Elem, ?LEAF0) ->
@@ -555,8 +575,8 @@ iterator_from(Elem, Root, reversed) ->
     [?REV_ITER_TAG | Acc].
 
 -spec larger(_, t(Elem)) -> {found, Elem} | none.
-larger(Elem, ?INTERNAL1_MATCH_ALL) ->
-    larger_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+larger(Elem, ?INTERNAL1_MATCH_NO_SIZES) ->
+    larger_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
 larger(Elem, ?LEAF1_MATCH_ALL) ->
     larger_LEAF1(Elem, ?LEAF1_ARGS);
 larger(_Elem, ?LEAF0) ->
@@ -565,7 +585,7 @@ larger(Elem, Root) ->
     larger_recur(Elem, Root).
 
 -spec largest(t(Elem)) -> Elem.
-largest(?INTERNAL1_MATCH(_, _, C2)) ->
+largest(?INTERNAL1_MATCH(_, _, _, C2)) ->
     largest_recur(C2);
 largest(?LEAF1_MATCH(E1)) ->
     E1;
@@ -590,8 +610,8 @@ next([]) ->
     none.
 
 -spec smaller(_, t(Elem)) -> {found, Elem} | none.
-smaller(Elem, ?INTERNAL1_MATCH_ALL) ->
-    smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+smaller(Elem, ?INTERNAL1_MATCH_NO_SIZES) ->
+    smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
 smaller(Elem, ?LEAF1_MATCH_ALL) ->
     smaller_LEAF1(Elem, ?LEAF1_ARGS);
 smaller(_Elem, ?LEAF0) ->
@@ -600,7 +620,7 @@ smaller(Elem, Root) ->
     smaller_recur(Elem, Root).
 
 -spec smallest(t(Elem)) -> Elem.
-smallest(?INTERNAL1_MATCH(_, C1, _)) ->
+smallest(?INTERNAL1_MATCH(_, _, C1, _)) ->
     smallest_recur(C1);
 smallest(?LEAF1_MATCH(E1)) ->
     E1;
@@ -612,7 +632,7 @@ structural_stats(Root) ->
     Acc = b5_structural_stats:new(),
 
     case Root of
-        ?INTERNAL1_MATCH(_, C1, C2) ->
+        ?INTERNAL1_MATCH(_, _, C1, C2) ->
             Height = 1,
             Acc2 = b5_structural_stats:inc_count(internal1, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
@@ -651,7 +671,7 @@ take_smallest(Root) ->
     take_smallest_recur(Root).
 
 -spec to_list(t(Elem)) -> [Elem].
-to_list(?INTERNAL1_MATCH_ALL) ->
+to_list(?INTERNAL1_MATCH_NO_SIZES) ->
     Acc2 = to_list_recur(C2, []),
     Acc3 = [E1 | Acc2],
     to_list_recur(C1, Acc3);
@@ -720,138 +740,28 @@ add_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
 
 -compile({inline, add_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
 add_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
-    case add_recur(Elem, C1) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL4(
-                        UpElem,
-                        E2,
-                        E3,
-                        E4,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3,
-                        C4,
-                        C5
-                    );
-                %
-                Split ->
-                    ?SPLIT(1, Split)
-            end;
-        %
-        UpdatedC1 ->
-            ?INTERNAL4_UPD_C1(UpdatedC1)
-    end.
+    Result = add_recur(Elem, C1),
+    ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS).
 
 -compile({inline, add_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
 add_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
-    case add_recur(Elem, C2) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL4(
-                        UpElem,
-                        E2,
-                        E3,
-                        E4,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3,
-                        C4,
-                        C5
-                    );
-                %
-                Split ->
-                    ?SPLIT(2, Split)
-            end;
-        %
-        UpdatedC2 ->
-            ?INTERNAL4_UPD_C2(UpdatedC2)
-    end.
+    Result = add_recur(Elem, C2),
+    ins_rebalance_INTERNAL4_C2(Result, Elem, ?INTERNAL4_ARGS).
 
 -compile({inline, add_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
 add_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
-    case add_recur(Elem, C3) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2) of
-                {UpElem, UpdatedC2, UpdatedC3} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        UpElem,
-                        E3,
-                        E4,
-                        %
-                        C1,
-                        UpdatedC2,
-                        UpdatedC3,
-                        C4,
-                        C5
-                    );
-                %
-                Split ->
-                    ?SPLIT(3, Split)
-            end;
-        %
-        UpdatedC3 ->
-            ?INTERNAL4_UPD_C3(UpdatedC3)
-    end.
+    Result = add_recur(Elem, C3),
+    ins_rebalance_INTERNAL4_C3(Result, Elem, ?INTERNAL4_ARGS).
 
 -compile({inline, add_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
 add_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
-    case add_recur(Elem, C4) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C4, Pos, Args, E3, C3) of
-                {UpElem, UpdatedC3, UpdatedC4} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        E2,
-                        UpElem,
-                        E4,
-                        %
-                        C1,
-                        C2,
-                        UpdatedC3,
-                        UpdatedC4,
-                        C5
-                    );
-                %
-                Split ->
-                    ?SPLIT(4, Split)
-            end;
-        %
-        UpdatedC4 ->
-            ?INTERNAL4_UPD_C4(UpdatedC4)
-    end.
+    Result = add_recur(Elem, C4),
+    ins_rebalance_INTERNAL4_C4(Result, Elem, ?INTERNAL4_ARGS).
 
 -compile({inline, add_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
 add_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
-    case add_recur(Elem, C5) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C5, Pos, Args, E4, C4) of
-                {UpElem, UpdatedC4, UpdatedC5} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        E2,
-                        E3,
-                        UpElem,
-                        %
-                        C1,
-                        C2,
-                        C3,
-                        UpdatedC4,
-                        UpdatedC5
-                    );
-                %
-                Split ->
-                    ?SPLIT(5, Split)
-            end;
-        %
-        UpdatedC5 ->
-            ?INTERNAL4_UPD_C5(UpdatedC5)
-    end.
+    Result = add_recur(Elem, C5),
+    ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS).
 
 %%
 %% ?INTERNAL3
@@ -879,147 +789,23 @@ add_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
 
 -compile({inline, add_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
 add_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
-    case add_recur(Elem, C1) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL3(
-                        UpElem,
-                        E2,
-                        E3,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3,
-                        C4
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL4(
-                        SplitE,
-                        E1,
-                        E2,
-                        E3,
-                        %
-                        SplitL,
-                        SplitR,
-                        C2,
-                        C3,
-                        C4
-                    )
-            end;
-        %
-        UpdatedC1 ->
-            ?INTERNAL3_UPD_C1(UpdatedC1)
-    end.
+    Result = add_recur(Elem, C1),
+    ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS).
 
 -compile({inline, add_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
 add_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
-    case add_recur(Elem, C2) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL3(
-                        UpElem,
-                        E2,
-                        E3,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3,
-                        C4
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        SplitE,
-                        E2,
-                        E3,
-                        %
-                        C1,
-                        SplitL,
-                        SplitR,
-                        C3,
-                        C4
-                    )
-            end;
-        %
-        UpdatedC2 ->
-            ?INTERNAL3_UPD_C2(UpdatedC2)
-    end.
+    Result = add_recur(Elem, C2),
+    ins_rebalance_INTERNAL3_C2(Result, Elem, ?INTERNAL3_ARGS).
 
 -compile({inline, add_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
 add_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
-    case add_recur(Elem, C3) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2) of
-                {UpElem, UpdatedC2, UpdatedC3} ->
-                    ?new_INTERNAL3(
-                        E1,
-                        UpElem,
-                        E3,
-                        %
-                        C1,
-                        UpdatedC2,
-                        UpdatedC3,
-                        C4
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        E2,
-                        SplitE,
-                        E3,
-                        %
-                        C1,
-                        C2,
-                        SplitL,
-                        SplitR,
-                        C4
-                    )
-            end;
-        %
-        UpdatedC3 ->
-            ?INTERNAL3_UPD_C3(UpdatedC3)
-    end.
+    Result = add_recur(Elem, C3),
+    ins_rebalance_INTERNAL3_C3(Result, Elem, ?INTERNAL3_ARGS).
 
 -compile({inline, add_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
 add_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
-    case add_recur(Elem, C4) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C4, Pos, Args, E3, C3) of
-                {UpElem, UpdatedC3, UpdatedC4} ->
-                    ?new_INTERNAL3(
-                        E1,
-                        E2,
-                        UpElem,
-                        %
-                        C1,
-                        C2,
-                        UpdatedC3,
-                        UpdatedC4
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        E2,
-                        E3,
-                        SplitE,
-                        %
-                        C1,
-                        C2,
-                        C3,
-                        SplitL,
-                        SplitR
-                    )
-            end;
-        %
-        UpdatedC4 ->
-            ?INTERNAL3_UPD_C4(UpdatedC4)
-    end.
+    Result = add_recur(Elem, C4),
+    ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS).
 
 %%
 %% ?INTERNAL2
@@ -1044,99 +830,18 @@ add_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
 
 -compile({inline, add_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
 add_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
-    case add_recur(Elem, C1) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL2(
-                        UpElem,
-                        E2,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL3(
-                        SplitE,
-                        E1,
-                        E2,
-                        %
-                        SplitL,
-                        SplitR,
-                        C2,
-                        C3
-                    )
-            end;
-        %
-        UpdatedC1 ->
-            ?INTERNAL2_UPD_C1(UpdatedC1)
-    end.
+    Result = add_recur(Elem, C1),
+    ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS).
 
 -compile({inline, add_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
 add_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
-    case add_recur(Elem, C2) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL2(
-                        UpElem,
-                        E2,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL3(
-                        E1,
-                        SplitE,
-                        E2,
-                        %
-                        C1,
-                        SplitL,
-                        SplitR,
-                        C3
-                    )
-            end;
-        %
-        UpdatedC2 ->
-            ?INTERNAL2_UPD_C2(UpdatedC2)
-    end.
+    Result = add_recur(Elem, C2),
+    ins_rebalance_INTERNAL2_C2(Result, Elem, ?INTERNAL2_ARGS).
 
 -compile({inline, add_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
 add_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
-    case add_recur(Elem, C3) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2) of
-                {UpElem, UpdatedC2, UpdatedC3} ->
-                    ?new_INTERNAL2(
-                        E1,
-                        UpElem,
-                        %
-                        C1,
-                        UpdatedC2,
-                        UpdatedC3
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL3(
-                        E1,
-                        E2,
-                        SplitE,
-                        %
-                        C1,
-                        C2,
-                        SplitL,
-                        SplitR
-                    )
-            end;
-        %
-        UpdatedC3 ->
-            ?INTERNAL2_UPD_C3(UpdatedC3)
-    end.
+    Result = add_recur(Elem, C3),
+    ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS).
 
 %%
 %% ?INTERNAL1
@@ -1154,49 +859,13 @@ add_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
 
 -compile({inline, add_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
 add_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
-    case add_recur(Elem, C1) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL1(UpElem, UpdatedC1, UpdatedC2);
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL2(
-                        SplitE,
-                        E1,
-                        %
-                        SplitL,
-                        SplitR,
-                        C2
-                    )
-            end;
-        %
-        UpdatedC1 ->
-            ?new_INTERNAL1(E1, UpdatedC1, C2)
-    end.
+    Result = add_recur(Elem, C1),
+    ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS).
 
 -compile({inline, add_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
 add_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
-    case add_recur(Elem, C2) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL1(UpElem, UpdatedC1, UpdatedC2);
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL2(
-                        E1,
-                        SplitE,
-                        %
-                        C1,
-                        SplitL,
-                        SplitR
-                    )
-            end;
-        %
-        UpdatedC2 ->
-            ?new_INTERNAL1(E1, C1, UpdatedC2)
-    end.
+    Result = add_recur(Elem, C2),
+    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS).
 
 %%
 %% ?LEAF4
@@ -1439,6 +1108,11 @@ delete_att_INTERNAL4_E1(?INTERNAL4_ARGS_IGN_E1) ->
         E3,
         E4,
         %
+        O1,
+        O2,
+        O3,
+        O4,
+        %
         C1,
         UpdatedC2,
         C3,
@@ -1455,6 +1129,11 @@ delete_att_INTERNAL4_E2(?INTERNAL4_ARGS_IGN_E2) ->
         ReplacementE,
         E3,
         E4,
+        %
+        O1,
+        O2,
+        O3,
+        O4,
         %
         C1,
         UpdatedC2,
@@ -1473,6 +1152,11 @@ delete_att_INTERNAL4_E3(?INTERNAL4_ARGS_IGN_E3) ->
         ReplacementE,
         E4,
         %
+        O1,
+        O2,
+        O3,
+        O4,
+        %
         C1,
         C2,
         C3,
@@ -1489,6 +1173,11 @@ delete_att_INTERNAL4_E4(?INTERNAL4_ARGS_IGN_E4) ->
         E2,
         E3,
         ReplacementE,
+        %
+        O1,
+        O2,
+        O3,
+        O4,
         %
         C1,
         C2,
@@ -1569,6 +1258,10 @@ delete_att_INTERNAL3_E1(?INTERNAL3_ARGS_IGN_E1) ->
         E2,
         E3,
         %
+        O1,
+        O2,
+        O3,
+        %
         C1,
         UpdatedC2,
         C3,
@@ -1584,6 +1277,10 @@ delete_att_INTERNAL3_E2(?INTERNAL3_ARGS_IGN_E2) ->
         ReplacementE,
         E3,
         %
+        O1,
+        O2,
+        O3,
+        %
         C1,
         C2,
         UpdatedC3,
@@ -1598,6 +1295,10 @@ delete_att_INTERNAL3_E3(?INTERNAL3_ARGS_IGN_E3) ->
         E1,
         E2,
         ReplacementE,
+        %
+        O1,
+        O2,
+        O3,
         %
         C1,
         C2,
@@ -1660,6 +1361,9 @@ delete_att_INTERNAL2_E1(?INTERNAL2_ARGS_IGN_E1) ->
         ReplacementE,
         E2,
         %
+        O1,
+        O2,
+        %
         C1,
         UpdatedC2,
         C3
@@ -1672,6 +1376,9 @@ delete_att_INTERNAL2_E2(?INTERNAL2_ARGS_IGN_E2) ->
     del_rebalance_INTERNAL2_C2(
         E1,
         ReplacementE,
+        %
+        O1,
+        O2,
         %
         C1,
         UpdatedC2,
@@ -1790,7 +1497,7 @@ delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 filter_root(Fun, Count, Root, Filtered) ->
     case Root of
-        ?INTERNAL1_MATCH_ALL ->
+        ?INTERNAL1_MATCH_NO_SIZES ->
             filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered);
         %
         ?LEAF1_MATCH_ALL ->
@@ -1814,13 +1521,13 @@ filter_recur(Fun, Node, Count, Filtered) ->
         ?LEAF4_MATCH_ALL ->
             filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
         %
-        ?INTERNAL2_MATCH_ALL ->
+        ?INTERNAL2_MATCH_NO_SIZES ->
             filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered);
         %
-        ?INTERNAL3_MATCH_ALL ->
+        ?INTERNAL3_MATCH_NO_SIZES ->
             filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered);
         %
-        ?INTERNAL4_MATCH_ALL ->
+        ?INTERNAL4_MATCH_NO_SIZES ->
             filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
     end.
 
@@ -1936,7 +1643,7 @@ filter_single_element(Fun, E1, Count, Filtered) ->
 
 filtermap_root(Fun, Count, Root, Filtered) ->
     case Root of
-        ?INTERNAL1_MATCH_ALL ->
+        ?INTERNAL1_MATCH_NO_SIZES ->
             [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
             [Count3 | Filtered3] = filtermap_single_element(Fun, E1, Count2, Filtered2),
             filtermap_recur(Fun, C2, Count3, Filtered3);
@@ -1962,13 +1669,13 @@ filtermap_recur(Fun, Node, Count, Filtered) ->
         ?LEAF4_MATCH_ALL ->
             filtermap_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
         %
-        ?INTERNAL2_MATCH_ALL ->
+        ?INTERNAL2_MATCH_NO_SIZES ->
             filtermap_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered);
         %
-        ?INTERNAL3_MATCH_ALL ->
+        ?INTERNAL3_MATCH_NO_SIZES ->
             filtermap_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered);
         %
-        ?INTERNAL4_MATCH_ALL ->
+        ?INTERNAL4_MATCH_NO_SIZES ->
             filtermap_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
     end.
 
@@ -2120,7 +1827,7 @@ filtermap_true(True, PrevElem) ->
 
 filtermap_unique_root(Fun, Count, Root, Filtered) ->
     case Root of
-        ?INTERNAL1_MATCH_ALL ->
+        ?INTERNAL1_MATCH_NO_SIZES ->
             [Count2 | Filtered2] = filtermap_unique_recur(Fun, C1, Count, Filtered),
             [Count3 | Filtered3] = filtermap_unique_single_element(Fun, E1, Count2, Filtered2),
             filtermap_unique_recur(Fun, C2, Count3, Filtered3);
@@ -2146,13 +1853,13 @@ filtermap_unique_recur(Fun, Node, Count, Filtered) ->
         ?LEAF4_MATCH_ALL ->
             filtermap_unique_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
         %
-        ?INTERNAL2_MATCH_ALL ->
+        ?INTERNAL2_MATCH_NO_SIZES ->
             filtermap_unique_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered);
         %
-        ?INTERNAL3_MATCH_ALL ->
+        ?INTERNAL3_MATCH_NO_SIZES ->
             filtermap_unique_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered);
         %
-        ?INTERNAL4_MATCH_ALL ->
+        ?INTERNAL4_MATCH_NO_SIZES ->
             filtermap_unique_internal_batch4(
                 Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered
             )
@@ -2347,18 +2054,18 @@ fold_recur(Fun, Acc, Node) ->
         ?LEAF4_MATCH_ALL ->
             Fun(E4, Fun(E3, Fun(E2, Fun(E1, Acc))));
         %
-        ?INTERNAL2_MATCH_ALL ->
+        ?INTERNAL2_MATCH_NO_SIZES ->
             Acc2 = fold_recur(Fun, Acc, C1),
             Acc3 = fold_recur(Fun, Fun(E1, Acc2), C2),
             _Acc4 = fold_recur(Fun, Fun(E2, Acc3), C3);
         %
-        ?INTERNAL3_MATCH_ALL ->
+        ?INTERNAL3_MATCH_NO_SIZES ->
             Acc2 = fold_recur(Fun, Acc, C1),
             Acc3 = fold_recur(Fun, Fun(E1, Acc2), C2),
             Acc4 = fold_recur(Fun, Fun(E2, Acc3), C3),
             _Acc5 = fold_recur(Fun, Fun(E3, Acc4), C4);
         %
-        ?INTERNAL4_MATCH_ALL ->
+        ?INTERNAL4_MATCH_NO_SIZES ->
             Acc2 = fold_recur(Fun, Acc, C1),
             Acc3 = fold_recur(Fun, Fun(E1, Acc2), C2),
             Acc4 = fold_recur(Fun, Fun(E2, Acc3), C3),
@@ -2373,30 +2080,30 @@ fold_recur(Fun, Acc, Node) ->
 insert_att_recur(Elem, Node) ->
     case Node of
         ?INTERNAL2_MATCH_ALL ->
-            insert_INTERNAL2(Elem, ?INTERNAL2_ARGS);
+            insert_att_INTERNAL2(Elem, ?INTERNAL2_ARGS);
         %
         ?INTERNAL3_MATCH_ALL ->
-            insert_INTERNAL3(Elem, ?INTERNAL3_ARGS);
+            insert_att_INTERNAL3(Elem, ?INTERNAL3_ARGS);
         %
         ?INTERNAL4_MATCH_ALL ->
-            insert_INTERNAL4(Elem, ?INTERNAL4_ARGS);
+            insert_att_INTERNAL4(Elem, ?INTERNAL4_ARGS);
         %
         ?LEAF2_MATCH_ALL ->
-            insert_LEAF2(Elem, ?LEAF2_ARGS);
+            insert_att_LEAF2(Elem, ?LEAF2_ARGS);
         %
         ?LEAF3_MATCH_ALL ->
-            insert_LEAF3(Elem, ?LEAF3_ARGS);
+            insert_att_LEAF3(Elem, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            insert_LEAF4(Elem, ?LEAF4_ARGS)
+            insert_att_LEAF4(Elem, ?LEAF4_ARGS)
     end.
 
 %%
 %% ?INTERNAL4
 %%
 
--compile({inline, insert_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-insert_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
+-compile({inline, insert_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
+insert_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
     if
         Elem > E2 ->
             %
@@ -2405,17 +2112,17 @@ insert_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
                     %
                     if
                         Elem > E3 ->
-                            insert_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS);
+                            insert_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS);
                         %
                         Elem < E3 ->
-                            insert_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS);
+                            insert_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS);
                         %
                         true ->
                             none
                     end;
                 %
                 Elem > E4 ->
-                    insert_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS);
+                    insert_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS);
                 %
                 true ->
                     none
@@ -2425,10 +2132,10 @@ insert_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
             %
             if
                 Elem < E1 ->
-                    insert_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS);
+                    insert_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS);
                 %
                 Elem > E1 ->
-                    insert_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS);
+                    insert_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS);
                 %
                 true ->
                     none
@@ -2438,171 +2145,46 @@ insert_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
             none
     end.
 
--compile({inline, insert_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
-insert_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
-    case insert_att_recur(Elem, C1) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL4(
-                        UpElem,
-                        E2,
-                        E3,
-                        E4,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3,
-                        C4,
-                        C5
-                    );
-                %
-                Split ->
-                    ?SPLIT(1, Split)
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC1 ->
-            ?INTERNAL4_UPD_C1(UpdatedC1)
-    end.
+-compile({inline, insert_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
+insert_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
+    Result = insert_att_recur(Elem, C1),
+    ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS).
 
--compile({inline, insert_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
-insert_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
-    case insert_att_recur(Elem, C2) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL4(
-                        UpElem,
-                        E2,
-                        E3,
-                        E4,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3,
-                        C4,
-                        C5
-                    );
-                %
-                Split ->
-                    ?SPLIT(2, Split)
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC2 ->
-            ?INTERNAL4_UPD_C2(UpdatedC2)
-    end.
+-compile({inline, insert_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
+insert_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
+    Result = insert_att_recur(Elem, C2),
+    ins_rebalance_INTERNAL4_C2(Result, Elem, ?INTERNAL4_ARGS).
 
--compile({inline, insert_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
-insert_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
-    case insert_att_recur(Elem, C3) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2) of
-                {UpElem, UpdatedC2, UpdatedC3} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        UpElem,
-                        E3,
-                        E4,
-                        %
-                        C1,
-                        UpdatedC2,
-                        UpdatedC3,
-                        C4,
-                        C5
-                    );
-                %
-                Split ->
-                    ?SPLIT(3, Split)
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC3 ->
-            ?INTERNAL4_UPD_C3(UpdatedC3)
-    end.
+-compile({inline, insert_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
+insert_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
+    Result = insert_att_recur(Elem, C3),
+    ins_rebalance_INTERNAL4_C3(Result, Elem, ?INTERNAL4_ARGS).
 
--compile({inline, insert_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
-insert_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
-    case insert_att_recur(Elem, C4) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C4, Pos, Args, E3, C3) of
-                {UpElem, UpdatedC3, UpdatedC4} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        E2,
-                        UpElem,
-                        E4,
-                        %
-                        C1,
-                        C2,
-                        UpdatedC3,
-                        UpdatedC4,
-                        C5
-                    );
-                %
-                Split ->
-                    ?SPLIT(4, Split)
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC4 ->
-            ?INTERNAL4_UPD_C4(UpdatedC4)
-    end.
+-compile({inline, insert_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
+insert_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
+    Result = insert_att_recur(Elem, C4),
+    ins_rebalance_INTERNAL4_C4(Result, Elem, ?INTERNAL4_ARGS).
 
--compile({inline, insert_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
-insert_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
-    case insert_att_recur(Elem, C5) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C5, Pos, Args, E4, C4) of
-                {UpElem, UpdatedC4, UpdatedC5} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        E2,
-                        E3,
-                        UpElem,
-                        %
-                        C1,
-                        C2,
-                        C3,
-                        UpdatedC4,
-                        UpdatedC5
-                    );
-                %
-                Split ->
-                    ?SPLIT(5, Split)
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC5 ->
-            ?INTERNAL4_UPD_C5(UpdatedC5)
-    end.
+-compile({inline, insert_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
+insert_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
+    Result = insert_att_recur(Elem, C5),
+    ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS).
 
 %%
 %% ?INTERNAL3
 %%
 
--compile({inline, insert_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-insert_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
+-compile({inline, insert_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
+insert_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
     if
         Elem < E2 ->
             %
             if
                 Elem < E1 ->
-                    insert_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS);
+                    insert_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS);
                 %
                 Elem > E1 ->
-                    insert_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS);
+                    insert_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS);
                 %
                 true ->
                     none
@@ -2612,10 +2194,10 @@ insert_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
             %
             if
                 Elem < E3 ->
-                    insert_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS);
+                    insert_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS);
                 %
                 Elem > E3 ->
-                    insert_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS);
+                    insert_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS);
                 %
                 true ->
                     none
@@ -2625,369 +2207,101 @@ insert_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
             none
     end.
 
--compile({inline, insert_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
-insert_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
-    case insert_att_recur(Elem, C1) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL3(
-                        UpElem,
-                        E2,
-                        E3,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3,
-                        C4
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL4(
-                        SplitE,
-                        E1,
-                        E2,
-                        E3,
-                        %
-                        SplitL,
-                        SplitR,
-                        C2,
-                        C3,
-                        C4
-                    )
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC1 ->
-            ?INTERNAL3_UPD_C1(UpdatedC1)
-    end.
+-compile({inline, insert_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
+insert_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
+    Result = insert_att_recur(Elem, C1),
+    ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS).
 
--compile({inline, insert_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
-insert_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
-    case insert_att_recur(Elem, C2) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL3(
-                        UpElem,
-                        E2,
-                        E3,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3,
-                        C4
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        SplitE,
-                        E2,
-                        E3,
-                        %
-                        C1,
-                        SplitL,
-                        SplitR,
-                        C3,
-                        C4
-                    )
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC2 ->
-            ?INTERNAL3_UPD_C2(UpdatedC2)
-    end.
+-compile({inline, insert_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
+insert_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
+    Result = insert_att_recur(Elem, C2),
+    ins_rebalance_INTERNAL3_C2(Result, Elem, ?INTERNAL3_ARGS).
 
--compile({inline, insert_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
-insert_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
-    case insert_att_recur(Elem, C3) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2) of
-                {UpElem, UpdatedC2, UpdatedC3} ->
-                    ?new_INTERNAL3(
-                        E1,
-                        UpElem,
-                        E3,
-                        %
-                        C1,
-                        UpdatedC2,
-                        UpdatedC3,
-                        C4
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        E2,
-                        SplitE,
-                        E3,
-                        %
-                        C1,
-                        C2,
-                        SplitL,
-                        SplitR,
-                        C4
-                    )
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC3 ->
-            ?INTERNAL3_UPD_C3(UpdatedC3)
-    end.
+-compile({inline, insert_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
+insert_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
+    Result = insert_att_recur(Elem, C3),
+    ins_rebalance_INTERNAL3_C3(Result, Elem, ?INTERNAL3_ARGS).
 
--compile({inline, insert_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
-insert_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
-    case insert_att_recur(Elem, C4) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C4, Pos, Args, E3, C3) of
-                {UpElem, UpdatedC3, UpdatedC4} ->
-                    ?new_INTERNAL3(
-                        E1,
-                        E2,
-                        UpElem,
-                        %
-                        C1,
-                        C2,
-                        UpdatedC3,
-                        UpdatedC4
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL4(
-                        E1,
-                        E2,
-                        E3,
-                        SplitE,
-                        %
-                        C1,
-                        C2,
-                        C3,
-                        SplitL,
-                        SplitR
-                    )
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC4 ->
-            ?INTERNAL3_UPD_C4(UpdatedC4)
-    end.
+-compile({inline, insert_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
+insert_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
+    Result = insert_att_recur(Elem, C4),
+    ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS).
 
 %%
 %% ?INTERNAL2
 %%
 
--compile({inline, insert_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-insert_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
+-compile({inline, insert_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
+insert_att_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
     if
         Elem > E1 ->
             %
             if
                 Elem < E2 ->
-                    insert_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS);
+                    insert_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS);
                 %
                 Elem > E2 ->
-                    insert_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS);
+                    insert_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS);
                 %
                 true ->
                     none
             end;
         %
         Elem < E1 ->
-            insert_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS);
+            insert_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS);
         %
         true ->
             none
     end.
 
--compile({inline, insert_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
-insert_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
-    case insert_att_recur(Elem, C1) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL2(
-                        UpElem,
-                        E2,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL3(
-                        SplitE,
-                        E1,
-                        E2,
-                        %
-                        SplitL,
-                        SplitR,
-                        C2,
-                        C3
-                    )
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC1 ->
-            ?INTERNAL2_UPD_C1(UpdatedC1)
-    end.
+-compile({inline, insert_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
+insert_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
+    Result = insert_att_recur(Elem, C1),
+    ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS).
 
--compile({inline, insert_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
-insert_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
-    case insert_att_recur(Elem, C2) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL2(
-                        UpElem,
-                        E2,
-                        %
-                        UpdatedC1,
-                        UpdatedC2,
-                        C3
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL3(
-                        E1,
-                        SplitE,
-                        E2,
-                        %
-                        C1,
-                        SplitL,
-                        SplitR,
-                        C3
-                    )
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC2 ->
-            ?INTERNAL2_UPD_C2(UpdatedC2)
-    end.
+-compile({inline, insert_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
+insert_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
+    Result = insert_att_recur(Elem, C2),
+    ins_rebalance_INTERNAL2_C2(Result, Elem, ?INTERNAL2_ARGS).
 
--compile({inline, insert_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
-insert_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
-    case insert_att_recur(Elem, C3) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2) of
-                {UpElem, UpdatedC2, UpdatedC3} ->
-                    ?new_INTERNAL2(
-                        E1,
-                        UpElem,
-                        %
-                        C1,
-                        UpdatedC2,
-                        UpdatedC3
-                    );
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL3(
-                        E1,
-                        E2,
-                        SplitE,
-                        %
-                        C1,
-                        C2,
-                        SplitL,
-                        SplitR
-                    )
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC3 ->
-            ?INTERNAL2_UPD_C3(UpdatedC3)
-    end.
+-compile({inline, insert_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
+insert_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
+    Result = insert_att_recur(Elem, C3),
+    ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS).
 
 %%
 %% ?INTERNAL1
 %%
 
--compile({inline, insert_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-insert_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+-compile({inline, insert_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+insert_att_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     if
         Elem < E1 ->
-            insert_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS);
+            insert_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS);
         %
         Elem > E1 ->
-            insert_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS);
+            insert_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS);
         %
         true ->
             none
     end.
 
--compile({inline, insert_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
-insert_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
-    case insert_att_recur(Elem, C1) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_right_sibling_maybe(Elem, C1, Pos, Args, E1, C2) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL1(UpElem, UpdatedC1, UpdatedC2);
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL2(
-                        SplitE,
-                        E1,
-                        %
-                        SplitL,
-                        SplitR,
-                        C2
-                    )
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC1 ->
-            ?new_INTERNAL1(E1, UpdatedC1, C2)
-    end.
+-compile({inline, insert_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
+insert_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
+    Result = insert_att_recur(Elem, C1),
+    ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS).
 
--compile({inline, insert_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
-insert_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
-    case insert_att_recur(Elem, C2) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1) of
-                {UpElem, UpdatedC1, UpdatedC2} ->
-                    ?new_INTERNAL1(UpElem, UpdatedC1, UpdatedC2);
-                %
-                {split, SplitE, SplitL, SplitR} ->
-                    ?new_INTERNAL2(
-                        E1,
-                        SplitE,
-                        %
-                        C1,
-                        SplitL,
-                        SplitR
-                    )
-            end;
-        %
-        none ->
-            none;
-        %
-        UpdatedC2 ->
-            ?new_INTERNAL1(E1, C1, UpdatedC2)
-    end.
+-compile({inline, insert_att_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
+insert_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
+    Result = insert_att_recur(Elem, C2),
+    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS).
 
 %%
 %% ?LEAF4
 %%
 
--compile({inline, insert_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-insert_LEAF4(Elem, ?LEAF4_ARGS) ->
+-compile({inline, insert_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
+insert_att_LEAF4(Elem, ?LEAF4_ARGS) ->
     if
         Elem > E2 ->
             %
@@ -3033,17 +2347,17 @@ insert_LEAF4(Elem, ?LEAF4_ARGS) ->
 %% ?LEAF3
 %%
 
--compile({inline, insert_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-insert_LEAF3(Elem, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
+insert_att_LEAF3(Elem, ?LEAF3_ARGS) ->
     if
         Elem < E2 ->
             %
             if
                 Elem < E1 ->
-                    insert_LEAF3_POS1(Elem, ?LEAF3_ARGS);
+                    insert_att_LEAF3_POS1(Elem, ?LEAF3_ARGS);
                 %
                 Elem > E1 ->
-                    insert_LEAF3_POS2(Elem, ?LEAF3_ARGS);
+                    insert_att_LEAF3_POS2(Elem, ?LEAF3_ARGS);
                 %
                 true ->
                     none
@@ -3053,10 +2367,10 @@ insert_LEAF3(Elem, ?LEAF3_ARGS) ->
             %
             if
                 Elem < E3 ->
-                    insert_LEAF3_POS3(Elem, ?LEAF3_ARGS);
+                    insert_att_LEAF3_POS3(Elem, ?LEAF3_ARGS);
                 %
                 Elem > E3 ->
-                    insert_LEAF3_POS4(Elem, ?LEAF3_ARGS);
+                    insert_att_LEAF3_POS4(Elem, ?LEAF3_ARGS);
                 %
                 true ->
                     none
@@ -3066,84 +2380,84 @@ insert_LEAF3(Elem, ?LEAF3_ARGS) ->
             none
     end.
 
--compile({inline, insert_LEAF3_POS1 / ?LEAF3_ARITY_PLUS1}).
-insert_LEAF3_POS1(Elem, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3_POS1 / ?LEAF3_ARITY_PLUS1}).
+insert_att_LEAF3_POS1(Elem, ?LEAF3_ARGS) ->
     ?new_LEAF4(Elem, E1, E2, E3).
 
--compile({inline, insert_LEAF3_POS2 / ?LEAF3_ARITY_PLUS1}).
-insert_LEAF3_POS2(Elem, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3_POS2 / ?LEAF3_ARITY_PLUS1}).
+insert_att_LEAF3_POS2(Elem, ?LEAF3_ARGS) ->
     ?new_LEAF4(E1, Elem, E2, E3).
 
--compile({inline, insert_LEAF3_POS3 / ?LEAF3_ARITY_PLUS1}).
-insert_LEAF3_POS3(Elem, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3_POS3 / ?LEAF3_ARITY_PLUS1}).
+insert_att_LEAF3_POS3(Elem, ?LEAF3_ARGS) ->
     ?new_LEAF4(E1, E2, Elem, E3).
 
--compile({inline, insert_LEAF3_POS4 / ?LEAF3_ARITY_PLUS1}).
-insert_LEAF3_POS4(Elem, ?LEAF3_ARGS) ->
+-compile({inline, insert_att_LEAF3_POS4 / ?LEAF3_ARITY_PLUS1}).
+insert_att_LEAF3_POS4(Elem, ?LEAF3_ARGS) ->
     ?new_LEAF4(E1, E2, E3, Elem).
 
 %%
 %% ?LEAF2
 %%
 
--compile({inline, insert_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-insert_LEAF2(Elem, ?LEAF2_ARGS) ->
+-compile({inline, insert_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
+insert_att_LEAF2(Elem, ?LEAF2_ARGS) ->
     if
         Elem > E1 ->
             %
             if
                 Elem < E2 ->
-                    insert_LEAF2_POS2(Elem, ?LEAF2_ARGS);
+                    insert_att_LEAF2_POS2(Elem, ?LEAF2_ARGS);
                 %
                 Elem > E2 ->
-                    insert_LEAF2_POS3(Elem, ?LEAF2_ARGS);
+                    insert_att_LEAF2_POS3(Elem, ?LEAF2_ARGS);
                 %
                 true ->
                     none
             end;
         %
         Elem < E1 ->
-            insert_LEAF2_POS1(Elem, ?LEAF2_ARGS);
+            insert_att_LEAF2_POS1(Elem, ?LEAF2_ARGS);
         %
         true ->
             none
     end.
 
--compile({inline, insert_LEAF2_POS1 / ?LEAF2_ARITY_PLUS1}).
-insert_LEAF2_POS1(Elem, ?LEAF2_ARGS) ->
+-compile({inline, insert_att_LEAF2_POS1 / ?LEAF2_ARITY_PLUS1}).
+insert_att_LEAF2_POS1(Elem, ?LEAF2_ARGS) ->
     ?new_LEAF3(Elem, E1, E2).
 
--compile({inline, insert_LEAF2_POS2 / ?LEAF2_ARITY_PLUS1}).
-insert_LEAF2_POS2(Elem, ?LEAF2_ARGS) ->
+-compile({inline, insert_att_LEAF2_POS2 / ?LEAF2_ARITY_PLUS1}).
+insert_att_LEAF2_POS2(Elem, ?LEAF2_ARGS) ->
     ?new_LEAF3(E1, Elem, E2).
 
--compile({inline, insert_LEAF2_POS3 / ?LEAF2_ARITY_PLUS1}).
-insert_LEAF2_POS3(Elem, ?LEAF2_ARGS) ->
+-compile({inline, insert_att_LEAF2_POS3 / ?LEAF2_ARITY_PLUS1}).
+insert_att_LEAF2_POS3(Elem, ?LEAF2_ARGS) ->
     ?new_LEAF3(E1, E2, Elem).
 
 %%
 %% ?LEAF1
 %%
 
--compile({inline, insert_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-insert_LEAF1(Elem, ?LEAF1_ARGS) ->
+-compile({inline, insert_att_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+insert_att_LEAF1(Elem, ?LEAF1_ARGS) ->
     if
         Elem < E1 ->
-            insert_LEAF1_POS1(Elem, ?LEAF1_ARGS);
+            insert_att_LEAF1_POS1(Elem, ?LEAF1_ARGS);
         %
         Elem > E1 ->
-            insert_LEAF1_POS2(Elem, ?LEAF1_ARGS);
+            insert_att_LEAF1_POS2(Elem, ?LEAF1_ARGS);
         %
         true ->
             none
     end.
 
--compile({inline, insert_LEAF1_POS1 / ?LEAF1_ARITY_PLUS1}).
-insert_LEAF1_POS1(Elem, ?LEAF1_ARGS) ->
+-compile({inline, insert_att_LEAF1_POS1 / ?LEAF1_ARITY_PLUS1}).
+insert_att_LEAF1_POS1(Elem, ?LEAF1_ARGS) ->
     ?new_LEAF2(Elem, E1).
 
--compile({inline, insert_LEAF1_POS2 / ?LEAF1_ARITY_PLUS1}).
-insert_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
+-compile({inline, insert_att_LEAF1_POS2 / ?LEAF1_ARITY_PLUS1}).
+insert_att_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
     ?new_LEAF2(E1, Elem).
 
 %% ------------------------------------------------------------------
@@ -3153,14 +2467,14 @@ insert_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
 is_member_recur(Elem, Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH_ALL ->
-            is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS);
+        ?INTERNAL2_MATCH_NO_SIZES ->
+            is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL3_MATCH_ALL ->
-            is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS);
+        ?INTERNAL3_MATCH_NO_SIZES ->
+            is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL4_MATCH_ALL ->
-            is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS);
+        ?INTERNAL4_MATCH_NO_SIZES ->
+            is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES);
         %
         ?LEAF2_MATCH_ALL ->
             is_member_LEAF2(Elem, ?LEAF2_ARGS);
@@ -3176,8 +2490,8 @@ is_member_recur(Elem, Node) ->
 %% ?INTERNAL4
 %%
 
--compile({inline, is_member_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
+-compile({inline, is_member_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS1}).
+is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES) ->
     if
         Elem > E2 ->
             %
@@ -3223,8 +2537,8 @@ is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
 %% ?INTERNAL3
 %%
 
--compile({inline, is_member_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
+-compile({inline, is_member_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS1}).
+is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES) ->
     if
         Elem < E2 ->
             %
@@ -3260,8 +2574,8 @@ is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
 %% ?INTERNAL2
 %%
 
--compile({inline, is_member_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
+-compile({inline, is_member_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS1}).
+is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES) ->
     if
         Elem > E1 ->
             %
@@ -3287,8 +2601,8 @@ is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
 %% ?INTERNAL1
 %%
 
--compile({inline, is_member_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+-compile({inline, is_member_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
+is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
     if
         Elem < E1 ->
             is_member_recur(Elem, C1);
@@ -3341,7 +2655,7 @@ is_member_LEAF1(Elem, ?LEAF1_ARGS) ->
 %% Internal Function Definitions: iterator/2 - forward
 %% ------------------------------------------------------------------
 
-fwd_iterator(?INTERNAL1_MATCH(E1, C1, C2)) ->
+fwd_iterator(?INTERNAL1_MATCH_NO_SIZES) ->
     Acc = [?ITER_ELEM(E1), C2],
     fwd_iterator_recur(C1, Acc);
 fwd_iterator(?LEAF1_MATCH(E1)) ->
@@ -3363,7 +2677,7 @@ fwd_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
 fwd_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
     Acc2;
-fwd_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
+fwd_iterator_recur(?INTERNAL2_MATCH_NO_SIZES, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E1),
         C2,
@@ -3372,7 +2686,7 @@ fwd_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
         | Acc
     ],
     fwd_iterator_recur(C1, Acc2);
-fwd_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
+fwd_iterator_recur(?INTERNAL3_MATCH_NO_SIZES, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E1),
         C2,
@@ -3383,7 +2697,7 @@ fwd_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
         | Acc
     ],
     fwd_iterator_recur(C1, Acc2);
-fwd_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
+fwd_iterator_recur(?INTERNAL4_MATCH_NO_SIZES, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E1),
         C2,
@@ -3401,7 +2715,7 @@ fwd_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
 %% Internal Function Definitions: iterator/2 - reverse
 %% ------------------------------------------------------------------
 
-rev_iterator(?INTERNAL1_MATCH(E1, C1, C2)) ->
+rev_iterator(?INTERNAL1_MATCH_NO_SIZES) ->
     Acc = [?ITER_ELEM(E1), C1],
     rev_iterator_recur(C2, Acc);
 rev_iterator(?LEAF1_MATCH(E1)) ->
@@ -3423,7 +2737,7 @@ rev_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
 rev_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E4), ?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
     Acc2;
-rev_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
+rev_iterator_recur(?INTERNAL2_MATCH_NO_SIZES, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E2),
         C2,
@@ -3432,7 +2746,7 @@ rev_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
         | Acc
     ],
     rev_iterator_recur(C3, Acc2);
-rev_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
+rev_iterator_recur(?INTERNAL3_MATCH_NO_SIZES, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E3),
         C3,
@@ -3443,7 +2757,7 @@ rev_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
         | Acc
     ],
     rev_iterator_recur(C4, Acc2);
-rev_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
+rev_iterator_recur(?INTERNAL4_MATCH_NO_SIZES, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E4),
         C4,
@@ -3463,8 +2777,8 @@ rev_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
 
 bound_fwd_iterator(Elem, Root) ->
     case Root of
-        ?INTERNAL1_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+        ?INTERNAL1_MATCH_NO_SIZES ->
+            bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
         %
         ?LEAF1_MATCH_ALL ->
             bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS);
@@ -3489,20 +2803,20 @@ bound_fwd_iterator_recur(Elem, Node, Acc) ->
         ?LEAF4_MATCH_ALL ->
             bound_fwd_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc);
         %
-        ?INTERNAL2_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc);
+        ?INTERNAL2_MATCH_NO_SIZES ->
+            bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc);
         %
-        ?INTERNAL3_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc);
+        ?INTERNAL3_MATCH_NO_SIZES ->
+            bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc);
         %
-        ?INTERNAL4_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc)
+        ?INTERNAL4_MATCH_NO_SIZES ->
+            bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc)
     end.
 
 %% INTERNAL4
 
--compile({inline, bound_fwd_iterator_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
-bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS2}).
+bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem > E4 ->
             case Acc of
@@ -3535,8 +2849,8 @@ bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
 
 %% INTERNAL3
 
--compile({inline, bound_fwd_iterator_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
-bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS2}).
+bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem > E3 ->
             case Acc of
@@ -3563,8 +2877,8 @@ bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
 
 %% INTERNAL2
 
--compile({inline, bound_fwd_iterator_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
-bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS2}).
+bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem > E2 ->
             case Acc of
@@ -3587,8 +2901,8 @@ bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
 
 %% INTERNAL1
 
--compile({inline, bound_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+-compile({inline, bound_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
+bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
     if
         Elem < E1 ->
             Acc = [?ITER_ELEM(E1), C2],
@@ -3674,8 +2988,8 @@ bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 bound_rev_iterator(Elem, Root) ->
     case Root of
-        ?INTERNAL1_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+        ?INTERNAL1_MATCH_NO_SIZES ->
+            bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
         %
         ?LEAF1_MATCH_ALL ->
             bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS);
@@ -3700,20 +3014,20 @@ bound_rev_iterator_recur(Elem, Node, Acc) ->
         ?LEAF4_MATCH_ALL ->
             bound_rev_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc);
         %
-        ?INTERNAL2_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc);
+        ?INTERNAL2_MATCH_NO_SIZES ->
+            bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc);
         %
-        ?INTERNAL3_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc);
+        ?INTERNAL3_MATCH_NO_SIZES ->
+            bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc);
         %
-        ?INTERNAL4_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc)
+        ?INTERNAL4_MATCH_NO_SIZES ->
+            bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc)
     end.
 
 %% INTERNAL4
 
--compile({inline, bound_rev_iterator_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
-bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS2}).
+bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem < E1 ->
             case Acc of
@@ -3746,8 +3060,8 @@ bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
 
 %% INTERNAL3
 
--compile({inline, bound_rev_iterator_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
-bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS2}).
+bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem < E1 ->
             case Acc of
@@ -3774,8 +3088,8 @@ bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
 
 %% INTERNAL2
 
--compile({inline, bound_rev_iterator_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
-bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS2}).
+bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem < E1 ->
             case Acc of
@@ -3798,8 +3112,8 @@ bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
 
 %% INTERNAL1
 
--compile({inline, bound_rev_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+-compile({inline, bound_rev_iterator_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
+bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
     if
         Elem > E1 ->
             Acc = [?ITER_ELEM(E1), C1],
@@ -3886,14 +3200,14 @@ bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
 larger_recur(Elem, Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH_ALL ->
-            larger_INTERNAL2(Elem, ?INTERNAL2_ARGS);
+        ?INTERNAL2_MATCH_NO_SIZES ->
+            larger_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL3_MATCH_ALL ->
-            larger_INTERNAL3(Elem, ?INTERNAL3_ARGS);
+        ?INTERNAL3_MATCH_NO_SIZES ->
+            larger_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL4_MATCH_ALL ->
-            larger_INTERNAL4(Elem, ?INTERNAL4_ARGS);
+        ?INTERNAL4_MATCH_NO_SIZES ->
+            larger_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES);
         %
         ?LEAF2_MATCH_ALL ->
             larger_LEAF2(Elem, ?LEAF2_ARGS);
@@ -3909,8 +3223,8 @@ larger_recur(Elem, Node) ->
 %% ?INTERNAL4
 %%
 
--compile({inline, larger_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-larger_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
+-compile({inline, larger_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS1}).
+larger_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES) ->
     if
         Elem < E2 ->
             case Elem < E1 of
@@ -3946,8 +3260,8 @@ larger_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
 %% ?INTERNAL3
 %%
 
--compile({inline, larger_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-larger_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
+-compile({inline, larger_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS1}).
+larger_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES) ->
     if
         Elem < E2 ->
             case Elem < E1 of
@@ -3977,8 +3291,8 @@ larger_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
 %% ?INTERNAL2
 %%
 
--compile({inline, larger_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-larger_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
+-compile({inline, larger_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS1}).
+larger_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES) ->
     if
         Elem < E1 ->
             case larger_recur(Elem, C1) of
@@ -4000,8 +3314,8 @@ larger_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
 %% ?INTERNAL1
 %%
 
--compile({inline, larger_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-larger_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+-compile({inline, larger_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
+larger_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
     if
         Elem < E1 ->
             case larger_recur(Elem, C1) of
@@ -4098,13 +3412,13 @@ larger_LEAF1(Elem, ?LEAF1_ARGS) ->
 largest_recur(Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH(_, _, _, _, C3) ->
+        ?INTERNAL2_MATCH(_, _, _, _, _, _, C3) ->
             largest_recur(C3);
         %
-        ?INTERNAL3_MATCH(_, _, _, _, _, _, C4) ->
+        ?INTERNAL3_MATCH(_, _, _, _, _, _, _, _, _, C4) ->
             largest_recur(C4);
         %
-        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, C5) ->
+        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, _, _, _, _, C5) ->
             largest_recur(C5);
         %
         ?LEAF2_MATCH(_, E2) ->
@@ -4123,7 +3437,7 @@ largest_recur(Node) ->
 
 map_root(Fun, Node, Acc) ->
     case Node of
-        ?INTERNAL1_MATCH_ALL ->
+        ?INTERNAL1_MATCH_NO_SIZES ->
             Acc2 = map_recur(Fun, C1, Acc),
             Acc3 = map_elem(Fun, E1, Acc2),
 
@@ -4157,7 +3471,7 @@ map_recur(Fun, Node, Acc) ->
             Acc4 = map_elem(Fun, E3, Acc3),
             _Acc5 = map_elem(Fun, E4, Acc4);
         %
-        ?INTERNAL2_MATCH_ALL ->
+        ?INTERNAL2_MATCH_NO_SIZES ->
             Acc2 = map_recur(Fun, C1, Acc),
             Acc3 = map_elem(Fun, E1, Acc2),
 
@@ -4166,7 +3480,7 @@ map_recur(Fun, Node, Acc) ->
 
             _Acc6 = map_recur(Fun, C3, Acc5);
         %
-        ?INTERNAL3_MATCH_ALL ->
+        ?INTERNAL3_MATCH_NO_SIZES ->
             Acc2 = map_recur(Fun, C1, Acc),
             Acc3 = map_elem(Fun, E1, Acc2),
 
@@ -4178,7 +3492,7 @@ map_recur(Fun, Node, Acc) ->
 
             _Acc8 = map_recur(Fun, C4, Acc7);
         %
-        ?INTERNAL4_MATCH_ALL ->
+        ?INTERNAL4_MATCH_NO_SIZES ->
             Acc2 = map_recur(Fun, C1, Acc),
             Acc3 = map_elem(Fun, E1, Acc2),
 
@@ -4250,14 +3564,14 @@ rev_next(Head, Tail) ->
 smaller_recur(Elem, Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH_ALL ->
-            smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS);
+        ?INTERNAL2_MATCH_NO_SIZES ->
+            smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL3_MATCH_ALL ->
-            smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS);
+        ?INTERNAL3_MATCH_NO_SIZES ->
+            smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL4_MATCH_ALL ->
-            smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS);
+        ?INTERNAL4_MATCH_NO_SIZES ->
+            smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES);
         %
         ?LEAF2_MATCH_ALL ->
             smaller_LEAF2(Elem, ?LEAF2_ARGS);
@@ -4273,8 +3587,8 @@ smaller_recur(Elem, Node) ->
 %% ?INTERNAL4
 %%
 
--compile({inline, smaller_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
+-compile({inline, smaller_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS1}).
+smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES) ->
     if
         Elem > E3 ->
             case Elem > E4 of
@@ -4310,8 +3624,8 @@ smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
 %% ?INTERNAL3
 %%
 
--compile({inline, smaller_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
+-compile({inline, smaller_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS1}).
+smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES) ->
     if
         Elem > E2 ->
             case Elem > E3 of
@@ -4341,8 +3655,8 @@ smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
 %% ?INTERNAL2
 %%
 
--compile({inline, smaller_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
+-compile({inline, smaller_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS1}).
+smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES) ->
     if
         Elem > E2 ->
             case smaller_recur(Elem, C3) of
@@ -4364,8 +3678,8 @@ smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
 %% ?INTERNAL1
 %%
 
--compile({inline, smaller_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+-compile({inline, smaller_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
+smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
     case Elem > E1 of
         true ->
             case smaller_recur(Elem, C2) of
@@ -4462,13 +3776,13 @@ smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
 smallest_recur(Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH(_, _, C1, _, _) ->
+        ?INTERNAL2_MATCH(_, _, _, _, C1, _, _) ->
             smallest_recur(C1);
         %
-        ?INTERNAL3_MATCH(_, _, _, C1, _, _, _) ->
+        ?INTERNAL3_MATCH(_, _, _, _, _, _, C1, _, _, _) ->
             smallest_recur(C1);
         %
-        ?INTERNAL4_MATCH(_, _, _, _, C1, _, _, _, _) ->
+        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, C1, _, _, _, _) ->
             smallest_recur(C1);
         %
         ?LEAF2_MATCH(E1, _) ->
@@ -4499,20 +3813,20 @@ structural_stats_recur(Node, Acc, Height) ->
             Acc2 = b5_structural_stats:inc_count(leaf4, Acc),
             b5_structural_stats:set_height(Height, Acc2);
         %
-        ?INTERNAL2_MATCH(_, _, C1, C2, C3) ->
+        ?INTERNAL2_MATCH(_, _, _, _, C1, C2, C3) ->
             Acc2 = b5_structural_stats:inc_count(internal2, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             _Acc5 = structural_stats_recur(C3, Acc4, Height + 1);
         %
-        ?INTERNAL3_MATCH(_, _, _, C1, C2, C3, C4) ->
+        ?INTERNAL3_MATCH(_, _, _, _, _, _, C1, C2, C3, C4) ->
             Acc2 = b5_structural_stats:inc_count(internal3, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             Acc5 = structural_stats_recur(C3, Acc4, Height + 1),
             _Acc6 = structural_stats_recur(C4, Acc5, Height + 1);
         %
-        ?INTERNAL4_MATCH(_, _, _, _, C1, C2, C3, C4, C5) ->
+        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, C1, C2, C3, C4, C5) ->
             Acc2 = b5_structural_stats:inc_count(internal4, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
@@ -4524,6 +3838,8 @@ structural_stats_recur(Node, Acc, Height) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: take_largest/2
 %% ------------------------------------------------------------------
+
+%% TODO continue from here
 
 take_largest_recur(Node) ->
     case Node of
@@ -4724,18 +4040,18 @@ to_list_recur(Node, Acc) ->
         ?LEAF4_MATCH_ALL ->
             [E1, E2, E3, E4 | Acc];
         %
-        ?INTERNAL2_MATCH_ALL ->
+        ?INTERNAL2_MATCH_NO_SIZES ->
             Acc2 = to_list_recur(C3, Acc),
             Acc3 = to_list_recur(C2, [E2 | Acc2]),
             _Acc4 = to_list_recur(C1, [E1 | Acc3]);
         %
-        ?INTERNAL3_MATCH_ALL ->
+        ?INTERNAL3_MATCH_NO_SIZES ->
             Acc2 = to_list_recur(C4, Acc),
             Acc3 = to_list_recur(C3, [E3 | Acc2]),
             Acc4 = to_list_recur(C2, [E2 | Acc3]),
             _Acc5 = to_list_recur(C1, [E1 | Acc4]);
         %
-        ?INTERNAL4_MATCH_ALL ->
+        ?INTERNAL4_MATCH_NO_SIZES ->
             Acc2 = to_list_recur(C5, Acc),
             Acc3 = to_list_recur(C4, [E4 | Acc2]),
             Acc4 = to_list_recur(C3, [E3 | Acc3]),
@@ -4754,6 +4070,712 @@ to_list_recur(Node, Acc) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: Insertion - Rebalancing INTERNAL4
+%% ------------------------------------------------------------------
+
+-compile({inline, ins_rebalance_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS2}).
+ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_right_sibling_maybe(Elem, C1, O1, Pos, Args, E1, C2) of
+                {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL4(
+                        UpElem,
+                        E2,
+                        E3,
+                        E4,
+                        %
+                        O1 - MovedSize,
+                        O2 + 1,
+                        O3 + 1,
+                        O4 + 1,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3,
+                        C4,
+                        C5
+                    );
+                %
+                Split ->
+                    ?SPLIT(1, Split)
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC1 ->
+            ?new_INTERNAL4(
+               E1,
+               E2,
+               E3,
+               E4,
+               %
+               O1 + 1,
+               O2 + 1,
+               O3 + 1,
+               O4 + 1,
+               %
+               UpdatedC1,
+               C2,
+               C3,
+               C4,
+               C5
+              )
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS2}).
+ins_rebalance_INTERNAL4_C2(Result, Elem, ?INTERNAL4_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1, O1) of
+                {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL4(
+                        UpElem,
+                        E2,
+                        E3,
+                        E4,
+                        %
+                        O1 + MovedSize,
+                        O2 + 1,
+                        O3 + 1,
+                        O4 + 1,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3,
+                        C4,
+                        C5
+                    );
+                %
+                Split ->
+                    ?SPLIT(2, Split)
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC2 ->
+            ?new_INTERNAL4(
+               E1,
+               E2,
+               E3,
+               E4,
+               %
+               O1,
+               O2 + 1,
+               O3 + 1,
+               O4 + 1,
+               %
+               C1,
+               UpdatedC2,
+               C3,
+               C4,
+               C5
+              )
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS2}).
+ins_rebalance_INTERNAL4_C3(Result, Elem, ?INTERNAL4_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2, O2 - O1) of
+                {UpElem, MovedSize, UpdatedC2, UpdatedC3} ->
+                    ?new_INTERNAL4(
+                        E1,
+                        UpElem,
+                        E3,
+                        E4,
+                        %
+                        O1,
+                        O2 + MovedSize,
+                        O3 + 1,
+                        O4 + 1,
+                        %
+                        C1,
+                        UpdatedC2,
+                        UpdatedC3,
+                        C4,
+                        C5
+                    );
+                %
+                Split ->
+                    ?SPLIT(3, Split)
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC3 ->
+            ?new_INTERNAL4(
+               E1,
+               E2,
+               E3,
+               E4,
+               %
+               O1,
+               O2,
+               O3 + 1,
+               O4 + 1,
+               %
+               C1,
+               C2,
+               UpdatedC3,
+               C4,
+               C5
+              )
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS2}).
+ins_rebalance_INTERNAL4_C4(Result, Elem, ?INTERNAL4_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C4, Pos, Args, E3, C3, O3 - O2) of
+                {UpElem, MovedSize, UpdatedC3, UpdatedC4} ->
+                    ?new_INTERNAL4(
+                        E1,
+                        E2,
+                        UpElem,
+                        E4,
+                        %
+                        O1,
+                        O2,
+                        O3 + MovedSize,
+                        O4 + 1 ,
+                        %
+                        C1,
+                        C2,
+                        UpdatedC3,
+                        UpdatedC4,
+                        C5
+                    );
+                %
+                Split ->
+                    ?SPLIT(4, Split)
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC4 ->
+            ?new_INTERNAL4(
+               E1,
+               E2,
+               E3,
+               E4,
+               %
+               O1,
+               O2,
+               O3,
+               O4 + 1,
+               %
+               C1,
+               C2,
+               C3,
+               UpdatedC4,
+               C5)
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS2}).
+ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C5, Pos, Args, E4, C4, O4 - O3) of
+                {UpElem, MovedSize, UpdatedC4, UpdatedC5} ->
+                    ?new_INTERNAL4(
+                        E1,
+                        E2,
+                        E3,
+                        UpElem,
+                        %
+                        O1,
+                        O2,
+                        O3,
+                        O4 + MovedSize,
+                        %
+                        C1,
+                        C2,
+                        C3,
+                        UpdatedC4,
+                        UpdatedC5
+                    );
+                %
+                Split ->
+                    ?SPLIT(5, Split)
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC5 ->
+            ?INTERNAL4_UPD_C5(UpdatedC5)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Insertion - Rebalancing INTERNAL3
+%% ------------------------------------------------------------------
+
+-compile({inline, ins_rebalance_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS2}).
+ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_right_sibling_maybe(Elem, C1, O1, Pos, Args, E1, C2) of
+                {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL3(
+                        UpElem,
+                        E2,
+                        E3,
+                        %
+                        O1 - MovedSize,
+                        O2 + 1,
+                        O3 + 1,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3,
+                        C4
+                    );
+                %
+                {split, SplitE, SplitO, SplitL, SplitR} ->
+                    ?new_INTERNAL4(
+                        SplitE,
+                        E1,
+                        E2,
+                        E3,
+                        %
+                        SplitO,
+                        O1 + 1,
+                        O2 + 1,
+                        O3 + 1,
+                        %
+                        SplitL,
+                        SplitR,
+                        C2,
+                        C3,
+                        C4
+                    )
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC1 ->
+            ?new_INTERNAL3(
+               E1,
+               E2,
+               E3,
+               %
+               O1 + 1,
+               O2 + 1,
+               O3 + 1,
+               %
+               UpdatedC1,
+               C2,
+               C3,
+               C4)
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS2}).
+ins_rebalance_INTERNAL3_C2(Result, Elem, ?INTERNAL3_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1, O1) of
+                % FIXME continue here
+                {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL3(
+                        UpElem,
+                        E2,
+                        E3,
+                        %
+                        O1 + MovedSize,
+                        O2 + 1,
+                        O3 + 1,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3,
+                        C4
+                    );
+                %
+                {split, SplitE, SplitO, SplitL, SplitR} ->
+                    ?new_INTERNAL4(
+                        E1,
+                        SplitE,
+                        E2,
+                        E3,
+                        %
+                        O1,
+                        O1 + SplitO,
+                        O2 + 1,
+                        O3 + 1,
+                        %
+                        C1,
+                        SplitL,
+                        SplitR,
+                        C3,
+                        C4
+                    )
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC2 ->
+            ?new_INTERNAL3(
+               E1,
+               E2,
+               E3,
+               %
+               O1,
+               O2 + 1,
+               O3 + 1,
+               %
+               C1,
+               UpdatedC2,
+               C3,
+               C4)
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS2}).
+ins_rebalance_INTERNAL3_C3(Result, Elem, ?INTERNAL3_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2, O2 - O1) of
+                {UpElem, MovedSize, UpdatedC2, UpdatedC3} ->
+                    ?new_INTERNAL3(
+                        E1,
+                        UpElem,
+                        E3,
+                        %
+                        O1,
+                        O2 + MovedSize,
+                        O3 + 1,
+                        %
+                        C1,
+                        UpdatedC2,
+                        UpdatedC3,
+                        C4
+                    );
+                %
+                {split, SplitE, SplitO, SplitL, SplitR} ->
+                    ?new_INTERNAL4(
+                        E1,
+                        E2,
+                        SplitE,
+                        E3,
+                        %
+                        O1,
+                        O2,
+                        O2 + SplitO,
+                        O3 + 1,
+                        %
+                        C1,
+                        C2,
+                        SplitL,
+                        SplitR,
+                        C4
+                    )
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC3 ->
+            ?new_INTERNAL3(
+               E1,
+               E2,
+               E3,
+               %
+               O1,
+               O2,
+               O3 + 1,
+               %
+               C1,
+               C2,
+               UpdatedC3,
+               C4)
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS2}).
+ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C4, Pos, Args, E3, C3, O3 - O2) of
+                {UpElem, MovedSize, UpdatedC3, UpdatedC4} ->
+                    ?new_INTERNAL3(
+                        E1,
+                        E2,
+                        UpElem,
+                        %
+                        O1,
+                        O2,
+                        O3 + MovedSize,
+                        %
+                        C1,
+                        C2,
+                        UpdatedC3,
+                        UpdatedC4
+                    );
+                %
+                {split, SplitE, SplitO, SplitL, SplitR} ->
+                    ?new_INTERNAL4(
+                        E1,
+                        E2,
+                        E3,
+                        SplitE,
+                        %
+                        O1,
+                        O2,
+                        O3,
+                        O3 + SplitO,
+                        %
+                        C1,
+                        C2,
+                        C3,
+                        SplitL,
+                        SplitR
+                    )
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC4 ->
+            ?INTERNAL3_UPD_C4(UpdatedC4)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Insertion - Rebalancing INTERNAL2
+%% ------------------------------------------------------------------
+
+-compile({inline, ins_rebalance_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS2}).
+ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_right_sibling_maybe(Elem, C1, O1, Pos, Args, E1, C2) of
+                {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL2(
+                        UpElem,
+                        E2,
+                        %
+                        O1 - MovedSize,
+                        O2 + 1,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3
+                    );
+                %
+                {split, SplitE, SplitO, SplitL, SplitR} ->
+                    ?new_INTERNAL3(
+                        SplitE,
+                        E1,
+                        E2,
+                        %
+                        SplitO,
+                        O1 + 1,
+                        O2 + 1,
+                        %
+                        SplitL,
+                        SplitR,
+                        C2,
+                        C3
+                    )
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC1 ->
+            ?new_INTERNAL2(
+               E1,
+               E2,
+               %
+               O1 + 1,
+               O2 + 1,
+               %
+               UpdatedC1,
+               C2,
+               C3
+              )
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS2}).
+ins_rebalance_INTERNAL2_C2(Result, Elem, ?INTERNAL2_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1, O1) of
+                {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL2(
+                        UpElem,
+                        E2,
+                        %
+                        O1 + MovedSize,
+                        O2 + 1,
+                        %
+                        UpdatedC1,
+                        UpdatedC2,
+                        C3
+                    );
+                %
+                {split, SplitE, SplitO, SplitL, SplitR} ->
+                    ?new_INTERNAL3(
+                        E1,
+                        SplitE,
+                        E2,
+                        %
+                        O1,
+                        O1 + SplitO,
+                        O2 + 1,
+                        %
+                        C1,
+                        SplitL,
+                        SplitR,
+                        C3
+                    )
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC2 ->
+            ?new_INTERNAL2(
+               E1,
+               E2,
+               %
+               O1,
+               O2 + 1,
+               %
+               C1,
+               UpdatedC2,
+               C3)
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS2}).
+ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C3, Pos, Args, E2, C2, O2 - O1) of
+                {UpElem, MovedSize, UpdatedC2, UpdatedC3} ->
+                    ?new_INTERNAL2(
+                        E1,
+                        UpElem,
+                        %
+                        O1,
+                        O2 + MovedSize,
+                        %
+                        C1,
+                        UpdatedC2,
+                        UpdatedC3
+                    );
+                %
+                {split, SplitE, SplitO, SplitL, SplitR} ->
+                    ?new_INTERNAL3(
+                        E1,
+                        E2,
+                        SplitE,
+                        %
+                        O1,
+                        O2,
+                        O2 + SplitO,
+                        %
+                        C1,
+                        C2,
+                        SplitL,
+                        SplitR
+                    )
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC3 ->
+            ?INTERNAL2_UPD_C3(UpdatedC3)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: Insertion - Rebalancing INTERNAL1
+%% ------------------------------------------------------------------
+
+-compile({inline, ins_rebalance_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS2}).
+ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_right_sibling_maybe(Elem, C1, O1, Pos, Args, E1, C2) of
+                {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL1(
+                       UpElem,
+                       %
+                       O1 - MovedSize,
+                       %
+                       UpdatedC1, UpdatedC2);
+                %
+                {split, SplitE, SplitO, SplitL, SplitR} ->
+                    ?new_INTERNAL2(
+                        SplitE,
+                        E1,
+                        %
+                        SplitO,
+                        O1 + 1,
+                        %
+                        SplitL,
+                        SplitR,
+                        C2
+                    )
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC1 ->
+            ?new_INTERNAL1(
+               E1,
+               %
+               O1 + 1,
+               %
+               UpdatedC1, C2)
+    end.
+
+-compile({inline, ins_rebalance_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS2}).
+ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS) ->
+    case Result of
+        ?SPLIT_MATCH(Pos, Args) ->
+            case ins_rebalance_into_left_sibling_maybe(Elem, C2, Pos, Args, E1, C1, O1) of
+                {UpElem, MovedSize, UpdatedC1, UpdatedC2} ->
+                    ?new_INTERNAL1(
+                       UpElem,
+                       %
+                       O1 + MovedSize,
+                       %
+                       UpdatedC1, UpdatedC2);
+                %
+                {split, SplitE, SplitO, SplitL, SplitR} ->
+                    ?new_INTERNAL2(
+                        E1,
+                        SplitE,
+                        %
+                        O1,
+                        O1 + SplitO,
+                        %
+                        C1,
+                        SplitL,
+                        SplitR
+                    )
+            end;
+        %
+        none ->
+            none;
+        %
+        UpdatedC2 ->
+            ?new_INTERNAL1(
+               E1,
+               %
+               O1,
+               %
+               C1, UpdatedC2)
+    end.
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: Insertion - Node Split
 %% ------------------------------------------------------------------
 
@@ -4765,6 +4787,7 @@ insert_split_root(NewElem, Pos, [], Root) ->
         1 ->
             ?new_INTERNAL1(
                 E2,
+                3,
                 ?new_LEAF2(NewElem, E1),
                 ?new_LEAF2(E3, E4)
             );
@@ -4772,6 +4795,7 @@ insert_split_root(NewElem, Pos, [], Root) ->
         2 ->
             ?new_INTERNAL1(
                 E2,
+                3,
                 ?new_LEAF2(E1, NewElem),
                 ?new_LEAF2(E3, E4)
             );
@@ -4779,6 +4803,7 @@ insert_split_root(NewElem, Pos, [], Root) ->
         3 ->
             ?new_INTERNAL1(
                 NewElem,
+                3,
                 ?new_LEAF2(E1, E2),
                 ?new_LEAF2(E3, E4)
             );
@@ -4786,6 +4811,7 @@ insert_split_root(NewElem, Pos, [], Root) ->
         4 ->
             ?new_INTERNAL1(
                 E3,
+                3,
                 ?new_LEAF2(E1, E2),
                 ?new_LEAF2(NewElem, E4)
             );
@@ -4793,98 +4819,190 @@ insert_split_root(NewElem, Pos, [], Root) ->
         5 ->
             ?new_INTERNAL1(
                 E3,
+                3,
                 ?new_LEAF2(E1, E2),
                 ?new_LEAF2(E4, NewElem)
             )
     end;
-insert_split_root(_NewElem, Pos, {split, SplitE, SplitL, SplitR}, Root) ->
+insert_split_root(_NewElem, Pos, {split, SplitE, SplitO, SplitL, SplitR}, Root) ->
     ?INTERNAL4_MATCH_ALL = Root,
 
-    {split, ResplitK, ResplitL, ResplitR} =
-        case Pos of
-            1 ->
-                % FIXME unnecessary allocations
-                split_internal(
-                    SplitE,
-                    E1,
-                    E2,
-                    E3,
-                    E4,
-                    %
-                    SplitL,
-                    SplitR,
-                    C2,
-                    C3,
-                    C4,
-                    C5
-                );
-            %
-            2 ->
-                split_internal(
-                    E1,
-                    SplitE,
-                    E2,
-                    E3,
-                    E4,
-                    %
-                    C1,
-                    SplitL,
-                    SplitR,
-                    C3,
-                    C4,
-                    C5
-                );
-            %
-            3 ->
-                split_internal(
-                    E1,
-                    E2,
-                    SplitE,
-                    E3,
-                    E4,
-                    %
-                    C1,
-                    C2,
-                    SplitL,
-                    SplitR,
-                    C4,
-                    C5
-                );
-            %
-            4 ->
-                split_internal(
-                    E1,
-                    E2,
-                    E3,
-                    SplitE,
-                    E4,
-                    %
-                    C1,
-                    C2,
-                    C3,
-                    SplitL,
-                    SplitR,
-                    C5
-                );
-            %
-            5 ->
-                split_internal(
-                    E1,
-                    E2,
-                    E3,
-                    E4,
-                    SplitE,
-                    %
-                    C1,
-                    C2,
-                    C3,
-                    C4,
-                    SplitL,
-                    SplitR
-                )
-        end,
+    case Pos of
+        1 ->
+            insert_split_root_internal(
+              SplitE,
+              E1,
+              E2,
+              E3,
+              E4,
+              %
+              SplitO,
+              O1 + 1,
+              O2 + 1,
+              O3 + 1,
+              O4 + 1,
+              %
+              SplitL,
+              SplitR,
+              C2,
+              C3,
+              C4,
+              C5
+             );
+        %
+        2 ->
+            insert_split_root_internal(
+              E1,
+              SplitE,
+              E2,
+              E3,
+              E4,
+              %
+              O1,
+              O1 + SplitO,
+              O2 + 1,
+              O3 + 1,
+              O4 + 1,
+              %
+              C1,
+              SplitL,
+              SplitR,
+              C3,
+              C4,
+              C5
+             );
+        %
+        3 ->
+            insert_split_root_internal(
+              E1,
+              E2,
+              SplitE,
+              E3,
+              E4,
+              %
+              O1,
+              O2,
+              O2 + SplitO,
+              O3 + 1,
+              O4 + 1,
+              %
+              C1,
+              C2,
+              SplitL,
+              SplitR,
+              C4,
+              C5
+             );
+        %
+        4 ->
+            insert_split_root_internal(
+              E1,
+              E2,
+              E3,
+              SplitE,
+              E4,
+              %
+              O1,
+              O2,
+              O3,
+              O3 + SplitO,
+              O4 + 1,
+              %
+              C1,
+              C2,
+              C3,
+              SplitL,
+              SplitR,
+              C5
+             );
+        %
+        5 ->
+            insert_split_root_internal(
+              E1,
+              E2,
+              E3,
+              E4,
+              SplitE,
+              %
+              O1,
+              O2,
+              O3,
+              O4,
+              O4 + SplitO,
+              %
+              C1,
+              C2,
+              C3,
+              C4,
+              SplitL,
+              SplitR
+             )
+    end.
 
-    ?new_INTERNAL1(ResplitK, ResplitL, ResplitR).
+-spec insert_split_root_internal(
+    E,
+    E,
+    E,
+    E,
+    E,
+    %
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
+    %
+    C,
+    C,
+    C,
+    C,
+    C,
+    C
+) -> split_internal_result(E) when
+    C :: nonempty_node(E).
+-compile({inline, insert_split_root_internal/16}).
+insert_split_root_internal(
+    E1,
+    E2,
+    E3,
+    E4,
+    E5,
+    %
+    O1,
+    O2,
+    O3,
+    O4,
+    O5,
+    %
+    C1,
+    C2,
+    C3,
+    C4,
+    C5,
+    C6
+) ->
+    SplitE = E3,
+    SplitO = O3,
+
+    SplitL = ?new_INTERNAL2(
+                E1, E2,
+                %
+                O1,
+                O2,
+                %
+                C1, C2, C3
+               ),
+
+    SplitR = ?new_INTERNAL2(
+                E4, E5,
+                %
+                O4 - O3,
+                O5 - O3,
+                %
+                C4, C5, C6
+               ),
+
+    ?new_INTERNAL1(SplitE, SplitO, SplitL, SplitR).
 
 -compile({inline, ins_rebalance_split_leaf/3}).
 ins_rebalance_split_leaf(?LEAF4_MATCH_ALL, Pos, NewElem) ->
@@ -4942,6 +5060,12 @@ ins_rebalance_split_leaf(?LEAF4_MATCH_ALL, Pos, NewElem) ->
     E,
     E,
     %
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
+    pos_integer(),
+    %
     C,
     C,
     C,
@@ -4950,13 +5074,19 @@ ins_rebalance_split_leaf(?LEAF4_MATCH_ALL, Pos, NewElem) ->
     C
 ) -> split_internal_result(E) when
     C :: nonempty_node(E).
--compile({inline, split_internal/11}).
+-compile({inline, split_internal/16}).
 split_internal(
     E1,
     E2,
     E3,
     E4,
     E5,
+    %
+    O1,
+    O2,
+    O3,
+    O4,
+    O5,
     %
     C1,
     C2,
@@ -4966,11 +5096,27 @@ split_internal(
     C6
 ) ->
     SplitE = E3,
+    SplitO = O3,
 
-    SplitL = ?new_INTERNAL2(E1, E2, C1, C2, C3),
-    SplitR = ?new_INTERNAL2(E4, E5, C4, C5, C6),
+    SplitL = ?new_INTERNAL2(
+                E1, E2,
+                %
+                O1,
+                O2,
+                %
+                C1, C2, C3
+               ),
 
-    {split, SplitE, SplitL, SplitR}.
+    SplitR = ?new_INTERNAL2(
+                E4, E5,
+                %
+                O4 - O3,
+                O5 - O3,
+                %
+                C4, C5, C6
+               ),
+
+    {split, SplitE, SplitO, SplitL, SplitR}.
 
 -spec split_leaf(
     E,
@@ -4988,31 +5134,32 @@ split_leaf(
     E5
 ) ->
     SplitE = E3,
+    SplitO = 3,
 
     SplitL = ?new_LEAF2(E1, E2),
     SplitR = ?new_LEAF2(E4, E5),
 
-    {split, SplitE, SplitL, SplitR}.
+    {split, SplitE, SplitO, SplitL, SplitR}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Insertion - Rebalancing from left sibling
 %% ------------------------------------------------------------------
 
--compile({inline, ins_rebalance_into_left_sibling_maybe/6}).
-ins_rebalance_into_left_sibling_maybe(NewElem, Node, Pos, Args, ParentE, Left) ->
+-compile({inline, ins_rebalance_into_left_sibling_maybe/7}).
+ins_rebalance_into_left_sibling_maybe(NewElem, Node, Pos, Args, ParentE, Left, LeftSize) ->
     case Args of
-        {split, SplitE, SplitL, SplitR} ->
+        {split, SplitE, SplitO, SplitL, SplitR} ->
             ins_rebalance_into_left_internal_maybe(
-                Node, Pos, SplitE, SplitL, SplitR, ParentE, Left
+                Node, Pos, SplitE, SplitO, SplitL, SplitR, ParentE, Left, LeftSize
             );
         %
         [] ->
             ins_rebalance_into_left_leaf_maybe(Node, Pos, NewElem, ParentE, Left)
     end.
 
--compile({inline, ins_rebalance_into_left_internal_maybe/7}).
+-compile({inline, ins_rebalance_into_left_internal_maybe/9}).
 ins_rebalance_into_left_internal_maybe(
-    ?INTERNAL4_MATCH_ALL, Pos, SplitE, SplitL, SplitR, ParentE, Left
+    ?INTERNAL4_MATCH_ALL, Pos, SplitE, SplitO, SplitL, SplitR, ParentE, Left, LeftSize
 ) ->
     case Pos of
         1 ->
@@ -5023,6 +5170,12 @@ ins_rebalance_into_left_internal_maybe(
                 E3,
                 E4,
                 %
+                SplitO,
+                O1 + 1,
+                O2 + 1,
+                O3 + 1,
+                O4 + 1,
+                %
                 SplitL,
                 SplitR,
                 C2,
@@ -5031,7 +5184,8 @@ ins_rebalance_into_left_internal_maybe(
                 C5,
                 %
                 ParentE,
-                Left
+                Left,
+                LeftSize
             );
         %
         2 ->
@@ -5042,6 +5196,12 @@ ins_rebalance_into_left_internal_maybe(
                 E3,
                 E4,
                 %
+                O1,
+                O1 + SplitO,
+                O2 + 1,
+                O3 + 1,
+                O4 + 1,
+                %
                 C1,
                 SplitL,
                 SplitR,
@@ -5050,7 +5210,8 @@ ins_rebalance_into_left_internal_maybe(
                 C5,
                 %
                 ParentE,
-                Left
+                Left,
+                LeftSize
             );
         %
         3 ->
@@ -5061,6 +5222,12 @@ ins_rebalance_into_left_internal_maybe(
                 E3,
                 E4,
                 %
+                O1,
+                O2,
+                O2 + SplitO,
+                O3 + 1,
+                O4 + 1,
+                %
                 C1,
                 C2,
                 SplitL,
@@ -5069,7 +5236,8 @@ ins_rebalance_into_left_internal_maybe(
                 C5,
                 %
                 ParentE,
-                Left
+                Left,
+                LeftSize
             );
         %
         4 ->
@@ -5080,6 +5248,12 @@ ins_rebalance_into_left_internal_maybe(
                 SplitE,
                 E4,
                 %
+                O1,
+                O2,
+                O3,
+                O3 + SplitO,
+                O4 + 1,
+                %
                 C1,
                 C2,
                 C3,
@@ -5088,7 +5262,8 @@ ins_rebalance_into_left_internal_maybe(
                 C5,
                 %
                 ParentE,
-                Left
+                Left,
+                LeftSize
             );
         %
         5 ->
@@ -5099,6 +5274,12 @@ ins_rebalance_into_left_internal_maybe(
                 E4,
                 SplitE,
                 %
+                O1,
+                O2,
+                O3,
+                O4,
+                O4 + SplitO,
+                %
                 C1,
                 C2,
                 C3,
@@ -5107,17 +5288,24 @@ ins_rebalance_into_left_internal_maybe(
                 SplitR,
                 %
                 ParentE,
-                Left
+                Left,
+                LeftSize
             )
     end.
 
--compile({inline, ins_rebalance_into_left_internal/13}).
+-compile({inline, ins_rebalance_into_left_internal/19}).
 ins_rebalance_into_left_internal(
     E1,
     E2,
     E3,
     E4,
     E5,
+    %
+    O1,
+    O2,
+    O3,
+    O4,
+    O5,
     %
     C1,
     C2,
@@ -5127,23 +5315,32 @@ ins_rebalance_into_left_internal(
     C6,
     %
     ParentE,
-    Left
+    Left,
+    LeftSize
 ) ->
     case Left of
         ?INTERNAL2_MATCH(
             LE1,
             LE2,
             %
+            LO1,
+            LO2,
+            %
             LC1,
             LC2,
             LC3
         ) ->
             UpElem = E1,
+            MovedSize = O1,
 
             UpdatedLeft = ?new_INTERNAL3(
                 LE1,
                 LE2,
                 ParentE,
+                %
+                LO1,
+                LO2,
+                LeftSize,
                 %
                 LC1,
                 LC2,
@@ -5156,6 +5353,11 @@ ins_rebalance_into_left_internal(
                 E3,
                 E4,
                 E5,
+                %%
+                O2 - O1,
+                O3 - O1,
+                O4 - O1,
+                O5 - O1,
                 %
                 C2,
                 C3,
@@ -5164,7 +5366,7 @@ ins_rebalance_into_left_internal(
                 C6
             ),
 
-            {UpElem, UpdatedLeft, UpdatedNode};
+            {UpElem, MovedSize, UpdatedLeft, UpdatedNode};
         %
         %
         %
@@ -5176,6 +5378,12 @@ ins_rebalance_into_left_internal(
                 E3,
                 E4,
                 E5,
+                %
+                O1,
+                O2,
+                O3,
+                O4,
+                O5,
                 %
                 C1,
                 C2,
@@ -5199,43 +5407,45 @@ ins_rebalance_into_left_leaf_maybe(Node, Pos, NewElem, ParentE, Left) ->
 
 -compile({inline, ins_rebalance_into_left_leaf/4}).
 ins_rebalance_into_left_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewElem, UpdatedLeft) ->
+    MovedSize = 1,
+
     case Pos of
         1 ->
             UpElem = NewElem,
             UpdatedNode = Node,
-            {UpElem, UpdatedLeft, UpdatedNode};
+            {UpElem, MovedSize, UpdatedLeft, UpdatedNode};
         %
         2 ->
             UpElem = E1,
             UpdatedNode = ?new_LEAF4(NewElem, E2, E3, E4),
-            {UpElem, UpdatedLeft, UpdatedNode};
+            {UpElem, MovedSize, UpdatedLeft, UpdatedNode};
         %
         3 ->
             UpElem = E1,
             UpdatedNode = ?new_LEAF4(E2, NewElem, E3, E4),
-            {UpElem, UpdatedLeft, UpdatedNode};
+            {UpElem, MovedSize, UpdatedLeft, UpdatedNode};
         %
         4 ->
             UpElem = E1,
             UpdatedNode = ?new_LEAF4(E2, E3, NewElem, E4),
-            {UpElem, UpdatedLeft, UpdatedNode};
+            {UpElem, MovedSize, UpdatedLeft, UpdatedNode};
         %
         5 ->
             UpElem = E1,
             UpdatedNode = ?new_LEAF4(E2, E3, E4, NewElem),
-            {UpElem, UpdatedLeft, UpdatedNode}
+            {UpElem, MovedSize, UpdatedLeft, UpdatedNode}
     end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Insertion - Rebalancing from right sibling
 %% ------------------------------------------------------------------
 
--compile({inline, ins_rebalance_into_right_sibling_maybe/6}).
-ins_rebalance_into_right_sibling_maybe(NewElem, Node, Pos, Args, ParentE, Right) ->
+-compile({inline, ins_rebalance_into_right_sibling_maybe/7}).
+ins_rebalance_into_right_sibling_maybe(NewElem, Node, NodeOffset, Pos, Args, ParentE, Right) ->
     case Args of
-        {split, SplitE, SplitL, SplitR} ->
+        {split, SplitE, SplitO, SplitL, SplitR} ->
             ins_rebalance_into_right_internal_maybe(
-                Node, Pos, SplitE, SplitL, SplitR, ParentE, Right
+                Node, NodeOffset, Pos, SplitE, SplitO, SplitL, SplitR, ParentE, Right
             );
         %
         [] ->
@@ -5244,9 +5454,9 @@ ins_rebalance_into_right_sibling_maybe(NewElem, Node, Pos, Args, ParentE, Right)
             )
     end.
 
--compile({inline, ins_rebalance_into_right_internal_maybe/7}).
+-compile({inline, ins_rebalance_into_right_internal_maybe/9}).
 ins_rebalance_into_right_internal_maybe(
-    ?INTERNAL4_MATCH_ALL, Pos, SplitE, SplitL, SplitR, ParentE, Right
+    ?INTERNAL4_MATCH_ALL, NodeOffset, Pos, SplitE, SplitO, SplitL, SplitR, ParentE, Right
 ) ->
     case Pos of
         1 ->
@@ -5257,12 +5467,20 @@ ins_rebalance_into_right_internal_maybe(
                 E3,
                 E4,
                 %
+                SplitO,
+                O1 + 1,
+                O2 + 1,
+                O3 + 1,
+                O4 + 1,
+                %
                 SplitL,
                 SplitR,
                 C2,
                 C3,
                 C4,
                 C5,
+                %
+                NodeOffset + 1,
                 %
                 ParentE,
                 Right
@@ -5276,12 +5494,20 @@ ins_rebalance_into_right_internal_maybe(
                 E3,
                 E4,
                 %
+                O1,
+                O1 + SplitO,
+                O2 + 1,
+                O3 + 1,
+                O4 + 1,
+                %
                 C1,
                 SplitL,
                 SplitR,
                 C3,
                 C4,
                 C5,
+                %
+                NodeOffset + 1,
                 %
                 ParentE,
                 Right
@@ -5295,12 +5521,20 @@ ins_rebalance_into_right_internal_maybe(
                 E3,
                 E4,
                 %
+                O1,
+                O2,
+                O2 + SplitO,
+                O3 + 1,
+                O4 + 1,
+                %
                 C1,
                 C2,
                 SplitL,
                 SplitR,
                 C4,
                 C5,
+                %
+                NodeOffset + 1,
                 %
                 ParentE,
                 Right
@@ -5314,12 +5548,20 @@ ins_rebalance_into_right_internal_maybe(
                 SplitE,
                 E4,
                 %
+                O1,
+                O2,
+                O3,
+                O3 + SplitO,
+                O4 + 1,
+                %
                 C1,
                 C2,
                 C3,
                 SplitL,
                 SplitR,
                 C5,
+                %
+                NodeOffset + 1,
                 %
                 ParentE,
                 Right
@@ -5333,6 +5575,12 @@ ins_rebalance_into_right_internal_maybe(
                 E4,
                 SplitE,
                 %
+                O1,
+                O2,
+                O3,
+                O4,
+                O4 + SplitO,
+                %
                 C1,
                 C2,
                 C3,
@@ -5340,12 +5588,14 @@ ins_rebalance_into_right_internal_maybe(
                 SplitL,
                 SplitR,
                 %
+                NodeOffset + 1,
+                %
                 ParentE,
                 Right
             )
     end.
 
--compile({inline, ins_rebalance_into_right_internal/13}).
+-compile({inline, ins_rebalance_into_right_internal/19}).
 ins_rebalance_into_right_internal(
     E1,
     E2,
@@ -5353,12 +5603,20 @@ ins_rebalance_into_right_internal(
     E4,
     E5,
     %
+    O1,
+    O2,
+    O3,
+    O4,
+    O5,
+    %
     C1,
     C2,
     C3,
     C4,
     C5,
     C6,
+    %
+    NodeOffset,
     %
     ParentE,
     Right
@@ -5368,17 +5626,27 @@ ins_rebalance_into_right_internal(
             RE1,
             RE2,
             %
+            RO1,
+            RO2,
+            %
             RC1,
             RC2,
             RC3
         ) ->
             UpElem = E5,
+            RightMovedSize = NodeOffset - O5,
+            MovedSize = RightMovedSize - 1,
 
             UpdatedNode = ?new_INTERNAL4(
                 E1,
                 E2,
                 E3,
                 E4,
+                %
+                O1,
+                O2,
+                O3,
+                O4,
                 %
                 C1,
                 C2,
@@ -5392,13 +5660,17 @@ ins_rebalance_into_right_internal(
                 RE1,
                 RE2,
                 %
+                RightMovedSize,
+                RightMovedSize + RO1,
+                RightMovedSize + RO2,
+                %
                 C6,
                 RC1,
                 RC2,
                 RC3
             ),
 
-            {UpElem, UpdatedNode, UpdatedRight};
+            {UpElem, MovedSize, UpdatedNode, UpdatedRight};
         %
         %
         %
@@ -5410,6 +5682,12 @@ ins_rebalance_into_right_internal(
                 E3,
                 E4,
                 E5,
+                %
+                O1,
+                O2,
+                O3,
+                O4,
+                O5,
                 %
                 C1,
                 C2,
@@ -5433,31 +5711,33 @@ ins_rebalance_into_right_leaf_maybe(Node, Pos, NewElem, ParentE, Right) ->
 
 -compile({inline, ins_rebalance_into_right_leaf/4}).
 ins_rebalance_into_right_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewElem, UpdatedRight) ->
+    MovedSize = 0,
+
     case Pos of
         1 ->
             UpElem = E4,
             UpdatedNode = ?new_LEAF4(NewElem, E1, E2, E3),
-            {UpElem, UpdatedNode, UpdatedRight};
+            {UpElem, MovedSize, UpdatedNode, UpdatedRight};
         %
         2 ->
             UpElem = E4,
             UpdatedNode = ?new_LEAF4(E1, NewElem, E2, E3),
-            {UpElem, UpdatedNode, UpdatedRight};
+            {UpElem, MovedSize, UpdatedNode, UpdatedRight};
         %
         3 ->
             UpElem = E4,
             UpdatedNode = ?new_LEAF4(E1, E2, NewElem, E3),
-            {UpElem, UpdatedNode, UpdatedRight};
+            {UpElem, MovedSize, UpdatedNode, UpdatedRight};
         %
         4 ->
             UpElem = E4,
             UpdatedNode = ?new_LEAF4(E1, E2, E3, NewElem),
-            {UpElem, UpdatedNode, UpdatedRight};
+            {UpElem, MovedSize, UpdatedNode, UpdatedRight};
         %
         5 ->
             UpElem = NewElem,
             UpdatedNode = Node,
-            {UpElem, UpdatedNode, UpdatedRight}
+            {UpElem, MovedSize, UpdatedNode, UpdatedRight}
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5480,19 +5760,45 @@ ins_rebalance_into_right_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewElem, UpdatedRigh
 
 -compile({inline, del_rebalance_INTERNAL4_C1 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
-    case del_rebalance_maybe_from_right_sibling(C1, E1, C2) of
+    UpdatedO1 = O1 - 1,
+    UpdatedO2 = O2 - 1,
+    UpdatedO3 = O3 - 1,
+    UpdatedO4 = O4 - 1,
+
+    case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
         no ->
-            ?INTERNAL4_UPD_C1(C1);
+            ?new_INTERNAL4(
+               E1,
+               E2,
+               E3,
+               E4,
+               %
+               UpdatedO1,
+               UpdatedO2,
+               UpdatedO3,
+               UpdatedO4,
+               %
+               C1,
+               C2,
+               C3,
+               C4,
+               C5
+              );
         %
         none ->
             none;
         %
-        ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
+        ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL4(
                 UpElem,
                 E2,
                 E3,
                 E4,
+                %
+                UpdatedO1 + MovedSize,
+                UpdatedO2,
+                UpdatedO3,
+                UpdatedO4,
                 %
                 UpdatedC1,
                 UpdatedC2,
@@ -5501,11 +5807,15 @@ del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
                 C5
             );
         %
-        ?MERGED(MergedC1C2) ->
+        ?MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL3(
                 E2,
                 E3,
                 E4,
+                %
+                UpdatedO2,
+                UpdatedO3,
+                UpdatedO4,
                 %
                 MergedC1C2,
                 C3,
@@ -5520,19 +5830,41 @@ del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL4_C2 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
+    UpdatedO2 = O2 - 1,
+    UpdatedO3 = O3 - 1,
+    UpdatedO4 = O4 - 1,
+
     case
         del_rebalance_maybe_from_either_sibling(
             C2,
+            UpdatedO2 - O1,
             %
             E1,
             C1,
+            O1,
             %
             E2,
             C3
         )
     of
         no ->
-            ?INTERNAL4_UPD_C2(C2);
+            ?new_INTERNAL4(
+               E1,
+               E2,
+               E3,
+               E4,
+               %
+               O1,
+               UpdatedO2,
+               UpdatedO3,
+               UpdatedO4,
+               %
+               C1,
+               C2,
+               C3,
+               C4,
+               C5
+              );
         %
         none ->
             none;
@@ -5543,18 +5875,27 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
                 E3,
                 E4,
                 %
+                UpdatedO2,
+                UpdatedO3,
+                UpdatedO4,
+                %
                 MergedC1C2,
                 C3,
                 C4,
                 C5
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, RebalancedC2, UpdatedC3) ->
+        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL4(
                 E1,
                 UpElem,
                 E3,
                 E4,
+                %
+                O1,
+                UpdatedO2 + MovedSize,
+                UpdatedO3,
+                UpdatedO4,
                 %
                 C1,
                 RebalancedC2,
@@ -5563,12 +5904,17 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
                 C5
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedC1, RebalancedC2) ->
+        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC1, RebalancedC2) ->
             ?new_INTERNAL4(
                 UpElem,
                 E2,
                 E3,
                 E4,
+                %
+                O1  - MovedSize,
+                UpdatedO2,
+                UpdatedO3,
+                UpdatedO4,
                 %
                 UpdatedC1,
                 RebalancedC2,
@@ -5584,19 +5930,40 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL4_C3 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
+    UpdatedO3 = O3 - 1,
+    UpdatedO4 = O4 - 1,
+
     case
         del_rebalance_maybe_from_either_sibling(
             C3,
+            UpdatedO3 - O2,
             %
             E2,
             C2,
+            O2 - O1,
             %
             E3,
             C4
         )
     of
         no ->
-            ?INTERNAL4_UPD_C3(C3);
+            ?new_INTERNAL4(
+               E1,
+               E2,
+               E3,
+               E4,
+               %
+               O1,
+               O2,
+               UpdatedO3,
+               UpdatedO4,
+               %
+               C1,
+               C2,
+               C3,
+               C4,
+               C5
+              );
         %
         none ->
             none;
@@ -5607,18 +5974,27 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
                 E3,
                 E4,
                 %
+                O1,
+                UpdatedO3,
+                UpdatedO4,
+                %
                 C1,
                 MergedC2C3,
                 C4,
                 C5
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, RebalancedC3, UpdatedC4) ->
+        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC3, UpdatedC4) ->
             ?new_INTERNAL4(
                 E1,
                 E2,
                 UpElem,
                 E4,
+                %
+                O1,
+                O2,
+                UpdatedO3 + MovedSize,
+                UpdatedO4,
                 %
                 C1,
                 C2,
@@ -5627,12 +6003,17 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
                 C5
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedC2, RebalancedC3) ->
+        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL4(
                 E1,
                 UpElem,
                 E3,
                 E4,
+                %
+                O1,
+                O2 - MovedSize,
+                UpdatedO3,
+                UpdatedO4,
                 %
                 C1,
                 UpdatedC2,
@@ -5648,19 +6029,39 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL4_C4 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
+    UpdatedO4 = O4 - 1,
+
     case
         del_rebalance_maybe_from_either_sibling(
             C4,
+            UpdatedO4 - O3,
             %
             E3,
             C3,
+            O3 - O2,
             %
             E4,
             C5
         )
     of
         no ->
-            ?INTERNAL4_UPD_C4(C4);
+            ?new_INTERNAL4(
+               E1,
+               E2,
+               E3,
+               E4,
+               %
+               O1,
+               O2,
+               O3,
+               UpdatedO4,
+               %
+               C1,
+               C2,
+               C3,
+               C4,
+               C5
+              );
         %
         none ->
             none;
@@ -5671,18 +6072,27 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
                 E2,
                 E4,
                 %
+                O1,
+                O2,
+                UpdatedO4,
+                %
                 C1,
                 C2,
                 MergedC3C4,
                 C5
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, RebalancedC4, UpdatedC5) ->
+        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC4, UpdatedC5) ->
             ?new_INTERNAL4(
                 E1,
                 E2,
                 E3,
                 UpElem,
+                %
+                O1,
+                O2,
+                O3,
+                UpdatedO4 + MovedSize,
                 %
                 C1,
                 C2,
@@ -5691,12 +6101,17 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
                 UpdatedC5
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedC3, RebalancedC4) ->
+        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL4(
                 E1,
                 E2,
                 UpElem,
                 E4,
+                %
+                O1,
+                O2,
+                O3 - MovedSize,
+                UpdatedO4,
                 %
                 C1,
                 C2,
@@ -5712,19 +6127,24 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL4_C5 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
-    case del_rebalance_maybe_from_left_sibling(C5, E4, C4) of
+    case del_rebalance_maybe_from_left_sibling(C5, E4, C4, O4 - O3) of
         no ->
             ?INTERNAL4_UPD_C5(C5);
         %
         none ->
             none;
         %
-        ?ROTATED(UpElem, UpdatedC4, RebalancedC5) ->
+        ?ROTATED(UpElem, MovedSize, UpdatedC4, RebalancedC5) ->
             ?new_INTERNAL4(
                 E1,
                 E2,
                 E3,
                 UpElem,
+                %
+                O1,
+                O2,
+                O3,
+                O4 - MovedSize,
                 %
                 C1,
                 C2,
@@ -5733,11 +6153,15 @@ del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
                 RebalancedC5
             );
         %
-        ?MERGED(MergedC4C5) ->
+        ?MERGED_MATCH(MergedC4C5) ->
             ?new_INTERNAL3(
                 E1,
                 E2,
                 E3,
+                %
+                O1,
+                O2,
+                O3,
                 %
                 C1,
                 C2,
@@ -5756,18 +6180,38 @@ del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL3_C1 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
-    case del_rebalance_maybe_from_right_sibling(C1, E1, C2) of
+    UpdatedO1 = O1 - 1,
+    UpdatedO2 = O2 - 1,
+    UpdatedO3 = O3 - 1,
+
+    case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
         no ->
-            ?INTERNAL3_UPD_C1(C1);
+            ?new_INTERNAL3(
+               E1,
+               E2,
+               E3,
+               %
+               UpdatedO1,
+               UpdatedO2,
+               UpdatedO3,
+               %
+               C1,
+               C2,
+               C3,
+               C4);
         %
         none ->
             none;
         %
-        ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
+        ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL3(
                 UpElem,
                 E2,
                 E3,
+                %
+                UpdatedO1 + MovedSize,
+                UpdatedO2,
+                UpdatedO3,
                 %
                 UpdatedC1,
                 UpdatedC2,
@@ -5775,10 +6219,13 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
                 C4
             );
         %
-        ?MERGED(MergedC1C2) ->
+        ?MERGED_MATCH(MergedC1C2) ->
             ?new_INTERNAL2(
                 E2,
                 E3,
+                %
+                UpdatedO2,
+                UpdatedO3,
                 %
                 MergedC1C2,
                 C3,
@@ -5792,19 +6239,36 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL3_C2 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
+    UpdatedO2 = O2 - 1,
+    UpdatedO3 = O3 - 1,
+
     case
         del_rebalance_maybe_from_either_sibling(
             C2,
+            UpdatedO2 - O1,
             %
             E1,
             C1,
+            O1,
             %
             E2,
             C3
         )
     of
         no ->
-            ?INTERNAL3_UPD_C2(C2);
+            ?new_INTERNAL3(
+               E1,
+               E2,
+               E3,
+               %
+               O1,
+               UpdatedO2,
+               UpdatedO3,
+               %
+               C1,
+               C2,
+               C3,
+               C4);
         %
         none ->
             none;
@@ -5814,16 +6278,23 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
                 E2,
                 E3,
                 %
+                UpdatedO2,
+                UpdatedO3,
+                %
                 MergedC1C2,
                 C3,
                 C4
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, RebalancedC2, UpdatedC3) ->
+        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL3(
                 E1,
                 UpElem,
                 E3,
+                %
+                O1,
+                UpdatedO2 + MovedSize,
+                UpdatedO3,
                 %
                 C1,
                 RebalancedC2,
@@ -5831,11 +6302,15 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
                 C4
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedC1, RebalancedC2) ->
+        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC1, RebalancedC2) ->
             ?new_INTERNAL3(
                 UpElem,
                 E2,
                 E3,
+                %
+                O1 - MovedSize,
+                UpdatedO2,
+                UpdatedO3,
                 %
                 UpdatedC1,
                 RebalancedC2,
@@ -5850,19 +6325,35 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL3_C3 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
+    UpdatedO3 = O3 - 1,
+
     case
         del_rebalance_maybe_from_either_sibling(
             C3,
+            UpdatedO3 - O2,
             %
             E2,
             C2,
+            O2 - O1,
             %
             E3,
             C4
         )
     of
         no ->
-            ?INTERNAL3_UPD_C3(C3);
+            ?new_INTERNAL3(
+               E1,
+               E2,
+               E3,
+               %
+               O1,
+               O2,
+               UpdatedO3,
+               %
+               C1,
+               C2,
+               C3,
+               C4);
         %
         none ->
             none;
@@ -5872,16 +6363,23 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
                 E1,
                 E3,
                 %
+                O1,
+                UpdatedO3,
+                %
                 C1,
                 MergedC2C3,
                 C4
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, RebalancedC3, UpdatedC4) ->
+        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC3, UpdatedC4) ->
             ?new_INTERNAL3(
                 E1,
                 E2,
                 UpElem,
+                %
+                O1,
+                O2,
+                UpdatedO3 + MovedSize,
                 %
                 C1,
                 C2,
@@ -5889,11 +6387,15 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
                 UpdatedC4
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedC2, RebalancedC3) ->
+        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL3(
                 E1,
                 UpElem,
                 E3,
+                %
+                O1,
+                O2 - MovedSize,
+                UpdatedO3,
                 %
                 C1,
                 UpdatedC2,
@@ -5908,18 +6410,22 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL3_C4 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
-    case del_rebalance_maybe_from_left_sibling(C4, E3, C3) of
+    case del_rebalance_maybe_from_left_sibling(C4, E3, C3, O3 - O2) of
         no ->
             ?INTERNAL3_UPD_C4(C4);
         %
         none ->
             none;
         %
-        ?ROTATED(UpElem, UpdatedC3, RebalancedC4) ->
+        ?ROTATED(UpElem, MovedSize, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL3(
                 E1,
                 E2,
                 UpElem,
+                %
+                O1,
+                O2,
+                O3 - MovedSize,
                 %
                 C1,
                 C2,
@@ -5927,10 +6433,13 @@ del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
                 RebalancedC4
             );
         %
-        ?MERGED(MergedC3C4) ->
+        ?MERGED_MATCH(MergedC3C4) ->
             ?new_INTERNAL2(
                 E1,
                 E2,
+                %
+                O1,
+                O2,
                 %
                 C1,
                 C2,
@@ -5948,25 +6457,41 @@ del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL2_C1 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
-    case del_rebalance_maybe_from_right_sibling(C1, E1, C2) of
+    UpdatedO1 = O1 - 1,
+    UpdatedO2 = O2 - 1,
+
+    case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
         no ->
-            ?INTERNAL2_UPD_C1(C1);
+            ?new_INTERNAL2(
+               E1, E2,
+               %
+               UpdatedO1, UpdatedO2,
+               %
+               C1, C2, C3);
         %
         none ->
             none;
         %
-        ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
+        ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL2(
                 UpElem,
                 E2,
+                %
+                UpdatedO1 + MovedSize,
+                UpdatedO2,
                 %
                 UpdatedC1,
                 UpdatedC2,
                 C3
             );
         %
-        ?MERGED(MergedC1C2) ->
-            ?new_INTERNAL1(E2, MergedC1C2, C3)
+        ?MERGED_MATCH(MergedC1C2) ->
+            ?new_INTERNAL1(
+               E2,
+               %
+               UpdatedO2,
+               %
+               MergedC1C2, C3)
     end.
 
 %%
@@ -5975,19 +6500,28 @@ del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL2_C2 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
+    UpdatedO2 = O2 - 1,
+
     case
         del_rebalance_maybe_from_either_sibling(
             C2,
+            UpdatedO2 - O1,
             %
             E1,
             C1,
+            O1,
             %
             E2,
             C3
         )
     of
         no ->
-            ?INTERNAL2_UPD_C2(C2);
+            ?new_INTERNAL2(
+               E1, E2,
+               %
+               O1, UpdatedO2,
+               %
+               C1, C2, C3);
         %
         none ->
             none;
@@ -5996,24 +6530,32 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
             ?new_INTERNAL1(
                 E2,
                 %
+                UpdatedO2,
+                %
                 MergedC1C2,
                 C3
             );
         %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, RebalancedC2, UpdatedC3) ->
+        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL2(
                 E1,
                 UpElem,
+                %
+                O1,
+                UpdatedO2 + MovedSize,
                 %
                 C1,
                 RebalancedC2,
                 UpdatedC3
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedC1, RebalancedC2) ->
+        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC1, RebalancedC2) ->
             ?new_INTERNAL2(
                 UpElem,
                 E2,
+                %
+                O1 - MovedSize,
+                UpdatedO2,
                 %
                 UpdatedC1,
                 RebalancedC2,
@@ -6027,26 +6569,31 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL2_C3 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
-    case del_rebalance_maybe_from_left_sibling(C3, E2, C2) of
+    case del_rebalance_maybe_from_left_sibling(C3, E2, C2, O2 - O1) of
         no ->
             ?INTERNAL2_UPD_C3(C3);
         %
         none ->
             none;
         %
-        ?ROTATED(UpElem, UpdatedC2, RebalancedC3) ->
+        ?ROTATED(UpElem, MovedSize, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL2(
                 E1,
                 UpElem,
+                %
+                O1,
+                O2 - MovedSize,
                 %
                 C1,
                 UpdatedC2,
                 RebalancedC3
             );
         %
-        ?MERGED(MergedC2C3) ->
+        ?MERGED_MATCH(MergedC2C3) ->
             ?new_INTERNAL1(
                 E1,
+                %
+                O1,
                 %
                 C1,
                 MergedC2C3
@@ -6063,17 +6610,29 @@ del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL1_C1 / ?INTERNAL1_ARITY}).
 del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
-    case del_rebalance_maybe_from_right_sibling(C1, E1, C2) of
+    UpdatedO1 = O1 - 1,
+
+    case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
         no ->
-            ?INTERNAL1_UPD_C1(C1);
+            ?new_INTERNAL1(
+               E1,
+               %
+               UpdatedO1,
+               %
+               C1, C2);
         %
         none ->
             none;
         %
-        ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
-            ?new_INTERNAL1(UpElem, UpdatedC1, UpdatedC2);
+        ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
+            ?new_INTERNAL1(
+               UpElem,
+               %
+               UpdatedO1 + MovedSize,
+               %
+               UpdatedC1, UpdatedC2);
         %
-        ?MERGED(MergedC1C2) ->
+        ?MERGED_MATCH(MergedC1C2) ->
             % Can only happen at root - height is reduced
             ?CHECK_NODE(MergedC1C2)
     end.
@@ -6084,17 +6643,22 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
 
 -compile({inline, del_rebalance_INTERNAL1_C2 / ?INTERNAL1_ARITY}).
 del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
-    case del_rebalance_maybe_from_left_sibling(C2, E1, C1) of
+    case del_rebalance_maybe_from_left_sibling(C2, E1, C1, O1) of
         no ->
             ?INTERNAL1_UPD_C2(C2);
         %
         none ->
             none;
         %
-        ?ROTATED(UpElem, UpdatedC1, UpdatedC2) ->
-            ?new_INTERNAL1(UpElem, UpdatedC1, UpdatedC2);
+        ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
+            ?new_INTERNAL1(
+               UpElem,
+               %
+               O1 - MovedSize,
+               %
+               UpdatedC1, UpdatedC2);
         %
-        ?MERGED(MergedC1C2) ->
+        ?MERGED_MATCH(MergedC1C2) ->
             % Can only happen at root - height is reduced
             ?CHECK_NODE(MergedC1C2)
     end.
@@ -6103,15 +6667,17 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
 %% Internal Function Definitions: Deletion - Rebalance a node from its right sibling
 %% ------------------------------------------------------------------
 
--compile({inline, del_rebalance_maybe_from_right_sibling/3}).
-del_rebalance_maybe_from_right_sibling(Child, RParentE, Right) ->
+-compile({inline, del_rebalance_maybe_from_right_sibling/4}).
+del_rebalance_maybe_from_right_sibling(Child, ChildOffset, RParentE, Right) ->
     case Child of
-        ?INTERNAL1_MATCH(CElem, Cright, CRight) ->
+        ?INTERNAL1_MATCH(CElem, CLeftOffset, CLeft, CRight) ->
             del_rebalance_internal_from_right_sibling(
                 CElem,
-
-                Cright,
+                CLeftOffset,
+                CLeft,
                 CRight,
+                %
+                ChildOffset,
                 %
                 RParentE,
                 Right
@@ -6120,7 +6686,6 @@ del_rebalance_maybe_from_right_sibling(Child, RParentE, Right) ->
         ?LEAF1_MATCH(CElem) ->
             del_rebalance_leaf_from_right_sibling(
                 CElem,
-
                 %
                 RParentE,
                 Right
@@ -6133,12 +6698,14 @@ del_rebalance_maybe_from_right_sibling(Child, RParentE, Right) ->
             no
     end.
 
-%-compile({inline, del_rebalance_internal_from_right_sibling/7}).
+%-compile({inline,
 del_rebalance_internal_from_right_sibling(
     CElem,
-
+    CLeftOffset,
     CLeft,
     CRight,
+    %
+    ChildOffset,
     %
     RParentE,
     Right
@@ -6151,6 +6718,11 @@ del_rebalance_internal_from_right_sibling(
                 E1,
                 E2,
                 %
+                CLeftOffset,
+                ChildOffset,
+                ChildOffset + O1,
+                ChildOffset + O2,
+                %
                 CLeft,
                 CRight,
                 C1,
@@ -6158,17 +6730,21 @@ del_rebalance_internal_from_right_sibling(
                 C3
             ),
 
-            MergedNode;
+            ?MERGED(MergedNode);
         %
         %
         %
         ?INTERNAL3_MATCH_ALL ->
             UpElem = E1,
             MovedC = C1,
+            MovedSize = O1,
 
             UpdatedNode = ?new_INTERNAL2(
                 CElem,
                 RParentE,
+                %
+                CLeftOffset,
+                ChildOffset,
                 %
                 CLeft,
                 CRight,
@@ -6179,22 +6755,29 @@ del_rebalance_internal_from_right_sibling(
                 E2,
                 E3,
                 %
+                O2 - O1,
+                O3 - O1,
+                %
                 C2,
                 C3,
                 C4
             ),
 
-            ?ROTATED(UpElem, UpdatedNode, UpdatedRight);
+            ?ROTATED(UpElem, MovedSize, UpdatedNode, UpdatedRight);
         %
         %
         %
         ?INTERNAL4_MATCH_ALL ->
             UpElem = E1,
             MovedC = C1,
+            MovedSize = O1,
 
             UpdatedNode = ?new_INTERNAL2(
                 CElem,
                 RParentE,
+                %
+                CLeftOffset,
+                ChildOffset,
                 %
                 CLeft,
                 CRight,
@@ -6206,13 +6789,17 @@ del_rebalance_internal_from_right_sibling(
                 E3,
                 E4,
                 %
+                O2 - O1,
+                O3 - O1,
+                O4 - O1,
+                %
                 C2,
                 C3,
                 C4,
                 C5
             ),
 
-            ?ROTATED(UpElem, UpdatedNode, UpdatedRight)
+            ?ROTATED(UpElem, MovedSize, UpdatedNode, UpdatedRight)
         %
         %
     end.
@@ -6228,25 +6815,29 @@ del_rebalance_leaf_from_right_sibling(CElem, RParentE, Right) ->
                 E2
             ),
 
-            MergedNode;
+            ?MERGED(MergedNode);
         %
         %
         ?LEAF3_MATCH_ALL ->
             UpElem = E1,
+            MovedSize = 1,
+
 
             UpdatedNode = ?new_LEAF2(CElem, RParentE),
             UpdatedRight = ?new_LEAF2(E2, E3),
 
-            ?ROTATED(UpElem, UpdatedNode, UpdatedRight);
+            ?ROTATED(UpElem, MovedSize, UpdatedNode, UpdatedRight);
         %
         %
         ?LEAF4_MATCH_ALL ->
             UpElem = E1,
+            MovedSize = 1,
+
 
             UpdatedNode = ?new_LEAF2(CElem, RParentE),
             UpdatedRight = ?new_LEAF3(E2, E3, E4),
 
-            ?ROTATED(UpElem, UpdatedNode, UpdatedRight)
+            ?ROTATED(UpElem, MovedSize, UpdatedNode, UpdatedRight)
         %
         %
     end.
@@ -6255,24 +6846,24 @@ del_rebalance_leaf_from_right_sibling(CElem, RParentE, Right) ->
 %% Internal Function Definitions: Deletion - Rebalance a node from its left sibling
 %% ------------------------------------------------------------------
 
--compile({inline, del_rebalance_maybe_from_left_sibling/3}).
-del_rebalance_maybe_from_left_sibling(Child, LParentE, Left) ->
+-compile({inline, del_rebalance_maybe_from_left_sibling/4}).
+del_rebalance_maybe_from_left_sibling(Child, LParentE, Left, LeftOffset) ->
     case Child of
-        ?INTERNAL1_MATCH(CElem, CLeft, CRight) ->
+        ?INTERNAL1_MATCH(CElem, CLeftOffset, CLeft, CRight) ->
             del_rebalance_internal_from_left_sibling(
                 CElem,
-
+                CLeftOffset,
                 CLeft,
                 CRight,
                 %
                 LParentE,
-                Left
+                Left,
+                LeftOffset
             );
         %
         ?LEAF1_MATCH(CElem) ->
             del_rebalance_leaf_from_left_sibling(
                 CElem,
-
                 %
                 LParentE,
                 Left
@@ -6288,12 +6879,13 @@ del_rebalance_maybe_from_left_sibling(Child, LParentE, Left) ->
 %-compile({inline, del_rebalance_internal_from_left_sibling/7}).
 del_rebalance_internal_from_left_sibling(
     CElem,
-
+    CLeftOffset,
     CLeft,
     CRight,
     %
     LParentE,
-    Left
+    Left,
+    LeftOffset
 ) ->
     case Left of
         ?INTERNAL2_MATCH_ALL ->
@@ -6303,6 +6895,11 @@ del_rebalance_internal_from_left_sibling(
                 LParentE,
                 CElem,
                 %
+                O1,
+                O2,
+                LeftOffset,
+                LeftOffset + CLeftOffset,
+                %
                 C1,
                 C2,
                 C3,
@@ -6310,17 +6907,21 @@ del_rebalance_internal_from_left_sibling(
                 CRight
             ),
 
-            MergedNode;
+            ?MERGED(MergedNode);
         %
         %
         %
         ?INTERNAL3_MATCH_ALL ->
             UpElem = E3,
             MovedC = C4,
+            MovedSize = LeftOffset - O3,
 
             UpdatedNode = ?new_INTERNAL2(
                 LParentE,
                 CElem,
+                %
+                MovedSize,
+                MovedSize + CLeftOffset,
                 %
                 MovedC,
                 CLeft,
@@ -6331,22 +6932,29 @@ del_rebalance_internal_from_left_sibling(
                 E1,
                 E2,
                 %
+                O1,
+                O2,
+                %
                 C1,
                 C2,
                 C3
             ),
 
-            ?ROTATED(UpElem, UpdatedLeft, UpdatedNode);
+            ?ROTATED(UpElem, MovedSize, UpdatedLeft, UpdatedNode);
         %
         %
         %
         ?INTERNAL4_MATCH_ALL ->
             UpElem = E4,
             MovedC = C5,
+            MovedSize = LeftOffset - O4,
 
             UpdatedNode = ?new_INTERNAL2(
                 LParentE,
                 CElem,
+                %
+                MovedSize,
+                MovedSize + CLeftOffset,
                 %
                 MovedC,
                 CLeft,
@@ -6358,13 +6966,17 @@ del_rebalance_internal_from_left_sibling(
                 E2,
                 E3,
                 %
+                O1,
+                O2,
+                O3,
+                %
                 C1,
                 C2,
                 C3,
                 C4
             ),
 
-            ?ROTATED(UpElem, UpdatedLeft, UpdatedNode)
+            ?ROTATED(UpElem, MovedSize, UpdatedLeft, UpdatedNode)
         %
         %
     end.
@@ -6372,7 +6984,6 @@ del_rebalance_internal_from_left_sibling(
 %-compile({inline, del_rebalance_leaf_from_left_sibling/5}).
 del_rebalance_leaf_from_left_sibling(
     CElem,
-
     LParentE,
     Left
 ) ->
@@ -6385,51 +6996,58 @@ del_rebalance_leaf_from_left_sibling(
                 CElem
             ),
 
-            MergedNode;
+            ?MERGED(MergedNode);
         %
         %
         ?LEAF3_MATCH_ALL ->
             UpElem = E3,
+            MovedSize = 1,
 
             UpdatedNode = ?new_LEAF2(LParentE, CElem),
             UpdatedLeft = ?new_LEAF2(E1, E2),
 
-            ?ROTATED(UpElem, UpdatedLeft, UpdatedNode);
+            ?ROTATED(UpElem, MovedSize, UpdatedLeft, UpdatedNode);
         %
         %
         ?LEAF4_MATCH_ALL ->
             UpElem = E4,
+            MovedSize = 1,
 
             UpdatedNode = ?new_LEAF2(LParentE, CElem),
             UpdatedLeft = ?new_LEAF3(E1, E2, E3),
 
-            ?ROTATED(UpElem, UpdatedLeft, UpdatedNode)
+            ?ROTATED(UpElem, MovedSize, UpdatedLeft, UpdatedNode)
     end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Deletion - Rebalance a node from either left/right sibling
 %% ------------------------------------------------------------------
 
--compile({inline, del_rebalance_maybe_from_either_sibling/5}).
+-compile({inline, del_rebalance_maybe_from_either_sibling/7}).
 del_rebalance_maybe_from_either_sibling(
     Child,
+    ChildOffset,
     %
     LParentE,
     Left,
+    LeftOffset,
     %
     RParentE,
     Right
 ) ->
     case Child of
-        ?INTERNAL1_MATCH(CElem, CLeft, CRight) ->
+        ?INTERNAL1_MATCH(CElem, CLeftOffset, CLeft, CRight) ->
             del_rebalance_internal_from_either_sibling(
                 CElem,
-
+                CLeftOffset,
                 CLeft,
                 CRight,
                 %
+                ChildOffset,
+                %
                 LParentE,
                 Left,
+                LeftOffset,
                 %
                 RParentE,
                 Right
@@ -6438,7 +7056,6 @@ del_rebalance_maybe_from_either_sibling(
         ?LEAF1_MATCH(CElem) ->
             del_rebalance_leaf_from_either_sibling(
                 CElem,
-
                 %
                 LParentE,
                 Left,
@@ -6457,28 +7074,41 @@ del_rebalance_maybe_from_either_sibling(
 %-compile({inline, del_rebalance_internal_from_either_sibling/10}).
 del_rebalance_internal_from_either_sibling(
     CElem,
-
+    CLeftOffset,
     CLeft,
     CRight,
     %
+    ChildOffset,
+    %
     LParentE,
     Left,
+    LeftOffset,
     %
     RParentE,
     Right
 ) ->
     case Left of
-        ?INTERNAL2_MATCH(LE1, LE2, LC1, LC2, LC3) ->
+        ?INTERNAL2_MATCH(
+           LE1, LE2,
+           %
+           LO1, LO2,
+           %
+           LC1, LC2, LC3
+          ) ->
             %
             %
             case Right of
                 ?INTERNAL3_MATCH_ALL ->
                     UpElem = E1,
                     MovedC = C1,
+                    MovedSize = O1,
 
                     UpdatedNode = ?new_INTERNAL2(
                         CElem,
                         RParentE,
+                        %
+                        CLeftOffset,
+                        ChildOffset,
                         %
                         CLeft,
                         CRight,
@@ -6489,21 +7119,28 @@ del_rebalance_internal_from_either_sibling(
                         E2,
                         E3,
                         %
+                        O2 - O1,
+                        O3 - O1,
+                        %
                         C2,
                         C3,
                         C4
                     ),
 
-                    ?MID_ROTATED_FROM_RIGHT(UpElem, UpdatedNode, UpdatedRight);
+                    ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight);
                 %
                 %
                 ?INTERNAL4_MATCH_ALL ->
                     UpElem = E1,
                     MovedC = C1,
+                    MovedSize = O1,
 
                     UpdatedNode = ?new_INTERNAL2(
                         CElem,
                         RParentE,
+                        %
+                        CLeftOffset,
+                        ChildOffset,
                         %
                         CLeft,
                         CRight,
@@ -6515,13 +7152,17 @@ del_rebalance_internal_from_either_sibling(
                         E3,
                         E4,
                         %
+                        O2 - O1,
+                        O3 - O1,
+                        O4 - O1,
+                        %
                         C2,
                         C3,
                         C4,
                         C5
                     ),
 
-                    ?MID_ROTATED_FROM_RIGHT(UpElem, UpdatedNode, UpdatedRight);
+                    ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight);
                 %
                 %
                 _ ->
@@ -6531,6 +7172,11 @@ del_rebalance_internal_from_either_sibling(
                         LE2,
                         LParentE,
                         CElem,
+                        %
+                        LO1,
+                        LO2,
+                        LeftOffset,
+                        LeftOffset + CLeftOffset,
                         %
                         LC1,
                         LC2,
@@ -6548,10 +7194,14 @@ del_rebalance_internal_from_either_sibling(
         ?INTERNAL3_MATCH_ALL ->
             UpElem = E3,
             MovedC = C4,
+            MovedSize = LeftOffset - O3,
 
             UpdatedNode = ?new_INTERNAL2(
                 LParentE,
                 CElem,
+                %
+                MovedSize,
+                MovedSize + CLeftOffset,
                 %
                 MovedC,
                 CLeft,
@@ -6562,12 +7212,15 @@ del_rebalance_internal_from_either_sibling(
                 E1,
                 E2,
                 %
+                O1,
+                O2,
+                %
                 C1,
                 C2,
                 C3
             ),
 
-            ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedLeft, UpdatedNode);
+            ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedLeft, UpdatedNode);
         %
         %
         %
@@ -6575,10 +7228,14 @@ del_rebalance_internal_from_either_sibling(
         ?INTERNAL4_MATCH_ALL ->
             UpElem = E4,
             MovedC = C5,
+            MovedSize = LeftOffset - O4,
 
             UpdatedNode = ?new_INTERNAL2(
                 LParentE,
                 CElem,
+                %
+                MovedSize,
+                MovedSize + CLeftOffset,
                 %
                 MovedC,
                 CLeft,
@@ -6590,19 +7247,22 @@ del_rebalance_internal_from_either_sibling(
                 E2,
                 E3,
                 %
+                O1,
+                O2,
+                O3,
+                %
                 C1,
                 C2,
                 C3,
                 C4
             ),
 
-            ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedLeft, UpdatedNode)
+            ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedLeft, UpdatedNode)
     end.
 
-% -compile({inline, del_rebalance_leaf_from_either_sibling/8}).
+%-compile({inline, del_rebalance_leaf_from_either_sibling/8}).
 del_rebalance_leaf_from_either_sibling(
     CElem,
-
     %
     LParentE,
     Left,
@@ -6616,20 +7276,22 @@ del_rebalance_leaf_from_either_sibling(
             case Right of
                 ?LEAF4_MATCH_ALL ->
                     UpElem = E1,
+                    MovedSize = 1,
 
                     UpdatedNode = ?new_LEAF2(CElem, RParentE),
                     UpdatedRight = ?new_LEAF3(E2, E3, E4),
 
-                    ?MID_ROTATED_FROM_RIGHT(UpElem, UpdatedNode, UpdatedRight);
+                    ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight);
                 %
                 %
                 ?LEAF3_MATCH_ALL ->
                     UpElem = E1,
+                    MovedSize = 1,
 
                     UpdatedNode = ?new_LEAF2(CElem, RParentE),
                     UpdatedRight = ?new_LEAF2(E2, E3),
 
-                    ?MID_ROTATED_FROM_RIGHT(UpElem, UpdatedNode, UpdatedRight);
+                    ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight);
                 %
                 %
                 _ ->
@@ -6648,21 +7310,23 @@ del_rebalance_leaf_from_either_sibling(
         %
         ?LEAF3_MATCH_ALL ->
             UpElem = E3,
+            MovedSize = 1,
 
             UpdatedNode = ?new_LEAF2(LParentE, CElem),
             UpdatedLeft = ?new_LEAF2(E1, E2),
 
-            ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedLeft, UpdatedNode);
+            ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedLeft, UpdatedNode);
         %
         %
         %
         ?LEAF4_MATCH_ALL ->
             UpElem = E4,
+            MovedSize = 1,
 
             UpdatedNode = ?new_LEAF2(LParentE, CElem),
             UpdatedLeft = ?new_LEAF3(E1, E2, E3),
 
-            ?MID_ROTATED_FROM_LEFT(UpElem, UpdatedLeft, UpdatedNode)
+            ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedLeft, UpdatedNode)
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -6680,7 +7344,9 @@ check_node(LineNumber, Node) ->
     Type = node_type(Node),
     try to_list(Node) of
         List ->
-            check_node_keys(LineNumber, Type, Node, List)
+            check_node_keys(LineNumber, Type, Node, List),
+            check_node_offsets(LineNumber, Type, Node),
+            Node
     catch
         error:Reason:Stacktrace ->
             fail_node_check(LineNumber, Type, Node, {error_converting_to_list, Reason, Stacktrace})
@@ -6699,7 +7365,7 @@ check_node_keys(LineNumber, Type, Node, List) ->
 
 node_type(Node) ->
     case Node of
-        ?INTERNAL1(_, _, _) ->
+        ?INTERNAL1(_, _, _, _) ->
             'INTERNAL1';
         %
         ?LEAF1(_) ->
@@ -6710,10 +7376,12 @@ node_type(Node) ->
     end.
 
 check_node_recur(LineNumber, Node) ->
-    Type = node_type(Node),
+    Type = recur_node_type(Node),
     try to_list_recur(Node, []) of
         List ->
-            check_node_keys(LineNumber, Type, Node, List)
+            check_node_keys(LineNumber, Type, Node, List),
+            check_node_offsets(LineNumber, Type, Node),
+            Node
     catch
         error:Reason:Stacktrace ->
             fail_node_check(LineNumber, Type, Node, {error_converting_to_list, Reason, Stacktrace})
@@ -6721,13 +7389,13 @@ check_node_recur(LineNumber, Node) ->
 
 recur_node_type(Node) ->
     case Node of
-        ?INTERNAL2(_, _, _, _, _) ->
+        ?INTERNAL2(_, _, _, _, _, _, _) ->
             'INTERNAL2';
         %
-        ?INTERNAL3(_, _, _, _, _, _, _) ->
+        ?INTERNAL3(_, _, _, _, _, _, _, _, _, _) ->
             'INTERNAL3';
         %
-        ?INTERNAL4(_, _, _, _, _, _, _, _, _) ->
+        ?INTERNAL4(_, _, _, _, _, _, _, _, _, _, _, _, _) ->
             'INTERNAL4';
         %
         ?LEAF2(_, _) ->
@@ -6756,7 +7424,7 @@ check_node_keys([]) ->
     [].
 
 check_node_keys(E1, [E2 | Next]) ->
-    case E1 >= E2 of
+    case E1 > E2 of
         false ->
             check_node_keys(E2, Next);
         %
@@ -6765,6 +7433,76 @@ check_node_keys(E1, [E2 | Next]) ->
     end;
 check_node_keys(_, []) ->
     [].
+
+check_node_offsets(LineNumber, Type, Node) ->
+    try check_node_offsets_recur(Node) of
+        _ ->
+            Node
+    catch
+        error:{assertEqual, Details} ->
+            fail_node_check(LineNumber, Type, Node, {bad_offsets, Details})
+    end.
+
+check_node_offsets_recur(Node) ->
+    case Node of
+        ?INTERNAL1(_, O1, C1, C2) ->
+            S1 = check_node_offsets_recur(C1),
+            ?assertEqual(S1 + 1, O1),
+
+            S2 = check_node_offsets_recur(C2),
+            S1 + S2 + 1;
+        %
+        ?INTERNAL2(_, _, O1, O2, C1, C2, C3) ->
+            S1 = check_node_offsets_recur(C1),
+            ?assertEqual(S1 + 1, O1),
+
+            S2 = check_node_offsets_recur(C2),
+            ?assertEqual(S1 + S2 + 2, O2),
+
+            S3 = check_node_offsets_recur(C3),
+            S1 + S2 + S3 + 2;
+        %
+        ?INTERNAL3(_, _, _, O1, O2, O3, C1, C2, C3, C4) ->
+            S1 = check_node_offsets_recur(C1),
+            ?assertEqual(S1 + 1, O1),
+
+            S2 = check_node_offsets_recur(C2),
+            ?assertEqual(S1 + S2 + 2, O2),
+
+            S3 = check_node_offsets_recur(C3),
+            ?assertEqual(S1 + S2 + S3 + 3, O3),
+
+            S4 = check_node_offsets_recur(C4),
+            S1 + S2 + S3 + S4 + 3;
+        %
+        ?INTERNAL4(_, _, _, _, O1, O2, O3, O4, C1, C2, C3, C4, C5) ->
+            S1 = check_node_offsets_recur(C1),
+            ?assertEqual(S1 + 1, O1),
+
+            S2 = check_node_offsets_recur(C2),
+            ?assertEqual(S1 + S2 + 2, O2),
+
+            S3 = check_node_offsets_recur(C3),
+            ?assertEqual(S1 + S2 + S3 + 3, O3),
+
+            S4 = check_node_offsets_recur(C4),
+            ?assertEqual(S1 + S2 + S3 + S4 + 4, O4),
+
+            S5 = check_node_offsets_recur(C5),
+            S1 + S2 + S3 + S4 + S5 + 4;
+        %
+        ?LEAF1(_) ->
+            1;
+        %
+        ?LEAF2(_, _) ->
+            2;
+        %
+        ?LEAF3(_, _, _) ->
+            3;
+        %
+        ?LEAF4(_, _, _, _) ->
+            4
+    end.
 
 % -if(?NODE_CHECK_ENABLED).
 -endif.
