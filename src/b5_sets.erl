@@ -54,16 +54,33 @@
     union/2
 ]).
 
+-export([
+    from_constituent_parts/1,
+    to_constituent_parts/1
+]).
+
+-ignore_xref([
+    from_constituent_parts/1,
+    to_constituent_parts/1
+]).
+
 %% ------------------------------------------------------------------
 %% Type Definitions
 %% ------------------------------------------------------------------
 
 -record(b5_sets, {size, root}).
 
+-opaque set(Element) :: #b5_sets{size :: non_neg_integer(), root :: b5_sets_node:t(Element)}.
+-export_type([set/1]).
+
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-spec add(Element, Set) -> Set2 when
+    Element :: term(),
+    Set :: set(PrevElement),
+    Set2 :: set(PrevElement | Element).
 add(Element, #b5_sets{size = Size, root = Root} = Set) ->
     case b5_sets_node:insert_att(Element, Root) of
         none ->
@@ -73,12 +90,21 @@ add(Element, #b5_sets{size = Size, root = Root} = Set) ->
             Set#b5_sets{size = Size + 1, root = UpdatedRoot}
     end.
 
+-spec add_element(Element, Set) -> Set2 when
+    Element :: term(),
+    Set :: set(PrevElement),
+    Set2 :: set(PrevElement | Element).
 add_element(Element, Set) ->
     add(Element, Set).
 
+-spec del_element(Element, Set) -> Set2 when
+    Element :: term(),
+    Set :: set(Element),
+    Set2 :: set(Element | term()).
 del_element(Element, Set) ->
     delete_any(Element, Set).
 
+% TODO continue here
 delete(Element, #b5_sets{size = Size, root = Root} = Set) ->
     case b5_sets_node:delete_att(Element, Root) of
         none ->
@@ -281,6 +307,20 @@ union_recur(Root1, Size1, [#b5_sets{root = Root2, size = Size2} | Next]) ->
     union_recur(NewRoot, NewSize, Next);
 union_recur(Root, Size, []) ->
     #b5_sets{size = Size, root = Root}.
+
+-spec from_constituent_parts(#{
+    root := b5_sets_node:t(Element), size := non_neg_integer()
+}) -> set(Element).
+from_constituent_parts(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
+    #b5_sets{root = Root, size = Size}.
+
+-spec to_constituent_parts
+    (set(Element)) -> {ok, #{root := b5_trees_node:t(Element), size := non_neg_integer()}};
+    (term()) -> error.
+to_constituent_parts(#b5_sets{root = Root, size = Size}) when is_integer(Size), Size >= 0 ->
+    {ok, #{root => Root, size => Size}};
+to_constituent_parts(_) ->
+    error.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Unit Tests
