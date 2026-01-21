@@ -24,6 +24,9 @@
     new/0,
     next/1,
     nth/2,
+    nth_and_nthp1/2,
+    rank_larger/2,
+    rank_smaller/2,
     smaller/2,
     smallest/1,
     structural_stats/1,
@@ -626,13 +629,39 @@ next([Head | Tail]) ->
 next([]) ->
     none.
 
--spec nth(_, t(_)) -> boolean().
-nth(N, ?INTERNAL1_MATCH_ALL) ->
-    nth_INTERNAL1(N, ?INTERNAL1_ARGS);
-nth(N, ?LEAF1_MATCH_ALL) ->
-    nth_LEAF1(N, ?LEAF1_ARGS);
-nth(N, Root) ->
-    nth_recur(N, Root).
+-spec nth(pos_integer(), t(E)) -> E.
+nth(Rank, ?INTERNAL1_MATCH_ALL) ->
+    nth_INTERNAL1(Rank, ?INTERNAL1_ARGS);
+nth(Rank, ?LEAF1_MATCH_ALL) ->
+    nth_LEAF1(Rank, ?LEAF1_ARGS);
+nth(Rank, Root) ->
+    nth_recur(Rank, Root).
+
+-spec nth_and_nthp1(pos_integer(), t(E)) -> E.
+nth_and_nthp1(Rank, ?INTERNAL1_MATCH_ALL) ->
+    nth_and_nthp1_INTERNAL1(Rank, ?INTERNAL1_ARGS);
+nth_and_nthp1(Rank, Root) ->
+    nth_and_nthp1_recur(Rank, Root, nil).
+
+-spec rank_larger(_, t(E)) -> nonempty_improper_list(pos_integer(), E) | none.
+rank_larger(Elem, ?INTERNAL1_MATCH_ALL) ->
+    rank_larger_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+rank_larger(Elem, ?LEAF1_MATCH_ALL) ->
+    rank_larger_LEAF1(Elem, ?LEAF1_ARGS);
+rank_larger(_Elem, ?LEAF0) ->
+    none;
+rank_larger(Elem, Root) ->
+    rank_larger_recur(Elem, Root, 0).
+
+-spec rank_smaller(_, t(E)) -> nonempty_improper_list(pos_integer(), E) | none.
+rank_smaller(Elem, ?INTERNAL1_MATCH_ALL) ->
+    rank_smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+rank_smaller(Elem, ?LEAF1_MATCH_ALL) ->
+    rank_smaller_LEAF1(Elem, ?LEAF1_ARGS);
+rank_smaller(_Elem, ?LEAF0) ->
+    none;
+rank_smaller(Elem, Root) ->
+    rank_smaller_recur(Elem, Root, 0).
 
 -spec smaller(_, t(Elem)) -> {found, Elem} | none.
 smaller(Elem, ?INTERNAL1_MATCH_NO_SIZES) ->
@@ -3701,26 +3730,26 @@ rev_next(Head, Tail) ->
 %% Internal Function Definitions: nth/2
 %% ------------------------------------------------------------------
 
-nth_recur(N, Node) ->
+nth_recur(Rank, Node) ->
     case Node of
         %
         ?INTERNAL2_MATCH_ALL ->
-            nth_INTERNAL2(N, ?INTERNAL2_ARGS);
+            nth_INTERNAL2(Rank, ?INTERNAL2_ARGS);
         %
         ?INTERNAL3_MATCH_ALL ->
-            nth_INTERNAL3(N, ?INTERNAL3_ARGS);
+            nth_INTERNAL3(Rank, ?INTERNAL3_ARGS);
         %
         ?INTERNAL4_MATCH_ALL ->
-            nth_INTERNAL4(N, ?INTERNAL4_ARGS);
+            nth_INTERNAL4(Rank, ?INTERNAL4_ARGS);
         %
         ?LEAF2_MATCH_ALL ->
-            nth_LEAF2(N, ?LEAF2_ARGS);
+            nth_LEAF2(Rank, ?LEAF2_ARGS);
         %
         ?LEAF3_MATCH_ALL ->
-            nth_LEAF3(N, ?LEAF3_ARGS);
+            nth_LEAF3(Rank, ?LEAF3_ARGS);
         %
         ?LEAF4_MATCH_ALL ->
-            nth_LEAF4(N, ?LEAF4_ARGS)
+            nth_LEAF4(Rank, ?LEAF4_ARGS)
     end.
 
 %%
@@ -3728,36 +3757,36 @@ nth_recur(N, Node) ->
 %%
 
 -compile({inline, nth_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-nth_INTERNAL4(N, ?INTERNAL4_ARGS) ->
+nth_INTERNAL4(Rank, ?INTERNAL4_ARGS) ->
     if
-        N < O3 ->
+        Rank < O3 ->
             if
-                N > O1 ->
+                Rank > O1 ->
                     if
-                        N < O2 ->
-                            nth_recur(N - O1, C2);
+                        Rank < O2 ->
+                            nth_recur(Rank - O1, C2);
                         %
-                        N > O2 ->
-                            nth_recur(N - O2, C3);
+                        Rank > O2 ->
+                            nth_recur(Rank - O2, C3);
                         %
                         true ->
                             E2
                     end;
                 %
-                N < O1 ->
-                    nth_recur(N, C1);
+                Rank < O1 ->
+                    nth_recur(Rank, C1);
                 %
                 true ->
                     E1
             end;
         %
-        N > O3 ->
+        Rank > O3 ->
             if
-                N < O4 ->
-                    nth_recur(N - O3, C4);
+                Rank < O4 ->
+                    nth_recur(Rank - O3, C4);
                 %
-                N > O4 ->
-                    nth_recur(N - O4, C5);
+                Rank > O4 ->
+                    nth_recur(Rank - O4, C5);
                 %
                 true ->
                     E4
@@ -3772,27 +3801,27 @@ nth_INTERNAL4(N, ?INTERNAL4_ARGS) ->
 %%
 
 -compile({inline, nth_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-nth_INTERNAL3(N, ?INTERNAL3_ARGS) ->
+nth_INTERNAL3(Rank, ?INTERNAL3_ARGS) ->
     if
-        N < O2 ->
+        Rank < O2 ->
             if
-                N < O1 ->
-                    nth_recur(N, C1);
+                Rank < O1 ->
+                    nth_recur(Rank, C1);
                 %
-                N > O1 ->
-                    nth_recur(N - O1, C2);
+                Rank > O1 ->
+                    nth_recur(Rank - O1, C2);
                 %
                 true ->
                     E1
             end;
         %
-        N > O2 ->
+        Rank > O2 ->
             if
-                N < O3 ->
-                    nth_recur(N - O2, C3);
+                Rank < O3 ->
+                    nth_recur(Rank - O2, C3);
                 %
-                N > O3 ->
-                    nth_recur(N - O3, C4);
+                Rank > O3 ->
+                    nth_recur(Rank - O3, C4);
                 %
                 true ->
                     E3
@@ -3807,22 +3836,22 @@ nth_INTERNAL3(N, ?INTERNAL3_ARGS) ->
 %%
 
 -compile({inline, nth_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-nth_INTERNAL2(N, ?INTERNAL2_ARGS) ->
+nth_INTERNAL2(Rank, ?INTERNAL2_ARGS) ->
     if
-        N > O1 ->
+        Rank > O1 ->
             if
-                N < O2 ->
-                    nth_recur(N - O1, C2);
+                Rank < O2 ->
+                    nth_recur(Rank - O1, C2);
                 %
-                N > O2 ->
-                    nth_recur(N - O2, C3);
+                Rank > O2 ->
+                    nth_recur(Rank - O2, C3);
                 %
                 true ->
                     E2
             end;
         %
-        N < O1 ->
-            nth_recur(N, C1);
+        Rank < O1 ->
+            nth_recur(Rank, C1);
         %
         true ->
             E1
@@ -3833,13 +3862,13 @@ nth_INTERNAL2(N, ?INTERNAL2_ARGS) ->
 %%
 
 -compile({inline, nth_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-nth_INTERNAL1(N, ?INTERNAL1_ARGS) ->
+nth_INTERNAL1(Rank, ?INTERNAL1_ARGS) ->
     if
-        N < O1 ->
-            nth_recur(N, C1);
+        Rank < O1 ->
+            nth_recur(Rank, C1);
         %
-        N > O1 ->
-            nth_recur(N - O1, C2);
+        Rank > O1 ->
+            nth_recur(Rank - O1, C2);
         %
         true ->
             E1
@@ -3850,8 +3879,8 @@ nth_INTERNAL1(N, ?INTERNAL1_ARGS) ->
 %%
 
 -compile({inline, nth_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-nth_LEAF4(N, ?LEAF4_ARGS) ->
-    case N of
+nth_LEAF4(Rank, ?LEAF4_ARGS) ->
+    case Rank of
         1 -> E1;
         2 -> E2;
         3 -> E3;
@@ -3863,8 +3892,8 @@ nth_LEAF4(N, ?LEAF4_ARGS) ->
 %%
 
 -compile({inline, nth_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-nth_LEAF3(N, ?LEAF3_ARGS) ->
-    case N of
+nth_LEAF3(Rank, ?LEAF3_ARGS) ->
+    case Rank of
         1 -> E1;
         2 -> E2;
         3 -> E3
@@ -3875,8 +3904,8 @@ nth_LEAF3(N, ?LEAF3_ARGS) ->
 %%
 
 -compile({inline, nth_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-nth_LEAF2(N, ?LEAF2_ARGS) ->
-    case N of
+nth_LEAF2(Rank, ?LEAF2_ARGS) ->
+    case Rank of
         1 -> E1;
         2 -> E2
     end.
@@ -3888,6 +3917,633 @@ nth_LEAF2(N, ?LEAF2_ARGS) ->
 -compile({inline, nth_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 nth_LEAF1(1, ?LEAF1_ARGS) ->
     E1.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: nth_and_nthp1/2
+%% ------------------------------------------------------------------
+
+nth_and_nthp1_recur(Rank, Node, Plus1) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            nth_and_nthp1_INTERNAL2(Rank, ?INTERNAL2_ARGS, Plus1);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            nth_and_nthp1_INTERNAL3(Rank, ?INTERNAL3_ARGS, Plus1);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            nth_and_nthp1_INTERNAL4(Rank, ?INTERNAL4_ARGS, Plus1);
+        %
+        ?LEAF2_MATCH_ALL ->
+            nth_and_nthp1_LEAF2(Rank, ?LEAF2_ARGS, Plus1);
+        %
+        ?LEAF3_MATCH_ALL ->
+            nth_and_nthp1_LEAF3(Rank, ?LEAF3_ARGS, Plus1);
+        %
+        ?LEAF4_MATCH_ALL ->
+            nth_and_nthp1_LEAF4(Rank, ?LEAF4_ARGS, Plus1)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, nth_and_nthp1_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
+nth_and_nthp1_INTERNAL4(Rank, ?INTERNAL4_ARGS, Plus1) ->
+    if
+        Rank < O3 ->
+            if
+                Rank > O1 ->
+                    if
+                        Rank < O2 ->
+                            nth_and_nthp1_recur(Rank - O1, C2, E2);
+                        %
+                        Rank > O2 ->
+                            nth_and_nthp1_recur(Rank - O2, C3, E3);
+                        %
+                        true ->
+                            [E2 | smallest_recur(C3)]
+                    end;
+                %
+                Rank < O1 ->
+                    nth_and_nthp1_recur(Rank, C1, E1);
+                %
+                true ->
+                    [E1 | smallest_recur(C2)]
+            end;
+        %
+        Rank > O3 ->
+            if
+                Rank < O4 ->
+                    nth_and_nthp1_recur(Rank - O3, C4, E4);
+                %
+                Rank > O4 ->
+                    nth_and_nthp1_recur(Rank - O4, C5, Plus1);
+                %
+                true ->
+                    [E4 | smallest_recur(C5)]
+            end;
+        %
+        true ->
+            [E3 | smallest_recur(C4)]
+    end.
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, nth_and_nthp1_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
+nth_and_nthp1_INTERNAL3(Rank, ?INTERNAL3_ARGS, Plus1) ->
+    if
+        Rank < O2 ->
+            if
+                Rank < O1 ->
+                    nth_and_nthp1_recur(Rank, C1, E1);
+                %
+                Rank > O1 ->
+                    nth_and_nthp1_recur(Rank - O1, C2, E2);
+                %
+                true ->
+                    [E1 | smallest_recur(C2)]
+            end;
+        %
+        Rank > O2 ->
+            if
+                Rank < O3 ->
+                    nth_and_nthp1_recur(Rank - O2, C3, E3);
+                %
+                Rank > O3 ->
+                    nth_and_nthp1_recur(Rank - O3, C4, Plus1);
+                %
+                true ->
+                    [E3 | smallest_recur(C4)]
+            end;
+        %
+        true ->
+            [E2 | smallest_recur(C3)]
+    end.
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, nth_and_nthp1_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
+nth_and_nthp1_INTERNAL2(Rank, ?INTERNAL2_ARGS, Plus1) ->
+    if
+        Rank > O1 ->
+            if
+                Rank < O2 ->
+                    nth_and_nthp1_recur(Rank - O1, C2, E2);
+                %
+                Rank > O2 ->
+                    nth_and_nthp1_recur(Rank - O2, C3, Plus1);
+                %
+                true ->
+                    [E2 | smallest_recur(C3)]
+            end;
+        %
+        Rank < O1 ->
+            nth_and_nthp1_recur(Rank, C1, E1);
+        %
+        true ->
+            [E1 | smallest_recur(C2)]
+    end.
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, nth_and_nthp1_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+nth_and_nthp1_INTERNAL1(Rank, ?INTERNAL1_ARGS) ->
+    if
+        Rank < O1 ->
+            nth_and_nthp1_recur(Rank, C1, E1);
+        %
+        Rank > O1 ->
+            nth_and_nthp1_recur(Rank - O1, C2, nil);
+        %
+        true ->
+            [E1 | smallest_recur(C2)]
+    end.
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, nth_and_nthp1_LEAF4 / ?LEAF4_ARITY_PLUS2}).
+nth_and_nthp1_LEAF4(Rank, ?LEAF4_ARGS, Plus1) ->
+    case Rank of
+        1 -> [E1 | E2];
+        2 -> [E2 | E3];
+        3 -> [E3 | E4];
+        4 -> [E4 | Plus1]
+    end.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, nth_and_nthp1_LEAF3 / ?LEAF3_ARITY_PLUS2}).
+nth_and_nthp1_LEAF3(Rank, ?LEAF3_ARGS, Plus1) ->
+    case Rank of
+        1 -> [E1 | E2];
+        2 -> [E2 | E3];
+        3 -> [E3 | Plus1]
+    end.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, nth_and_nthp1_LEAF2 / ?LEAF2_ARITY_PLUS2}).
+nth_and_nthp1_LEAF2(Rank, ?LEAF2_ARGS, Plus1) ->
+    case Rank of
+        1 -> [E1 | E2];
+        2 -> [E2 | Plus1]
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: rank_larger/2
+%% ------------------------------------------------------------------
+
+rank_larger_recur(Elem, Node, Acc) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            rank_larger_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            rank_larger_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            rank_larger_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc);
+        %
+        ?LEAF2_MATCH_ALL ->
+            rank_larger_LEAF2(Elem, ?LEAF2_ARGS, Acc);
+        %
+        ?LEAF3_MATCH_ALL ->
+            rank_larger_LEAF3(Elem, ?LEAF3_ARGS, Acc);
+        %
+        ?LEAF4_MATCH_ALL ->
+            rank_larger_LEAF4(Elem, ?LEAF4_ARGS, Acc)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, rank_larger_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
+rank_larger_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
+    if
+        Elem < E2 ->
+            if
+                Elem < E1 ->
+                    case rank_larger_recur(Elem, C1, Acc) of
+                        none -> [Acc + O1 | E1];
+                        Rank -> Rank
+                    end;
+                %
+                true ->
+                    case rank_larger_recur(Elem, C2, Acc + O1) of
+                        none -> [Acc + O2 | E2];
+                        Rank -> Rank
+                    end
+            end;
+        %
+        Elem < E3 ->
+            case rank_larger_recur(Elem, C3, Acc + O2) of
+                none -> [Acc + O3 | E3];
+                Rank -> Rank
+            end;
+        %
+        Elem < E4 ->
+            case rank_larger_recur(Elem, C4, Acc + O3) of
+                none -> [Acc + O4 | E4];
+                Rank -> Rank
+            end;
+        %
+        true ->
+            rank_larger_recur(Elem, C5, Acc + O4)
+    end.
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, rank_larger_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
+rank_larger_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
+    if
+        Elem < E2 ->
+            if
+                Elem < E1 ->
+                    case rank_larger_recur(Elem, C1, Acc) of
+                        none -> [Acc + O1 | E1];
+                        Rank -> Rank
+                    end;
+                %
+                true ->
+                    case rank_larger_recur(Elem, C2, Acc + O1) of
+                        none -> [Acc + O2 | E2];
+                        Rank -> Rank
+                    end
+            end;
+        %
+        Elem < E3 ->
+            case rank_larger_recur(Elem, C3, Acc + O2) of
+                none -> [Acc + O3 | E3];
+                Rank -> Rank
+            end;
+        %
+        true ->
+            rank_larger_recur(Elem, C4, Acc + O3)
+    end.
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, rank_larger_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
+rank_larger_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
+    if
+        Elem < E2 ->
+            if
+                Elem < E1 ->
+                    case rank_larger_recur(Elem, C1, Acc) of
+                        none -> [Acc + O1 | E1];
+                        Rank -> Rank
+                    end;
+                %
+                true ->
+                    case rank_larger_recur(Elem, C2, Acc + O1) of
+                        none -> [Acc + O2 | E2];
+                        Rank -> Rank
+                    end
+            end;
+        %
+        true ->
+            rank_larger_recur(Elem, C3, Acc + O2)
+    end.
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, rank_larger_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+rank_larger_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+    if
+        Elem < E1 ->
+            case rank_larger_recur(Elem, C1, 0) of
+                none -> [O1 | E1];
+                Rank -> Rank
+            end;
+        %
+        true ->
+            Acc = O1,
+            rank_larger_recur(Elem, C2, Acc)
+    end.
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, rank_larger_LEAF4 / ?LEAF4_ARITY_PLUS2}).
+rank_larger_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
+    if
+        Elem < E2 ->
+            if
+                Elem < E1 ->
+                    [Acc + 1 | E1];
+                %
+                true ->
+                    [Acc + 2 | E2]
+            end;
+        %
+        Elem < E3 ->
+            [Acc + 3 | E3];
+        %
+        Elem < E4 ->
+            [Acc + 4 | E4];
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, rank_larger_LEAF3 / ?LEAF3_ARITY_PLUS2}).
+rank_larger_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
+    if
+        Elem < E1 ->
+            [Acc + 1 | E1];
+        %
+        Elem < E2 ->
+            [Acc + 2 | E2];
+        %
+        Elem < E3 ->
+            [Acc + 3 | E3];
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, rank_larger_LEAF2 / ?LEAF2_ARITY_PLUS2}).
+rank_larger_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
+    if
+        Elem < E1 ->
+            [Acc + 1 | E1];
+        %
+        Elem < E2 ->
+            [Acc + 2 | E2];
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF1
+%%
+
+-compile({inline, rank_larger_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+rank_larger_LEAF1(Elem, ?LEAF1_ARGS) ->
+    if
+        Elem < E1 ->
+            [1 | E1];
+        %
+        true ->
+            none
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: rank_smaller/2
+%% ------------------------------------------------------------------
+
+rank_smaller_recur(Elem, Node, Acc) ->
+    case Node of
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            rank_smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            rank_smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            rank_smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc);
+        %
+        ?LEAF2_MATCH_ALL ->
+            rank_smaller_LEAF2(Elem, ?LEAF2_ARGS, Acc);
+        %
+        ?LEAF3_MATCH_ALL ->
+            rank_smaller_LEAF3(Elem, ?LEAF3_ARGS, Acc);
+        %
+        ?LEAF4_MATCH_ALL ->
+            rank_smaller_LEAF4(Elem, ?LEAF4_ARGS, Acc)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, rank_smaller_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
+rank_smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
+    if
+        Elem > E3 ->
+            if
+                Elem > E4 ->
+                    UpdatedAcc = Acc + O4,
+                    case rank_smaller_recur(Elem, C5, UpdatedAcc) of
+                        none -> [UpdatedAcc | E4];
+                        Rank -> Rank
+                    end;
+                %
+                true ->
+                    UpdatedAcc = Acc + O3,
+                    case rank_smaller_recur(Elem, C4, UpdatedAcc) of
+                        none -> [UpdatedAcc | E3];
+                        Rank -> Rank
+                    end
+            end;
+        %
+        Elem > E2 ->
+            UpdatedAcc = Acc + O2,
+            case rank_smaller_recur(Elem, C3, UpdatedAcc) of
+                none -> [UpdatedAcc | E2];
+                Rank -> Rank
+            end;
+        %
+        Elem > E1 ->
+            UpdatedAcc = Acc + O1,
+            case rank_smaller_recur(Elem, C2, UpdatedAcc) of
+                none -> [UpdatedAcc | E1];
+                Rank -> Rank
+            end;
+        %
+        true ->
+            rank_smaller_recur(Elem, C1, Acc)
+    end.
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, rank_smaller_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
+rank_smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
+    if
+        Elem > E2 ->
+            if
+                Elem > E3 ->
+                    UpdatedAcc = Acc + O3,
+                    case rank_smaller_recur(Elem, C4, UpdatedAcc) of
+                        none -> [UpdatedAcc | E3];
+                        Rank -> Rank
+                    end;
+                %
+                true ->
+                    UpdatedAcc = Acc + O2,
+                    case rank_smaller_recur(Elem, C3, UpdatedAcc) of
+                        none -> [UpdatedAcc | E2];
+                        Rank -> Rank
+                    end
+            end;
+        %
+        Elem > E1 ->
+            UpdatedAcc = Acc + O1,
+            case rank_smaller_recur(Elem, C2, UpdatedAcc) of
+                none -> [UpdatedAcc | E1];
+                Rank -> Rank
+            end;
+        %
+        true ->
+            rank_smaller_recur(Elem, C1, Acc)
+    end.
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, rank_smaller_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
+rank_smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
+    if
+        Elem > E1 ->
+            if
+                Elem > E2 ->
+                    UpdatedAcc = Acc + O2,
+                    case rank_smaller_recur(Elem, C3, UpdatedAcc) of
+                        none -> [UpdatedAcc | E2];
+                        Rank -> Rank
+                    end;
+                %
+                true ->
+                    UpdatedAcc = Acc + O1,
+                    case rank_smaller_recur(Elem, C2, UpdatedAcc) of
+                        none -> [UpdatedAcc | E1];
+                        Rank -> Rank
+                    end
+            end;
+        %
+        true ->
+            rank_smaller_recur(Elem, C1, Acc)
+    end.
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, rank_smaller_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+rank_smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+    if
+        Elem > E1 ->
+            case rank_smaller_recur(Elem, C1, O1) of
+                none -> [O1 | E1];
+                Rank -> Rank
+            end;
+        %
+        true ->
+            Acc = O1,
+            rank_smaller_recur(Elem, C2, Acc)
+    end.
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, rank_smaller_LEAF4 / ?LEAF4_ARITY_PLUS2}).
+rank_smaller_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
+    if
+        Elem > E3 ->
+            if
+                Elem > E4 ->
+                    [Acc + 4 | E4];
+                %
+                true ->
+                    [Acc + 3 | E3]
+            end;
+        %
+        Elem > E2 ->
+            [Acc + 2 | E2];
+        %
+        Elem > E1 ->
+            [Acc + 1 | E1];
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, rank_smaller_LEAF3 / ?LEAF3_ARITY_PLUS2}).
+rank_smaller_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
+    if
+        Elem > E3 ->
+            [Acc + 3 | E3];
+        %
+        Elem > E2 ->
+            [Acc + 2 | E2];
+        %
+        Elem > E1 ->
+            [Acc + 1 | E1];
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, rank_smaller_LEAF2 / ?LEAF2_ARITY_PLUS2}).
+rank_smaller_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
+    if
+        Elem > E2 ->
+            [Acc + 2 | E2];
+        %
+        Elem > E1 ->
+            [Acc + 1 | E1];
+        %
+        true ->
+            none
+    end.
+
+%%
+%% ?LEAF1
+%%
+
+-compile({inline, rank_smaller_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+rank_smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
+    if
+        Elem > E1 ->
+            [1 | E1];
+        %
+        true ->
+            none
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: smaller/2
