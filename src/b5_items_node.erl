@@ -2873,14 +2873,7 @@ bound_fwd_iterator_recur(Elem, Node, Acc) ->
 bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem > E4 ->
-            case Acc of
-                [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_fwd_iterator_recur(Elem, C5, Acc)
-            end;
+            bound_fwd_iterator_recur(Elem, C5, Acc);
         %
         Elem > E3 ->
             Acc2 = [?ITER_ELEM(E4), C5 | Acc],
@@ -2907,14 +2900,7 @@ bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc) ->
 bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem > E3 ->
-            case Acc of
-                [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_fwd_iterator_recur(Elem, C4, Acc)
-            end;
+            bound_fwd_iterator_recur(Elem, C4, Acc);
         %
         Elem > E2 ->
             Acc2 = [?ITER_ELEM(E3), C4 | Acc],
@@ -2935,14 +2921,7 @@ bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc) ->
 bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem > E2 ->
-            case Acc of
-                [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_fwd_iterator_recur(Elem, C3, Acc)
-            end;
+            bound_fwd_iterator_recur(Elem, C3, Acc);
         %
         Elem > E1 ->
             Acc2 = [?ITER_ELEM(E2), C3 | Acc],
@@ -2958,16 +2937,13 @@ bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc) ->
 -compile({inline, bound_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
 bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
     if
-        Elem < E1 ->
+        Elem =< E1 ->
             Acc = [?ITER_ELEM(E1), C2],
             bound_fwd_iterator_recur(Elem, C1, Acc);
         %
-        Elem > E1 ->
-            Acc = [],
-            bound_fwd_iterator_recur(Elem, C2, Acc);
-        %
         true ->
-            _Acc = [?ITER_ELEM(E1), C2]
+            Acc = [],
+            bound_fwd_iterator_recur(Elem, C2, Acc)
     end.
 
 %% LEAF4
@@ -3084,14 +3060,7 @@ bound_rev_iterator_recur(Elem, Node, Acc) ->
 bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem < E1 ->
-            case Acc of
-                [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_rev_iterator_recur(Elem, C1, Acc)
-            end;
+            bound_rev_iterator_recur(Elem, C1, Acc);
         %
         Elem < E2 ->
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
@@ -3118,14 +3087,7 @@ bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc) ->
 bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem < E1 ->
-            case Acc of
-                [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_rev_iterator_recur(Elem, C1, Acc)
-            end;
+            bound_rev_iterator_recur(Elem, C1, Acc);
         %
         Elem < E2 ->
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
@@ -3146,14 +3108,7 @@ bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc) ->
 bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc) ->
     if
         Elem < E1 ->
-            case Acc of
-                [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_rev_iterator_recur(Elem, C1, Acc)
-            end;
+            bound_rev_iterator_recur(Elem, C1, Acc);
         %
         Elem < E2 ->
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
@@ -3169,16 +3124,13 @@ bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc) ->
 -compile({inline, bound_rev_iterator_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
 bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
     if
-        Elem > E1 ->
+        Elem >= E1 ->
             Acc = [?ITER_ELEM(E1), C1],
             bound_rev_iterator_recur(Elem, C2, Acc);
         %
-        Elem < E1 ->
-            Acc = [],
-            bound_rev_iterator_recur(Elem, C1, Acc);
-        %
         true ->
-            _Acc = [?ITER_ELEM(E1), C1]
+            Acc = [],
+            bound_rev_iterator_recur(Elem, C1, Acc)
     end.
 
 %% LEAF4
