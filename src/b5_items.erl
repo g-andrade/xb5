@@ -205,7 +205,7 @@ percentile(Percentile, Items) ->
 
 percentile(Percentile, Items, Opts) ->
     Bracket = percentile_bracket(Percentile, Items, Opts),
-    linear_interpolated_percentile(Percentile, Bracket).
+    linear_interpolated_percentile(Bracket).
 
 percentile_bracket(Percentile, Items) ->
     percentile_bracket(Percentile, Items, []).
@@ -220,7 +220,7 @@ percentile_bracket(Percentile, #b5_items{size = Size, root = Root}, Opts) when
         _ ->
             Method = proplists:get_value(method, Opts, inclusive),
             Pos = percentile_bracket_pos(Percentile, Size, Method),
-            percentile_bracket_for_pos(Pos, Size, Root, Method)
+            percentile_bracket_for_pos(Percentile, Pos, Size, Root, Method)
     end.
 
 percentile_rank(Elem, #b5_items{size = Size, root = Root}) when Size > 0 ->
@@ -329,7 +329,7 @@ percentile_bracket_pos(Percentile, Size, exclusive) ->
 percentile_bracket_pos(Percentile, Size, nearest_rank) ->
     ceil(Percentile * Size).
 
-percentile_bracket_for_pos(Pos, Size, Root, Method) ->
+percentile_bracket_for_pos(Percentile, Pos, Size, Root, Method) ->
     LowRank = floor(Pos),
     HighRank = ceil(Pos),
 
@@ -348,7 +348,12 @@ percentile_bracket_for_pos(Pos, Size, Root, Method) ->
             LowPerc = percentile_bracket_perc(LowRank, Size, Method),
             HighPerc = percentile_bracket_perc(HighRank, Size, Method),
 
-            {between, {LowPerc, LowElem}, {HighPerc, HighElem}}
+            PercRange = HighPerc - LowPerc,
+            HighWeight = (Percentile - LowPerc) / PercRange,
+            LowWeight = 1.0 - HighWeight,
+
+            {between, percentile_bracket_bound(LowWeight, LowPerc, LowElem),
+                percentile_bracket_bound(HighWeight, HighPerc, HighElem)}
     end.
 
 percentile_bracket_perc(Rank, Size, inclusive) ->
@@ -356,17 +361,37 @@ percentile_bracket_perc(Rank, Size, inclusive) ->
 percentile_bracket_perc(Rank, Size, exclusive) ->
     Rank / (Size + 1).
 
-linear_interpolated_percentile(_Percentile, {exact, ExactElem}) ->
-    ExactElem;
-linear_interpolated_percentile(Percentile, {between, {LowPerc, LowElem}, {HighPerc, HighElem}}) when
-    LowPerc < Percentile, HighPerc > Percentile
-->
-    Range = HighPerc - LowPerc,
-    HighWeight = (Percentile - LowPerc) / Range,
-    LowWeight = 1 - HighWeight,
+percentile_bracket_bound(Weight, Perc, Elem) ->
+    #{
+        percentile => Perc,
+        weight => Weight,
+        value => Elem
+    }.
 
-    (LowWeight * LowElem) + (HighWeight * HighElem);
-linear_interpolated_percentile(_Percentile, none) ->
+linear_interpolated_percentile({exact, ExactElem}) ->
+    ExactElem;
+linear_interpolated_percentile({between, LowBound, HighBound}) ->
+    #{
+        weight := LowWeight,
+        value := LowElem
+    } = LowBound,
+
+    #{
+        weight := HighWeight,
+        value := HighElem
+    } = HighBound,
+
+    if
+        not is_number(LowElem) ->
+            error({bracket_bound_not_numerical, LowBound});
+        %
+        not is_number(HighElem) ->
+            error({bracket_bound_not_numerical, LowBound});
+        %
+        true ->
+            (LowWeight * LowElem) + (HighWeight * HighElem)
+    end;
+linear_interpolated_percentile(none) ->
     none.
 
 %%%%%%%%
