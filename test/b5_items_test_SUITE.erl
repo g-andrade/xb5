@@ -39,6 +39,8 @@
 %% Test exports - order statistics
 -export([
     test_nth/1,
+    test_rank_smaller/1,
+    test_rank_larger/1,
     test_percentile_inclusive/1,
     test_percentile_exclusive/1,
     test_percentile_nearest_rank/1,
@@ -124,6 +126,8 @@ groups() ->
         ]},
         {order_statistics, [parallel], [
             test_nth,
+            test_rank_smaller,
+            test_rank_larger,
             test_percentile_inclusive,
             test_percentile_exclusive,
             test_percentile_nearest_rank,
@@ -465,6 +469,22 @@ test_nth(_Config) ->
 
             _ = (Size =/= 0 andalso test_valid_nth(RefElements, Col)),
             _ = (Size =/= 0 andalso test_valid_nth(RefUqElements, UqCol))
+        end
+    ).
+
+test_rank_smaller(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
+            run_rank_smaller(RefElements, Col),
+            run_rank_smaller(RefUqElements, UqCol)
+        end
+    ).
+
+test_rank_larger(_Config) ->
+    foreach_test_set(
+        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+            run_rank_larger(Size, RefElements, Col),
+            run_rank_larger(length(RefUqElements), RefUqElements, UqCol)
         end
     ).
 
@@ -1511,6 +1531,98 @@ test_valid_nth_recur(N, [RefElement | Next], Col) ->
     test_valid_nth_recur(N + 1, Next, Col);
 test_valid_nth_recur(_, [], _) ->
     ok.
+
+%% ------------------------------------------------------------------
+%% Helpers: rank smaller
+%% ------------------------------------------------------------------
+
+run_rank_smaller(RefElements, Col) ->
+    case RefElements of
+        [] ->
+            Element = new_element(),
+            ?assertEqual(none, b5_items:rank_smaller(Element, Col));
+        %
+        [FirstElement | Next] ->
+            ?assertEqual(
+                none, b5_items:rank_smaller(randomly_switch_number_type(FirstElement), Col)
+            ),
+
+            run_rank_smaller_recur(1, FirstElement, Next, Col)
+    end.
+
+run_rank_smaller_recur(Pos1, Elem1, Tail, Col) ->
+    case lists:dropwhile(fun(E) -> E == Elem1 end, Tail) of
+        [Elem2 | Next] ->
+            RepeatedCount = length(Tail) - (length(Next) + 1),
+            Pos2 = Pos1 + RepeatedCount + 1,
+
+            {SmallerPos, SmallerElem} =
+                Smaller = b5_items:rank_smaller(randomly_switch_number_type(Elem2), Col),
+            ?assertEqual(Pos1 + RepeatedCount, SmallerPos),
+            ?assertCanonEqual(Elem1, SmallerElem),
+
+            case element_in_between(Elem1, Elem2) of
+                {found, InBetween} ->
+                    ?assertEqual(Smaller, b5_items:rank_smaller(InBetween, Col));
+                %
+                none ->
+                    ok
+            end,
+
+            run_rank_smaller_recur(Pos2, Elem2, Next, Col);
+        %
+        [] ->
+            LastPos = b5_items:size(Col),
+
+            LargerElem = element_larger(Elem1),
+            {SmallerPos, SmallerElem} = b5_items:rank_smaller(LargerElem, Col),
+            ?assertEqual(LastPos, SmallerPos),
+            ?assertCanonEqual(Elem1, SmallerElem)
+    end.
+
+%% ------------------------------------------------------------------
+%% Helpers: rank larger
+%% ------------------------------------------------------------------
+
+run_rank_larger(Size, RefElements, Col) ->
+    case lists:reverse(RefElements) of
+        [] ->
+            Element = new_element(),
+            ?assertEqual(none, b5_items:rank_larger(Element, Col));
+        %
+        [LastElement | Next] ->
+            ?assertEqual(none, b5_items:rank_larger(randomly_switch_number_type(LastElement), Col)),
+
+            run_rank_larger_recur(Size, LastElement, Next, Col)
+    end.
+
+run_rank_larger_recur(Pos2, Elem2, Tail, Col) ->
+    case lists:dropwhile(fun(E) -> E == Elem2 end, Tail) of
+        [Elem1 | Next] ->
+            RepeatedCount = length(Tail) - (length(Next) + 1),
+            Pos1 = Pos2 - RepeatedCount - 1,
+
+            {LargerPos, LargerElem} =
+                Larger = b5_items:rank_larger(randomly_switch_number_type(Elem1), Col),
+            ?assertEqual(Pos1 + 1, LargerPos),
+            ?assertCanonEqual(Elem2, LargerElem),
+
+            case element_in_between(Elem1, Elem2) of
+                {found, InBetween} ->
+                    ?assertEqual(Larger, b5_items:rank_larger(InBetween, Col));
+                %
+                none ->
+                    ok
+            end,
+
+            run_rank_larger_recur(Pos1, Elem1, Next, Col);
+        %
+        [] ->
+            SmallerElem = element_smaller(Elem2),
+            {LargerPos, LargerElem} = b5_items:rank_larger(SmallerElem, Col),
+            ?assertEqual(1, LargerPos),
+            ?assertCanonEqual(Elem2, LargerElem)
+    end.
 
 %% ------------------------------------------------------------------
 %% Helpers: Percentile Bracket - Inclusive
