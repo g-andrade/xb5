@@ -586,11 +586,9 @@ largest(?LEAF1_MATCH(E1)) ->
 largest(Root) ->
     largest_recur(Root).
 
--spec map(fun((Elem) -> MappedElem), t(Elem)) -> nonempty_improper_list(NewSize, t(MappedElem)) when
-    NewSize :: non_neg_integer().
+-spec map(fun((Elem) -> MappedElem), t(Elem)) -> t(MappedElem).
 map(Fun, Node) ->
-    Count = 0,
-    Acc = [Count | new()],
+    Acc = new(),
     map_root(Fun, Node, Acc).
 
 -spec merge(non_neg_integer(), t(Elem1), non_neg_integer(), t(Elem2)) -> t(Elem1 | Elem2).
@@ -3276,10 +3274,10 @@ map_recur(Fun, Node, Acc) ->
             _Acc10 = map_recur(Fun, C5, Acc9)
     end.
 
-map_elem(Fun, Elem, [Count | Root]) ->
+-compile({inline, map_elem/3}).
+map_elem(Fun, Elem, Root) ->
     Mapped = Fun(Elem),
-    UpdatedRoot = add(Mapped, Root),
-    [Count + 1 | UpdatedRoot].
+    add(Mapped, Root).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: merge/2

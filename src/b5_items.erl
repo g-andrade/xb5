@@ -136,8 +136,8 @@ largest(#b5_items{}) ->
     error_empty_items().
 
 map(Fun, #b5_items{root = Root} = Items) ->
-    [NewSize | MappedRoot] = b5_items_node:map(Fun, Root),
-    Items#b5_items{size = NewSize, root = MappedRoot}.
+    MappedRoot = b5_items_node:map(Fun, Root),
+    Items#b5_items{root = MappedRoot}.
 
 merge(
     #b5_items{size = Size1, root = Root1} = Items1,
