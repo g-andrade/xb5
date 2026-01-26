@@ -414,6 +414,7 @@ linear_interpolated_percentile({between, LowBound, HighBound}) ->
             error({bracket_value_not_a_number, HighBound});
         %
         true ->
+            % TODO avoid truncation when interpolating large enough integers (> 2**52)
             {value, (LowWeight * LowElem) + (HighWeight * HighElem)}
     end;
 linear_interpolated_percentile(none) ->
