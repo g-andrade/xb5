@@ -198,7 +198,9 @@ next(Iter) ->
     b5_items_node:next(Iter).
 
 nth(Rank, #b5_items{size = Size, root = Root}) when is_integer(Rank), Rank >= 1, Rank =< Size ->
-    b5_items_node:nth(Rank, Root).
+    b5_items_node:nth(Rank, Root);
+nth(Rank, #b5_items{}) ->
+    error({badarg, Rank}).
 
 percentile(Percentile, Items) ->
     percentile(Percentile, Items, []).
@@ -218,18 +220,35 @@ percentile_bracket(Percentile, #b5_items{size = Size, root = Root}, Opts) when
             none;
         %
         _ ->
+            % Inclusive: as in Excel PERCENTILE.INC:
+            % * https://support.microsoft.com/en-us/office/percentile-inc-function-680f9539-45eb-410b-9a5e-c1355e5fe2ed
+            % * (Claude says this is Hyndman-Fan Type 7)
+            %
+            % Exclusive: as in Excel PERCENTILE.EXC:
+            % * https://support.microsoft.com/en-us/office/percentile-exc-function-bbaa7204-e9e1-4010-85bf-c31dc5dce4ba
+            % * (Claude says this is Hyndman-Fan Type 6)
+            %
+            % Nearest rank: as described in Wikipedia:
+            % * https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+            %
             Method = proplists:get_value(method, Opts, inclusive),
             Pos = percentile_bracket_pos(Percentile, Size, Method),
             percentile_bracket_for_pos(Percentile, Pos, Size, Root, Method)
-    end.
+    end;
+percentile_bracket(Percentile, #b5_items{}, _Opts) ->
+    error({badarg, Percentile}).
 
 percentile_rank(Elem, #b5_items{size = Size, root = Root}) when Size > 0 ->
+    % As described in Wikipedia:
+    % https://en.wikipedia.org/wiki/Percentile_rank
     Smaller = b5_items_node:rank_smaller(Elem, Root),
     Larger = b5_items_node:rank_larger(Elem, Root),
 
     [CF | F] = percentile_rank_params(Smaller, Larger, Size),
 
-    (CF - 0.5 * F) / Size.
+    (CF - 0.5 * F) / Size;
+percentile_rank(_, #b5_items{}) ->
+    error_empty_items().
 
 rank_larger(Elem, #b5_items{root = Root}) ->
     case b5_items_node:rank_larger(Elem, Root) of
@@ -345,15 +364,21 @@ percentile_bracket_for_pos(Percentile, Pos, Size, Root, Method) ->
         true ->
             [LowElem | HighElem] = b5_items_node:nth_and_nthp1(LowRank, Root),
 
-            LowPerc = percentile_bracket_perc(LowRank, Size, Method),
-            HighPerc = percentile_bracket_perc(HighRank, Size, Method),
+            case HighElem == LowElem of
+                true ->
+                    {exact, LowElem};
+                %
+                _ ->
+                    LowPerc = percentile_bracket_perc(LowRank, Size, Method),
+                    HighPerc = percentile_bracket_perc(HighRank, Size, Method),
 
-            PercRange = HighPerc - LowPerc,
-            HighWeight = (Percentile - LowPerc) / PercRange,
-            LowWeight = 1.0 - HighWeight,
+                    PercRange = HighPerc - LowPerc,
+                    HighWeight = (Percentile - LowPerc) / PercRange,
+                    LowWeight = 1.0 - HighWeight,
 
-            {between, percentile_bracket_bound(LowWeight, LowPerc, LowElem),
-                percentile_bracket_bound(HighWeight, HighPerc, HighElem)}
+                    {between, percentile_bracket_bound(LowWeight, LowPerc, LowElem),
+                        percentile_bracket_bound(HighWeight, HighPerc, HighElem)}
+            end
     end.
 
 percentile_bracket_perc(Rank, Size, inclusive) ->
@@ -369,7 +394,7 @@ percentile_bracket_bound(Weight, Perc, Elem) ->
     }.
 
 linear_interpolated_percentile({exact, ExactElem}) ->
-    ExactElem;
+    {value, ExactElem};
 linear_interpolated_percentile({between, LowBound, HighBound}) ->
     #{
         weight := LowWeight,
@@ -383,22 +408,22 @@ linear_interpolated_percentile({between, LowBound, HighBound}) ->
 
     if
         not is_number(LowElem) ->
-            error({bracket_bound_not_numerical, LowBound});
+            error({bracket_value_not_a_number, LowBound});
         %
         not is_number(HighElem) ->
-            error({bracket_bound_not_numerical, LowBound});
+            error({bracket_value_not_a_number, HighBound});
         %
         true ->
-            (LowWeight * LowElem) + (HighWeight * HighElem)
+            {value, (LowWeight * LowElem) + (HighWeight * HighElem)}
     end;
 linear_interpolated_percentile(none) ->
     none.
 
 %%%%%%%%
 
-percentile_rank_params(none, none, _) ->
-    CF = 0,
-    F = 0,
+percentile_rank_params(none, none, Size) ->
+    CF = Size,
+    F = Size,
     [CF | F];
 percentile_rank_params(none, [LargerRank | _], _) ->
     F = LargerRank - 1,

@@ -4410,14 +4410,13 @@ rank_smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
 rank_smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     if
         Elem > E1 ->
-            case rank_smaller_recur(Elem, C1, O1) of
+            case rank_smaller_recur(Elem, C2, O1) of
                 none -> [O1 | E1];
                 Rank -> Rank
             end;
         %
         true ->
-            Acc = O1,
-            rank_smaller_recur(Elem, C2, Acc)
+            rank_smaller_recur(Elem, C1, 0)
     end.
 
 %%
