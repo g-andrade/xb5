@@ -476,10 +476,8 @@ test_percentile_inclusive(_Config) ->
             test_invalid_percentile_inclusive(Col),
             test_invalid_percentile_inclusive(UqCol),
 
-            _ = (Size =/= 0 andalso test_valid_percentile_inclusive(Size, RefElements, Col)),
-            _ =
-                (Size =/= 0 andalso
-                    test_valid_percentile_inclusive(length(RefUqElements), RefUqElements, UqCol))
+            test_valid_percentile_inclusive(Size, RefElements, Col),
+            test_valid_percentile_inclusive(length(RefUqElements), RefUqElements, UqCol)
         end
     ),
 
@@ -490,10 +488,8 @@ test_percentile_inclusive(_Config) ->
             test_invalid_percentile_inclusive(Col),
             test_invalid_percentile_inclusive(UqCol),
 
-            _ = (Size =/= 0 andalso test_valid_percentile_inclusive(Size, RefElements, Col)),
-            _ =
-                (Size =/= 0 andalso
-                    test_valid_percentile_inclusive(length(RefUqElements), RefUqElements, UqCol))
+            test_valid_percentile_inclusive(Size, RefElements, Col),
+            test_valid_percentile_inclusive(length(RefUqElements), RefUqElements, UqCol)
         end,
         [numeric_only]
     ).
@@ -506,10 +502,8 @@ test_percentile_exclusive(_Config) ->
             test_invalid_percentile_exclusive(Col),
             test_invalid_percentile_exclusive(UqCol),
 
-            _ = (Size =/= 0 andalso test_valid_percentile_exclusive(Size, RefElements, Col)),
-            _ =
-                (Size =/= 0 andalso
-                    test_valid_percentile_exclusive(length(RefUqElements), RefUqElements, UqCol))
+            test_valid_percentile_exclusive(Size, RefElements, Col),
+            test_valid_percentile_exclusive(length(RefUqElements), RefUqElements, UqCol)
         end
     ),
 
@@ -520,10 +514,8 @@ test_percentile_exclusive(_Config) ->
             test_invalid_percentile_exclusive(Col),
             test_invalid_percentile_exclusive(UqCol),
 
-            _ = (Size =/= 0 andalso test_valid_percentile_exclusive(Size, RefElements, Col)),
-            _ =
-                (Size =/= 0 andalso
-                    test_valid_percentile_exclusive(length(RefUqElements), RefUqElements, UqCol))
+            test_valid_percentile_exclusive(Size, RefElements, Col),
+            test_valid_percentile_exclusive(length(RefUqElements), RefUqElements, UqCol)
         end,
         [numeric_only]
     ).
@@ -536,10 +528,8 @@ test_percentile_nearest_rank(_Config) ->
             test_invalid_percentile_nearest_rank(Col),
             test_invalid_percentile_nearest_rank(UqCol),
 
-            _ = (Size =/= 0 andalso test_valid_percentile_nearest_rank(Size, RefElements, Col)),
-            _ =
-                (Size =/= 0 andalso
-                    test_valid_percentile_nearest_rank(length(RefUqElements), RefUqElements, UqCol))
+            test_valid_percentile_nearest_rank(Size, RefElements, Col),
+            test_valid_percentile_nearest_rank(length(RefUqElements), RefUqElements, UqCol)
         end
     ),
 
@@ -1539,6 +1529,15 @@ test_invalid_percentile_inclusive(Col) ->
     ?assertError({badarg, 50}, new_percentile_inclusive(50, Col)),
     ?assertError({badarg, not_numerical}, new_percentile_inclusive(not_numerical, Col)).
 
+test_valid_percentile_inclusive(0 = Size, _, Col) ->
+    foreach_percentile(
+        fun(Percentile, _, _) ->
+            ?assertEqual(none, new_percentile_bracket_inclusive(Percentile, Col)),
+            ?assertEqual(none, new_percentile_inclusive(Percentile, Col))
+        end,
+        Size,
+        inclusive
+    );
 test_valid_percentile_inclusive(Size, RefElements, Col) ->
     foreach_percentile(
         fun
@@ -1713,6 +1712,15 @@ test_invalid_percentile_exclusive(Col) ->
     ?assertError({badarg, 50}, new_percentile_exclusive(50, Col)),
     ?assertError({badarg, not_numerical}, new_percentile_exclusive(not_numerical, Col)).
 
+test_valid_percentile_exclusive(0 = Size, _, Col) ->
+    foreach_percentile(
+        fun(Percentile, _, _) ->
+            ?assertCanonEqual(none, new_percentile_bracket_exclusive(Percentile, Col)),
+            ?assertEqual(none, new_percentile_exclusive(Percentile, Col))
+        end,
+        Size,
+        exclusive
+    );
 test_valid_percentile_exclusive(Size, RefElements, Col) ->
     foreach_percentile(
         fun
@@ -1881,6 +1889,15 @@ test_invalid_percentile_nearest_rank(Col) ->
     ?assertError({badarg, 50}, new_percentile_nearest_rank(50, Col)),
     ?assertError({badarg, not_numerical}, new_percentile_nearest_rank(not_numerical, Col)).
 
+test_valid_percentile_nearest_rank(0 = Size, _, Col) ->
+    foreach_percentile(
+        fun(Percentile, _, _) ->
+            ?assertEqual(none, new_percentile_bracket_nearest_rank(Percentile, Col)),
+            ?assertEqual(none, new_percentile_nearest_rank(Percentile, Col))
+        end,
+        Size,
+        nearest_rank
+    );
 test_valid_percentile_nearest_rank(Size, RefElements, Col) ->
     foreach_percentile(
         fun
@@ -1975,12 +1992,26 @@ new_percentile_nearest_rank_do(Percentile, Col) ->
 %%%%%%%%%%
 
 foreach_percentile(Fun, Size, Method) ->
-    ForExactPositions = [Pos / Size || Pos <- lists:seq(1, Size)],
+    CacheKey = {?MODULE, foreach_percentile, cached_percentiles, Size},
 
-    MaxGenericSlice = 100,
-    ForGenericSlices = [SliceNr / MaxGenericSlice || SliceNr <- lists:seq(0, MaxGenericSlice)],
+    Percentiles =
+        case get(CacheKey) of
+            List when is_list(List) ->
+                List;
+            %
+            undefined ->
+                ForExactPositions = [Pos / Size || Pos <- lists:seq(1, Size)],
 
-    Percentiles = lists:usort(ForGenericSlices ++ ForExactPositions),
+                MaxGenericSlice = 100,
+                ForGenericSlices = [
+                    SliceNr / MaxGenericSlice
+                 || SliceNr <- lists:seq(0, MaxGenericSlice)
+                ],
+
+                List = lists:usort(ForGenericSlices ++ ForExactPositions),
+                put(CacheKey, List),
+                List
+        end,
 
     lists:foreach(
         fun(Percentile) ->
