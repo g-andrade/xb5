@@ -52,6 +52,15 @@
     test_percentile_rank_hardcoded/1
 ]).
 
+%% Test exports - additional functions
+-export([
+    test_filter/1,
+    test_filtermap/1,
+    test_fold/1,
+    test_map/1,
+    test_merge/1
+]).
+
 %% Test constants
 -define(TESTED_SIZES,
     (lists:seq(0, 50) ++ lists:seq(55, 200, 5) ++ [997])
@@ -137,6 +146,13 @@ groups() ->
             test_percentile_hardcoded4,
             test_percentile_rank,
             test_percentile_rank_hardcoded
+        ]},
+        {additional_functions, [parallel], [
+            test_filter,
+            test_filtermap,
+            test_fold,
+            test_map,
+            test_merge
         ]}
     ].
 
@@ -152,45 +168,24 @@ end_per_suite(_Config) ->
 
 test_construction(_Config) ->
     foreach_tested_size(
-        fun(Size, RefElements, RefUqElements) ->
+        fun(Size, RefElements) ->
             Col = b5_items:from_list(RefElements),
             ?assertListsCanonEqual(RefElements, b5_items:to_list(Col)),
             ?assertEqual(Size, b5_items:size(Col)),
             ?assertEqual(Size =:= 0, b5_items:is_empty(Col)),
             ?assertEqual(Col, new_collection_from_each_added(RefElements)),
-            ?assertEqual(Col, b5_items:from_list(RefElements, [])),
-            ?assertEqual(Col, b5_items:from_list(RefElements, [{unique, false}])),
-            ?assertEqual(Col, b5_items:from_list(RefElements, [{unique, false}, unique])),
-            ?assertEqual(Col, b5_items:from_ordset(RefElements)),
-            ?assertEqual(Col, b5_items:from_ordset(RefElements, [])),
-            ?assertEqual(Col, b5_items:from_ordset(RefElements, [{unique, false}])),
-            ?assertEqual(Col, b5_items:from_ordset(RefElements, [{unique, false}, unique])),
-
-            UqCol = b5_items:from_list(RefElements, [unique]),
-            ?assertListsCanonEqual(RefUqElements, b5_items:to_list(UqCol)),
-            ?assertEqual(length(RefUqElements), b5_items:size(UqCol)),
-            ?assertEqual(RefUqElements =:= [], b5_items:is_empty(Col)),
-            ?assertEqual(UqCol, new_collection_from_each_added(RefElements, [unique])),
-            ?assertEqual(UqCol, b5_items:from_list(RefElements, [{unique, true}])),
-            ?assertEqual(UqCol, b5_items:from_list(RefElements, [{unique, true}, {unique, false}])),
-            ?assertEqual(UqCol, b5_items:from_list(RefElements, [unique, {unique, false}])),
-            ?assertEqual(UqCol, b5_items:from_ordset(RefElements, [{unique, true}])),
-            ?assertEqual(
-                UqCol, b5_items:from_ordset(RefElements, [{unique, true}, {unique, false}])
-            ),
-            ?assertEqual(UqCol, b5_items:from_ordset(RefElements, [unique, {unique, false}]))
+            ?assertEqual(Col, b5_items:from_ordset(RefElements))
         end
     ).
 
 test_lookup(_Config) ->
     foreach_test_set(
-        fun(Size, _RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             foreach_existing_element(
                 fun(Element) ->
-                    ?assertEqual(true, b5_items:is_member(Element, Col)),
-                    ?assertEqual(true, b5_items:is_member(Element, UqCol))
+                    ?assertEqual(true, b5_items:is_member(Element, Col))
                 end,
-                RefUqElements,
+                RefElements,
                 Size
             ),
 
@@ -198,10 +193,9 @@ test_lookup(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    ?assertEqual(false, b5_items:is_member(Element, Col)),
-                    ?assertEqual(false, b5_items:is_member(Element, UqCol))
+                    ?assertEqual(false, b5_items:is_member(Element, Col))
                 end,
-                RefUqElements,
+                RefElements,
                 100
             )
         end
@@ -209,7 +203,7 @@ test_lookup(_Config) ->
 
 test_add(_Config) ->
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             foreach_existing_element(
                 fun(Element) ->
                     Col2 = b5_items:add(Element, Col),
@@ -217,15 +211,9 @@ test_add(_Config) ->
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
                         b5_items:to_list(Col2)
-                    ),
-
-                    %%%%%%%%%%%%
-
-                    UqCol2 = b5_items:add(randomly_switch_number_type(Element), UqCol),
-                    ?assertEqual(length(RefUqElements), b5_items:size(UqCol2)),
-                    ?assertEqual(UqCol, UqCol2)
+                    )
                 end,
-                RefUqElements,
+                RefElements,
                 min(50, Size)
             ),
 
@@ -238,16 +226,9 @@ test_add(_Config) ->
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
                         b5_items:to_list(Col2)
-                    ),
-
-                    UqCol2 = b5_items:add(Element, UqCol),
-                    ?assertEqual(length(RefUqElements) + 1, b5_items:size(UqCol2)),
-                    ?assertListsCanonEqual(
-                        add_to_sorted_list(Element, RefUqElements),
-                        b5_items:to_list(UqCol2)
                     )
                 end,
-                RefUqElements,
+                RefElements,
                 50
             )
         end
@@ -255,13 +236,12 @@ test_add(_Config) ->
 
 test_insert(_Config) ->
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             foreach_existing_element(
                 fun(Element) ->
-                    ?assertError({key_exists, Element}, b5_items:insert(Element, Col)),
-                    ?assertError({key_exists, Element}, b5_items:insert(Element, UqCol))
+                    ?assertError({key_exists, Element}, b5_items:insert(Element, Col))
                 end,
-                RefUqElements,
+                RefElements,
                 min(50, Size)
             ),
 
@@ -274,16 +254,9 @@ test_insert(_Config) ->
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
                         b5_items:to_list(Col2)
-                    ),
-
-                    UqCol2 = b5_items:insert(Element, UqCol),
-                    ?assertEqual(length(RefUqElements) + 1, b5_items:size(UqCol2)),
-                    ?assertListsCanonEqual(
-                        add_to_sorted_list(Element, RefUqElements),
-                        b5_items:to_list(UqCol2)
                     )
                 end,
-                RefUqElements,
+                RefElements,
                 50
             )
         end
@@ -291,7 +264,7 @@ test_insert(_Config) ->
 
 test_delete(_Config) ->
     foreach_test_set(
-        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(_Size, RefElements, Col) ->
             DeleteKeys = lists:map(fun randomly_switch_number_type/1, list_shuffle(RefElements)),
 
             {ColN, []} =
@@ -317,39 +290,7 @@ test_delete(_Config) ->
             ?assertEqual(0, b5_items:size(ColN)),
             ?assertEqual(true, b5_items:is_empty(ColN)),
 
-            test_delete_non_existing_keys(ColN, [], 3),
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-            UqDeleteKeys = lists:map(
-                fun randomly_switch_number_type/1, list_shuffle(RefUqElements)
-            ),
-
-            {UqColN, []} =
-                lists:foldl(
-                    fun(Element, {UqCol1, RemainingElements1}) ->
-                        test_delete_non_existing_keys(UqCol1, RemainingElements1, 3),
-
-                        UqCol2 = b5_items:delete(Element, UqCol1),
-                        RemainingElements2 = remove_from_sorted_list(Element, RemainingElements1),
-                        ?assertListsCanonEqual(RemainingElements2, b5_items:to_list(UqCol2)),
-                        ?assertEqual(length(RemainingElements2), b5_items:size(UqCol2)),
-                        ?assertEqual(RemainingElements2 =:= [], b5_items:is_empty(UqCol2)),
-
-                        ?assertEqual(UqCol2, b5_items:delete_any(Element, UqCol1)),
-
-                        {UqCol2, RemainingElements2}
-                    end,
-                    {UqCol, lists:sort(UqDeleteKeys)},
-                    UqDeleteKeys
-                ),
-
-            ?assertEqual([], b5_items:to_list(UqColN)),
-            ?assertEqual(0, b5_items:size(UqColN)),
-            ?assertEqual(true, b5_items:is_empty(UqColN)),
-
-            test_delete_non_existing_keys(UqColN, [], 3)
+            test_delete_non_existing_keys(ColN, [], 3)
         end
     ).
 
@@ -360,58 +301,50 @@ test_delete(_Config) ->
 test_smallest(_Config) ->
     foreach_test_set(
         fun
-            (0, _RefElements, Col, _RefUqElements, UqCol) ->
-                ?assertError(empty_items, b5_items:smallest(Col)),
-                ?assertError(empty_items, b5_items:smallest(UqCol));
+            (0, _RefElements, Col) ->
+                ?assertError(empty_items, b5_items:smallest(Col));
             %
-            (_Size, RefElements, Col, RefUqElements, UqCol) ->
-                ?assert(b5_items:smallest(Col) == hd(RefElements)),
-                ?assert(b5_items:smallest(UqCol) == hd(RefUqElements))
+            (_Size, RefElements, Col) ->
+                ?assert(b5_items:smallest(Col) == hd(RefElements))
         end
     ).
 
 test_largest(_Config) ->
     foreach_test_set(
         fun
-            (0, _RefElements, Col, _RefUqElements, UqCol) ->
-                ?assertError(empty_items, b5_items:largest(Col)),
-                ?assertError(empty_items, b5_items:largest(UqCol));
+            (0, _RefElements, Col) ->
+                ?assertError(empty_items, b5_items:largest(Col));
             %
-            (_Size, RefElements, Col, RefUqElements, UqCol) ->
-                ?assert(b5_items:largest(Col) == lists:last(RefElements)),
-                ?assert(b5_items:largest(UqCol) == lists:last(RefUqElements))
+            (_Size, RefElements, Col) ->
+                ?assert(b5_items:largest(Col) == lists:last(RefElements))
         end
     ).
 
 test_smaller(_Config) ->
     foreach_test_set(
-        fun(_Size, _RefElements, Col, RefUqElements, UqCol) ->
-            run_smaller(RefUqElements, Col),
-            run_smaller(RefUqElements, UqCol)
+        fun(_Size, RefElements, Col) ->
+            run_smaller(RefElements, Col)
         end
     ).
 
 test_larger(_Config) ->
     foreach_test_set(
-        fun(_Size, _RefElements, Col, RefUqElements, UqCol) ->
-            run_larger(RefUqElements, Col),
-            run_larger(RefUqElements, UqCol)
+        fun(_Size, RefElements, Col) ->
+            run_larger(RefElements, Col)
         end
     ).
 
 test_take_smallest(_Config) ->
     foreach_test_set(
-        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
-            run_take_smallest(RefElements, Col),
-            run_take_smallest(RefUqElements, UqCol)
+        fun(_Size, RefElements, Col) ->
+            run_take_smallest(RefElements, Col)
         end
     ).
 
 test_take_largest(_Config) ->
     foreach_test_set(
-        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
-            run_take_largest(lists:reverse(RefElements), Col),
-            run_take_largest(lists:reverse(RefUqElements), UqCol)
+        fun(_Size, RefElements, Col) ->
+            run_take_largest(lists:reverse(RefElements), Col)
         end
     ).
 
@@ -421,39 +354,31 @@ test_take_largest(_Config) ->
 
 test_iterator(_Config) ->
     foreach_test_set(
-        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(_Size, RefElements, Col) ->
             Iter = new_iterator(Col),
-            ?assertListsCanonEqual(RefElements, iterate(Iter)),
-
-            UqIter = new_iterator(UqCol),
-            ?assertListsCanonEqual(RefUqElements, iterate(UqIter))
+            ?assertListsCanonEqual(RefElements, iterate(Iter))
         end
     ).
 
 test_iterator_reversed(_Config) ->
     foreach_test_set(
-        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(_Size, RefElements, Col) ->
             Iter = b5_items:iterator(Col, reversed),
-            ?assertListsCanonEqual(lists:reverse(RefElements), iterate(Iter)),
-
-            UqIter = b5_items:iterator(UqCol, reversed),
-            ?assertListsCanonEqual(lists:reverse(RefUqElements), iterate(UqIter))
+            ?assertListsCanonEqual(lists:reverse(RefElements), iterate(Iter))
         end
     ).
 
 test_iterator_from(_Config) ->
     foreach_test_set(
-        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
-            run_iterator_from(RefElements, Col),
-            run_iterator_from(RefUqElements, UqCol)
+        fun(_Size, RefElements, Col) ->
+            run_iterator_from(RefElements, Col)
         end
     ).
 
 test_iterator_from_reversed(_Config) ->
     foreach_test_set(
-        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
-            run_iterator_from_reversed(RefElements, Col),
-            run_iterator_from_reversed(RefUqElements, UqCol)
+        fun(_Size, RefElements, Col) ->
+            run_iterator_from_reversed(RefElements, Col)
         end
     ).
 
@@ -463,28 +388,24 @@ test_iterator_from_reversed(_Config) ->
 
 test_nth(_Config) ->
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             test_invalid_nth(Size, Col),
-            test_invalid_nth(Size, UqCol),
 
-            _ = (Size =/= 0 andalso test_valid_nth(RefElements, Col)),
-            _ = (Size =/= 0 andalso test_valid_nth(RefUqElements, UqCol))
+            _ = (Size =/= 0 andalso test_valid_nth(RefElements, Col))
         end
     ).
 
 test_rank_smaller(_Config) ->
     foreach_test_set(
-        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
-            run_rank_smaller(RefElements, Col),
-            run_rank_smaller(RefUqElements, UqCol)
+        fun(_Size, RefElements, Col) ->
+            run_rank_smaller(RefElements, Col)
         end
     ).
 
 test_rank_larger(_Config) ->
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
-            run_rank_larger(Size, RefElements, Col),
-            run_rank_larger(length(RefUqElements), RefUqElements, UqCol)
+        fun(Size, RefElements, Col) ->
+            run_rank_larger(Size, RefElements, Col)
         end
     ).
 
@@ -492,24 +413,18 @@ test_rank_larger(_Config) ->
 
 test_percentile_inclusive(_Config) ->
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             test_invalid_percentile_inclusive(Col),
-            test_invalid_percentile_inclusive(UqCol),
-
-            test_valid_percentile_inclusive(Size, RefElements, Col),
-            test_valid_percentile_inclusive(length(RefUqElements), RefUqElements, UqCol)
+            test_valid_percentile_inclusive(Size, RefElements, Col)
         end
     ),
 
     %%%%%%%%%%
 
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             test_invalid_percentile_inclusive(Col),
-            test_invalid_percentile_inclusive(UqCol),
-
-            test_valid_percentile_inclusive(Size, RefElements, Col),
-            test_valid_percentile_inclusive(length(RefUqElements), RefUqElements, UqCol)
+            test_valid_percentile_inclusive(Size, RefElements, Col)
         end,
         [numeric_only]
     ).
@@ -518,24 +433,18 @@ test_percentile_inclusive(_Config) ->
 
 test_percentile_exclusive(_Config) ->
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             test_invalid_percentile_exclusive(Col),
-            test_invalid_percentile_exclusive(UqCol),
-
-            test_valid_percentile_exclusive(Size, RefElements, Col),
-            test_valid_percentile_exclusive(length(RefUqElements), RefUqElements, UqCol)
+            test_valid_percentile_exclusive(Size, RefElements, Col)
         end
     ),
 
     %%%%%%%%%
 
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             test_invalid_percentile_exclusive(Col),
-            test_invalid_percentile_exclusive(UqCol),
-
-            test_valid_percentile_exclusive(Size, RefElements, Col),
-            test_valid_percentile_exclusive(length(RefUqElements), RefUqElements, UqCol)
+            test_valid_percentile_exclusive(Size, RefElements, Col)
         end,
         [numeric_only]
     ).
@@ -544,26 +453,19 @@ test_percentile_exclusive(_Config) ->
 
 test_percentile_nearest_rank(_Config) ->
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             test_invalid_percentile_nearest_rank(Col),
-            test_invalid_percentile_nearest_rank(UqCol),
-
-            test_valid_percentile_nearest_rank(Size, RefElements, Col),
-            test_valid_percentile_nearest_rank(length(RefUqElements), RefUqElements, UqCol)
+            test_valid_percentile_nearest_rank(Size, RefElements, Col)
         end
     ),
 
     %%%%%%%%%%%%
 
     foreach_test_set(
-        fun(Size, RefElements, Col, RefUqElements, UqCol) ->
+        fun(Size, RefElements, Col) ->
             test_invalid_percentile_nearest_rank(Col),
-            test_invalid_percentile_nearest_rank(UqCol),
 
-            _ = (Size =/= 0 andalso test_valid_percentile_nearest_rank(Size, RefElements, Col)),
-            _ =
-                (Size =/= 0 andalso
-                    test_valid_percentile_nearest_rank(length(RefUqElements), RefUqElements, UqCol))
+            _ = (Size =/= 0 andalso test_valid_percentile_nearest_rank(Size, RefElements, Col))
         end,
         [numeric_only]
     ).
@@ -914,9 +816,8 @@ test_percentile_hardcoded4(_Config) ->
 
 test_percentile_rank(_Config) ->
     foreach_test_set(
-        fun(_Size, RefElements, Col, RefUqElements, UqCol) ->
-            run_percentile_rank(RefElements, Col),
-            run_percentile_rank(RefUqElements, UqCol)
+        fun(_Size, RefElements, Col) ->
+            run_percentile_rank(RefElements, Col)
         end
     ).
 
@@ -994,6 +895,45 @@ test_percentile_rank_hardcoded(_Config) ->
     run_percentile_rank(List5, Col5).
 
 %% ------------------------------------------------------------------
+%% Tests - Additional Functions
+%% ------------------------------------------------------------------
+
+test_filter(_Config) ->
+    foreach_test_set(
+        fun(Size, RefElements, Col) ->
+            run_filter(Size, RefElements, Col)
+        end
+    ).
+
+test_filtermap(_Config) ->
+    foreach_test_set(
+        fun(Size, RefElements, Col) ->
+            run_filtermap(Size, RefElements, Col)
+        end
+    ).
+
+test_fold(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Col) ->
+            run_fold(RefElements, Col)
+        end
+    ).
+
+test_map(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Col) ->
+            run_map(RefElements, Col)
+        end
+    ).
+
+test_merge(_Config) ->
+    foreach_test_set(
+        fun(Size, RefElements, Col) ->
+            run_merge(Size, RefElements, Col)
+        end
+    ).
+
+%% ------------------------------------------------------------------
 %% Helper Functions: shared
 %% ------------------------------------------------------------------
 
@@ -1002,13 +942,9 @@ foreach_test_set(Fun) ->
 
 foreach_test_set(Fun, Opts) ->
     foreach_tested_size(
-        fun(Size, RefElements, RefUqElements) ->
+        fun(Size, RefElements) ->
             Col = b5_items:from_list(maybe_shuffle_elements_for_new_collection(RefElements)),
-            UqCol = b5_items:from_list(maybe_shuffle_elements_for_new_collection(RefElements), [
-                unique
-            ]),
-
-            Fun(Size, RefElements, Col, RefUqElements, UqCol)
+            Fun(Size, RefElements, Col)
         end,
         Opts
     ).
@@ -1055,8 +991,7 @@ foreach_tested_size(Fun, Opts) ->
 run_test_for_size(Size, NumericOnly, Fun) ->
     RepetitionChance = 0.20,
     RefElements = new_ref_elements(Size, NumericOnly, RepetitionChance),
-    RefUqElements = ref_unique_elements(RefElements),
-    Fun(Size, RefElements, RefUqElements).
+    Fun(Size, RefElements).
 
 new_ref_elements(Size, NumericOnly, RepetitionChance) ->
     new_ref_elements_recur(Size, NumericOnly, RepetitionChance, _Acc = []).
@@ -1092,17 +1027,6 @@ randomly_switch_number_type(Element) ->
             Element
     end.
 
-ref_unique_elements([V1 | [V2 | T2] = T1]) ->
-    if
-        V2 == V1 ->
-            ref_unique_elements([V1 | T2]);
-        %
-        V2 > V1 ->
-            [V1 | ref_unique_elements(T1)]
-    end;
-ref_unique_elements(T) ->
-    T.
-
 canon_element(Element) when is_float(Element) ->
     case math:fmod(Element, 1.0) == 0 of
         true ->
@@ -1134,13 +1058,7 @@ canon_list(ImproperTail) ->
     canon_element(ImproperTail).
 
 new_collection_from_each_added(List) ->
-    new_collection_from_each_added(List, []).
-
-new_collection_from_each_added(List, Opts) ->
-    Col = b5_items:new(Opts),
-
-    IsUnique = proplists:get_value(unique, Opts, false),
-    ?assertEqual(not IsUnique, Col =:= b5_items:new()),
+    Col = b5_items:new(),
 
     ?assertEqual(0, b5_items:size(Col)),
     ?assertEqual(true, b5_items:is_empty(Col)),
@@ -1155,8 +1073,8 @@ new_collection_from_each_added_recur([], Col) ->
 
 %%%%%%%%%%%%%%%
 
-foreach_existing_element(Fun, RefUqElements, Amount) ->
-    Chosen = lists:sublist(list_shuffle(RefUqElements), Amount),
+foreach_existing_element(Fun, RefElements, Amount) ->
+    Chosen = lists:sublist(list_shuffle(RefElements), Amount),
 
     lists:foreach(
         fun(Element) ->
@@ -1165,16 +1083,16 @@ foreach_existing_element(Fun, RefUqElements, Amount) ->
         Chosen
     ).
 
-foreach_non_existent_element(Fun, RefUqElements, Amount) when Amount > 0 ->
+foreach_non_existent_element(Fun, RefElements, Amount) when Amount > 0 ->
     Element = new_element(),
 
-    case lists:any(fun(E) -> E == Element end, RefUqElements) of
+    case lists:any(fun(E) -> E == Element end, RefElements) of
         false ->
             Fun(Element),
-            foreach_non_existent_element(Fun, RefUqElements, Amount - 1);
+            foreach_non_existent_element(Fun, RefElements, Amount - 1);
         %
         true ->
-            foreach_non_existent_element(Fun, RefUqElements, Amount)
+            foreach_non_existent_element(Fun, RefElements, Amount)
     end;
 foreach_non_existent_element(_, _, 0) ->
     ok.
@@ -1229,7 +1147,7 @@ test_delete_non_existing_keys(_, _, 0) ->
 %% ------------------------------------------------------------------
 
 run_smaller(RefElements, Col) ->
-    case RefElements of
+    case lists:usort(RefElements) of
         [] ->
             Element = new_element(),
             ?assertEqual(none, b5_items:smaller(Element, Col));
@@ -1253,7 +1171,10 @@ run_smaller(RefElements, Col) ->
     end.
 
 run_smaller_recur(Expected, [LastElement], Col) ->
-    ?assert(b5_items:smaller(randomly_switch_number_type(LastElement), Col) == {found, Expected}),
+    ?assertCanonEqual(
+        {found, Expected},
+        b5_items:smaller(randomly_switch_number_type(LastElement), Col)
+    ),
 
     LargerElement = element_larger(LastElement),
     ?assert(LargerElement > LastElement),
@@ -1276,7 +1197,7 @@ run_smaller_recur(Expected, [Element | Next], Col) ->
 %%%%%%%%%%%%%%%%%
 
 run_larger(RefElements, Col) ->
-    case RefElements of
+    case lists:reverse(lists:usort(RefElements)) of
         [] ->
             Element = new_element(),
             ?assertEqual(none, b5_items:larger(Element, Col));
@@ -1290,9 +1211,7 @@ run_larger(RefElements, Col) ->
             SmallerElement = element_smaller(SingleElement),
             ?assert(b5_items:larger(SmallerElement, Col) == {found, SingleElement});
         %
-        _ ->
-            [LastElement | Next] = lists:reverse(RefElements),
-
+        [LastElement | Next] ->
             ?assertEqual(none, b5_items:larger(randomly_switch_number_type(LastElement), Col)),
 
             LargerElement = element_larger(LastElement),
@@ -1302,7 +1221,10 @@ run_larger(RefElements, Col) ->
     end.
 
 run_larger_recur(Expected, [FirstElement], Col) ->
-    ?assert(b5_items:larger(randomly_switch_number_type(FirstElement), Col) == {found, Expected}),
+    ?assertCanonEqual(
+        {found, Expected},
+        b5_items:larger(randomly_switch_number_type(FirstElement), Col)
+    ),
 
     SmallerElement = element_smaller(FirstElement),
     ?assert(SmallerElement < FirstElement),
@@ -2236,6 +2158,253 @@ lists_count_while(Fun, [H | T]) ->
     end;
 lists_count_while(_, []) ->
     0.
+
+%% ------------------------------------------------------------------
+%% Helper Functions: filter
+%% ------------------------------------------------------------------
+
+run_filter(Size, RefElements, Col) ->
+    RoughAmountsToRemove =
+        case Size of
+            0 ->
+                [0];
+            %
+            _ ->
+                lists:usort([
+                    0, 1, Size, Size - 1, rand:uniform(Size), rand:uniform(Size), rand:uniform(Size)
+                ])
+        end,
+
+    lists:foreach(
+        fun(RoughAmountToRemove) ->
+            FilterFun =
+                case Size of
+                    0 ->
+                        fun(_) -> error(not_to_be_called) end;
+                    %
+                    _ ->
+                        ElementsToRemove = lists:sublist(
+                            list_shuffle(RefElements), RoughAmountToRemove
+                        ),
+                        AuxSet = gb_sets:from_list(ElementsToRemove),
+                        fun(E) -> not gb_sets:is_element(E, AuxSet) end
+                end,
+
+            FilteredCol = b5_items:filter(FilterFun, Col),
+
+            ExpectedElementsRemaining = lists:filter(FilterFun, RefElements),
+            ?assertListsCanonEqual(ExpectedElementsRemaining, b5_items:to_list(FilteredCol)),
+
+            ?assertEqual(length(ExpectedElementsRemaining), b5_items:size(FilteredCol))
+        end,
+        RoughAmountsToRemove
+    ).
+
+%% ------------------------------------------------------------------
+%% Helper Functions: filtermap
+%% ------------------------------------------------------------------
+
+run_filtermap(Size, RefElements, Col) ->
+    RoughAmountsToKeep =
+        case Size of
+            0 ->
+                [0];
+            %
+            _ ->
+                lists:usort([
+                    0, 1, Size, Size - 1, rand:uniform(Size), rand:uniform(Size), rand:uniform(Size)
+                ])
+        end,
+
+    RoughPercentagesToMap =
+        case Size of
+            0 ->
+                [0.0];
+            %
+            _ ->
+                [0.0, 0.2, 0.5, 0.8, 1.0]
+        end,
+
+    ParamCombos = [
+        {RoughAmountToKeep, RoughPercentageToMap}
+     || RoughAmountToKeep <- RoughAmountsToKeep,
+        RoughPercentageToMap <- RoughPercentagesToMap
+    ],
+
+    %%%%
+
+    lists:foreach(
+        fun({RoughAmountToKeep, RoughPercentageToMap}) ->
+            RoughAmountToMap = floor(RoughPercentageToMap * RoughAmountToKeep),
+
+            FiltermapFun =
+                case Size of
+                    0 ->
+                        fun(_) -> error(not_to_be_called) end;
+                    %
+                    _ ->
+                        ElementsToKeep = lists:sublist(
+                            list_shuffle(RefElements), RoughAmountToKeep
+                        ),
+                        ElementsToMap = lists:sublist(
+                            list_shuffle(ElementsToKeep), RoughAmountToMap
+                        ),
+
+                        KeepSet = gb_sets:from_list(ElementsToKeep),
+                        MapSet = gb_sets:from_list(ElementsToMap),
+
+                        fun(E) ->
+                            case gb_sets:is_element(E, MapSet) of
+                                true ->
+                                    {true, erlang:phash2(canon_element(E), 4)};
+                                %
+                                false ->
+                                    gb_sets:is_element(E, KeepSet)
+                            end
+                        end
+                end,
+
+            FiltermappedCol = b5_items:filtermap(FiltermapFun, Col),
+
+            ExpectedElementsRemaining = lists:sort(lists:filtermap(FiltermapFun, RefElements)),
+            ?assertListsCanonEqual(ExpectedElementsRemaining, b5_items:to_list(FiltermappedCol)),
+
+            ?assertEqual(length(ExpectedElementsRemaining), b5_items:size(FiltermappedCol))
+        end,
+        ParamCombos
+    ).
+
+%% ------------------------------------------------------------------
+%% Helper Functions: fold
+%% ------------------------------------------------------------------
+
+run_fold(RefElements, Col) ->
+    run_fold_count(RefElements, Col),
+
+    RandomFactor = rand:uniform(),
+
+    Fun =
+        fun(E, Acc) ->
+            case erlang:phash2([canon_element(E) | RandomFactor], 3) of
+                0 ->
+                    [E | Acc];
+                %
+                _ ->
+                    Acc
+            end
+        end,
+
+    ?assertListsCanonEqual(
+        lists:foldl(Fun, [], RefElements),
+        b5_items:fold(Fun, [], Col)
+    ).
+
+run_fold_count(RefElements, Col) ->
+    Count = b5_items:fold(fun(_E, Acc) -> Acc + 1 end, 0, Col),
+    ?assertEqual(length(RefElements), Count).
+
+%% ------------------------------------------------------------------
+%% Helper Functions: map
+%% ------------------------------------------------------------------
+
+run_map(RefElements, Col) ->
+    PercentagesMapped = [
+        0.0,
+        0.2,
+        0.5,
+        0.7,
+        1.0
+    ],
+
+    %%%%
+
+    lists:foreach(
+        fun(PercentageMapped) ->
+            PHashRange = 100000,
+            PHashCeiling = round(PercentageMapped * PHashRange),
+            RandomFactor = rand:uniform(),
+
+            MapFun =
+                fun(E) ->
+                    case erlang:phash2(canon_element(E), PHashRange) < PHashCeiling of
+                        true ->
+                            erlang:phash2([RandomFactor | canon_element(E)], 3);
+                        %
+                        false ->
+                            E
+                    end
+                end,
+
+            MappedCol = b5_items:map(MapFun, Col),
+
+            ExpectedMappedRef = lists:sort(lists:map(MapFun, RefElements)),
+
+            ?assertEqual(
+                length(ExpectedMappedRef),
+                b5_items:size(MappedCol)
+            ),
+
+            ?assertListsCanonEqual(
+                ExpectedMappedRef,
+                b5_items:to_list(MappedCol)
+            )
+        end,
+        PercentagesMapped
+    ).
+
+%% ------------------------------------------------------------------
+%% Helper Functions: merge
+%% ------------------------------------------------------------------
+
+run_merge(Size, RefElements, Col) ->
+    Amounts2 = lists:usort([
+        0,
+        1,
+        Size,
+        rand:uniform(max(1, Size)),
+        rand:uniform(Size + 100)
+    ]),
+
+    PercentagesInCommon = [0.0, 0.5, 1.0],
+
+    ParamCombos = [
+        {Amount2, PercentageInCommon}
+     || Amount2 <- Amounts2,
+        PercentageInCommon <- PercentagesInCommon
+    ],
+
+    %%%%
+
+    lists:foreach(
+        fun({Amount2, PercentageInCommon}) ->
+            RepeatedAmount = floor(PercentageInCommon * min(Amount2, Size)),
+            NewAmount = Amount2 - RepeatedAmount,
+
+            RepeatedElements = lists:sublist(list_shuffle(RefElements), RepeatedAmount),
+            NewElements = [new_element() || _ <- lists:seq(1, NewAmount)],
+
+            RefElements2 = lists:sort(RepeatedElements ++ NewElements),
+
+            Col2 = b5_items:from_list(maybe_shuffle_elements_for_new_collection(RefElements2)),
+
+            MergedCol = b5_items:merge(Col, Col2),
+
+            %%%
+
+            ExpectedMergedRef = lists:sort(RefElements ++ RefElements2),
+
+            ?assertEqual(
+                length(ExpectedMergedRef),
+                b5_items:size(MergedCol)
+            ),
+
+            ?assertListsCanonEqual(
+                ExpectedMergedRef,
+                b5_items:to_list(MergedCol)
+            )
+        end,
+        ParamCombos
+    ).
 
 %% ------------------------------------------------------------------
 %% Helpers: element generation

@@ -10,7 +10,6 @@
     delete_att/2,
     filter/2,
     filtermap/2,
-    filtermap_unique/2,
     fold/3,
     insert_att/2,
     is_member/2,
@@ -20,7 +19,6 @@
     largest/1,
     map/2,
     merge/4,
-    merge_unique/4,
     new/0,
     next/1,
     nth/2,
@@ -514,15 +512,6 @@ filtermap(Fun, Root) ->
     Filtered = new(),
     filtermap_root(Fun, Count, Root, Filtered).
 
--spec filtermap_unique(fun((Elem) -> {true, MappedElem} | boolean()), t(Elem)) ->
-    nonempty_improper_list(FilteredSize, t(Elem | MappedElem))
-when
-    FilteredSize :: non_neg_integer().
-filtermap_unique(Fun, Root) ->
-    Count = 0,
-    Filtered = new(),
-    filtermap_unique_root(Fun, Count, Root, Filtered).
-
 -spec fold(fun((Elem, Acc1) -> Acc2), Acc0, t(Elem)) -> AccN when
     Acc0 :: term(),
     Acc1 :: term(),
@@ -609,15 +598,6 @@ merge(Size1, Root1, Size2, Root2) when Size1 < Size2 ->
     merge_root(Root1, Root2);
 merge(_Size1, Root1, _Size2, Root2) ->
     merge_root(Root2, Root1).
-
--spec merge_unique(non_neg_integer(), t(Elem1), non_neg_integer(), t(Elem2)) ->
-    nonempty_improper_list(MergedSize, t(Elem1 | Elem2))
-when
-    MergedSize :: non_neg_integer().
-merge_unique(Size1, Root1, Size2, Root2) when Size1 < Size2 ->
-    merge_unique_root(Root1, [Size2 | Root2]);
-merge_unique(Size1, Root1, _Size2, Root2) ->
-    merge_unique_root(Root2, [Size1 | Root1]).
 
 -spec new() -> t(_).
 new() ->
@@ -1874,224 +1854,6 @@ filtermap_true(True, PrevElem) ->
         true ->
             PrevElem
     end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: filtermap_unique/2
-%% ------------------------------------------------------------------
-
-filtermap_unique_root(Fun, Count, Root, Filtered) ->
-    case Root of
-        ?INTERNAL1_MATCH_NO_SIZES ->
-            [Count2 | Filtered2] = filtermap_unique_recur(Fun, C1, Count, Filtered),
-            [Count3 | Filtered3] = filtermap_unique_single_element(Fun, E1, Count2, Filtered2),
-            filtermap_unique_recur(Fun, C2, Count3, Filtered3);
-        %
-        ?LEAF1_MATCH_ALL ->
-            filtermap_unique_single_element(Fun, E1, Count, Filtered);
-        %
-        ?LEAF0 ->
-            [Count | Filtered];
-        %
-        _ ->
-            filtermap_unique_recur(Fun, Root, Count, Filtered)
-    end.
-
-filtermap_unique_recur(Fun, Node, Count, Filtered) ->
-    case Node of
-        ?LEAF2_MATCH_ALL ->
-            filtermap_unique_leaf_batch2(Fun, E1, E2, Count, Filtered);
-        %
-        ?LEAF3_MATCH_ALL ->
-            filtermap_unique_leaf_batch3(Fun, E1, E2, E3, Count, Filtered);
-        %
-        ?LEAF4_MATCH_ALL ->
-            filtermap_unique_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
-        %
-        ?INTERNAL2_MATCH_NO_SIZES ->
-            filtermap_unique_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered);
-        %
-        ?INTERNAL3_MATCH_NO_SIZES ->
-            filtermap_unique_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered);
-        %
-        ?INTERNAL4_MATCH_NO_SIZES ->
-            filtermap_unique_internal_batch4(
-                Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered
-            )
-    end.
-
-%% INTERNAL4
-
--compile({inline, filtermap_unique_internal_batch4/12}).
-filtermap_unique_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered) ->
-    [Count2 | Filtered2] = filtermap_unique_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        false ->
-            filtermap_unique_internal_batch3(Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            case insert_att(Elem, Filtered2) of
-                none ->
-                    filtermap_unique_internal_batch3(
-                        Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2
-                    );
-                %
-                Filtered3 ->
-                    filtermap_unique_internal_batch3(
-                        Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, Filtered3
-                    )
-            end
-    end.
-
-%% INTERNAL3
-
--compile({inline, filtermap_unique_internal_batch3/10}).
-filtermap_unique_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
-    [Count2 | Filtered2] = filtermap_unique_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        false ->
-            filtermap_unique_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            case insert_att(Elem, Filtered2) of
-                none ->
-                    filtermap_unique_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2);
-                %
-                Filtered3 ->
-                    filtermap_unique_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, Filtered3)
-            end
-    end.
-
-%% INTERNAL2
-
--compile({inline, filtermap_unique_internal_batch2/8}).
-filtermap_unique_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
-    [Count2 | Filtered2] = filtermap_unique_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        false ->
-            filtermap_unique_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            case insert_att(Elem, Filtered2) of
-                none ->
-                    filtermap_unique_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2);
-                %
-                Filtered3 ->
-                    filtermap_unique_internal_batch1(Fun, E2, C2, C3, Count2 + 1, Filtered3)
-            end
-    end.
-
-%% INTERNAL1
-
--compile({inline, filtermap_unique_internal_batch1/6}).
-filtermap_unique_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
-    [Count2 | Filtered2] = filtermap_unique_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        false ->
-            filtermap_unique_recur(Fun, C2, Count2, Filtered2);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            case insert_att(Elem, Filtered2) of
-                none ->
-                    filtermap_unique_recur(Fun, C2, Count2, Filtered2);
-                %
-                Filtered3 ->
-                    filtermap_unique_recur(Fun, C2, Count2 + 1, Filtered3)
-            end
-    end.
-
-%% LEAF4
-
--compile({inline, filtermap_unique_leaf_batch4/7}).
-filtermap_unique_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
-    case Fun(E1) of
-        false ->
-            filtermap_unique_leaf_batch3(Fun, E2, E3, E4, Count, Filtered);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            case insert_att(Elem, Filtered) of
-                none ->
-                    filtermap_unique_leaf_batch3(Fun, E2, E3, E4, Count, Filtered);
-                %
-                Filtered2 ->
-                    filtermap_unique_leaf_batch3(Fun, E2, E3, E4, Count + 1, Filtered2)
-            end
-    end.
-
-%% LEAF3
-
--compile({inline, filtermap_unique_leaf_batch3/6}).
-filtermap_unique_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
-    case Fun(E1) of
-        false ->
-            filtermap_unique_leaf_batch2(Fun, E2, E3, Count, Filtered);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            case insert_att(Elem, Filtered) of
-                none ->
-                    filtermap_unique_leaf_batch2(Fun, E2, E3, Count, Filtered);
-                %
-                Filtered2 ->
-                    filtermap_unique_leaf_batch2(Fun, E2, E3, Count + 1, Filtered2)
-            end
-    end.
-
-%% LEAF2
-
--compile({inline, filtermap_unique_leaf_batch2/5}).
-filtermap_unique_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
-    case Fun(E1) of
-        false ->
-            filtermap_unique_single_element(Fun, E2, Count, Filtered);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            case insert_att(Elem, Filtered) of
-                none ->
-                    filtermap_unique_single_element(Fun, E2, Count, Filtered);
-                %
-                Filtered2 ->
-                    filtermap_unique_single_element(Fun, E2, Count + 1, Filtered2)
-            end
-    end.
-
-%% LEAF1
-
--compile({inline, filtermap_unique_single_element/4}).
-filtermap_unique_single_element(Fun, E1, Count, Filtered) ->
-    case Fun(E1) of
-        false ->
-            [Count | Filtered];
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            case insert_att(Elem, Filtered) of
-                none ->
-                    [Count | Filtered];
-                %
-                Filtered2 ->
-                    [Count + 1 | Filtered2]
-            end
-    end.
-
-%%
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: fold/3
@@ -3460,7 +3222,7 @@ map_root(Fun, Node, Acc) ->
     end.
 
 map_recur(Fun, Node, Acc) ->
-    % TODO optimize like in filter, filtermap, union, etc
+    % TODO optimize like in filter, filtermap
     case Node of
         ?LEAF2_MATCH_ALL ->
             Acc2 = map_elem(Fun, E1, Acc),
@@ -3514,16 +3276,10 @@ map_recur(Fun, Node, Acc) ->
             _Acc10 = map_recur(Fun, C5, Acc9)
     end.
 
-map_elem(Fun, Elem, [Count | Root] = Acc) ->
+map_elem(Fun, Elem, [Count | Root]) ->
     Mapped = Fun(Elem),
-
-    case insert_att(Mapped, Root) of
-        none ->
-            Acc;
-        %
-        UpdatedRoot ->
-            [Count + 1 | UpdatedRoot]
-    end.
+    UpdatedRoot = add(Mapped, Root),
+    [Count + 1 | UpdatedRoot].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: merge/2
@@ -3534,7 +3290,7 @@ merge_root(Node, Acc) ->
         ?INTERNAL1_MATCH_NO_SIZES ->
             Acc2 = merge_recur(C1, Acc),
             Acc3 = add(E1, Acc2),
-            _Acc4 = add(C2, Acc3);
+            _Acc4 = merge_recur(C2, Acc3);
         %
         ?LEAF1_MATCH_ALL ->
             _Acc2 = add(E1, Acc);
@@ -3576,68 +3332,6 @@ merge_recur(Node, Acc) ->
             Acc4 = add(E3, merge_recur(C3, Acc3)),
             Acc5 = add(E4, merge_recur(C4, Acc4)),
             _Acc6 = merge_recur(C5, Acc5)
-    end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: merge/2
-%% ------------------------------------------------------------------
-
-merge_unique_root(Node, Acc) ->
-    case Node of
-        ?INTERNAL1_MATCH_NO_SIZES ->
-            Acc2 = merge_unique_recur(C1, Acc),
-            Acc3 = maybe_merge(E1, Acc2),
-            _Acc4 = maybe_merge(C2, Acc3);
-        %
-        ?LEAF1_MATCH_ALL ->
-            _Acc2 = maybe_merge(E1, Acc);
-        %
-        ?LEAF0 ->
-            Acc;
-        %
-        _ ->
-            merge_unique_recur(Node, Acc)
-    end.
-
-merge_unique_recur(Node, Acc) ->
-    % TODO optimize like in filter, filtermerge, union, etc
-    case Node of
-        ?LEAF2_MATCH_ALL ->
-            maybe_merge(E2, maybe_merge(E1, Acc));
-        %
-        ?LEAF3_MATCH_ALL ->
-            maybe_merge(E3, maybe_merge(E2, maybe_merge(E1, Acc)));
-        %
-        ?LEAF4_MATCH_ALL ->
-            maybe_merge(E4, maybe_merge(E3, maybe_merge(E2, maybe_merge(E1, Acc))));
-        %
-        ?INTERNAL2_MATCH_NO_SIZES ->
-            Acc2 = maybe_merge(E1, merge_unique_recur(C1, Acc)),
-            Acc3 = maybe_merge(E2, merge_unique_recur(C2, Acc2)),
-            _Acc3 = merge_unique_recur(C3, Acc3);
-        %
-        ?INTERNAL3_MATCH_NO_SIZES ->
-            Acc2 = maybe_merge(E1, merge_unique_recur(C1, Acc)),
-            Acc3 = maybe_merge(E2, merge_unique_recur(C2, Acc2)),
-            Acc4 = maybe_merge(E3, merge_unique_recur(C3, Acc3)),
-            _Acc5 = merge_unique_recur(C4, Acc4);
-        %
-        %
-        ?INTERNAL4_MATCH_NO_SIZES ->
-            Acc2 = maybe_merge(E1, merge_unique_recur(C1, Acc)),
-            Acc3 = maybe_merge(E2, merge_unique_recur(C2, Acc2)),
-            Acc4 = maybe_merge(E3, merge_unique_recur(C3, Acc3)),
-            Acc5 = maybe_merge(E4, merge_unique_recur(C4, Acc4)),
-            _Acc6 = merge_unique_recur(C5, Acc5)
-    end.
-
-maybe_merge(Elem, [Size | Root] = Acc) ->
-    case insert_att(Elem, Root) of
-        none ->
-            Acc;
-        %
-        UpdatedRoot ->
-            [Size + 1 | UpdatedRoot]
     end.
 
 %% ------------------------------------------------------------------

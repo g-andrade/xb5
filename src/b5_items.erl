@@ -12,9 +12,7 @@
     filtermap/2,
     fold/3,
     from_list/1,
-    from_list/2,
     from_ordset/1,
-    from_ordset/2,
     insert/2,
     is_empty/1,
     is_member/2,
@@ -27,7 +25,6 @@
     map/2,
     merge/2,
     new/0,
-    new/1,
     next/1,
     nth/2,
     percentile/2,
@@ -50,10 +47,10 @@
 %% Type Definitions
 %% ------------------------------------------------------------------
 
--record(b5_items, {unique, size, root}).
+-record(b5_items, {reserved, size, root}).
 
 -opaque items(E) :: #b5_items{
-    unique :: boolean(), size :: non_neg_integer(), root :: b5_items_node:t(E)
+    reserved :: undefined, size :: non_neg_integer(), root :: b5_items_node:t(E)
 }.
 -export_type([items/1]).
 
@@ -61,21 +58,9 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-add(Element, #b5_items{unique = Unique, size = Size, root = Root} = Items) ->
-    case Unique of
-        false ->
-            UpdatedRoot = b5_items_node:add(Element, Root),
-            Items#b5_items{size = Size + 1, root = UpdatedRoot};
-        %
-        true ->
-            case b5_items_node:insert_att(Element, Root) of
-                none ->
-                    Items;
-                %
-                UpdatedRoot ->
-                    Items#b5_items{size = Size + 1, root = UpdatedRoot}
-            end
-    end.
+add(Element, #b5_items{size = Size, root = Root} = Items) ->
+    UpdatedRoot = b5_items_node:add(Element, Root),
+    Items#b5_items{size = Size + 1, root = UpdatedRoot}.
 
 delete(Element, #b5_items{size = Size, root = Root} = Items) ->
     case b5_items_node:delete_att(Element, Root) of
@@ -95,45 +80,25 @@ delete_any(Element, #b5_items{size = Size, root = Root} = Items) ->
             Items#b5_items{size = Size - 1, root = UpdatedRoot}
     end.
 
-filter(Fun, #b5_items{unique = Unique, root = Root}) ->
+filter(Fun, #b5_items{root = Root} = Items) ->
     [FilteredSize | FilteredRoot] = b5_items_node:filter(Fun, Root),
-    #b5_items{unique = Unique, size = FilteredSize, root = FilteredRoot}.
+    Items#b5_items{size = FilteredSize, root = FilteredRoot}.
 
-filtermap(Fun, #b5_items{unique = Unique, root = Root}) ->
-    case Unique of
-        false ->
-            [FilteredSize | FilteredRoot] = b5_items_node:filtermap(Fun, Root),
-            #b5_items{unique = Unique, size = FilteredSize, root = FilteredRoot};
-        %
-        true ->
-            [FilteredSize | FilteredRoot] = b5_items_node:filtermap_unique(Fun, Root),
-            #b5_items{unique = Unique, size = FilteredSize, root = FilteredRoot}
-    end.
+filtermap(Fun, #b5_items{root = Root} = Items) ->
+    [FilteredSize | FilteredRoot] = b5_items_node:filtermap(Fun, Root),
+    Items#b5_items{size = FilteredSize, root = FilteredRoot}.
 
 fold(Fun, Acc, #b5_items{root = Root}) ->
     b5_items_node:fold(Fun, Acc, Root).
 
 from_list(List) ->
-    from_list(List, []).
-
-from_list(List, Opts) ->
     Root = b5_items_node:new(),
     Size = 0,
-
-    case get_opt_unique(Opts) of
-        false ->
-            from_list_recur(List, Size, Root);
-        %
-        true ->
-            from_list_unique_recur(List, Size, Root)
-    end.
+    from_list_recur(List, Size, Root).
 
 from_ordset(Ordset) ->
-    from_ordset(Ordset, []).
-
-from_ordset(Ordset, Opts) ->
     List = ordsets:to_list(Ordset),
-    from_list(List, Opts).
+    from_list(List).
 
 insert(Element, #b5_items{size = Size, root = Root} = Items) ->
     case b5_items_node:insert_att(Element, Root) of
@@ -170,29 +135,19 @@ largest(#b5_items{size = Size, root = Root}) when Size =/= 0 ->
 largest(#b5_items{}) ->
     error_empty_items().
 
-map(Fun, #b5_items{root = Root}) ->
+map(Fun, #b5_items{root = Root} = Items) ->
     [NewSize | MappedRoot] = b5_items_node:map(Fun, Root),
-    #b5_items{size = NewSize, root = MappedRoot}.
+    Items#b5_items{size = NewSize, root = MappedRoot}.
 
 merge(
-    #b5_items{unique = Unique, size = Size1, root = Root1},
+    #b5_items{size = Size1, root = Root1} = Items1,
     #b5_items{size = Size2, root = Root2}
 ) ->
-    case Unique of
-        false ->
-            MergedRoot = b5_items_node:merge(Size1, Root1, Size2, Root2),
-            #b5_items{unique = false, size = Size1 + Size2, root = MergedRoot};
-        %
-        true ->
-            [MergedSize | MergedRoot] = b5_items_node:merge_unique(Size1, Root1, Size2, Root2),
-            #b5_items{unique = true, size = MergedSize, root = MergedRoot}
-    end.
+    MergedRoot = b5_items_node:merge(Size1, Root1, Size2, Root2),
+    Items1#b5_items{size = Size1 + Size2, root = MergedRoot}.
 
 new() ->
-    new([]).
-
-new(Opts) ->
-    #b5_items{unique = get_opt_unique(Opts), size = 0, root = b5_items_node:new()}.
+    #b5_items{size = 0, root = b5_items_node:new()}.
 
 next(Iter) ->
     b5_items_node:next(Iter).
@@ -316,28 +271,11 @@ error_empty_items() ->
 error_key_exists(Elem) ->
     error({key_exists, Elem}).
 
-get_opt_unique(Opts) ->
-    case proplists:get_value(unique, Opts, false) of
-        true -> true;
-        false -> false
-    end.
-
 from_list_recur([Element | Next], Size, Root) ->
     UpdatedRoot = b5_items_node:add(Element, Root),
     from_list_recur(Next, Size + 1, UpdatedRoot);
 from_list_recur([], Size, Root) ->
-    #b5_items{unique = false, size = Size, root = Root}.
-
-from_list_unique_recur([Element | Next], Size, Root) ->
-    case b5_items_node:insert_att(Element, Root) of
-        none ->
-            from_list_unique_recur(Next, Size, Root);
-        %
-        UpdatedRoot ->
-            from_list_unique_recur(Next, Size + 1, UpdatedRoot)
-    end;
-from_list_unique_recur([], Size, Root) ->
-    #b5_items{unique = true, size = Size, root = Root}.
+    #b5_items{size = Size, root = Root}.
 
 %%%%%%%%
 
