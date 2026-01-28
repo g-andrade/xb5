@@ -61,10 +61,26 @@
     test_merge/1
 ]).
 
+%% Test exports - structure
+-export([
+    test_structure_sequentially_built/1,
+    test_structure_randomly_built/1,
+    test_structure_build_seqIns2x_seqDelSmallerHalf/1,
+    test_structure_build_seqIns2x_seqDelGreaterHalf/1,
+    test_structure_build_seqIns2x_randomlyDelHalf/1,
+    test_structure_build_randomlyIns2x_randomlyDelHalf/1,
+    test_structure_build_randomlyIns2x_seqDelSmallerHalf/1
+]).
+
 %% Test constants
 -define(TESTED_SIZES,
     (lists:seq(0, 50) ++ lists:seq(55, 200, 5) ++ [997])
 ).
+
+-define(STRUCTURE_TEST_ITERATIONS, 1000).
+-define(STRUCTURE_TEST_BASE_SIZE, 1000).
+
+-define(Z_SCORE_95, 1.960).
 
 -define(assertListsCanonEqual(ExpectedL, TestedL),
     (?assertEqual(
@@ -97,6 +113,28 @@
                     ]}
                 )
         end
+    end)
+).
+
+-define(assertRigidStat(Id, SingleValue, CondensedStats),
+    (?assertMatch(
+        #{
+            min := SingleValue,
+            max := SingleValue
+        },
+        maps:get(Id, CondensedStats)
+    ))
+).
+
+-define(assertConfidentStat(Id, ExpectedAvg, CondensedStats),
+    (begin
+        ?assertMatch(
+            #{
+                lower := Lower,
+                higher := Higher
+            } when Lower =< ExpectedAvg andalso ExpectedAvg =< Higher,
+            observed_error_margin(Id, CondensedStats)
+        )
     end)
 ).
 
@@ -153,6 +191,15 @@ groups() ->
             test_fold,
             test_map,
             test_merge
+        ]},
+        {structure, [parallel], [
+            test_structure_sequentially_built,
+            test_structure_randomly_built,
+            test_structure_build_seqIns2x_seqDelSmallerHalf,
+            test_structure_build_seqIns2x_seqDelGreaterHalf,
+            test_structure_build_seqIns2x_randomlyDelHalf,
+            test_structure_build_randomlyIns2x_randomlyDelHalf,
+            test_structure_build_randomlyIns2x_seqDelSmallerHalf
         ]}
     ].
 
@@ -934,6 +981,166 @@ test_merge(_Config) ->
     ).
 
 %% ------------------------------------------------------------------
+%% Tests - Structure
+%% ------------------------------------------------------------------
+
+test_structure_sequentially_built(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                ?assertEqual(RefElements, lists:usort(RefElements)),
+
+                case rand:uniform(4) of
+                    1 ->
+                        new_collection_from_each_added(RefElements);
+                    2 ->
+                        b5_items:from_list(RefElements);
+                    3 ->
+                        new_collection_from_each_added(lists:reverse(RefElements));
+                    4 ->
+                        b5_items:from_list(lists:reverse(RefElements))
+                end
+            end
+        ),
+
+    %%%%%%%%%%
+
+    ?assertRigidStat(height, 5.0, CondensedStats),
+
+    ?assertRigidStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
+
+%%%%
+
+test_structure_randomly_built(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                new_collection_from_each_added(list_shuffle(RefElements))
+            end
+        ),
+
+    %%%%%%%%%%
+
+    ?assertConfidentStat(height, 5.0002, CondensedStats),
+
+    ?assertConfidentStat(avg_keys_per_node, 2.9143881267511302, CondensedStats).
+
+%%%%
+
+test_structure_build_seqIns2x_seqDelSmallerHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build sequentially
+                Col1 = new_collection_from_each_added(RefElements),
+
+                % 2) delete smaller half sequentially
+                AmountToDelete = b5_items:size(Col1) div 2,
+                ItemsToDelete = lists:sublist(RefElements, AmountToDelete),
+                lists:foldl(fun b5_items:delete/2, Col1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
+
+    %%%%%%%%%%
+
+    ?assertRigidStat(height, 5.0, CondensedStats),
+
+    ?assertRigidStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
+
+%%%%
+
+test_structure_build_seqIns2x_seqDelGreaterHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build sequentially
+                Col1 = new_collection_from_each_added(RefElements),
+
+                % 2) delete greater half sequentially
+                AmountToDelete = b5_items:size(Col1) div 2,
+                ItemsToDelete = lists:sublist(lists:reverse(RefElements), AmountToDelete),
+                lists:foldl(fun b5_items:delete/2, Col1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
+
+    %%%%%%%%%%
+
+    ?assertRigidStat(height, 5.0, CondensedStats),
+
+    ?assertRigidStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
+
+%%%%
+
+test_structure_build_seqIns2x_randomlyDelHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build sequentially
+                Col1 = new_collection_from_each_added(RefElements),
+
+                % 2) delete half randomly
+                AmountToDelete = b5_items:size(Col1) div 2,
+                ItemsToDelete = lists:sublist(list_shuffle(RefElements), AmountToDelete),
+                lists:foldl(fun b5_items:delete/2, Col1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
+
+    %%%%%%%%%%
+
+    ?assertConfidentStat(height, 5.9512, CondensedStats),
+
+    ?assertConfidentStat(avg_keys_per_node, 2.50, CondensedStats).
+
+%%%%
+
+test_structure_build_randomlyIns2x_randomlyDelHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build randomly
+                Col1 = new_collection_from_each_added(list_shuffle(RefElements)),
+
+                % 2) delete half randomly
+                AmountToDelete = b5_items:size(Col1) div 2,
+                ItemsToDelete = lists:sublist(list_shuffle(RefElements), AmountToDelete),
+                lists:foldl(fun b5_items:delete/2, Col1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
+
+    %%%%%%%%%%
+
+    ?assertConfidentStat(height, 5.9556, CondensedStats),
+
+    ?assertConfidentStat(avg_keys_per_node, 2.5023622163176475, CondensedStats).
+
+%%%%
+
+test_structure_build_randomlyIns2x_seqDelSmallerHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build randomly
+                Col1 = new_collection_from_each_added(list_shuffle(RefElements)),
+
+                % 2) delete smaller half sequentially
+                AmountToDelete = b5_items:size(Col1) div 2,
+                ItemsToDelete = lists:sublist(RefElements, AmountToDelete),
+                lists:foldl(fun b5_items:delete/2, Col1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
+
+    %%%%%%%%%%
+
+    ?assertConfidentStat(height, 5.01, CondensedStats),
+
+    ?assertConfidentStat(avg_keys_per_node, 2.9089119962162733, CondensedStats).
+
+%% ------------------------------------------------------------------
 %% Helper Functions: shared
 %% ------------------------------------------------------------------
 
@@ -997,7 +1204,7 @@ new_ref_elements(Size, NumericOnly, RepetitionChance) ->
     new_ref_elements_recur(Size, NumericOnly, RepetitionChance, _Acc = []).
 
 new_ref_elements_recur(Size, NumericOnly, RepetitionChance, Acc) when Size > 0 ->
-    case Acc =/= [] andalso rand:uniform() =< RepetitionChance of
+    case Acc =/= [] andalso rand:uniform() < RepetitionChance of
         true ->
             RepeatedElement = randomly_switch_number_type(list_pick_random(Acc)),
             UpdatedAcc = [RepeatedElement | Acc],
@@ -1005,8 +1212,15 @@ new_ref_elements_recur(Size, NumericOnly, RepetitionChance, Acc) when Size > 0 -
         %
         false ->
             NewElement = new_element(NumericOnly),
-            UpdatedAcc = [NewElement | Acc],
-            new_ref_elements_recur(Size - 1, NumericOnly, RepetitionChance, UpdatedAcc)
+
+            case lists:member(NewElement, Acc) of
+                false ->
+                    UpdatedAcc = [NewElement | Acc],
+                    new_ref_elements_recur(Size - 1, NumericOnly, RepetitionChance, UpdatedAcc);
+                %
+                true ->
+                    new_ref_elements_recur(Size, NumericOnly, RepetitionChance, Acc)
+            end
     end;
 new_ref_elements_recur(0, _, _, Acc) ->
     lists:sort(Acc).
@@ -2405,6 +2619,118 @@ run_merge(Size, RefElements, Col) ->
         end,
         ParamCombos
     ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Structurel Tests
+%% ------------------------------------------------------------------
+
+run_structure_test(InitFun) ->
+    run_structure_test(InitFun, []).
+
+run_structure_test(InitFun, Opts) ->
+    SizeMultiplier = proplists:get_value(size_multiplier, Opts, 1),
+    Size = SizeMultiplier * ?STRUCTURE_TEST_BASE_SIZE,
+
+    rand:seed(exsss, 1404887150367571),
+
+    StatsAcc =
+        lists:foldl(
+            fun(_, Acc) ->
+                RepetitionChance = 0.0,
+                % faster with numeric only
+                NumericOnly = true,
+                RefElements = new_ref_elements(Size, NumericOnly, RepetitionChance),
+
+                Col = InitFun(RefElements),
+                ?assertEqual(?STRUCTURE_TEST_BASE_SIZE, b5_items:size(Col)),
+
+                Stats = b5_items:structural_stats(Col),
+
+                %%%%%%%%%%
+
+                {_, Height} = lists:keyfind(height, 1, Stats),
+                {_, NodePercentages} = lists:keyfind(node_percentages, 1, Stats),
+                {_, AvgKeysPerNode} = lists:keyfind(avg_keys_per_node, 1, Stats),
+
+                Acc2 = structure_test_stats_acc(height, Height, Acc),
+                Acc3 = structure_test_stats_acc(avg_keys_per_node, AvgKeysPerNode, Acc2),
+
+                lists:foldl(
+                    fun({NodeType, Percentage}, SubAcc) ->
+                        structure_test_stats_acc({node_percentage, NodeType}, Percentage, SubAcc)
+                    end,
+                    Acc3,
+                    NodePercentages
+                )
+            end,
+            #{},
+            lists:seq(1, ?STRUCTURE_TEST_ITERATIONS)
+        ),
+
+    %%%%%
+
+    maps:map(fun condense_stats/2, StatsAcc).
+
+structure_test_stats_acc(Id, Sample, Acc) ->
+    try maps:get(Id, Acc) of
+        PrevSamples ->
+            Acc#{Id := [Sample | PrevSamples]}
+    catch
+        error:{badkey, K} when K =:= Id ->
+            maps:put(Id, [Sample], Acc)
+    end.
+
+condense_stats(_Id, Samples) ->
+    Sorted = lists:sort(Samples),
+    Len = length(Sorted),
+
+    Min = hd(Sorted),
+    Max = lists:last(Sorted),
+
+    Avg = lists:sum(Sorted) / Len,
+
+    Median = list_median(Sorted, Len),
+
+    StdDev = float(list_std_dev(Avg, Sorted)),
+
+    #{
+        min => float(Min),
+        max => float(Max),
+        avg => Avg,
+        std_dev => StdDev,
+        std_err => StdDev / math:sqrt(Len),
+        median => float(Median)
+    }.
+
+list_median(SortedList, Len) ->
+    case Len rem 2 of
+        0 ->
+            LeftPos = (Len div 2),
+            [Left, Right] = lists:sublist(SortedList, LeftPos, 2),
+            (Left + Right) / 2.0;
+        %
+        1 ->
+            MidPos = (Len div 2) + 1,
+            lists:nth(MidPos, SortedList)
+    end.
+
+list_std_dev(Avg, List) ->
+    SquareDevs = lists:map(fun(Sample) -> math:pow(Sample - Avg, 2.0) end, List),
+    Variance = lists:sum(SquareDevs) / length(SquareDevs),
+    math:sqrt(Variance).
+
+observed_error_margin(Id, CondensedStats) ->
+    #{
+        avg := ObservedAvg,
+        std_err := ObservedStdErr
+    } = Stats = maps:get(Id, CondensedStats),
+
+    Margin = ?Z_SCORE_95 * ObservedStdErr,
+
+    Lower = ObservedAvg - Margin,
+    Higher = ObservedAvg + Margin,
+
+    #{lower => Lower, higher => Higher, stats => Stats}.
 
 %% ------------------------------------------------------------------
 %% Helpers: element generation

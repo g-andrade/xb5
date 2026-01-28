@@ -9,7 +9,8 @@
     new/0,
     set_height/2,
     inc_count/2,
-    return/1
+    return/1,
+    total_keys_in_node_type/1
 ]).
 
 %% ------------------------------------------------------------------
@@ -24,7 +25,8 @@
     | {node_counts, count_per_node()}
     | {node_percentages, percent_per_node()}
     | {total_keys, non_neg_integer()}
-    | {key_percentages, percent_per_node()}).
+    | {key_percentages, percent_per_node()})
+    | {avg_keys_per_node, undefined | float()}.
 -export_type([stat/0]).
 
 -type count_per_node() :: [{node_type(), non_neg_integer()}, ...].
@@ -91,14 +93,26 @@ return(#{node_counters := NodeCounters, height := Height}) ->
     NodePercentages = node_percentages(NodeCounts),
     TotalKeys = total_keys(NodeCounts),
     KeyPercentages = key_percentages(NodeCounts, TotalKeys),
+    AvgKeysPerNode = avg_keys_per_node(NodeCounts),
 
     [
         {height, Height},
         {node_counts, NodeCounts},
         {node_percentages, NodePercentages},
         {total_keys, TotalKeys},
-        {key_percentages, KeyPercentages}
+        {key_percentages, KeyPercentages},
+        {avg_keys_per_node, AvgKeysPerNode}
     ].
+
+-spec total_keys_in_node_type(node_type()) -> 1..4.
+total_keys_in_node_type(internal4) -> 4;
+total_keys_in_node_type(internal3) -> 3;
+total_keys_in_node_type(internal2) -> 2;
+total_keys_in_node_type(internal1) -> 1;
+total_keys_in_node_type(leaf4) -> 4;
+total_keys_in_node_type(leaf3) -> 3;
+total_keys_in_node_type(leaf2) -> 2;
+total_keys_in_node_type(leaf1) -> 1.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
@@ -183,11 +197,25 @@ key_percentages(NodeCounts, TotalKeys) ->
 round_percentage(Percentage) ->
     binary_to_float(float_to_binary(Percentage, [{decimals, 1}])).
 
-total_keys_in_node_type(internal4) -> 4;
-total_keys_in_node_type(internal3) -> 3;
-total_keys_in_node_type(internal2) -> 2;
-total_keys_in_node_type(internal1) -> 1;
-total_keys_in_node_type(leaf4) -> 4;
-total_keys_in_node_type(leaf3) -> 3;
-total_keys_in_node_type(leaf2) -> 2;
-total_keys_in_node_type(leaf1) -> 1.
+avg_keys_per_node(NodeCounts) ->
+    {KeySum, NodeSum} =
+        lists:foldl(
+            fun({NodeType, Count}, {KeySum, NodeSum}) ->
+                {
+                    KeySum + (Count * b5_structural_stats:total_keys_in_node_type(NodeType)),
+                    NodeSum + Count
+                }
+            end,
+            {0, 0},
+            NodeCounts
+        ),
+
+    %%%
+
+    case KeySum =:= 0 of
+        true ->
+            undefined;
+        %
+        false ->
+            KeySum / NodeSum
+    end.
