@@ -1,5 +1,5 @@
 % TODO document
--module(b5_trees_node).
+-module(b5_trees_v2_node).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -41,11 +41,6 @@
 -define(INTERNAL2_MATCH(K1, K2, V1, V2, C1, C2, C3), {K1, K2, V1, V2, C1, C2, C3}).
 -define(INTERNAL2_MATCH_ALL, {K1, K2, V1, V2, C1, C2, C3}).
 
-% 4 elements
--define(LEAF2(K1, K2, V1, V2), {K1, K2, V1, V2}).
--define(LEAF2_MATCH(K1, K2, V1, V2), {K1, K2, V1, V2}).
--define(LEAF2_MATCH_ALL, {K1, K2, V1, V2}).
-
 % 10 elements
 -define(INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
     {K1, K2, K3, V1, V2, V3, C1, C2, C3, C4}
@@ -54,11 +49,6 @@
     {K1, K2, K3, V1, V2, V3, C1, C2, C3, C4}
 ).
 -define(INTERNAL3_MATCH_ALL, {K1, K2, K3, V1, V2, V3, C1, C2, C3, C4}).
-
-% 6 elements
--define(LEAF3(K1, K2, K3, V1, V2, V3), {K1, K2, K3, V1, V2, V3}).
--define(LEAF3_MATCH(K1, K2, K3, V1, V2, V3), {K1, K2, K3, V1, V2, V3}).
--define(LEAF3_MATCH_ALL, {K1, K2, K3, V1, V2, V3}).
 
 % 13 elements
 -define(INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
@@ -71,23 +61,13 @@
     {K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5}
 ).
 
-% 8 elements
--define(LEAF4(K1, K2, K3, K4, V1, V2, V3, V4), {K1, K2, K3, K4, V1, V2, V3, V4}).
--define(LEAF4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4), {K1, K2, K3, K4, V1, V2, V3, V4}).
--define(LEAF4_MATCH_ALL, {K1, K2, K3, K4, V1, V2, V3, V4}).
-
-% 5 elements
--define(INTERNAL1(K1, V1, C1, C2), {internal1, K1, V1, C1, C2}).
--define(INTERNAL1_MATCH(K1, V1, C1, C2), {_, K1, V1, C1, C2}).
--define(INTERNAL1_MATCH_ALL, {_, K1, V1, C1, C2}).
-
-% 2 elements
--define(LEAF1(K1, V1), {K1, V1}).
--define(LEAF1_MATCH(K1, V1), {K1, V1}).
--define(LEAF1_MATCH_ALL, {K1, V1}).
+% 4 elements
+-define(INTERNAL1(K1, V1, C1, C2), {K1, V1, C1, C2}).
+-define(INTERNAL1_MATCH(K1, V1, C1, C2), {K1, V1, C1, C2}).
+-define(INTERNAL1_MATCH_ALL, {K1, V1, C1, C2}).
 
 % empty root
--define(LEAF0, leaf0).
+-define(EMPTY_ROOT, leaf0).
 
 %%%%%%%%
 
@@ -125,7 +105,7 @@
 
 %%%%%%%
 
--define(ITER_PAIR(Key, Value), ?LEAF1(Key, Value)).
+-define(ITER_PAIR(Key, Value), [Key | Value]).
 -define(REV_ITER_TAG, reversed).
 
 %% ------------------------------------------------------------------
@@ -264,37 +244,6 @@
 -define(INTERNAL1_ARGS_IGN_K1, _, V1, C1, C2).
 -define(INTERNAL1_ARGS_IGN_K1_V1, _, _, C1, C2).
 
-%% ?LEAF4
-
--define(LEAF4_ARGS, K1, K2, K3, K4, V1, V2, V3, V4).
--define(LEAF4_ARITY, 8).
--define(LEAF4_ARITY_PLUS1, 9).
--define(LEAF4_ARITY_PLUS2, 10).
--define(LEAF4_ARITY_PLUS3, 11).
-
-%% ?LEAF3
-
--define(LEAF3_ARGS, K1, K2, K3, V1, V2, V3).
--define(LEAF3_ARITY, 6).
--define(LEAF3_ARITY_PLUS1, 7).
--define(LEAF3_ARITY_PLUS2, 8).
--define(LEAF3_ARITY_PLUS3, 9).
-
-%% ?LEAF2
-
--define(LEAF2_ARGS, K1, K2, V1, V2).
--define(LEAF2_ARITY, 4).
--define(LEAF2_ARITY_PLUS1, 5).
--define(LEAF2_ARITY_PLUS2, 6).
--define(LEAF2_ARITY_PLUS3, 7).
-
-%% ?LEAF1
-
--define(LEAF1_ARGS, K1, V1).
--define(LEAF1_ARITY, 2).
--define(LEAF1_ARITY_PLUS1, 3).
--define(LEAF1_ARITY_PLUS3, 5).
-
 %%
 
 -define(TAKEN(Pair, UpdatedNode), [Pair | UpdatedNode]).
@@ -330,18 +279,6 @@
 
 -define(new_INTERNAL1(K1, V1, C1, C2), ?CHECK_NODE(?INTERNAL1(K1, V1, C1, C2))).
 
-%
-
--define(new_LEAF4(K1, K2, K3, K4, V1, V2, V3, V4),
-    ?CHECK_NODE_RECUR(?LEAF4(K1, K2, K3, K4, V1, V2, V3, V4))
-).
-
--define(new_LEAF3(K1, K2, K3, V1, V2, V3), ?CHECK_NODE_RECUR(?LEAF3(K1, K2, K3, V1, V2, V3))).
-
--define(new_LEAF2(K1, K2, V1, V2), ?CHECK_NODE_RECUR(?LEAF2(K1, K2, V1, V2))).
-
--define(new_LEAF1(K1, V1), ?CHECK_NODE(?LEAF1(K1, V1))).
-
 %% ------------------------------------------------------------------
 %% Type Definitions
 %% ------------------------------------------------------------------
@@ -350,7 +287,7 @@
 %% This type represents any tree node structure.
 -export_type([t/2]).
 
--type empty_node() :: ?LEAF0.
+-type empty_node() :: ?EMPTY_ROOT.
 
 %
 % The fact that some node types are root-only allows us to optimize the
@@ -362,20 +299,15 @@
 
 -type root_only_node(Key, Value) ::
     (node_INTERNAL1(Key, Value)
-    | node_LEAF1(Key, Value)
     | empty_node()).
 
 -type deep_node(Key, Value) ::
     (node_INTERNAL4(Key, Value)
     | node_INTERNAL3(Key, Value)
-    | node_INTERNAL2(Key, Value)
-    | node_LEAF4(Key, Value)
-    | node_LEAF3(Key, Value)
-    | node_LEAF2(Key, Value)).
+    | node_INTERNAL2(Key, Value)).
 
 -type nonempty_node(Key, Value) ::
     (node_INTERNAL1(Key, Value)
-    | node_LEAF1(Key, Value)
     | deep_node(Key, Value)).
 
 -type node_INTERNAL4(Key, Value) ::
@@ -428,40 +360,10 @@
         deep_node(Key, Value)
     )).
 
--type node_LEAF4(Key, Value) ::
-    (?LEAF4(
-        Key,
-        Key,
-        Key,
-        Key,
-        Value,
-        Value,
-        Value,
-        Value
-    )).
-
--type node_LEAF3(Key, Value) ::
-    (?LEAF3(
-        Key,
-        Key,
-        Key,
-        Value,
-        Value,
-        Value
-    )).
-
--type node_LEAF2(Key, Value) :: ?LEAF2(Key, Key, Value, Value).
-
--type node_LEAF1(Key, Value) :: ?LEAF1(Key, Value).
-
 %%%%%%%%%%%
 
 -type split_internal_result(Key, Value) :: split_result(
     Key, Value, node_INTERNAL2(Key, Value), node_INTERNAL2(Key, Value)
-).
-
--type split_leaf_result(Key, Value) :: split_result(
-    Key, Value, node_LEAF2(Key, Value), node_LEAF2(Key, Value)
 ).
 
 -type split_result(Key, Value, SplitL, SplitR) :: {split, Key, Value, SplitL, SplitR}.
@@ -494,9 +396,7 @@
 -spec delete_att(Key, t(Key, Value)) -> none | t(Key, Value).
 delete_att(Key, ?INTERNAL1_MATCH_ALL) ->
     delete_att_INTERNAL1(Key, ?INTERNAL1_ARGS);
-delete_att(Key, ?LEAF1_MATCH(K1, _)) ->
-    delete_att_LEAF1(Key, K1);
-delete_att(_Key, ?LEAF0) ->
+delete_att(_Key, ?EMPTY_ROOT) ->
     none;
 delete_att(Key, Root) ->
     delete_att_recur(Key, Root).
@@ -510,9 +410,7 @@ foldl(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
     Acc2 = foldl_recur(Fun, Acc, C1),
     Acc3 = Fun(K1, V1, Acc2),
     foldl_recur(Fun, Acc3, C2);
-foldl(Fun, Acc, ?LEAF1_MATCH_ALL) ->
-    Fun(K1, V1, Acc);
-foldl(_Fun, Acc, ?LEAF0) ->
+foldl(_Fun, Acc, ?EMPTY_ROOT) ->
     Acc;
 foldl(Fun, Acc, Root) ->
     foldl_recur(Fun, Acc, Root).
@@ -526,9 +424,7 @@ foldr(Fun, Acc, ?INTERNAL1_MATCH_ALL) ->
     Acc2 = foldr_recur(Fun, Acc, C2),
     Acc3 = Fun(K1, V1, Acc2),
     foldr_recur(Fun, Acc3, C1);
-foldr(Fun, Acc, ?LEAF1_MATCH_ALL) ->
-    Fun(K1, V1, Acc);
-foldr(_Fun, Acc, ?LEAF0) ->
+foldr(_Fun, Acc, ?EMPTY_ROOT) ->
     Acc;
 foldr(Fun, Acc, Root) ->
     foldr_recur(Fun, Acc, Root).
@@ -536,9 +432,7 @@ foldr(Fun, Acc, Root) ->
 -spec get(Key, t(Key, Value)) -> Value | no_return().
 get(Key, ?INTERNAL1_MATCH_ALL) ->
     get_INTERNAL1(Key, ?INTERNAL1_ARGS);
-get(Key, ?LEAF1_MATCH_ALL) ->
-    get_LEAF1(Key, ?LEAF1_ARGS);
-get(Key, ?LEAF0) ->
+get(Key, ?EMPTY_ROOT) ->
     error_badkey(Key);
 get(Key, Root) ->
     get_recur(Key, Root).
@@ -548,11 +442,9 @@ get(Key, Root) ->
     (Key, lazy, fun(() -> Value), t(Key, Value)) -> none | t(Key, Value).
 insert_att(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
     insert_att_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
-insert_att(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
-    insert_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-insert_att(Key, ValueEval, ValueWrap, ?LEAF0) ->
+insert_att(Key, ValueEval, ValueWrap, ?EMPTY_ROOT) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
-    ?new_LEAF1(Key, Value);
+    ?new_INTERNAL1(Key, Value, nil, nil);
 insert_att(Key, ValueEval, ValueWrap, Root) ->
     case insert_att_recur(Key, ValueEval, ValueWrap, Root) of
         ?SPLIT_MATCH(Pos, Args) ->
@@ -565,9 +457,7 @@ insert_att(Key, ValueEval, ValueWrap, Root) ->
 -spec is_defined(Key, t(Key, _)) -> boolean().
 is_defined(Key, ?INTERNAL1_MATCH(K1, _, C1, C2)) ->
     is_defined_INTERNAL1(Key, K1, C1, C2);
-is_defined(Key, ?LEAF1_MATCH(K1, _)) ->
-    is_defined_LEAF1(Key, K1);
-is_defined(_Key, ?LEAF0) ->
+is_defined(_Key, ?EMPTY_ROOT) ->
     false;
 is_defined(Key, Root) ->
     is_defined_recur(Key, Root).
@@ -589,9 +479,7 @@ iterator_from(Key, Root, reversed) ->
 -spec keys(t(Key, _)) -> [Key].
 keys(?INTERNAL1_MATCH(K1, _, C1, C2)) ->
     keys_recur(C1, [K1 | keys_recur(C2, [])]);
-keys(?LEAF1_MATCH(K1, _)) ->
-    [K1];
-keys(?LEAF0) ->
+keys(?EMPTY_ROOT) ->
     [];
 keys(Root) ->
     keys_recur(Root, []).
@@ -599,27 +487,21 @@ keys(Root) ->
 -spec larger(Key, t(Key, Value)) -> {Key, Value} | none.
 larger(Key, ?INTERNAL1_MATCH_ALL) ->
     larger_INTERNAL1(Key, ?INTERNAL1_ARGS);
-larger(Key, ?LEAF1_MATCH_ALL) ->
-    larger_LEAF1(Key, ?LEAF1_ARGS);
-larger(_Key, ?LEAF0) ->
+larger(_Key, ?EMPTY_ROOT) ->
     none;
 larger(Key, Root) ->
     larger_recur(Key, Root).
 
 -spec largest(t(Key, Value)) -> {Key, Value}.
-largest(?INTERNAL1_MATCH(_, _, _, C2)) ->
-    largest_recur(C2);
-largest(?LEAF1_MATCH(K1, V1)) ->
-    {K1, V1};
+largest(?INTERNAL1_MATCH(K1, V1, _, C2)) ->
+    largest_continue(K1, V1, C2);
 largest(Root) ->
     largest_recur(Root).
 
 -spec lookup(Key, t(Key, Value)) -> {value, Value} | none.
 lookup(Key, ?INTERNAL1_MATCH_ALL) ->
     lookup_INTERNAL1(Key, ?INTERNAL1_ARGS);
-lookup(Key, ?LEAF1_MATCH_ALL) ->
-    lookup_LEAF1(Key, ?LEAF1_ARGS);
-lookup(_Key, ?LEAF0) ->
+lookup(_Key, ?EMPTY_ROOT) ->
     none;
 lookup(Key, Root) ->
     lookup_recur(Key, Root).
@@ -634,16 +516,14 @@ map(Fun, ?INTERNAL1_MATCH_ALL) ->
         map_recur(Fun, C1),
         map_recur(Fun, C2)
     );
-map(Fun, ?LEAF1_MATCH_ALL) ->
-    ?new_LEAF1(K1, Fun(K1, V1));
-map(_Fun, ?LEAF0) ->
-    ?LEAF0;
+map(_Fun, ?EMPTY_ROOT) ->
+    ?EMPTY_ROOT;
 map(Fun, Root) ->
     map_recur(Fun, Root).
 
 -spec new() -> t(term(), term()).
 new() ->
-    ?LEAF0.
+    ?EMPTY_ROOT.
 
 next([Head | Tail]) ->
     next(Head, Tail);
@@ -653,18 +533,14 @@ next([]) ->
 -spec smaller(Key, t(Key, Value)) -> {Key, Value} | none.
 smaller(Key, ?INTERNAL1_MATCH_ALL) ->
     smaller_INTERNAL1(Key, ?INTERNAL1_ARGS);
-smaller(Key, ?LEAF1_MATCH_ALL) ->
-    smaller_LEAF1(Key, ?LEAF1_ARGS);
-smaller(_Key, ?LEAF0) ->
+smaller(_Key, ?EMPTY_ROOT) ->
     none;
 smaller(Key, Root) ->
     smaller_recur(Key, Root).
 
 -spec smallest(t(Key, Value)) -> {Key, Value}.
-smallest(?INTERNAL1_MATCH(_, _, C1, _)) ->
-    smallest_recur(C1);
-smallest(?LEAF1_MATCH(K1, V1)) ->
-    {K1, V1};
+smallest(?INTERNAL1_MATCH(K1, V1, C1, _)) ->
+    smallest_continue(K1, V1, C1);
 smallest(Root) ->
     smallest_recur(Root).
 
@@ -680,13 +556,7 @@ structural_stats(Root) ->
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             b5_structural_stats:return(Acc4);
         %
-        ?LEAF1_MATCH(_, _) ->
-            Height = 1,
-            Acc2 = b5_structural_stats:inc_count(leaf1, Acc),
-            Acc3 = b5_structural_stats:set_height(Height, Acc2),
-            b5_structural_stats:return(Acc3);
-        %
-        ?LEAF0 ->
+        ?EMPTY_ROOT ->
             b5_structural_stats:return(Acc);
         %
         _ ->
@@ -698,9 +568,7 @@ structural_stats(Root) ->
 -spec take_att(Key, t(Key, Value)) -> none | take_result(Key, Value) | no_return().
 take_att(Key, ?INTERNAL1_MATCH_ALL) ->
     take_att_INTERNAL1(Key, ?INTERNAL1_ARGS);
-take_att(Key, ?LEAF1_MATCH_ALL) ->
-    take_att_LEAF1(Key, ?LEAF1_ARGS);
-take_att(_Key, ?LEAF0) ->
+take_att(_Key, ?EMPTY_ROOT) ->
     none;
 take_att(Key, Root) ->
     take_att_recur(Key, Root).
@@ -708,16 +576,12 @@ take_att(Key, Root) ->
 -spec take_largest(t(Key, Value)) -> take_result(Key, Value).
 take_largest(?INTERNAL1_MATCH_ALL) ->
     take_largest_INTERNAL1(?INTERNAL1_ARGS);
-take_largest(?LEAF1_MATCH_ALL) ->
-    take_largest_LEAF1(?LEAF1_ARGS);
 take_largest(Root) ->
     take_largest_recur(Root).
 
 -spec take_smallest(t(Key, Value)) -> take_result(Key, Value).
 take_smallest(?INTERNAL1_MATCH_ALL) ->
     take_smallest_INTERNAL1(?INTERNAL1_ARGS);
-take_smallest(?LEAF1_MATCH_ALL) ->
-    take_smallest_LEAF1(?LEAF1_ARGS);
 take_smallest(Root) ->
     take_smallest_recur(Root).
 
@@ -726,9 +590,7 @@ to_list(?INTERNAL1_MATCH_ALL) ->
     Acc2 = to_list_recur(C2, []),
     Acc3 = [{K1, V1} | Acc2],
     to_list_recur(C1, Acc3);
-to_list(?LEAF1_MATCH_ALL) ->
-    [{K1, V1}];
-to_list(?LEAF0) ->
+to_list(?EMPTY_ROOT) ->
     [];
 to_list(Root) ->
     to_list_recur(Root, []).
@@ -738,9 +600,7 @@ to_list(Root) ->
     (Key, lazy, fun((PrevValue) -> Value), t(Key, PrevValue)) -> none | t(Key, Value).
 update_att(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
     update_att_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
-update_att(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
-    update_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-update_att(_Key, _ValueEval, _ValueWrap, ?LEAF0) ->
+update_att(_Key, _ValueEval, _ValueWrap, ?EMPTY_ROOT) ->
     none;
 update_att(Key, ValueEval, ValueWrap, Root) ->
     update_att_recur(Key, ValueEval, ValueWrap, Root).
@@ -748,9 +608,7 @@ update_att(Key, ValueEval, ValueWrap, Root) ->
 -spec values(t(_, Value)) -> [Value].
 values(?INTERNAL1_MATCH(_, V1, C1, C2)) ->
     values_recur(C1, [V1 | values_recur(C2, [])]);
-values(?LEAF1_MATCH(_, V1)) ->
-    [V1];
-values(?LEAF0) ->
+values(?EMPTY_ROOT) ->
     [];
 values(Root) ->
     values_recur(Root, []).
@@ -761,7 +619,6 @@ values(Root) ->
 
 delete_att_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             delete_att_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -771,14 +628,8 @@ delete_att_recur(Key, Node) ->
         ?INTERNAL4_MATCH_ALL ->
             delete_att_INTERNAL4(Key, ?INTERNAL4_ARGS);
         %
-        ?LEAF2_MATCH_ALL ->
-            delete_att_LEAF2(Key, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            delete_att_LEAF3(Key, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            delete_att_LEAF4(Key, ?LEAF4_ARGS)
+        nil ->
+            none
     end.
 
 %%
@@ -862,91 +713,159 @@ delete_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
 
 -compile({inline, delete_att_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
 delete_att_INTERNAL4_K1(?INTERNAL4_ARGS_IGN_K1_V1) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    del_rebalance_INTERNAL4_C2(
-        ReplacementK,
-        K2,
-        K3,
-        K4,
+    case take_smallest_recur(C2) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) ->
+            del_rebalance_INTERNAL4_C2(
+                ReplacementK,
+                K2,
+                K3,
+                K4,
+                %
+                ReplacementV,
+                V2,
+                V3,
+                V4,
+                %
+                C1,
+                UpdatedC2,
+                C3,
+                C4,
+                C5
+            );
         %
-        ReplacementV,
-        V2,
-        V3,
-        V4,
-        %
-        C1,
-        UpdatedC2,
-        C3,
-        C4,
-        C5
-    ).
+        none ->
+            ?new_INTERNAL3(
+                K2,
+                K3,
+                K4,
+                %
+                V2,
+                V3,
+                V4,
+                %
+                nil,
+                nil,
+                nil,
+                nil
+            )
+    end.
 
 -compile({inline, delete_att_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
 delete_att_INTERNAL4_K2(?INTERNAL4_ARGS_IGN_K2_V2) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
-
-    del_rebalance_INTERNAL4_C2(
-        K1,
-        ReplacementK,
-        K3,
-        K4,
+    case take_largest_recur(C2) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) ->
+            del_rebalance_INTERNAL4_C2(
+                K1,
+                ReplacementK,
+                K3,
+                K4,
+                %
+                V1,
+                ReplacementV,
+                V3,
+                V4,
+                %
+                C1,
+                UpdatedC2,
+                C3,
+                C4,
+                C5
+            );
         %
-        V1,
-        ReplacementV,
-        V3,
-        V4,
-        %
-        C1,
-        UpdatedC2,
-        C3,
-        C4,
-        C5
-    ).
+        none ->
+            ?new_INTERNAL3(
+                K1,
+                K3,
+                K4,
+                %
+                V1,
+                V3,
+                V4,
+                %
+                nil,
+                nil,
+                nil,
+                nil
+            )
+    end.
 
 -compile({inline, delete_att_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
 delete_att_INTERNAL4_K3(?INTERNAL4_ARGS_IGN_K3_V3) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_smallest_recur(C4),
-
-    del_rebalance_INTERNAL4_C4(
-        K1,
-        K2,
-        ReplacementK,
-        K4,
+    case take_smallest_recur(C4) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) ->
+            del_rebalance_INTERNAL4_C4(
+                K1,
+                K2,
+                ReplacementK,
+                K4,
+                %
+                V1,
+                V2,
+                ReplacementV,
+                V4,
+                %
+                C1,
+                C2,
+                C3,
+                UpdatedC4,
+                C5
+            );
         %
-        V1,
-        V2,
-        ReplacementV,
-        V4,
-        %
-        C1,
-        C2,
-        C3,
-        UpdatedC4,
-        C5
-    ).
+        none ->
+            ?new_INTERNAL3(
+                K1,
+                K2,
+                K4,
+                %
+                V1,
+                V2,
+                V4,
+                %
+                nil,
+                nil,
+                nil,
+                nil
+            )
+    end.
 
 -compile({inline, delete_att_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
 delete_att_INTERNAL4_K4(?INTERNAL4_ARGS_IGN_K4_V4) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_largest_recur(C4),
-
-    del_rebalance_INTERNAL4_C4(
-        K1,
-        K2,
-        K3,
-        ReplacementK,
+    case take_largest_recur(C4) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) ->
+            del_rebalance_INTERNAL4_C4(
+                K1,
+                K2,
+                K3,
+                ReplacementK,
+                %
+                V1,
+                V2,
+                V3,
+                ReplacementV,
+                %
+                C1,
+                C2,
+                C3,
+                UpdatedC4,
+                C5
+            );
         %
-        V1,
-        V2,
-        V3,
-        ReplacementV,
-        %
-        C1,
-        C2,
-        C3,
-        UpdatedC4,
-        C5
-    ).
+        none ->
+            ?new_INTERNAL3(
+                K1,
+                K2,
+                K3,
+                %
+                V1,
+                V2,
+                V3,
+                %
+                nil,
+                nil,
+                nil,
+                nil
+            )
+    end.
 
 %%
 %% ?INTERNAL3
@@ -1013,60 +932,102 @@ delete_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
 
 -compile({inline, delete_att_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
 delete_att_INTERNAL3_K1(?INTERNAL3_ARGS_IGN_K1_V1) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    del_rebalance_INTERNAL3_C2(
-        ReplacementK,
-        K2,
-        K3,
+    case take_smallest_recur(C2) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) ->
+            del_rebalance_INTERNAL3_C2(
+                ReplacementK,
+                K2,
+                K3,
+                %
+                ReplacementV,
+                V2,
+                V3,
+                %
+                C1,
+                UpdatedC2,
+                C3,
+                C4
+            );
         %
-        ReplacementV,
-        V2,
-        V3,
-        %
-        C1,
-        UpdatedC2,
-        C3,
-        C4
-    ).
+        none ->
+            ?new_INTERNAL2(
+                K2,
+                K3,
+                %
+                V2,
+                V3,
+                %
+                nil,
+                nil,
+                nil
+            )
+    end.
 
 -compile({inline, delete_att_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
 delete_att_INTERNAL3_K2(?INTERNAL3_ARGS_IGN_K2_V2) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
-
-    del_rebalance_INTERNAL3_C3(
-        K1,
-        ReplacementK,
-        K3,
+    case take_smallest_recur(C3) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) ->
+            del_rebalance_INTERNAL3_C3(
+                K1,
+                ReplacementK,
+                K3,
+                %
+                V1,
+                ReplacementV,
+                V3,
+                %
+                C1,
+                C2,
+                UpdatedC3,
+                C4
+            );
         %
-        V1,
-        ReplacementV,
-        V3,
-        %
-        C1,
-        C2,
-        UpdatedC3,
-        C4
-    ).
+        none ->
+            ?new_INTERNAL2(
+                K1,
+                K3,
+                %
+                V1,
+                V3,
+                %
+                nil,
+                nil,
+                nil
+            )
+    end.
 
 -compile({inline, delete_att_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
 delete_att_INTERNAL3_K3(?INTERNAL3_ARGS_IGN_K3_V3) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
-
-    del_rebalance_INTERNAL3_C3(
-        K1,
-        K2,
-        ReplacementK,
+    case take_largest_recur(C3) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) ->
+            del_rebalance_INTERNAL3_C3(
+                K1,
+                K2,
+                ReplacementK,
+                %
+                V1,
+                V2,
+                ReplacementV,
+                %
+                C1,
+                C2,
+                UpdatedC3,
+                C4
+            );
         %
-        V1,
-        V2,
-        ReplacementV,
-        %
-        C1,
-        C2,
-        UpdatedC3,
-        C4
-    ).
+        none ->
+            ?new_INTERNAL2(
+                K1,
+                K2,
+                %
+                V1,
+                V2,
+                %
+                nil,
+                nil,
+                nil
+            )
+    end.
 
 %%
 %% ?INTERNAL2
@@ -1117,35 +1078,43 @@ delete_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
 
 -compile({inline, delete_att_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
 delete_att_INTERNAL2_K1(?INTERNAL2_ARGS_IGN_K1_V1) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    del_rebalance_INTERNAL2_C2(
-        ReplacementK,
-        K2,
+    case take_smallest_recur(C2) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) ->
+            del_rebalance_INTERNAL2_C2(
+                ReplacementK,
+                K2,
+                %
+                ReplacementV,
+                V2,
+                %
+                C1,
+                UpdatedC2,
+                C3
+            );
         %
-        ReplacementV,
-        V2,
-        %
-        C1,
-        UpdatedC2,
-        C3
-    ).
+        none ->
+            ?new_INTERNAL1(K2, V2, nil, nil)
+    end.
 
 -compile({inline, delete_att_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
 delete_att_INTERNAL2_K2(?INTERNAL2_ARGS_IGN_K2_V2) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
-
-    del_rebalance_INTERNAL2_C2(
-        K1,
-        ReplacementK,
+    case take_largest_recur(C2) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) ->
+            del_rebalance_INTERNAL2_C2(
+                K1,
+                ReplacementK,
+                %
+                V1,
+                ReplacementV,
+                %
+                C1,
+                UpdatedC2,
+                C3
+            );
         %
-        V1,
-        ReplacementV,
-        %
-        C1,
-        UpdatedC2,
-        C3
-    ).
+        none ->
+            ?new_INTERNAL1(K1, V1, nil, nil)
+    end.
 
 %%
 %% ?INTERNAL1
@@ -1176,82 +1145,12 @@ delete_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
 
 -compile({inline, delete_att_INTERNAL1_K1 / ?INTERNAL1_ARITY}).
 delete_att_INTERNAL1_K1(?INTERNAL1_ARGS_IGN_K1_V1) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    ?INTERNAL1_K1_C2_REBALANCE(ReplacementK, ReplacementV, UpdatedC2).
-
-%%
-%% ?LEAF4
-%%
-
--compile({inline, delete_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-delete_att_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            ?new_LEAF3(K2, K3, K4, V2, V3, V4);
+    case take_smallest_recur(C2) of
+        ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) ->
+            ?INTERNAL1_K1_C2_REBALANCE(ReplacementK, ReplacementV, UpdatedC2);
         %
-        Key == K2 ->
-            ?new_LEAF3(K1, K3, K4, V1, V3, V4);
-        %
-        Key == K3 ->
-            ?new_LEAF3(K1, K2, K4, V1, V2, V4);
-        %
-        Key == K4 ->
-            ?new_LEAF3(K1, K2, K3, V1, V2, V3);
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, delete_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-delete_att_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            ?new_LEAF2(K2, K3, V2, V3);
-        %
-        Key == K2 ->
-            ?new_LEAF2(K1, K3, V1, V3);
-        %
-        Key == K3 ->
-            ?new_LEAF2(K1, K2, V1, V2);
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, delete_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-delete_att_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            ?new_LEAF1(K2, V2);
-        %
-        Key == K2 ->
-            ?new_LEAF1(K1, V1);
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, delete_att_LEAF1/2}).
-delete_att_LEAF1(Key, K1) ->
-    if
-        Key == K1 ->
-            ?LEAF0;
-        %
-        true ->
-            none
+        none ->
+            ?EMPTY_ROOT
     end.
 
 %% ------------------------------------------------------------------
@@ -1260,15 +1159,6 @@ delete_att_LEAF1(Key, K1) ->
 
 foldl_recur(Fun, Acc, Node) ->
     case Node of
-        ?LEAF2_MATCH_ALL ->
-            Fun(K2, V2, Fun(K1, V1, Acc));
-        %
-        ?LEAF3_MATCH_ALL ->
-            Fun(K3, V3, Fun(K2, V2, Fun(K1, V1, Acc)));
-        %
-        ?LEAF4_MATCH_ALL ->
-            Fun(K4, V4, Fun(K3, V3, Fun(K2, V2, Fun(K1, V1, Acc))));
-        %
         ?INTERNAL2_MATCH_ALL ->
             Acc2 = foldl_recur(Fun, Acc, C1),
             Acc3 = foldl_recur(Fun, Fun(K1, V1, Acc2), C2),
@@ -1285,7 +1175,10 @@ foldl_recur(Fun, Acc, Node) ->
             Acc3 = foldl_recur(Fun, Fun(K1, V1, Acc2), C2),
             Acc4 = foldl_recur(Fun, Fun(K2, V2, Acc3), C3),
             Acc5 = foldl_recur(Fun, Fun(K3, V3, Acc4), C4),
-            _Acc6 = foldl_recur(Fun, Fun(K4, V4, Acc5), C5)
+            _Acc6 = foldl_recur(Fun, Fun(K4, V4, Acc5), C5);
+        %
+        nil ->
+            Acc
     end.
 
 %% ------------------------------------------------------------------
@@ -1294,15 +1187,6 @@ foldl_recur(Fun, Acc, Node) ->
 
 foldr_recur(Fun, Acc, Node) ->
     case Node of
-        ?LEAF2_MATCH_ALL ->
-            Fun(K1, V1, Fun(K2, V2, Acc));
-        %
-        ?LEAF3_MATCH_ALL ->
-            Fun(K1, V1, Fun(K2, V2, Fun(K3, V3, Acc)));
-        %
-        ?LEAF4_MATCH_ALL ->
-            Fun(K1, V1, Fun(K2, V2, Fun(K3, V3, Fun(K4, V4, Acc))));
-        %
         ?INTERNAL2_MATCH_ALL ->
             Acc2 = foldr_recur(Fun, Acc, C3),
             Acc3 = foldr_recur(Fun, Fun(K2, V2, Acc2), C2),
@@ -1319,7 +1203,10 @@ foldr_recur(Fun, Acc, Node) ->
             Acc3 = foldr_recur(Fun, Fun(K4, V4, Acc2), C4),
             Acc4 = foldr_recur(Fun, Fun(K3, V3, Acc3), C3),
             Acc5 = foldr_recur(Fun, Fun(K2, V2, Acc4), C2),
-            _Acc6 = foldr_recur(Fun, Fun(K1, V1, Acc5), C1)
+            _Acc6 = foldr_recur(Fun, Fun(K1, V1, Acc5), C1);
+        %
+        nil ->
+            Acc
     end.
 
 %% ------------------------------------------------------------------
@@ -1328,7 +1215,6 @@ foldr_recur(Fun, Acc, Node) ->
 
 get_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             get_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -1338,14 +1224,8 @@ get_recur(Key, Node) ->
         ?INTERNAL4_MATCH_ALL ->
             get_INTERNAL4(Key, ?INTERNAL4_ARGS);
         %
-        ?LEAF2_MATCH_ALL ->
-            get_LEAF2(Key, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            get_LEAF3(Key, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            get_LEAF4(Key, ?LEAF4_ARGS)
+        nil ->
+            error_badkey(Key)
     end.
 
 %%
@@ -1477,80 +1357,6 @@ get_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
     end.
 
 %%
-%% ?LEAF4
-%%
-
--compile({inline, get_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-get_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            V1;
-        %
-        Key == K2 ->
-            V2;
-        %
-        Key == K3 ->
-            V3;
-        %
-        Key == K4 ->
-            V4;
-        %
-        true ->
-            error_badkey(Key)
-    end.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, get_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-get_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            V1;
-        %
-        Key == K2 ->
-            V2;
-        %
-        Key == K3 ->
-            V3;
-        %
-        true ->
-            error_badkey(Key)
-    end.
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, get_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-get_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            V1;
-        %
-        Key == K2 ->
-            V2;
-        %
-        true ->
-            error_badkey(Key)
-    end.
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, get_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-get_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key == K1 ->
-            V1;
-        %
-        true ->
-            error_badkey(Key)
-    end.
-
-%%
 
 -compile({inline, error_badkey/1}).
 -spec error_badkey(term()) -> no_return().
@@ -1570,16 +1376,7 @@ insert_att_recur(Key, ValueEval, ValueWrap, Node) ->
             insert_att_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
         %
         ?INTERNAL4_MATCH_ALL ->
-            insert_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-        %
-        ?LEAF2_MATCH_ALL ->
-            insert_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            insert_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH(K1, K2, K3, K4, _, _, _, _) ->
-            insert_att_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4)
+            insert_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
     end.
 
 %%
@@ -1631,28 +1428,63 @@ insert_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS3}).
 insert_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C1),
-    ins_rebalance_INTERNAL4_C1(Result, ?INTERNAL4_ARGS).
+    case C1 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?SPLIT(1, [Key | Value]);
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C1),
+            ins_rebalance_INTERNAL4_C1(Result, ?INTERNAL4_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS3}).
 insert_att_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C2),
-    ins_rebalance_INTERNAL4_C2(Result, ?INTERNAL4_ARGS).
+    case C2 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?SPLIT(2, [Key | Value]);
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C2),
+            ins_rebalance_INTERNAL4_C2(Result, ?INTERNAL4_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS3}).
 insert_att_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C3),
-    ins_rebalance_INTERNAL4_C3(Result, ?INTERNAL4_ARGS).
+    case C3 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?SPLIT(3, [Key | Value]);
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C3),
+            ins_rebalance_INTERNAL4_C3(Result, ?INTERNAL4_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS3}).
 insert_att_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C4),
-    ins_rebalance_INTERNAL4_C4(Result, ?INTERNAL4_ARGS).
+    case C4 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?SPLIT(4, [Key | Value]);
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C4),
+            ins_rebalance_INTERNAL4_C4(Result, ?INTERNAL4_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS3}).
 insert_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C5),
-    ins_rebalance_INTERNAL4_C5(Result, ?INTERNAL4_ARGS).
+    case C5 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?SPLIT(5, [Key | Value]);
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C5),
+            ins_rebalance_INTERNAL4_C5(Result, ?INTERNAL4_ARGS)
+    end.
 
 %%
 %% ?INTERNAL3
@@ -1693,23 +1525,115 @@ insert_att_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS3}).
 insert_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C1),
-    ins_rebalance_INTERNAL3_C1(Result, ?INTERNAL3_ARGS).
+    case C1 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_INTERNAL4(
+                Key,
+                K1,
+                K2,
+                K3,
+                %
+                Value,
+                V1,
+                V2,
+                V3,
+                %
+                nil,
+                nil,
+                nil,
+                nil,
+                nil
+            );
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C1),
+            ins_rebalance_INTERNAL3_C1(Result, ?INTERNAL3_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS3}).
 insert_att_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C2),
-    ins_rebalance_INTERNAL3_C2(Result, ?INTERNAL3_ARGS).
+    case C2 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_INTERNAL4(
+                K1,
+                Key,
+                K2,
+                K3,
+                %
+                V1,
+                Value,
+                V2,
+                V3,
+                %
+                nil,
+                nil,
+                nil,
+                nil,
+                nil
+            );
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C2),
+            ins_rebalance_INTERNAL3_C2(Result, ?INTERNAL3_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS3}).
 insert_att_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C3),
-    ins_rebalance_INTERNAL3_C3(Result, ?INTERNAL3_ARGS).
+    case C3 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_INTERNAL4(
+                K1,
+                K2,
+                Key,
+                K3,
+                %
+                V1,
+                V2,
+                Value,
+                V3,
+                %
+                nil,
+                nil,
+                nil,
+                nil,
+                nil
+            );
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C3),
+            ins_rebalance_INTERNAL3_C3(Result, ?INTERNAL3_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS3}).
 insert_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C4),
-    ins_rebalance_INTERNAL3_C4(Result, ?INTERNAL3_ARGS).
+    case C4 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_INTERNAL4(
+                K1,
+                K2,
+                K3,
+                Key,
+                %
+                V1,
+                V2,
+                V3,
+                Value,
+                %
+                nil,
+                nil,
+                nil,
+                nil,
+                nil
+            );
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C4),
+            ins_rebalance_INTERNAL3_C4(Result, ?INTERNAL3_ARGS)
+    end.
 
 %%
 %% ?INTERNAL2
@@ -1740,18 +1664,78 @@ insert_att_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS3}).
 insert_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C1),
-    ins_rebalance_INTERNAL2_C1(Result, ?INTERNAL2_ARGS).
+    case C1 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_INTERNAL3(
+                Key,
+                K1,
+                K2,
+                %
+                Value,
+                V1,
+                V2,
+                %
+                nil,
+                nil,
+                nil,
+                nil
+            );
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C1),
+            ins_rebalance_INTERNAL2_C1(Result, ?INTERNAL2_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS3}).
 insert_att_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C2),
-    ins_rebalance_INTERNAL2_C2(Result, ?INTERNAL2_ARGS).
+    case C2 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_INTERNAL3(
+                K1,
+                Key,
+                K2,
+                %
+                V1,
+                Value,
+                V2,
+                %
+                nil,
+                nil,
+                nil,
+                nil
+            );
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C2),
+            ins_rebalance_INTERNAL2_C2(Result, ?INTERNAL2_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS3}).
 insert_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C3),
-    ins_rebalance_INTERNAL2_C3(Result, ?INTERNAL2_ARGS).
+    case C3 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_INTERNAL3(
+                K1,
+                K2,
+                Key,
+                %
+                V1,
+                V2,
+                Value,
+                %
+                nil,
+                nil,
+                nil,
+                nil
+            );
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C3),
+            ins_rebalance_INTERNAL2_C3(Result, ?INTERNAL2_ARGS)
+    end.
 
 %%
 %% ?INTERNAL1
@@ -1772,264 +1756,47 @@ insert_att_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS3}).
 insert_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C1),
-    ins_rebalance_INTERNAL1_C1(Result, ?INTERNAL1_ARGS).
+    case C1 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_INTERNAL2(
+                Key,
+                K1,
+                %
+                Value,
+                V1,
+                %
+                nil,
+                nil,
+                nil
+            );
+        %
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C1),
+            ins_rebalance_INTERNAL1_C1(Result, ?INTERNAL1_ARGS)
+    end.
 
 -compile({inline, insert_att_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS3}).
 insert_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
-    Result = insert_att_recur(Key, ValueEval, ValueWrap, C2),
-    ins_rebalance_INTERNAL1_C2(Result, ?INTERNAL1_ARGS).
-
-%%
-%% ?LEAF4
-%%
-
--compile({inline, insert_att_LEAF4/7}).
-insert_att_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4) ->
-    if
-        Key > K2 ->
-            %
-            if
-                Key < K4 ->
-                    %
-                    if
-                        Key > K3 ->
-                            Value = eval_insert_value(ValueEval, ValueWrap),
-                            ?SPLIT(4, [Key | Value]);
-                        %
-                        Key < K3 ->
-                            Value = eval_insert_value(ValueEval, ValueWrap),
-                            ?SPLIT(3, [Key | Value]);
-                        %
-                        true ->
-                            none
-                    end;
+    case C2 of
+        nil ->
+            Value = eval_insert_value(ValueEval, ValueWrap),
+            ?new_INTERNAL2(
+                K1,
+                Key,
                 %
-                Key > K4 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?SPLIT(5, [Key | Value]);
+                V1,
+                Value,
                 %
-                true ->
-                    none
-            end;
+                nil,
+                nil,
+                nil
+            );
         %
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?SPLIT(1, [Key | Value]);
-                %
-                Key > K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?SPLIT(2, [Key | Value]);
-                %
-                true ->
-                    none
-            end;
-        %
-        true ->
-            none
+        _ ->
+            Result = insert_att_recur(Key, ValueEval, ValueWrap, C2),
+            ins_rebalance_INTERNAL1_C2(Result, ?INTERNAL1_ARGS)
     end.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, insert_att_LEAF3 / ?LEAF3_ARITY_PLUS3}).
-insert_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    if
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    insert_att_LEAF3_POS1(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-                %
-                Key > K1 ->
-                    insert_att_LEAF3_POS2(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-                %
-                true ->
-                    none
-            end;
-        %
-        Key > K2 ->
-            %
-            if
-                Key < K3 ->
-                    insert_att_LEAF3_POS3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-                %
-                Key > K3 ->
-                    insert_att_LEAF3_POS4(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-                %
-                true ->
-                    none
-            end;
-        %
-        true ->
-            none
-    end.
-
--compile({inline, insert_att_LEAF3_POS1 / ?LEAF3_ARITY_PLUS3}).
-insert_att_LEAF3_POS1(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF4(
-        Key,
-        K1,
-        K2,
-        K3,
-        %
-        Value,
-        V1,
-        V2,
-        V3
-    ).
-
--compile({inline, insert_att_LEAF3_POS2 / ?LEAF3_ARITY_PLUS3}).
-insert_att_LEAF3_POS2(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF4(
-        K1,
-        Key,
-        K2,
-        K3,
-        %
-        V1,
-        Value,
-        V2,
-        V3
-    ).
-
--compile({inline, insert_att_LEAF3_POS3 / ?LEAF3_ARITY_PLUS3}).
-insert_att_LEAF3_POS3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF4(
-        K1,
-        K2,
-        Key,
-        K3,
-        %
-        V1,
-        V2,
-        Value,
-        V3
-    ).
-
--compile({inline, insert_att_LEAF3_POS4 / ?LEAF3_ARITY_PLUS3}).
-insert_att_LEAF3_POS4(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF4(
-        K1,
-        K2,
-        K3,
-        Key,
-        %
-        V1,
-        V2,
-        V3,
-        Value
-    ).
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, insert_att_LEAF2 / ?LEAF2_ARITY_PLUS3}).
-insert_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    if
-        Key > K1 ->
-            %
-            if
-                Key < K2 ->
-                    insert_att_LEAF2_POS2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-                %
-                Key > K2 ->
-                    insert_att_LEAF2_POS3(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-                %
-                true ->
-                    none
-            end;
-        %
-        Key < K1 ->
-            insert_att_LEAF2_POS1(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-        %
-        true ->
-            none
-    end.
-
--compile({inline, insert_att_LEAF2_POS1 / ?LEAF2_ARITY_PLUS3}).
-insert_att_LEAF2_POS1(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF3(
-        Key,
-        K1,
-        K2,
-        %
-        Value,
-        V1,
-        V2
-    ).
-
--compile({inline, insert_att_LEAF2_POS2 / ?LEAF2_ARITY_PLUS3}).
-insert_att_LEAF2_POS2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF3(
-        K1,
-        Key,
-        K2,
-        %
-        V1,
-        Value,
-        V2
-    ).
-
--compile({inline, insert_att_LEAF2_POS3 / ?LEAF2_ARITY_PLUS3}).
-insert_att_LEAF2_POS3(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF3(
-        K1,
-        K2,
-        Key,
-        %
-        V1,
-        V2,
-        Value
-    ).
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, insert_att_LEAF1 / ?LEAF1_ARITY_PLUS3}).
-insert_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
-    if
-        Key < K1 ->
-            insert_att_LEAF1_POS1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-        %
-        Key > K1 ->
-            insert_att_LEAF1_POS2(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
-        %
-        true ->
-            none
-    end.
-
--compile({inline, insert_att_LEAF1_POS1 / ?LEAF1_ARITY_PLUS3}).
-insert_att_LEAF1_POS1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF2(Key, K1, Value, V1).
-
--compile({inline, insert_att_LEAF1_POS2 / ?LEAF1_ARITY_PLUS3}).
-insert_att_LEAF1_POS2(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF2(K1, Key, V1, Value).
 
 %%%
 
@@ -2098,19 +1865,6 @@ split_internal(
 
     {split, SplitK, SplitV, SplitL, SplitR}.
 
--spec split_leaf(
-    K,
-    K,
-    K,
-    K,
-    K,
-    %
-    V,
-    V,
-    V,
-    V,
-    V
-) -> split_leaf_result(K, V).
 -compile({inline, split_leaf/10}).
 split_leaf(
     K1,
@@ -2125,13 +1879,26 @@ split_leaf(
     V4,
     V5
 ) ->
-    SplitK = K3,
-    SplitV = V3,
-
-    SplitL = ?new_LEAF2(K1, K2, V1, V2),
-    SplitR = ?new_LEAF2(K4, K5, V4, V5),
-
-    {split, SplitK, SplitV, SplitL, SplitR}.
+    split_internal(
+        K1,
+        K2,
+        K3,
+        K4,
+        K5,
+        %
+        V1,
+        V2,
+        V3,
+        V4,
+        V5,
+        %
+        nil,
+        nil,
+        nil,
+        nil,
+        nil,
+        nil
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: is_defined/2
@@ -2149,14 +1916,8 @@ is_defined_recur(Key, Node) ->
         ?INTERNAL4_MATCH(K1, K2, K3, K4, _, _, _, _, C1, C2, C3, C4, C5) ->
             is_defined_INTERNAL4(Key, K1, K2, K3, K4, C1, C2, C3, C4, C5);
         %
-        ?LEAF2_MATCH(K1, K2, _, _) ->
-            is_defined_LEAF2(Key, K1, K2);
-        %
-        ?LEAF3_MATCH(K1, K2, K3, _, _, _) ->
-            is_defined_LEAF3(Key, K1, K2, K3);
-        %
-        ?LEAF4_MATCH(K1, K2, K3, K4, _, _, _, _) ->
-            is_defined_LEAF4(Key, K1, K2, K3, K4)
+        nil ->
+            false
     end.
 
 %%
@@ -2287,38 +2048,6 @@ is_defined_INTERNAL1(Key, K1, C1, C2) ->
             true
     end.
 
-%%
-%% ?LEAF4
-%%
-
--compile({inline, is_defined_LEAF4/5}).
-is_defined_LEAF4(Key, K1, K2, K3, K4) ->
-    Key == K1 orelse Key == K2 orelse Key == K3 orelse Key == K4.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, is_defined_LEAF3/4}).
-is_defined_LEAF3(Key, K1, K2, K3) ->
-    Key == K1 orelse Key == K2 orelse Key == K3.
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, is_defined_LEAF2/3}).
-is_defined_LEAF2(Key, K1, K2) ->
-    Key == K1 orelse Key == K2.
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, is_defined_LEAF1/2}).
-is_defined_LEAF1(Key, K1) ->
-    Key == K1.
-
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - forward
 %% ------------------------------------------------------------------
@@ -2326,25 +2055,13 @@ is_defined_LEAF1(Key, K1) ->
 fwd_iterator(?INTERNAL1_MATCH_ALL) ->
     Acc = [?ITER_PAIR(K1, V1), C2],
     fwd_iterator_recur(C1, Acc);
-fwd_iterator(?LEAF1_MATCH_ALL) ->
-    Iter = [?ITER_PAIR(K1, V1)],
-    Iter;
-fwd_iterator(?LEAF0) ->
+fwd_iterator(?EMPTY_ROOT) ->
     Iter = [],
     Iter;
 fwd_iterator(Root) ->
     Acc = [],
     fwd_iterator_recur(Root, Acc).
 
-fwd_iterator_recur(?LEAF2_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2) | Acc],
-    Acc2;
-fwd_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3) | Acc],
-    Acc2;
-fwd_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc],
-    Acc2;
 fwd_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
     Acc2 = [
         ?ITER_PAIR(K1, V1),
@@ -2377,7 +2094,9 @@ fwd_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
         C5
         | Acc
     ],
-    fwd_iterator_recur(C1, Acc2).
+    fwd_iterator_recur(C1, Acc2);
+fwd_iterator_recur(nil, Acc) ->
+    Acc.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - reverse
@@ -2386,25 +2105,13 @@ fwd_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
 rev_iterator(?INTERNAL1_MATCH_ALL) ->
     Acc = [?ITER_PAIR(K1, V1), C1],
     rev_iterator_recur(C2, Acc);
-rev_iterator(?LEAF1_MATCH_ALL) ->
-    Iter = [?ITER_PAIR(K1, V1)],
-    Iter;
-rev_iterator(?LEAF0) ->
+rev_iterator(?EMPTY_ROOT) ->
     Iter = [],
     Iter;
 rev_iterator(Root) ->
     Acc = [],
     rev_iterator_recur(Root, Acc).
 
-rev_iterator_recur(?LEAF2_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
-    Acc2;
-rev_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
-    Acc2;
-rev_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
-    Acc2 = [?ITER_PAIR(K4, V4), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
-    Acc2;
 rev_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
     Acc2 = [
         ?ITER_PAIR(K2, V2),
@@ -2437,7 +2144,9 @@ rev_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
         C1
         | Acc
     ],
-    rev_iterator_recur(C5, Acc2).
+    rev_iterator_recur(C5, Acc2);
+rev_iterator_recur(nil, Acc) ->
+    Acc.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator_from/3 - forward
@@ -2448,10 +2157,7 @@ bound_fwd_iterator(Key, Root) ->
         ?INTERNAL1_MATCH_ALL ->
             bound_fwd_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS);
         %
-        ?LEAF1_MATCH_ALL ->
-            bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS);
-        %
-        ?LEAF0 ->
+        ?EMPTY_ROOT ->
             Iter = [],
             Iter;
         %
@@ -2462,15 +2168,6 @@ bound_fwd_iterator(Key, Root) ->
 
 bound_fwd_iterator_recur(Key, Node, Acc) ->
     case Node of
-        ?LEAF2_MATCH_ALL ->
-            bound_fwd_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc);
-        %
-        ?LEAF3_MATCH_ALL ->
-            bound_fwd_iterator_LEAF3(Key, ?LEAF3_ARGS, Acc);
-        %
-        ?LEAF4_MATCH_ALL ->
-            bound_fwd_iterator_LEAF4(Key, ?LEAF4_ARGS, Acc);
-        %
         ?INTERNAL2_MATCH_ALL ->
             bound_fwd_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc);
         %
@@ -2478,7 +2175,10 @@ bound_fwd_iterator_recur(Key, Node, Acc) ->
             bound_fwd_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc);
         %
         ?INTERNAL4_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc)
+            bound_fwd_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc);
+        %
+        nil ->
+            Acc
     end.
 
 %% INTERNAL4
@@ -2592,72 +2292,6 @@ bound_fwd_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
             _Acc = [?ITER_PAIR(K1, V1), C2]
     end.
 
-%% LEAF4
-
--compile({inline, bound_fwd_iterator_LEAF4 / ?LEAF4_ARITY_PLUS2}).
-bound_fwd_iterator_LEAF4(Key, ?LEAF4_ARGS, Acc) ->
-    if
-        Key > K4 ->
-            Acc;
-        %
-        Key > K3 ->
-            [?ITER_PAIR(K4, V4) | Acc];
-        %
-        Key > K2 ->
-            [?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc];
-        %
-        Key > K1 ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc]
-    end.
-
-%% LEAF3
-
--compile({inline, bound_fwd_iterator_LEAF3 / ?LEAF3_ARITY_PLUS2}).
-bound_fwd_iterator_LEAF3(Key, ?LEAF3_ARGS, Acc) ->
-    if
-        Key > K3 ->
-            Acc;
-        %
-        Key > K2 ->
-            [?ITER_PAIR(K3, V3) | Acc];
-        %
-        Key > K1 ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3) | Acc]
-    end.
-
-%% LEAF2
-
--compile({inline, bound_fwd_iterator_LEAF2 / ?LEAF2_ARITY_PLUS2}).
-bound_fwd_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc) ->
-    if
-        Key > K2 ->
-            Acc;
-        %
-        Key > K1 ->
-            [?ITER_PAIR(K2, V2) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2) | Acc]
-    end.
-
-%% LEAF1
-
--compile({inline, bound_fwd_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key > K1 ->
-            [];
-        %
-        true ->
-            [?ITER_PAIR(K1, V1)]
-    end.
-
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator_from/3 - forward
 %% ------------------------------------------------------------------
@@ -2667,10 +2301,7 @@ bound_rev_iterator(Key, Root) ->
         ?INTERNAL1_MATCH_ALL ->
             bound_rev_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS);
         %
-        ?LEAF1_MATCH_ALL ->
-            bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS);
-        %
-        ?LEAF0 ->
+        ?EMPTY_ROOT ->
             Iter = [],
             Iter;
         %
@@ -2681,15 +2312,6 @@ bound_rev_iterator(Key, Root) ->
 
 bound_rev_iterator_recur(Key, Node, Acc) ->
     case Node of
-        ?LEAF2_MATCH_ALL ->
-            bound_rev_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc);
-        %
-        ?LEAF3_MATCH_ALL ->
-            bound_rev_iterator_LEAF3(Key, ?LEAF3_ARGS, Acc);
-        %
-        ?LEAF4_MATCH_ALL ->
-            bound_rev_iterator_LEAF4(Key, ?LEAF4_ARGS, Acc);
-        %
         ?INTERNAL2_MATCH_ALL ->
             bound_rev_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc);
         %
@@ -2697,7 +2319,10 @@ bound_rev_iterator_recur(Key, Node, Acc) ->
             bound_rev_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc);
         %
         ?INTERNAL4_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc)
+            bound_rev_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc);
+        %
+        nil ->
+            Acc
     end.
 
 %% INTERNAL4
@@ -2811,87 +2436,12 @@ bound_rev_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
             _Acc = [?ITER_PAIR(K1, V1), C1]
     end.
 
-%% LEAF4
-
--compile({inline, bound_rev_iterator_LEAF4 / ?LEAF4_ARITY_PLUS2}).
-bound_rev_iterator_LEAF4(Key, ?LEAF4_ARGS, Acc) ->
-    if
-        Key < K1 ->
-            Acc;
-        %
-        Key < K2 ->
-            [?ITER_PAIR(K1, V1) | Acc];
-        %
-        Key < K3 ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc];
-        %
-        Key < K4 ->
-            [?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K4, V4), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
-    end.
-
-%% LEAF3
-
--compile({inline, bound_rev_iterator_LEAF3 / ?LEAF3_ARITY_PLUS2}).
-bound_rev_iterator_LEAF3(Key, ?LEAF3_ARGS, Acc) ->
-    if
-        Key < K1 ->
-            Acc;
-        %
-        Key < K2 ->
-            [?ITER_PAIR(K1, V1) | Acc];
-        %
-        Key < K3 ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
-    end.
-
-%% LEAF2
-
--compile({inline, bound_rev_iterator_LEAF2 / ?LEAF2_ARITY_PLUS2}).
-bound_rev_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc) ->
-    if
-        Key < K1 ->
-            Acc;
-        %
-        Key < K2 ->
-            [?ITER_PAIR(K1, V1) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
-    end.
-
-%% LEAF1
-
--compile({inline, bound_rev_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key < K1 ->
-            [];
-        %
-        true ->
-            [?ITER_PAIR(K1, V1)]
-    end.
-
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: keys/1
 %% ------------------------------------------------------------------
 
 keys_recur(Node, Acc) ->
     case Node of
-        ?LEAF2_MATCH(K1, K2, _, _) ->
-            [K1, K2 | Acc];
-        %
-        ?LEAF3_MATCH(K1, K2, K3, _, _, _) ->
-            [K1, K2, K3 | Acc];
-        %
-        ?LEAF4_MATCH(K1, K2, K3, K4, _, _, _, _) ->
-            [K1, K2, K3, K4 | Acc];
-        %
         ?INTERNAL2_MATCH(K1, K2, _, _, C1, C2, C3) ->
             Acc2 = [K2 | keys_recur(C3, Acc)],
             Acc3 = [K1 | keys_recur(C2, Acc2)],
@@ -2908,7 +2458,10 @@ keys_recur(Node, Acc) ->
             Acc3 = [K3 | keys_recur(C4, Acc2)],
             Acc4 = [K2 | keys_recur(C3, Acc3)],
             Acc5 = [K1 | keys_recur(C2, Acc4)],
-            keys_recur(C1, Acc5)
+            keys_recur(C1, Acc5);
+        %
+        nil ->
+            Acc
     end.
 
 %% ------------------------------------------------------------------
@@ -2917,7 +2470,6 @@ keys_recur(Node, Acc) ->
 
 larger_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             larger_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -2927,14 +2479,8 @@ larger_recur(Key, Node) ->
         ?INTERNAL4_MATCH_ALL ->
             larger_INTERNAL4(Key, ?INTERNAL4_ARGS);
         %
-        ?LEAF2_MATCH_ALL ->
-            larger_LEAF2(Key, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            larger_LEAF3(Key, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            larger_LEAF4(Key, ?LEAF4_ARGS)
+        nil ->
+            none
     end.
 
 %%
@@ -3045,108 +2591,30 @@ larger_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
             larger_recur(Key, C2)
     end.
 
-%%
-%% ?LEAF4
-%%
-
--compile({inline, larger_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-larger_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key < K2 ->
-            case Key < K1 of
-                true ->
-                    {K1, V1};
-                _ ->
-                    {K2, V2}
-            end;
-        %
-        Key < K3 ->
-            {K3, V3};
-        %
-        Key < K4 ->
-            {K4, V4};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, larger_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-larger_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key < K2 ->
-            case Key < K1 of
-                true ->
-                    {K1, V1};
-                _ ->
-                    {K2, V2}
-            end;
-        %
-        Key < K3 ->
-            {K3, V3};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, larger_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-larger_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key < K1 ->
-            {K1, V1};
-        %
-        Key < K2 ->
-            {K2, V2};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, larger_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-larger_LEAF1(Key, ?LEAF1_ARGS) ->
-    case Key < K1 of
-        true ->
-            {K1, V1};
-        %
-        _ ->
-            none
-    end.
-
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: largest/1
 %% ------------------------------------------------------------------
 
+-compile({inline, largest_continue/3}).
+largest_continue(K, V, C) ->
+    case C of
+        nil ->
+            {K, V};
+        %
+        _ ->
+            largest_recur(C)
+    end.
+
 largest_recur(Node) ->
     case Node of
+        ?INTERNAL2_MATCH(_, K2, _, V2, _, _, C3) ->
+            largest_continue(K2, V2, C3);
         %
-        ?INTERNAL2_MATCH(_, _, _, _, _, _, C3) ->
-            largest_recur(C3);
+        ?INTERNAL3_MATCH(_, _, K3, _, _, V3, _, _, _, C4) ->
+            largest_continue(K3, V3, C4);
         %
-        ?INTERNAL3_MATCH(_, _, _, _, _, _, _, _, _, C4) ->
-            largest_recur(C4);
-        %
-        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, _, _, _, _, C5) ->
-            largest_recur(C5);
-        %
-        ?LEAF2_MATCH(_, K2, _, V2) ->
-            {K2, V2};
-        %
-        ?LEAF3_MATCH(_, _, K3, _, _, V3) ->
-            {K3, V3};
-        %
-        ?LEAF4_MATCH(_, _, _, K4, _, _, _, V4) ->
-            {K4, V4}
+        ?INTERNAL4_MATCH(_, _, _, K4, _, _, _, V4, _, _, _, _, C5) ->
+            largest_continue(K4, V4, C5)
     end.
 
 %% ------------------------------------------------------------------
@@ -3155,7 +2623,6 @@ largest_recur(Node) ->
 
 lookup_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             lookup_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -3165,14 +2632,8 @@ lookup_recur(Key, Node) ->
         ?INTERNAL4_MATCH_ALL ->
             lookup_INTERNAL4(Key, ?INTERNAL4_ARGS);
         %
-        ?LEAF2_MATCH_ALL ->
-            lookup_LEAF2(Key, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            lookup_LEAF3(Key, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            lookup_LEAF4(Key, ?LEAF4_ARGS)
+        nil ->
+            none
     end.
 
 %%
@@ -3303,122 +2764,12 @@ lookup_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
             {value, V1}
     end.
 
-%%
-%% ?LEAF4
-%%
-
--compile({inline, lookup_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-lookup_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            {value, V1};
-        %
-        Key == K2 ->
-            {value, V2};
-        %
-        Key == K3 ->
-            {value, V3};
-        %
-        Key == K4 ->
-            {value, V4};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, lookup_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-lookup_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            {value, V1};
-        %
-        Key == K2 ->
-            {value, V2};
-        %
-        Key == K3 ->
-            {value, V3};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, lookup_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-lookup_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            {value, V1};
-        %
-        Key == K2 ->
-            {value, V2};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, lookup_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-lookup_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key == K1 ->
-            {value, V1};
-        %
-        true ->
-            none
-    end.
-
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: map/2
 %% ------------------------------------------------------------------
 
 map_recur(Fun, Node) ->
     case Node of
-        ?LEAF2_MATCH_ALL ->
-            ?new_LEAF2(
-                K1,
-                K2,
-                %
-                Fun(K1, V1),
-                Fun(K2, V2)
-            );
-        %
-        %
-        ?LEAF3_MATCH_ALL ->
-            ?new_LEAF3(
-                K1,
-                K2,
-                K3,
-                %
-                Fun(K1, V1),
-                Fun(K2, V2),
-                Fun(K3, V3)
-            );
-        %
-        %
-        ?LEAF4_MATCH_ALL ->
-            ?new_LEAF4(
-                K1,
-                K2,
-                K3,
-                K4,
-                %
-                Fun(K1, V1),
-                Fun(K2, V2),
-                Fun(K3, V3),
-                Fun(K4, V4)
-            );
-        %
-        %
         ?INTERNAL2_MATCH_ALL ->
             ?new_INTERNAL2(
                 K1,
@@ -3467,7 +2818,11 @@ map_recur(Fun, Node) ->
                 map_recur(Fun, C3),
                 map_recur(Fun, C4),
                 map_recur(Fun, C5)
-            )
+            );
+        %
+        %
+        nil ->
+            nil
     end.
 
 %% ------------------------------------------------------------------
@@ -3486,9 +2841,14 @@ fwd_next(Head, Tail) ->
             {Key, Value, Iter2};
         %
         Node ->
-            [?ITER_PAIR(Key, Value) | NewTail] = fwd_iterator_recur(Node, Tail),
-            Iter2 = NewTail,
-            {Key, Value, Iter2}
+            case fwd_iterator_recur(Node, Tail) of
+                [?ITER_PAIR(Key, Value) | NewTail] ->
+                    Iter2 = NewTail,
+                    {Key, Value, Iter2};
+                %
+                [] ->
+                    none
+            end
     end.
 
 rev_next([Head | Tail]) ->
@@ -3503,9 +2863,14 @@ rev_next(Head, Tail) ->
             {Key, Value, Iter2};
         %
         Node ->
-            [?ITER_PAIR(Key, Value) | NewTail] = rev_iterator_recur(Node, Tail),
-            Iter2 = [?REV_ITER_TAG | NewTail],
-            {Key, Value, Iter2}
+            case rev_iterator_recur(Node, Tail) of
+                [?ITER_PAIR(Key, Value) | NewTail] ->
+                    Iter2 = [?REV_ITER_TAG | NewTail],
+                    {Key, Value, Iter2};
+                %
+                [] ->
+                    none
+            end
     end.
 
 %% ------------------------------------------------------------------
@@ -3514,7 +2879,6 @@ rev_next(Head, Tail) ->
 
 smaller_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             smaller_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -3524,14 +2888,8 @@ smaller_recur(Key, Node) ->
         ?INTERNAL4_MATCH_ALL ->
             smaller_INTERNAL4(Key, ?INTERNAL4_ARGS);
         %
-        ?LEAF2_MATCH_ALL ->
-            smaller_LEAF2(Key, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            smaller_LEAF3(Key, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            smaller_LEAF4(Key, ?LEAF4_ARGS)
+        nil ->
+            none
     end.
 
 %%
@@ -3642,108 +3000,30 @@ smaller_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
             smaller_recur(Key, C1)
     end.
 
-%%
-%% ?LEAF4
-%%
-
--compile({inline, smaller_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-smaller_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key > K3 ->
-            case Key > K4 of
-                true ->
-                    {K4, V4};
-                _ ->
-                    {K3, V3}
-            end;
-        %
-        Key > K2 ->
-            {K2, V2};
-        %
-        Key > K1 ->
-            {K1, V1};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, smaller_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-smaller_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key > K2 ->
-            case Key > K3 of
-                true ->
-                    {K3, V3};
-                _ ->
-                    {K2, V2}
-            end;
-        %
-        Key > K1 ->
-            {K1, V1};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, smaller_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-smaller_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key > K2 ->
-            {K2, V2};
-        %
-        Key > K1 ->
-            {K1, V1};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, smaller_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-smaller_LEAF1(Key, ?LEAF1_ARGS) ->
-    case Key > K1 of
-        true ->
-            {K1, V1};
-        %
-        _ ->
-            none
-    end.
-
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: smallest/1
 %% ------------------------------------------------------------------
 
+-compile({inline, smallest_continue/3}).
+smallest_continue(K, V, C) ->
+    case C of
+        nil ->
+            {K, V};
+        %
+        _ ->
+            smallest_recur(C)
+    end.
+
 smallest_recur(Node) ->
     case Node of
+        ?INTERNAL2_MATCH(K1, _, V1, _, C1, _, _) ->
+            smallest_continue(K1, V1, C1);
         %
-        ?INTERNAL2_MATCH(_, _, _, _, C1, _, _) ->
-            smallest_recur(C1);
+        ?INTERNAL3_MATCH(K1, _, _, V1, _, _, C1, _, _, _) ->
+            smallest_continue(K1, V1, C1);
         %
-        ?INTERNAL3_MATCH(_, _, _, _, _, _, C1, _, _, _) ->
-            smallest_recur(C1);
-        %
-        ?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, C1, _, _, _, _) ->
-            smallest_recur(C1);
-        %
-        ?LEAF2_MATCH(K1, _, V1, _) ->
-            {K1, V1};
-        %
-        ?LEAF3_MATCH(K1, _, _, V1, _, _) ->
-            {K1, V1};
-        %
-        ?LEAF4_MATCH(K1, _, _, _, V1, _, _, _) ->
-            {K1, V1}
+        ?INTERNAL4_MATCH(K1, _, _, _, V1, _, _, _, C1, _, _, _, _) ->
+            smallest_continue(K1, V1, C1)
     end.
 
 %% ------------------------------------------------------------------
@@ -3752,18 +3032,6 @@ smallest_recur(Node) ->
 
 structural_stats_recur(Node, Acc, Height) ->
     case Node of
-        ?LEAF2_MATCH(_, _, _, _) ->
-            Acc2 = b5_structural_stats:inc_count(leaf2, Acc),
-            b5_structural_stats:set_height(Height, Acc2);
-        %
-        ?LEAF3_MATCH(_, _, _, _, _, _) ->
-            Acc2 = b5_structural_stats:inc_count(leaf3, Acc),
-            b5_structural_stats:set_height(Height, Acc2);
-        %
-        ?LEAF4_MATCH(_, _, _, _, _, _, _, _) ->
-            Acc2 = b5_structural_stats:inc_count(leaf4, Acc),
-            b5_structural_stats:set_height(Height, Acc2);
-        %
         ?INTERNAL2_MATCH(_, _, _, _, C1, C2, C3) ->
             Acc2 = b5_structural_stats:inc_count(internal2, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
@@ -3792,7 +3060,6 @@ structural_stats_recur(Node, Acc, Height) ->
 
 take_att_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_att_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -3802,14 +3069,8 @@ take_att_recur(Key, Node) ->
         ?INTERNAL4_MATCH_ALL ->
             take_att_INTERNAL4(Key, ?INTERNAL4_ARGS);
         %
-        ?LEAF2_MATCH_ALL ->
-            take_att_LEAF2(Key, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            take_att_LEAF3(Key, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            take_att_LEAF4(Key, ?LEAF4_ARGS)
+        nil ->
+            none
     end.
 
 %%
@@ -3913,108 +3174,19 @@ take_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
 
 -compile({inline, take_att_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K1(?INTERNAL4_ARGS) ->
-    % TODO simplify, reuse functions to delete keys
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    ?TAKEN_PAIR(
-        K1,
-        V1,
-        del_rebalance_INTERNAL4_C2(
-            ReplacementK,
-            K2,
-            K3,
-            K4,
-            %
-            ReplacementV,
-            V2,
-            V3,
-            V4,
-            %
-            C1,
-            UpdatedC2,
-            C3,
-            C4,
-            C5
-        )
-    ).
+    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL4_K1(?INTERNAL4_ARGS)).
 
 -compile({inline, take_att_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K2(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
-
-    ?TAKEN_PAIR(
-        K2,
-        V2,
-        del_rebalance_INTERNAL4_C2(
-            K1,
-            ReplacementK,
-            K3,
-            K4,
-            %
-            V1,
-            ReplacementV,
-            V3,
-            V4,
-            %
-            C1,
-            UpdatedC2,
-            C3,
-            C4,
-            C5
-        )
-    ).
+    ?TAKEN_PAIR(K2, V2, delete_att_INTERNAL4_K2(?INTERNAL4_ARGS)).
 
 -compile({inline, take_att_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K3(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
-
-    ?TAKEN_PAIR(
-        K3,
-        V3,
-        del_rebalance_INTERNAL4_C3(
-            K1,
-            K2,
-            ReplacementK,
-            K4,
-            %
-            V1,
-            V2,
-            ReplacementV,
-            V4,
-            %
-            C1,
-            C2,
-            UpdatedC3,
-            C4,
-            C5
-        )
-    ).
+    ?TAKEN_PAIR(K3, V3, delete_att_INTERNAL4_K3(?INTERNAL4_ARGS)).
 
 -compile({inline, take_att_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K4(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_largest_recur(C4),
-
-    ?TAKEN_PAIR(
-        K4,
-        V4,
-        del_rebalance_INTERNAL4_C4(
-            K1,
-            K2,
-            K3,
-            ReplacementK,
-            %
-            V1,
-            V2,
-            V3,
-            ReplacementV,
-            %
-            C1,
-            C2,
-            C3,
-            UpdatedC4,
-            C5
-        )
-    ).
+    ?TAKEN_PAIR(K4, V4, delete_att_INTERNAL4_K4(?INTERNAL4_ARGS)).
 
 %%
 %% ?INTERNAL3
@@ -4097,72 +3269,15 @@ take_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
 
 -compile({inline, take_att_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
 take_att_INTERNAL3_K1(?INTERNAL3_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    ?TAKEN_PAIR(
-        K1,
-        V1,
-        del_rebalance_INTERNAL3_C2(
-            ReplacementK,
-            K2,
-            K3,
-            %
-            ReplacementV,
-            V2,
-            V3,
-            %
-            C1,
-            UpdatedC2,
-            C3,
-            C4
-        )
-    ).
+    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL3_K1(?INTERNAL3_ARGS)).
 
 -compile({inline, take_att_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
 take_att_INTERNAL3_K2(?INTERNAL3_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
-
-    ?TAKEN_PAIR(
-        K2,
-        V2,
-        del_rebalance_INTERNAL3_C3(
-            K1,
-            ReplacementK,
-            K3,
-            %
-            V1,
-            ReplacementV,
-            V3,
-            %
-            C1,
-            C2,
-            UpdatedC3,
-            C4
-        )
-    ).
+    ?TAKEN_PAIR(K2, V2, delete_att_INTERNAL3_K2(?INTERNAL3_ARGS)).
 
 -compile({inline, take_att_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
 take_att_INTERNAL3_K3(?INTERNAL3_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
-
-    ?TAKEN_PAIR(
-        K3,
-        V3,
-        del_rebalance_INTERNAL3_C3(
-            K1,
-            K2,
-            ReplacementK,
-            %
-            V1,
-            V2,
-            ReplacementV,
-            %
-            C1,
-            C2,
-            UpdatedC3,
-            C4
-        )
-    ).
+    ?TAKEN_PAIR(K3, V3, delete_att_INTERNAL3_K3(?INTERNAL3_ARGS)).
 
 %%
 %% ?INTERNAL2
@@ -4225,43 +3340,11 @@ take_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
 
 -compile({inline, take_att_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
 take_att_INTERNAL2_K1(?INTERNAL2_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    ?TAKEN_PAIR(
-        K1,
-        V1,
-        del_rebalance_INTERNAL2_C2(
-            ReplacementK,
-            K2,
-            %
-            ReplacementV,
-            V2,
-            %
-            C1,
-            UpdatedC2,
-            C3
-        )
-    ).
+    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL2_K1(?INTERNAL2_ARGS)).
 
 -compile({inline, take_att_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
 take_att_INTERNAL2_K2(?INTERNAL2_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
-
-    ?TAKEN_PAIR(
-        K2,
-        V2,
-        del_rebalance_INTERNAL2_C3(
-            K1,
-            ReplacementK,
-            %
-            V1,
-            ReplacementV,
-            %
-            C1,
-            C2,
-            UpdatedC3
-        )
-    ).
+    ?TAKEN_PAIR(K2, V2, delete_att_INTERNAL2_K2(?INTERNAL2_ARGS)).
 
 %%
 %% ?INTERNAL1
@@ -4302,83 +3385,7 @@ take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
 
 -compile({inline, take_att_INTERNAL1_K1 / ?INTERNAL1_ARITY}).
 take_att_INTERNAL1_K1(?INTERNAL1_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    ?TAKEN_PAIR(K1, V1, ?INTERNAL1_K1_C2_REBALANCE(ReplacementK, ReplacementV, UpdatedC2)).
-
-%%
-%% ?LEAF4
-%%
-
--compile({inline, take_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-take_att_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            ?TAKEN_PAIR(K1, V1, ?new_LEAF3(K2, K3, K4, V2, V3, V4));
-        %
-        Key == K2 ->
-            ?TAKEN_PAIR(K2, V2, ?new_LEAF3(K1, K3, K4, V1, V3, V4));
-        %
-        Key == K3 ->
-            ?TAKEN_PAIR(K3, V3, ?new_LEAF3(K1, K2, K4, V1, V2, V4));
-        %
-        Key == K4 ->
-            ?TAKEN_PAIR(K4, V4, ?new_LEAF3(K1, K2, K3, V1, V2, V3));
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, take_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-take_att_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            ?TAKEN_PAIR(K1, V1, ?new_LEAF2(K2, K3, V2, V3));
-        %
-        Key == K2 ->
-            ?TAKEN_PAIR(K2, V2, ?new_LEAF2(K1, K3, V1, V3));
-        %
-        Key == K3 ->
-            ?TAKEN_PAIR(K3, V3, ?new_LEAF2(K1, K2, V1, V2));
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, take_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-take_att_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            ?TAKEN_PAIR(K1, V1, ?new_LEAF1(K2, V2));
-        %
-        Key == K2 ->
-            ?TAKEN_PAIR(K2, V2, ?new_LEAF1(K1, V1));
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, take_att_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-take_att_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key == K1 ->
-            ?TAKEN_PAIR(K1, V1, ?LEAF0);
-        %
-        true ->
-            none
-    end.
+    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL1_K1(?INTERNAL1_ARGS)).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: take_largest/2
@@ -4386,7 +3393,6 @@ take_att_LEAF1(Key, ?LEAF1_ARGS) ->
 
 take_largest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_largest_INTERNAL2(?INTERNAL2_ARGS);
         %
@@ -4396,14 +3402,8 @@ take_largest_recur(Node) ->
         ?INTERNAL4_MATCH_ALL ->
             take_largest_INTERNAL4(?INTERNAL4_ARGS);
         %
-        ?LEAF2_MATCH_ALL ->
-            take_largest_LEAF2(?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            take_largest_LEAF3(?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            take_largest_LEAF4(?LEAF4_ARGS)
+        nil ->
+            none
     end.
 
 %%
@@ -4412,8 +3412,30 @@ take_largest_recur(Node) ->
 
 -compile({inline, take_largest_INTERNAL4 / ?INTERNAL4_ARITY}).
 take_largest_INTERNAL4(?INTERNAL4_ARGS) ->
-    ?TAKEN(Taken, UpdatedC5) = take_largest_recur(C5),
-    ?TAKEN(Taken, ?INTERNAL4_C5_REBALANCE(UpdatedC5)).
+    case take_largest_recur(C5) of
+        ?TAKEN(Taken, UpdatedC5) ->
+            ?TAKEN(Taken, ?INTERNAL4_C5_REBALANCE(UpdatedC5));
+        %
+        none ->
+            ?TAKEN_PAIR(
+                K4,
+                V4,
+                ?new_INTERNAL3(
+                    K1,
+                    K2,
+                    K3,
+                    %
+                    V1,
+                    V2,
+                    V3,
+                    %
+                    nil,
+                    nil,
+                    nil,
+                    nil
+                )
+            )
+    end.
 
 %%
 %% ?INTERNAL3
@@ -4421,8 +3443,27 @@ take_largest_INTERNAL4(?INTERNAL4_ARGS) ->
 
 -compile({inline, take_largest_INTERNAL3 / ?INTERNAL3_ARITY}).
 take_largest_INTERNAL3(?INTERNAL3_ARGS) ->
-    ?TAKEN(Taken, UpdatedC4) = take_largest_recur(C4),
-    ?TAKEN(Taken, ?INTERNAL3_C4_REBALANCE(UpdatedC4)).
+    case take_largest_recur(C4) of
+        ?TAKEN(Taken, UpdatedC4) ->
+            ?TAKEN(Taken, ?INTERNAL3_C4_REBALANCE(UpdatedC4));
+        %
+        none ->
+            ?TAKEN_PAIR(
+                K3,
+                V3,
+                ?new_INTERNAL2(
+                    K1,
+                    K2,
+                    %
+                    V1,
+                    V2,
+                    %
+                    nil,
+                    nil,
+                    nil
+                )
+            )
+    end.
 
 %%
 %% ?INTERNAL2
@@ -4430,8 +3471,24 @@ take_largest_INTERNAL3(?INTERNAL3_ARGS) ->
 
 -compile({inline, take_largest_INTERNAL2 / ?INTERNAL2_ARITY}).
 take_largest_INTERNAL2(?INTERNAL2_ARGS) ->
-    ?TAKEN(Taken, UpdatedC3) = take_largest_recur(C3),
-    ?TAKEN(Taken, ?INTERNAL2_C3_REBALANCE(UpdatedC3)).
+    case take_largest_recur(C3) of
+        ?TAKEN(Taken, UpdatedC3) ->
+            ?TAKEN(Taken, ?INTERNAL2_C3_REBALANCE(UpdatedC3));
+        %
+        none ->
+            ?TAKEN_PAIR(
+                K2,
+                V2,
+                ?new_INTERNAL1(
+                    K1,
+                    %
+                    V1,
+                    %
+                    nil,
+                    nil
+                )
+            )
+    end.
 
 %%
 %% ?INTERNAL1
@@ -4439,40 +3496,13 @@ take_largest_INTERNAL2(?INTERNAL2_ARGS) ->
 
 -compile({inline, take_largest_INTERNAL1 / ?INTERNAL1_ARITY}).
 take_largest_INTERNAL1(?INTERNAL1_ARGS) ->
-    ?TAKEN(Taken, UpdatedC2) = take_largest_recur(C2),
-    ?TAKEN(Taken, ?INTERNAL1_C2_REBALANCE(UpdatedC2)).
-
-%%
-%% ?LEAF4
-%%
-
--compile({inline, take_largest_LEAF4 / ?LEAF4_ARITY}).
-take_largest_LEAF4(?LEAF4_ARGS) ->
-    ?TAKEN_PAIR(K4, V4, ?new_LEAF3(K1, K2, K3, V1, V2, V3)).
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, take_largest_LEAF3 / ?LEAF3_ARITY}).
-take_largest_LEAF3(?LEAF3_ARGS) ->
-    ?TAKEN_PAIR(K3, V3, ?new_LEAF2(K1, K2, V1, V2)).
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, take_largest_LEAF2 / ?LEAF2_ARITY}).
-take_largest_LEAF2(?LEAF2_ARGS) ->
-    ?TAKEN_PAIR(K2, V2, ?new_LEAF1(K1, V1)).
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, take_largest_LEAF1 / ?LEAF1_ARITY}).
-take_largest_LEAF1(?LEAF1_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?LEAF0).
+    case take_largest_recur(C2) of
+        ?TAKEN(Taken, UpdatedC2) ->
+            ?TAKEN(Taken, ?INTERNAL1_C2_REBALANCE(UpdatedC2));
+        %
+        none ->
+            ?TAKEN_PAIR(K1, V1, ?EMPTY_ROOT)
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: take_smallest/2
@@ -4480,7 +3510,6 @@ take_largest_LEAF1(?LEAF1_ARGS) ->
 
 take_smallest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_smallest_INTERNAL2(?INTERNAL2_ARGS);
         %
@@ -4490,14 +3519,8 @@ take_smallest_recur(Node) ->
         ?INTERNAL4_MATCH_ALL ->
             take_smallest_INTERNAL4(?INTERNAL4_ARGS);
         %
-        ?LEAF2_MATCH_ALL ->
-            take_smallest_LEAF2(?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            take_smallest_LEAF3(?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            take_smallest_LEAF4(?LEAF4_ARGS)
+        nil ->
+            none
     end.
 
 %%
@@ -4506,8 +3529,30 @@ take_smallest_recur(Node) ->
 
 -compile({inline, take_smallest_INTERNAL4 / ?INTERNAL4_ARITY}).
 take_smallest_INTERNAL4(?INTERNAL4_ARGS) ->
-    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
-    ?TAKEN(Taken, ?INTERNAL4_C1_REBALANCE(UpdatedC1)).
+    case take_smallest_recur(C1) of
+        none ->
+            ?TAKEN_PAIR(
+                K1,
+                V1,
+                ?new_INTERNAL3(
+                    K2,
+                    K3,
+                    K4,
+                    %
+                    V2,
+                    V3,
+                    V4,
+                    %
+                    nil,
+                    nil,
+                    nil,
+                    nil
+                )
+            );
+        %
+        ?TAKEN(Taken, UpdatedC1) ->
+            ?TAKEN(Taken, ?INTERNAL4_C1_REBALANCE(UpdatedC1))
+    end.
 
 %%
 %% ?INTERNAL3
@@ -4515,8 +3560,27 @@ take_smallest_INTERNAL4(?INTERNAL4_ARGS) ->
 
 -compile({inline, take_smallest_INTERNAL3 / ?INTERNAL3_ARITY}).
 take_smallest_INTERNAL3(?INTERNAL3_ARGS) ->
-    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
-    ?TAKEN(Taken, ?INTERNAL3_C1_REBALANCE(UpdatedC1)).
+    case take_smallest_recur(C1) of
+        ?TAKEN(Taken, UpdatedC1) ->
+            ?TAKEN(Taken, ?INTERNAL3_C1_REBALANCE(UpdatedC1));
+        %
+        none ->
+            ?TAKEN_PAIR(
+                K1,
+                V1,
+                ?new_INTERNAL2(
+                    K2,
+                    K3,
+                    %
+                    V2,
+                    V3,
+                    %
+                    nil,
+                    nil,
+                    nil
+                )
+            )
+    end.
 
 %%
 %% ?INTERNAL2
@@ -4524,8 +3588,24 @@ take_smallest_INTERNAL3(?INTERNAL3_ARGS) ->
 
 -compile({inline, take_smallest_INTERNAL2 / ?INTERNAL2_ARITY}).
 take_smallest_INTERNAL2(?INTERNAL2_ARGS) ->
-    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
-    ?TAKEN(Taken, ?INTERNAL2_C1_REBALANCE(UpdatedC1)).
+    case take_smallest_recur(C1) of
+        ?TAKEN(Taken, UpdatedC1) ->
+            ?TAKEN(Taken, ?INTERNAL2_C1_REBALANCE(UpdatedC1));
+        %
+        none ->
+            ?TAKEN_PAIR(
+                K1,
+                V1,
+                ?new_INTERNAL1(
+                    K2,
+                    %
+                    V2,
+                    %
+                    nil,
+                    nil
+                )
+            )
+    end.
 
 %%
 %% ?INTERNAL1
@@ -4533,40 +3613,13 @@ take_smallest_INTERNAL2(?INTERNAL2_ARGS) ->
 
 -compile({inline, take_smallest_INTERNAL1 / ?INTERNAL1_ARITY}).
 take_smallest_INTERNAL1(?INTERNAL1_ARGS) ->
-    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
-    ?TAKEN(Taken, ?INTERNAL1_C1_REBALANCE(UpdatedC1)).
-
-%%
-%% ?LEAF4
-%%
-
--compile({inline, take_smallest_LEAF4 / ?LEAF4_ARITY}).
-take_smallest_LEAF4(?LEAF4_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?new_LEAF3(K2, K3, K4, V2, V3, V4)).
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, take_smallest_LEAF3 / ?LEAF3_ARITY}).
-take_smallest_LEAF3(?LEAF3_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?new_LEAF2(K2, K3, V2, V3)).
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, take_smallest_LEAF2 / ?LEAF2_ARITY}).
-take_smallest_LEAF2(?LEAF2_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?new_LEAF1(K2, V2)).
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, take_smallest_LEAF1 / ?LEAF1_ARITY}).
-take_smallest_LEAF1(?LEAF1_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?LEAF0).
+    case take_smallest_recur(C1) of
+        ?TAKEN(Taken, UpdatedC1) ->
+            ?TAKEN(Taken, ?INTERNAL1_C1_REBALANCE(UpdatedC1));
+        %
+        none ->
+            ?TAKEN_PAIR(K1, V1, ?EMPTY_ROOT)
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: to_list/1
@@ -4574,15 +3627,6 @@ take_smallest_LEAF1(?LEAF1_ARGS) ->
 
 to_list_recur(Node, Acc) ->
     case Node of
-        ?LEAF2_MATCH_ALL ->
-            [{K1, V1}, {K2, V2} | Acc];
-        %
-        ?LEAF3_MATCH_ALL ->
-            [{K1, V1}, {K2, V2}, {K3, V3} | Acc];
-        %
-        ?LEAF4_MATCH_ALL ->
-            [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Acc];
-        %
         ?INTERNAL2_MATCH_ALL ->
             Acc2 = to_list_recur(C3, Acc),
             Acc3 = to_list_recur(C2, [{K2, V2} | Acc2]),
@@ -4599,7 +3643,10 @@ to_list_recur(Node, Acc) ->
             Acc3 = to_list_recur(C4, [{K4, V4} | Acc2]),
             Acc4 = to_list_recur(C3, [{K3, V3} | Acc3]),
             Acc5 = to_list_recur(C2, [{K2, V2} | Acc4]),
-            _Acc6 = to_list_recur(C1, [{K1, V1} | Acc5])
+            _Acc6 = to_list_recur(C1, [{K1, V1} | Acc5]);
+        %
+        nil ->
+            Acc
     end.
 
 %% ------------------------------------------------------------------
@@ -4617,14 +3664,8 @@ update_att_recur(Key, ValueEval, ValueWrap, Node) ->
         ?INTERNAL4_MATCH_ALL ->
             update_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
         %
-        ?LEAF2_MATCH_ALL ->
-            update_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            update_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            update_att_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS)
+        nil ->
+            none
     end.
 
 %%
@@ -5093,170 +4134,6 @@ update_att_INTERNAL1_K1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS_IGN_K1) ->
         C2
     ).
 
-%%
-%% ?LEAF4
-%%
-
--compile({inline, update_att_LEAF4 / ?LEAF4_ARITY_PLUS3}).
-update_att_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?new_LEAF4(
-                Key,
-                K2,
-                K3,
-                K4,
-                %
-                Value,
-                V2,
-                V3,
-                V4
-            );
-        %
-        Key == K2 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V2),
-            ?new_LEAF4(
-                K1,
-                Key,
-                K3,
-                K4,
-                %
-                V1,
-                Value,
-                V3,
-                V4
-            );
-        %
-        Key == K3 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V3),
-            ?new_LEAF4(
-                K1,
-                K2,
-                Key,
-                K4,
-                %
-                V1,
-                V2,
-                Value,
-                V4
-            );
-        %
-        Key == K4 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V4),
-            ?new_LEAF4(
-                K1,
-                K2,
-                K3,
-                Key,
-                %
-                V1,
-                V2,
-                V3,
-                Value
-            );
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, update_att_LEAF3 / ?LEAF3_ARITY_PLUS3}).
-update_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?new_LEAF3(
-                Key,
-                K2,
-                K3,
-                %
-                Value,
-                V2,
-                V3
-            );
-        %
-        Key == K2 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V2),
-            ?new_LEAF3(
-                K1,
-                Key,
-                K3,
-                %
-                V1,
-                Value,
-                V3
-            );
-        %
-        Key == K3 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V3),
-            ?new_LEAF3(
-                K1,
-                K2,
-                Key,
-                %
-                V1,
-                V2,
-                Value
-            );
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, update_att_LEAF2 / ?LEAF2_ARITY_PLUS3}).
-update_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?new_LEAF2(
-                Key,
-                K2,
-                %
-                Value,
-                V2
-            );
-        %
-        Key == K2 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V2),
-            ?new_LEAF2(
-                K1,
-                Key,
-                %
-                V1,
-                Value
-            );
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, update_att_LEAF1 / ?LEAF1_ARITY_PLUS3}).
-update_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
-    if
-        Key == K1 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?new_LEAF1(
-                Key,
-                %
-                Value
-            );
-        %
-        true ->
-            none
-    end.
-
 %%%
 
 -compile({inline, eval_update_value/3}).
@@ -5275,15 +4152,6 @@ eval_update_value(Type, Wrap, Prev) ->
 
 values_recur(Node, Acc) ->
     case Node of
-        ?LEAF2_MATCH(_, _, V1, V2) ->
-            [V1, V2 | Acc];
-        %
-        ?LEAF3_MATCH(_, _, _, V1, V2, V3) ->
-            [V1, V2, V3 | Acc];
-        %
-        ?LEAF4_MATCH(_, _, _, _, V1, V2, V3, V4) ->
-            [V1, V2, V3, V4 | Acc];
-        %
         ?INTERNAL2_MATCH(_, _, V1, V2, C1, C2, C3) ->
             Acc2 = [V2 | values_recur(C3, Acc)],
             Acc3 = [V1 | values_recur(C2, Acc2)],
@@ -5300,7 +4168,10 @@ values_recur(Node, Acc) ->
             Acc3 = [V3 | values_recur(C4, Acc2)],
             Acc4 = [V2 | values_recur(C3, Acc3)],
             Acc5 = [V1 | values_recur(C2, Acc4)],
-            values_recur(C1, Acc5)
+            values_recur(C1, Acc5);
+        %
+        nil ->
+            Acc
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5884,47 +4755,47 @@ ins_rebalance_INTERNAL1_C2(Result, ?INTERNAL1_ARGS) ->
 %% ------------------------------------------------------------------
 
 insert_split_root(Pos, [NewKey | NewValue], Root) ->
-    ?LEAF4_MATCH_ALL = Root,
+    ?INTERNAL4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4, _, _, _, _, _) = Root,
 
     case Pos of
         1 ->
             ?new_INTERNAL1(
                 K2,
                 V2,
-                ?new_LEAF2(NewKey, K1, NewValue, V1),
-                ?new_LEAF2(K3, K4, V3, V4)
+                ?new_INTERNAL2(NewKey, K1, NewValue, V1, nil, nil, nil),
+                ?new_INTERNAL2(K3, K4, V3, V4, nil, nil, nil)
             );
         %
         2 ->
             ?new_INTERNAL1(
                 K2,
                 V2,
-                ?new_LEAF2(K1, NewKey, V1, NewValue),
-                ?new_LEAF2(K3, K4, V3, V4)
+                ?new_INTERNAL2(K1, NewKey, V1, NewValue, nil, nil, nil),
+                ?new_INTERNAL2(K3, K4, V3, V4, nil, nil, nil)
             );
         %
         3 ->
             ?new_INTERNAL1(
                 NewKey,
                 NewValue,
-                ?new_LEAF2(K1, K2, V1, V2),
-                ?new_LEAF2(K3, K4, V3, V4)
+                ?new_INTERNAL2(K1, K2, V1, V2, nil, nil, nil),
+                ?new_INTERNAL2(K3, K4, V3, V4, nil, nil, nil)
             );
         %
         4 ->
             ?new_INTERNAL1(
                 K3,
                 V3,
-                ?new_LEAF2(K1, K2, V1, V2),
-                ?new_LEAF2(NewKey, K4, NewValue, V4)
+                ?new_INTERNAL2(K1, K2, V1, V2, nil, nil, nil),
+                ?new_INTERNAL2(NewKey, K4, NewValue, V4, nil, nil, nil)
             );
         %
         5 ->
             ?new_INTERNAL1(
                 K3,
                 V3,
-                ?new_LEAF2(K1, K2, V1, V2),
-                ?new_LEAF2(K4, NewKey, V4, NewValue)
+                ?new_INTERNAL2(K1, K2, V1, V2, nil, nil, nil),
+                ?new_INTERNAL2(K4, NewKey, V4, NewValue, nil, nil, nil)
             )
     end;
 insert_split_root(Pos, {split, SplitK, SplitV, SplitL, SplitR}, Root) ->
@@ -6369,8 +5240,8 @@ ins_rebalance_into_left_internal(
 -compile({inline, ins_rebalance_into_left_leaf_maybe/7}).
 ins_rebalance_into_left_leaf_maybe(Node, Pos, NewKey, NewValue, ParentK, ParentV, Left) ->
     case Left of
-        ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
-            UpdatedLeft = ?new_LEAF3(LK1, LK2, ParentK, LV1, LV2, ParentV),
+        ?INTERNAL2_MATCH(LK1, LK2, LV1, LV2, _, _, _) ->
+            UpdatedLeft = ?new_INTERNAL3(LK1, LK2, ParentK, LV1, LV2, ParentV, nil, nil, nil, nil),
             ins_rebalance_into_left_leaf(Node, Pos, NewKey, NewValue, UpdatedLeft);
         %
         _ ->
@@ -6378,7 +5249,13 @@ ins_rebalance_into_left_leaf_maybe(Node, Pos, NewKey, NewValue, ParentK, ParentV
     end.
 
 -compile({inline, ins_rebalance_into_left_leaf/5}).
-ins_rebalance_into_left_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, UpdatedLeft) ->
+ins_rebalance_into_left_leaf(
+    ?INTERNAL4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4, _, _, _, _, _) = Node,
+    Pos,
+    NewKey,
+    NewValue,
+    UpdatedLeft
+) ->
     case Pos of
         1 ->
             UpKey = NewKey,
@@ -6389,30 +5266,40 @@ ins_rebalance_into_left_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, Upd
         2 ->
             UpKey = K1,
             UpValue = V1,
-            UpdatedNode = ?new_LEAF4(NewKey, K2, K3, K4, NewValue, V2, V3, V4),
+            UpdatedNode = ?new_INTERNAL4(
+                NewKey, K2, K3, K4, NewValue, V2, V3, V4, nil, nil, nil, nil, nil
+            ),
             {UpKey, UpValue, UpdatedLeft, UpdatedNode};
         %
         3 ->
             UpKey = K1,
             UpValue = V1,
-            UpdatedNode = ?new_LEAF4(K2, NewKey, K3, K4, V2, NewValue, V3, V4),
+            UpdatedNode = ?new_INTERNAL4(
+                K2, NewKey, K3, K4, V2, NewValue, V3, V4, nil, nil, nil, nil, nil
+            ),
             {UpKey, UpValue, UpdatedLeft, UpdatedNode};
         %
         4 ->
             UpKey = K1,
             UpValue = V1,
-            UpdatedNode = ?new_LEAF4(K2, K3, NewKey, K4, V2, V3, NewValue, V4),
+            UpdatedNode = ?new_INTERNAL4(
+                K2, K3, NewKey, K4, V2, V3, NewValue, V4, nil, nil, nil, nil, nil
+            ),
             {UpKey, UpValue, UpdatedLeft, UpdatedNode};
         %
         5 ->
             UpKey = K1,
             UpValue = V1,
-            UpdatedNode = ?new_LEAF4(K2, K3, K4, NewKey, V2, V3, V4, NewValue),
+            UpdatedNode = ?new_INTERNAL4(
+                K2, K3, K4, NewKey, V2, V3, V4, NewValue, nil, nil, nil, nil, nil
+            ),
             {UpKey, UpValue, UpdatedLeft, UpdatedNode}
     end.
 
 -compile({inline, ins_rebalance_split_leaf/4}).
-ins_rebalance_split_leaf(?LEAF4_MATCH_ALL, Pos, NewKey, NewValue) ->
+ins_rebalance_split_leaf(
+    ?INTERNAL4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4, _, _, _, _, _), Pos, NewKey, NewValue
+) ->
     case Pos of
         1 ->
             split_leaf(
@@ -6743,8 +5630,8 @@ ins_rebalance_into_right_internal(
 -compile({inline, ins_rebalance_into_right_leaf_maybe/7}).
 ins_rebalance_into_right_leaf_maybe(Node, Pos, NewKey, NewValue, ParentK, ParentV, Right) ->
     case Right of
-        ?LEAF2_MATCH(RK1, RK2, RV1, RV2) ->
-            UpdatedRight = ?new_LEAF3(ParentK, RK1, RK2, ParentV, RV1, RV2),
+        ?INTERNAL2_MATCH(RK1, RK2, RV1, RV2, _, _, _) ->
+            UpdatedRight = ?new_INTERNAL3(ParentK, RK1, RK2, ParentV, RV1, RV2, nil, nil, nil, nil),
             ins_rebalance_into_right_leaf(Node, Pos, NewKey, NewValue, UpdatedRight);
         %
         _ ->
@@ -6752,30 +5639,44 @@ ins_rebalance_into_right_leaf_maybe(Node, Pos, NewKey, NewValue, ParentK, Parent
     end.
 
 -compile({inline, ins_rebalance_into_right_leaf/5}).
-ins_rebalance_into_right_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, UpdatedRight) ->
+ins_rebalance_into_right_leaf(
+    ?INTERNAL4_MATCH(K1, K2, K3, K4, V1, V2, V3, V4, _, _, _, _, _) = Node,
+    Pos,
+    NewKey,
+    NewValue,
+    UpdatedRight
+) ->
     case Pos of
         1 ->
             UpKey = K4,
             UpValue = V4,
-            UpdatedNode = ?new_LEAF4(NewKey, K1, K2, K3, NewValue, V1, V2, V3),
+            UpdatedNode = ?new_INTERNAL4(
+                NewKey, K1, K2, K3, NewValue, V1, V2, V3, nil, nil, nil, nil, nil
+            ),
             {UpKey, UpValue, UpdatedNode, UpdatedRight};
         %
         2 ->
             UpKey = K4,
             UpValue = V4,
-            UpdatedNode = ?new_LEAF4(K1, NewKey, K2, K3, V1, NewValue, V2, V3),
+            UpdatedNode = ?new_INTERNAL4(
+                K1, NewKey, K2, K3, V1, NewValue, V2, V3, nil, nil, nil, nil, nil
+            ),
             {UpKey, UpValue, UpdatedNode, UpdatedRight};
         %
         3 ->
             UpKey = K4,
             UpValue = V4,
-            UpdatedNode = ?new_LEAF4(K1, K2, NewKey, K3, V1, V2, NewValue, V3),
+            UpdatedNode = ?new_INTERNAL4(
+                K1, K2, NewKey, K3, V1, V2, NewValue, V3, nil, nil, nil, nil, nil
+            ),
             {UpKey, UpValue, UpdatedNode, UpdatedRight};
         %
         4 ->
             UpKey = K4,
             UpValue = V4,
-            UpdatedNode = ?new_LEAF4(K1, K2, K3, NewKey, V1, V2, V3, NewValue),
+            UpdatedNode = ?new_INTERNAL4(
+                K1, K2, K3, NewKey, V1, V2, V3, NewValue, nil, nil, nil, nil, nil
+            ),
             {UpKey, UpValue, UpdatedNode, UpdatedRight};
         %
         5 ->
@@ -7567,16 +6468,6 @@ del_rebalance_maybe_from_right_sibling(Child, RParentK, RParentV, Right) ->
                 Right
             );
         %
-        ?LEAF1_MATCH(CKey, CValue) ->
-            del_rebalance_leaf_from_right_sibling(
-                CKey,
-                CValue,
-                %
-                RParentK,
-                RParentV,
-                Right
-            );
-        %
         none ->
             none;
         %
@@ -7689,47 +6580,6 @@ del_rebalance_internal_from_right_sibling(
         %
     end.
 
-%-compile({inline, del_rebalance_leaf_from_right_sibling/5}).
-del_rebalance_leaf_from_right_sibling(CKey, CValue, RParentK, RParentV, Right) ->
-    case Right of
-        ?LEAF2_MATCH_ALL ->
-            MergedNode = ?new_LEAF4(
-                CKey,
-                RParentK,
-                K1,
-                K2,
-                %
-                CValue,
-                RParentV,
-                V1,
-                V2
-            ),
-
-            MergedNode;
-        %
-        %
-        ?LEAF3_MATCH_ALL ->
-            UpKey = K1,
-            UpValue = V1,
-
-            UpdatedNode = ?new_LEAF2(CKey, RParentK, CValue, RParentV),
-            UpdatedRight = ?new_LEAF2(K2, K3, V2, V3),
-
-            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight);
-        %
-        %
-        ?LEAF4_MATCH_ALL ->
-            UpKey = K1,
-            UpValue = V1,
-
-            UpdatedNode = ?new_LEAF2(CKey, RParentK, CValue, RParentV),
-            UpdatedRight = ?new_LEAF3(K2, K3, K4, V2, V3, V4),
-
-            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight)
-        %
-        %
-    end.
-
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Deletion - Rebalance a node from its left sibling
 %% ------------------------------------------------------------------
@@ -7743,16 +6593,6 @@ del_rebalance_maybe_from_left_sibling(Child, LParentK, LParentV, Left) ->
                 CValue,
                 CLeft,
                 CRight,
-                %
-                LParentK,
-                LParentV,
-                Left
-            );
-        %
-        ?LEAF1_MATCH(CKey, CValue) ->
-            del_rebalance_leaf_from_left_sibling(
-                CKey,
-                CValue,
                 %
                 LParentK,
                 LParentV,
@@ -7870,51 +6710,6 @@ del_rebalance_internal_from_left_sibling(
         %
     end.
 
-%-compile({inline, del_rebalance_leaf_from_left_sibling/5}).
-del_rebalance_leaf_from_left_sibling(
-    CKey,
-    CValue,
-    LParentK,
-    LParentV,
-    Left
-) ->
-    case Left of
-        ?LEAF2_MATCH_ALL ->
-            MergedNode = ?new_LEAF4(
-                K1,
-                K2,
-                LParentK,
-                CKey,
-                %
-                V1,
-                V2,
-                LParentV,
-                CValue
-            ),
-
-            MergedNode;
-        %
-        %
-        ?LEAF3_MATCH_ALL ->
-            UpKey = K3,
-            UpValue = V3,
-
-            UpdatedNode = ?new_LEAF2(LParentK, CKey, LParentV, CValue),
-            UpdatedLeft = ?new_LEAF2(K1, K2, V1, V2),
-
-            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode);
-        %
-        %
-        ?LEAF4_MATCH_ALL ->
-            UpKey = K4,
-            UpValue = V4,
-
-            UpdatedNode = ?new_LEAF2(LParentK, CKey, LParentV, CValue),
-            UpdatedLeft = ?new_LEAF3(K1, K2, K3, V1, V2, V3),
-
-            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode)
-    end.
-
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Deletion - Rebalance a node from either left/right sibling
 %% ------------------------------------------------------------------
@@ -7938,20 +6733,6 @@ del_rebalance_maybe_from_either_sibling(
                 CValue,
                 CLeft,
                 CRight,
-                %
-                LParentK,
-                LParentV,
-                Left,
-                %
-                RParentK,
-                RParentV,
-                Right
-            );
-        %
-        ?LEAF1_MATCH(CKey, CValue) ->
-            del_rebalance_leaf_from_either_sibling(
-                CKey,
-                CValue,
                 %
                 LParentK,
                 LParentV,
@@ -8151,83 +6932,6 @@ del_rebalance_internal_from_either_sibling(
             ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedLeft, UpdatedNode)
     end.
 
-% -compile({inline, del_rebalance_leaf_from_either_sibling/8}).
-del_rebalance_leaf_from_either_sibling(
-    CKey,
-    CValue,
-    %
-    LParentK,
-    LParentV,
-    Left,
-    %
-    RParentK,
-    RParentV,
-    Right
-) ->
-    case Left of
-        ?LEAF2_MATCH(LK1, LK2, LV1, LV2) ->
-            %
-            case Right of
-                ?LEAF4_MATCH_ALL ->
-                    UpKey = K1,
-                    UpValue = V1,
-
-                    UpdatedNode = ?new_LEAF2(CKey, RParentK, CValue, RParentV),
-                    UpdatedRight = ?new_LEAF3(K2, K3, K4, V2, V3, V4),
-
-                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, UpdatedNode, UpdatedRight);
-                %
-                %
-                ?LEAF3_MATCH_ALL ->
-                    UpKey = K1,
-                    UpValue = V1,
-
-                    UpdatedNode = ?new_LEAF2(CKey, RParentK, CValue, RParentV),
-                    UpdatedRight = ?new_LEAF2(K2, K3, V2, V3),
-
-                    ?MID_ROTATED_FROM_RIGHT(UpKey, UpValue, UpdatedNode, UpdatedRight);
-                %
-                %
-                _ ->
-                    % Merge with left since we already unpacked it
-                    MergedNode = ?new_LEAF4(
-                        LK1,
-                        LK2,
-                        LParentK,
-                        CKey,
-                        %
-                        LV1,
-                        LV2,
-                        LParentV,
-                        CValue
-                    ),
-
-                    ?MID_MERGED(MergedNode)
-            end;
-        %
-        %
-        %
-        ?LEAF3_MATCH_ALL ->
-            UpKey = K3,
-            UpValue = V3,
-
-            UpdatedNode = ?new_LEAF2(LParentK, CKey, LParentV, CValue),
-            UpdatedLeft = ?new_LEAF2(K1, K2, V1, V2),
-
-            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedLeft, UpdatedNode);
-        %
-        %
-        %
-        ?LEAF4_MATCH_ALL ->
-            UpKey = K4,
-            UpValue = V4,
-
-            UpdatedNode = ?new_LEAF2(LParentK, CKey, LParentV, CValue),
-            UpdatedLeft = ?new_LEAF3(K1, K2, K3, V1, V2, V3),
-
-            ?MID_ROTATED_FROM_LEFT(UpKey, UpValue, UpdatedLeft, UpdatedNode)
-    end.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -8278,9 +6982,6 @@ node_type(Node) ->
         ?INTERNAL1(_, _, _, _) ->
             'INTERNAL1';
         %
-        ?LEAF1(_, _) ->
-            'LEAF1';
-        %
         _ ->
             recur_node_type(Node)
     end.
@@ -8294,16 +6995,7 @@ recur_node_type(Node) ->
             'INTERNAL3';
         %
         ?INTERNAL4(_, _, _, _, _, _, _, _, _, _, _, _, _) ->
-            'INTERNAL4';
-        %
-        ?LEAF2(_, _, _, _) ->
-            'LEAF2';
-        %
-        ?LEAF3(_, _, _, _, _, _) ->
-            'LEAF3';
-        %
-        ?LEAF4(_, _, _, _, _, _, _, _) ->
-            'LEAF4'
+            'INTERNAL4'
     end.
 
 fail_node_check(LineNumber, Type, Node, Reason) ->
