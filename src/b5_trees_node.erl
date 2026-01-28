@@ -3913,108 +3913,19 @@ take_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
 
 -compile({inline, take_att_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K1(?INTERNAL4_ARGS) ->
-    % TODO simplify, reuse functions to delete keys
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    ?TAKEN_PAIR(
-        K1,
-        V1,
-        del_rebalance_INTERNAL4_C2(
-            ReplacementK,
-            K2,
-            K3,
-            K4,
-            %
-            ReplacementV,
-            V2,
-            V3,
-            V4,
-            %
-            C1,
-            UpdatedC2,
-            C3,
-            C4,
-            C5
-        )
-    ).
+    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL4_K1(?INTERNAL4_ARGS)).
 
 -compile({inline, take_att_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K2(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_largest_recur(C2),
-
-    ?TAKEN_PAIR(
-        K2,
-        V2,
-        del_rebalance_INTERNAL4_C2(
-            K1,
-            ReplacementK,
-            K3,
-            K4,
-            %
-            V1,
-            ReplacementV,
-            V3,
-            V4,
-            %
-            C1,
-            UpdatedC2,
-            C3,
-            C4,
-            C5
-        )
-    ).
+    ?TAKEN_PAIR(K2, V2, delete_att_INTERNAL4_K2(?INTERNAL4_ARGS)).
 
 -compile({inline, take_att_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K3(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
-
-    ?TAKEN_PAIR(
-        K3,
-        V3,
-        del_rebalance_INTERNAL4_C3(
-            K1,
-            K2,
-            ReplacementK,
-            K4,
-            %
-            V1,
-            V2,
-            ReplacementV,
-            V4,
-            %
-            C1,
-            C2,
-            UpdatedC3,
-            C4,
-            C5
-        )
-    ).
+    ?TAKEN_PAIR(K3, V3, delete_att_INTERNAL4_K3(?INTERNAL4_ARGS)).
 
 -compile({inline, take_att_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K4(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC4) = take_largest_recur(C4),
-
-    ?TAKEN_PAIR(
-        K4,
-        V4,
-        del_rebalance_INTERNAL4_C4(
-            K1,
-            K2,
-            K3,
-            ReplacementK,
-            %
-            V1,
-            V2,
-            V3,
-            ReplacementV,
-            %
-            C1,
-            C2,
-            C3,
-            UpdatedC4,
-            C5
-        )
-    ).
+    ?TAKEN_PAIR(K4, V4, delete_att_INTERNAL4_K4(?INTERNAL4_ARGS)).
 
 %%
 %% ?INTERNAL3
@@ -4097,72 +4008,15 @@ take_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
 
 -compile({inline, take_att_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
 take_att_INTERNAL3_K1(?INTERNAL3_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    ?TAKEN_PAIR(
-        K1,
-        V1,
-        del_rebalance_INTERNAL3_C2(
-            ReplacementK,
-            K2,
-            K3,
-            %
-            ReplacementV,
-            V2,
-            V3,
-            %
-            C1,
-            UpdatedC2,
-            C3,
-            C4
-        )
-    ).
+    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL3_K1(?INTERNAL3_ARGS)).
 
 -compile({inline, take_att_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
 take_att_INTERNAL3_K2(?INTERNAL3_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
-
-    ?TAKEN_PAIR(
-        K2,
-        V2,
-        del_rebalance_INTERNAL3_C3(
-            K1,
-            ReplacementK,
-            K3,
-            %
-            V1,
-            ReplacementV,
-            V3,
-            %
-            C1,
-            C2,
-            UpdatedC3,
-            C4
-        )
-    ).
+    ?TAKEN_PAIR(K2, V2, delete_att_INTERNAL3_K2(?INTERNAL3_ARGS)).
 
 -compile({inline, take_att_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
 take_att_INTERNAL3_K3(?INTERNAL3_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_largest_recur(C3),
-
-    ?TAKEN_PAIR(
-        K3,
-        V3,
-        del_rebalance_INTERNAL3_C3(
-            K1,
-            K2,
-            ReplacementK,
-            %
-            V1,
-            V2,
-            ReplacementV,
-            %
-            C1,
-            C2,
-            UpdatedC3,
-            C4
-        )
-    ).
+    ?TAKEN_PAIR(K3, V3, delete_att_INTERNAL3_K3(?INTERNAL3_ARGS)).
 
 %%
 %% ?INTERNAL2
@@ -4225,43 +4079,11 @@ take_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
 
 -compile({inline, take_att_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
 take_att_INTERNAL2_K1(?INTERNAL2_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    ?TAKEN_PAIR(
-        K1,
-        V1,
-        del_rebalance_INTERNAL2_C2(
-            ReplacementK,
-            K2,
-            %
-            ReplacementV,
-            V2,
-            %
-            C1,
-            UpdatedC2,
-            C3
-        )
-    ).
+    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL2_K1(?INTERNAL2_ARGS)).
 
 -compile({inline, take_att_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
 take_att_INTERNAL2_K2(?INTERNAL2_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC3) = take_smallest_recur(C3),
-
-    ?TAKEN_PAIR(
-        K2,
-        V2,
-        del_rebalance_INTERNAL2_C3(
-            K1,
-            ReplacementK,
-            %
-            V1,
-            ReplacementV,
-            %
-            C1,
-            C2,
-            UpdatedC3
-        )
-    ).
+    ?TAKEN_PAIR(K2, V2, delete_att_INTERNAL2_K2(?INTERNAL2_ARGS)).
 
 %%
 %% ?INTERNAL1
@@ -4302,9 +4124,7 @@ take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
 
 -compile({inline, take_att_INTERNAL1_K1 / ?INTERNAL1_ARITY}).
 take_att_INTERNAL1_K1(?INTERNAL1_ARGS) ->
-    ?TAKEN_PAIR(ReplacementK, ReplacementV, UpdatedC2) = take_smallest_recur(C2),
-
-    ?TAKEN_PAIR(K1, V1, ?INTERNAL1_K1_C2_REBALANCE(ReplacementK, ReplacementV, UpdatedC2)).
+    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL1_K1(?INTERNAL1_ARGS)).
 
 %%
 %% ?LEAF4
