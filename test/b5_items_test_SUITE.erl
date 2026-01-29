@@ -69,7 +69,8 @@
     test_structure_build_seqIns2x_seqDelGreaterHalf/1,
     test_structure_build_seqIns2x_randomlyDelHalf/1,
     test_structure_build_randomlyIns2x_randomlyDelHalf/1,
-    test_structure_build_randomlyIns2x_seqDelSmallerHalf/1
+    test_structure_build_randomlyIns2x_seqDelSmallerHalf/1,
+    test_structure_build_adversarial_deletion/1
 ]).
 
 %% Test constants
@@ -116,7 +117,7 @@
     end)
 ).
 
--define(assertRigidStat(Id, SingleValue, CondensedStats),
+-define(assertPreciseStat(Id, SingleValue, CondensedStats),
     (?assertMatch(
         #{
             min := SingleValue,
@@ -199,7 +200,8 @@ groups() ->
             test_structure_build_seqIns2x_seqDelGreaterHalf,
             test_structure_build_seqIns2x_randomlyDelHalf,
             test_structure_build_randomlyIns2x_randomlyDelHalf,
-            test_structure_build_randomlyIns2x_seqDelSmallerHalf
+            test_structure_build_randomlyIns2x_seqDelSmallerHalf,
+            test_structure_build_adversarial_deletion
         ]}
     ].
 
@@ -1005,9 +1007,9 @@ test_structure_sequentially_built(_Config) ->
 
     %%%%%%%%%%
 
-    ?assertRigidStat(height, 5.0, CondensedStats),
+    ?assertPreciseStat(height, 5.0, CondensedStats),
 
-    ?assertRigidStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
+    ?assertPreciseStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
 
 %%%%
 
@@ -1044,9 +1046,9 @@ test_structure_build_seqIns2x_seqDelSmallerHalf(_Config) ->
 
     %%%%%%%%%%
 
-    ?assertRigidStat(height, 5.0, CondensedStats),
+    ?assertPreciseStat(height, 5.0, CondensedStats),
 
-    ?assertRigidStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
+    ?assertPreciseStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
 
 %%%%
 
@@ -1067,9 +1069,9 @@ test_structure_build_seqIns2x_seqDelGreaterHalf(_Config) ->
 
     %%%%%%%%%%
 
-    ?assertRigidStat(height, 5.0, CondensedStats),
+    ?assertPreciseStat(height, 5.0, CondensedStats),
 
-    ?assertRigidStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
+    ?assertPreciseStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
 
 %%%%
 
@@ -1139,6 +1141,36 @@ test_structure_build_randomlyIns2x_seqDelSmallerHalf(_Config) ->
     ?assertConfidentStat(height, 5.01, CondensedStats),
 
     ?assertConfidentStat(avg_keys_per_node, 2.9089119962162733, CondensedStats).
+
+%%%%
+
+test_structure_build_adversarial_deletion(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build sequentially
+                Col1 = new_collection_from_each_added(RefElements),
+
+                % 2) delete every 5th item sequentially
+                ItemsToDelete =
+                    lists:filtermap(
+                        fun({Index, E}) ->
+                            ((Index rem 5 =:= 0) andalso
+                                {true, E})
+                        end,
+                        lists:enumerate(RefElements)
+                    ),
+
+                lists:foldl(fun b5_items:delete/2, Col1, ItemsToDelete)
+            end,
+            [{size_multiplier, 1.25}]
+        ),
+
+    %%%%%%%%%%
+
+    ?assertPreciseStat(height, 5.00, CondensedStats),
+
+    ?assertConfidentStat(avg_keys_per_node, 2.3980815347722086, CondensedStats).
 
 %% ------------------------------------------------------------------
 %% Helper Functions: shared
@@ -2629,7 +2661,7 @@ run_structure_test(InitFun) ->
 
 run_structure_test(InitFun, Opts) ->
     SizeMultiplier = proplists:get_value(size_multiplier, Opts, 1),
-    Size = SizeMultiplier * ?STRUCTURE_TEST_BASE_SIZE,
+    Size = round(SizeMultiplier * ?STRUCTURE_TEST_BASE_SIZE),
 
     rand:seed(exsss, 1404887150367571),
 
