@@ -7201,6 +7201,7 @@ del_rebalance_leaf_from_left_sibling(
 
 %%%%%%%% EXPERIMENTAL
 
+-compile({inline, maybe_compact_INTERNAL4 / ?INTERNAL4_ARITY}).
 maybe_compact_INTERNAL4(?INTERNAL4_ARGS) ->
     [CType | Size1] = keys_in_node(C1),
     Size2 = keys_in_node(CType, C2),
@@ -7442,6 +7443,7 @@ maybe_compact_INTERNAL4(?INTERNAL4_ARGS) ->
     end.
 %%%%%%%%%%%%
 
+-compile({inline, maybe_compact_INTERNAL3 / ?INTERNAL3_ARITY}).
 maybe_compact_INTERNAL3(?INTERNAL3_ARGS) ->
     [CType | Size1] = keys_in_node(C1),
     Size2 = keys_in_node(CType, C2),
@@ -7613,6 +7615,7 @@ maybe_compact_INTERNAL3(?INTERNAL3_ARGS) ->
 
 %%%%%%%%%%%%
 
+-compile({inline, maybe_compact_INTERNAL2 / ?INTERNAL2_ARITY}).
 maybe_compact_INTERNAL2(?INTERNAL2_ARGS) ->
     [CType | Size1] = keys_in_node(C1),
     Size2 = keys_in_node(CType, C2),
