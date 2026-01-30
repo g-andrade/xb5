@@ -132,14 +132,12 @@
 
 %%%%%%%
 
-% These thresholds are computed such that the average number of keys per node
-% before vs. after is as close to 3 as possible.
+-define(INTERNAL2_COMPACTION_THRESHOLD, 9).
+-define(INTERNAL3_COMPACTION_THRESHOLD, 11).
+-define(INTERNAL4_COMPACTION_THRESHOLD, 14).
 
--define(INTERNAL1_COMPACTION_THRESHOLD, 9).
-
--define(INTERNAL2_COMPACTION_THRESHOLD, 13).
-
--define(INTERNAL3_COMPACTION_THRESHOLD, 16).
+-define(INTERNAL1_COMPACTION_MAX, 9).
+-define(INTERNAL2_COMPACTION_MAX, 13).
 
 %% ------------------------------------------------------------------
 %% Macro Definitions: Boilerplate Helpers
@@ -7201,7 +7199,7 @@ del_rebalance_leaf_from_left_sibling(
 
 %%%%%%%% EXPERIMENTAL
 
--compile({inline, maybe_compact_INTERNAL4 / ?INTERNAL4_ARITY}).
+-compile({inline, maybe_compact_INTERNAL4/?INTERNAL4_ARITY}).
 maybe_compact_INTERNAL4(?INTERNAL4_ARGS) ->
     [CType | Size1] = keys_in_node(C1),
     Size2 = keys_in_node(CType, C2),
@@ -7212,7 +7210,7 @@ maybe_compact_INTERNAL4(?INTERNAL4_ARGS) ->
     Count = 4 + Size1 + Size2 + Size3 + Size4 + Size5,
 
     if
-        Count =< ?INTERNAL3_COMPACTION_THRESHOLD ->
+        Count =< ?INTERNAL4_COMPACTION_THRESHOLD ->
             CompactionList5 = [K4, V4 | compaction_unroll(CType, C5, [])],
             CompactionList4 = [K3, V3 | compaction_unroll(CType, C4, CompactionList5)],
             CompactionList3 = [K2, V2 | compaction_unroll(CType, C3, CompactionList4)],
@@ -7443,7 +7441,7 @@ maybe_compact_INTERNAL4(?INTERNAL4_ARGS) ->
     end.
 %%%%%%%%%%%%
 
--compile({inline, maybe_compact_INTERNAL3 / ?INTERNAL3_ARITY}).
+-compile({inline, maybe_compact_INTERNAL3/?INTERNAL3_ARITY}).
 maybe_compact_INTERNAL3(?INTERNAL3_ARGS) ->
     [CType | Size1] = keys_in_node(C1),
     Size2 = keys_in_node(CType, C2),
@@ -7453,7 +7451,7 @@ maybe_compact_INTERNAL3(?INTERNAL3_ARGS) ->
     Count = 3 + Size1 + Size2 + Size3 + Size4,
 
     if
-        Count =< ?INTERNAL2_COMPACTION_THRESHOLD ->
+        Count =< ?INTERNAL3_COMPACTION_THRESHOLD ->
             CompactionList4 = [K3, V3 | compaction_unroll(CType, C4, [])],
             CompactionList3 = [K2, V2 | compaction_unroll(CType, C3, CompactionList4)],
             CompactionList2 = [K1, V1 | compaction_unroll(CType, C2, CompactionList3)],
@@ -7615,7 +7613,7 @@ maybe_compact_INTERNAL3(?INTERNAL3_ARGS) ->
 
 %%%%%%%%%%%%
 
--compile({inline, maybe_compact_INTERNAL2 / ?INTERNAL2_ARITY}).
+-compile({inline, maybe_compact_INTERNAL2/?INTERNAL2_ARITY}).
 maybe_compact_INTERNAL2(?INTERNAL2_ARGS) ->
     [CType | Size1] = keys_in_node(C1),
     Size2 = keys_in_node(CType, C2),
@@ -7624,7 +7622,7 @@ maybe_compact_INTERNAL2(?INTERNAL2_ARGS) ->
     Count = 2 + Size1 + Size2 + Size3,
 
     if
-        Count =< ?INTERNAL1_COMPACTION_THRESHOLD ->
+        Count =< ?INTERNAL2_COMPACTION_THRESHOLD ->
             CompactionList3 = [K2, V2 | compaction_unroll(CType, C3, [])],
             CompactionList2 = [K1, V1 | compaction_unroll(CType, C2, CompactionList3)],
             CompactionList = compaction_unroll(CType, C1, CompactionList2),
@@ -7889,11 +7887,10 @@ compaction_unroll(leaf, Node, Acc) ->
 
 compact_node(CType, Count, CompactionList) ->
     if
-        % Cannot happen with current thresholds
-        % Count =< ?INTERNAL1_COMPACTION_THRESHOLD ->
-        %     compact_into_INTERNAL1(CType, Count, CompactionList);
+        Count =< ?INTERNAL1_COMPACTION_MAX ->
+            compact_into_INTERNAL1(CType, Count, CompactionList);
         %
-        Count =< ?INTERNAL2_COMPACTION_THRESHOLD ->
+        Count =< ?INTERNAL2_COMPACTION_MAX ->
             compact_into_INTERNAL2(CType, Count, CompactionList);
         %
         true ->
@@ -7924,51 +7921,51 @@ compact_into_INTERNAL3(CType, Count, CompactionList) ->
                 C2,
                 C3,
                 C4
-            );
-        %
-        15 ->
-            % 3 + 3 + 3 + 3
-            [C1 | [K1, V1 | CompactionList2]] = compact_child_size3(CType, CompactionList),
-            [C2 | [K2, V2 | CompactionList3]] = compact_child_size3(CType, CompactionList2),
-            [C3 | [K3, V3 | CompactionList4]] = compact_child_size3(CType, CompactionList3),
-            [C4 | []] = compact_child_size3(CType, CompactionList4),
-
-            ?new_INTERNAL3(
-                K1,
-                K2,
-                K3,
-                %
-                V1,
-                V2,
-                V3,
-                %
-                C1,
-                C2,
-                C3,
-                C4
-            );
-        %
-        16 ->
-            % 4 + 3 + 3 + 3
-            [C1 | [K1, V1 | CompactionList2]] = compact_child_size4(CType, CompactionList),
-            [C2 | [K2, V2 | CompactionList3]] = compact_child_size3(CType, CompactionList2),
-            [C3 | [K3, V3 | CompactionList4]] = compact_child_size3(CType, CompactionList3),
-            [C4 | []] = compact_child_size3(CType, CompactionList4),
-
-            ?new_INTERNAL3(
-                K1,
-                K2,
-                K3,
-                %
-                V1,
-                V2,
-                V3,
-                %
-                C1,
-                C2,
-                C3,
-                C4
             )
+        %
+        %15 ->
+        %    % 3 + 3 + 3 + 3
+        %    [C1 | [K1, V1 | CompactionList2]] = compact_child_size3(CType, CompactionList),
+        %    [C2 | [K2, V2 | CompactionList3]] = compact_child_size3(CType, CompactionList2),
+        %    [C3 | [K3, V3 | CompactionList4]] = compact_child_size3(CType, CompactionList3),
+        %    [C4 | []] = compact_child_size3(CType, CompactionList4),
+
+        %    ?new_INTERNAL3(
+        %        K1,
+        %        K2,
+        %        K3,
+        %        %
+        %        V1,
+        %        V2,
+        %        V3,
+        %        %
+        %        C1,
+        %        C2,
+        %        C3,
+        %        C4
+        %    );
+        %%
+        %16 ->
+        %    % 4 + 3 + 3 + 3
+        %    [C1 | [K1, V1 | CompactionList2]] = compact_child_size4(CType, CompactionList),
+        %    [C2 | [K2, V2 | CompactionList3]] = compact_child_size3(CType, CompactionList2),
+        %    [C3 | [K3, V3 | CompactionList4]] = compact_child_size3(CType, CompactionList3),
+        %    [C4 | []] = compact_child_size3(CType, CompactionList4),
+
+        %    ?new_INTERNAL3(
+        %        K1,
+        %        K2,
+        %        K3,
+        %        %
+        %        V1,
+        %        V2,
+        %        V3,
+        %        %
+        %        C1,
+        %        C2,
+        %        C3,
+        %        C4
+        %    )
     end.
 
 %%%%%%%%%%%
