@@ -215,8 +215,8 @@ avg_keys_per_node(NodeCounts) ->
                     case is_node_type_internal(NodeType) of
                         true ->
                             {
-                             InternalKSum + KeysInc,
-                             InternalNSum + Count
+                                InternalKSum + KeysInc,
+                                InternalNSum + Count
                             };
                         false ->
                             {InternalKSum, InternalNSum}
@@ -236,9 +236,9 @@ avg_keys_per_node(NodeCounts) ->
         %
         false ->
             {
-             KeySum / NodeSum,
-             InternalKSum / InternalNSum,
-             (KeySum - InternalKSum) / (NodeSum - InternalNSum)
+                KeySum / NodeSum,
+                InternalKSum / InternalNSum,
+                (KeySum - InternalKSum) / (NodeSum - InternalNSum)
             }
     end.
 
