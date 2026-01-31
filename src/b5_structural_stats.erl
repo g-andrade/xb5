@@ -26,7 +26,9 @@
     | {node_percentages, percent_per_node()}
     | {total_keys, non_neg_integer()}
     | {key_percentages, percent_per_node()})
-    | {avg_keys_per_node, undefined | float()}.
+    | {avg_keys_per_node, undefined | float()}
+    | {avg_keys_per_internal_node, undefined | float()}
+    | {avg_keys_per_leaf_node, undefined | float()}.
 -export_type([stat/0]).
 
 -type count_per_node() :: [{node_type(), non_neg_integer()}, ...].
@@ -93,7 +95,7 @@ return(#{node_counters := NodeCounters, height := Height}) ->
     NodePercentages = node_percentages(NodeCounts),
     TotalKeys = total_keys(NodeCounts),
     KeyPercentages = key_percentages(NodeCounts, TotalKeys),
-    AvgKeysPerNode = avg_keys_per_node(NodeCounts),
+    {AvgKeysPerNode, AvgKeysPerInternalNode, AvgKeysPerLeafNode} = avg_keys_per_node(NodeCounts),
 
     [
         {height, Height},
@@ -101,7 +103,9 @@ return(#{node_counters := NodeCounters, height := Height}) ->
         {node_percentages, NodePercentages},
         {total_keys, TotalKeys},
         {key_percentages, KeyPercentages},
-        {avg_keys_per_node, AvgKeysPerNode}
+        {avg_keys_per_node, AvgKeysPerNode},
+        {avg_keys_per_internal_node, AvgKeysPerInternalNode},
+        {avg_keys_per_leaf_node, AvgKeysPerLeafNode}
     ].
 
 -spec total_keys_in_node_type(node_type()) -> 1..4.
@@ -198,15 +202,29 @@ round_percentage(Percentage) ->
     binary_to_float(float_to_binary(Percentage, [{decimals, 1}])).
 
 avg_keys_per_node(NodeCounts) ->
-    {KeySum, NodeSum} =
+    {KeySum, NodeSum, InternalKSum, InternalNSum} =
         lists:foldl(
-            fun({NodeType, Count}, {KeySum, NodeSum}) ->
-                {
-                    KeySum + (Count * b5_structural_stats:total_keys_in_node_type(NodeType)),
-                    NodeSum + Count
-                }
+            fun({NodeType, Count}, {KeySum, NodeSum, InternalKSum, InternalNSum}) ->
+                KeysInNodeType = total_keys_in_node_type(NodeType),
+                KeysInc = Count * KeysInNodeType,
+
+                KeySum2 = KeySum + KeysInc,
+                NodeSum2 = NodeSum + Count,
+
+                {InternalKSum2, InternalNSum2} =
+                    case is_node_type_internal(NodeType) of
+                        true ->
+                            {
+                             InternalKSum + KeysInc,
+                             InternalNSum + Count
+                            };
+                        false ->
+                            {InternalKSum, InternalNSum}
+                    end,
+
+                {KeySum2, NodeSum2, InternalKSum2, InternalNSum2}
             end,
-            {0, 0},
+            {0, 0, 9, 0},
             NodeCounts
         ),
 
@@ -214,8 +232,21 @@ avg_keys_per_node(NodeCounts) ->
 
     case KeySum =:= 0 of
         true ->
-            undefined;
+            {undefined, undefined, undefined};
         %
         false ->
-            KeySum / NodeSum
+            {
+             KeySum / NodeSum,
+             InternalKSum / InternalNSum,
+             (KeySum - InternalKSum) / (NodeSum - InternalNSum)
+            }
+    end.
+
+is_node_type_internal(NodeType) ->
+    case atom_to_binary(NodeType) of
+        <<"internal", _>> ->
+            true;
+        %
+        <<"leaf", _>> ->
+            false
     end.
