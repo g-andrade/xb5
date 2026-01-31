@@ -7648,17 +7648,17 @@ maybe_compact_INTERNAL2(?INTERNAL2_ARGS) ->
                         UpdatedC1,
                         UpdatedC2,
                         C3
+                    );
+                %
+                ?MERGED(MergedC1C2) ->
+                    ?new_INTERNAL1(
+                        K2,
+                        %
+                        V2,
+                        %
+                        MergedC1C2,
+                        C3
                     )
-                % NOTE: Cannot happen with current compaction threshold
-                %?MERGED(MergedC1C2) ->
-                %    ?new_INTERNAL1(
-                %        K2,
-                %        %
-                %        V2,
-                %        %
-                %        MergedC1C2,
-                %        C3
-                %    )
             end;
         %
         %
@@ -7676,17 +7676,17 @@ maybe_compact_INTERNAL2(?INTERNAL2_ARGS) ->
                         UpdatedC1,
                         UpdatedC2,
                         C3
+                    );
+                %
+                ?MERGED(MergedC1C2) ->
+                    ?new_INTERNAL1(
+                        K2,
+                        %
+                        V2,
+                        %
+                        MergedC1C2,
+                        C3
                     )
-                % NOTE: Cannot happen with current compaction threshold
-                %?MERGED(MergedC1C2) ->
-                %    ?new_INTERNAL1(
-                %        K2,
-                %        %
-                %        V2,
-                %        %
-                %        MergedC1C2,
-                %        C3
-                %    )
             end;
         %
         %
@@ -7704,17 +7704,17 @@ maybe_compact_INTERNAL2(?INTERNAL2_ARGS) ->
                         C1,
                         UpdatedC2,
                         UpdatedC3
+                    );
+                %
+                ?MERGED(MergedC2C3) ->
+                    ?new_INTERNAL1(
+                        K1,
+                        %
+                        V1,
+                        %
+                        C1,
+                        MergedC2C3
                     )
-                % NOTE: cannot happen with current compaction threshold
-                %?MERGED(MergedC2C3) ->
-                %    ?new_INTERNAL1(
-                %        K1,
-                %        %
-                %        V1,
-                %        %
-                %        C1,
-                %        MergedC2C3
-                %    )
             end;
         %
         %
