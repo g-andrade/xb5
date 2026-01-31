@@ -1,5 +1,9 @@
 -module(b5_sets).
 
+%% ------------------------------------------------------------------
+%% API Function Exports
+%% ------------------------------------------------------------------
+
 -export([
     add/2,
     % `sets' compatibility alias
@@ -531,6 +535,8 @@ error_empty_set() ->
 error_key_exists(Elem) ->
     error({key_exists, Elem}).
 
+%%
+
 from_list_recur([Element | Next], Root, Size) ->
     case b5_sets_node:insert_att(Element, Root) of
         none ->
@@ -543,11 +549,15 @@ from_list_recur([Element | Next], Root, Size) ->
 from_list_recur([], Root, Size) ->
     #b5_sets{size = Size, root = Root}.
 
+%%
+
 intersection_recur(Root1, _Size1, [#b5_sets{root = Root2} | Next]) ->
     [NewSize | NewRoot] = b5_sets_node:intersection(Root1, Root2),
     intersection_recur(NewRoot, NewSize, Next);
 intersection_recur(Root, Size, []) ->
     #b5_sets{size = Size, root = Root}.
+
+%%
 
 union_recur(Root1, Size1, [#b5_sets{root = Root2, size = Size2} | Next]) ->
     [NewSize | NewRoot] = b5_sets_node:union(Root1, Size1, Root2, Size2),
@@ -555,11 +565,15 @@ union_recur(Root1, Size1, [#b5_sets{root = Root2, size = Size2} | Next]) ->
 union_recur(Root, Size, []) ->
     #b5_sets{size = Size, root = Root}.
 
+%%
+
 -spec from_constituent_parts(#{
     root := b5_sets_node:t(Element), size := non_neg_integer()
 }) -> set(Element).
 from_constituent_parts(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
     #b5_sets{root = Root, size = Size}.
+
+%%
 
 -spec to_constituent_parts
     (set(Element)) -> {ok, #{root := b5_sets_node:t(Element), size := non_neg_integer()}};
