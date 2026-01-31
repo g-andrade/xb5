@@ -1,9 +1,5 @@
 -module(b5_sets).
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
 -export([
     add/2,
     % `sets' compatibility alias
@@ -120,7 +116,7 @@ delete_any(Element, #b5_sets{size = Size, root = Root} = Set) ->
             Set;
         %
         UpdatedRoot ->
-            Set#b5_sets{size = Size + 1, root = UpdatedRoot}
+            Set#b5_sets{size = Size - 1, root = UpdatedRoot}
     end.
 
 difference(#b5_sets{size = Size1, root = Root1} = Set1, #b5_sets{root = Root2}) ->
@@ -321,21 +317,3 @@ to_constituent_parts(#b5_sets{root = Root, size = Size}) when is_integer(Size), 
     {ok, #{root => Root, size => Size}};
 to_constituent_parts(_) ->
     error.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: Unit Tests
-%% ------------------------------------------------------------------
-
--ifdef(TEST).
-
-is_set_test() ->
-    EmptyNode = b5_sets_node:new(),
-
-    ?assertEqual(true, is_set(#b5_sets{root = EmptyNode, size = 0})),
-    ?assertEqual(false, is_set(#b5_sets{root = EmptyNode, size = -1})),
-    ?assertEqual(false, is_set(#b5_sets{root = EmptyNode, size = non_integer})),
-
-    ?assertEqual(false, is_set(make_ref())).
-
-% -ifdef(TEEST).
--endif.

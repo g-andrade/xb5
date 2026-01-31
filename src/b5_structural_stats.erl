@@ -224,23 +224,27 @@ avg_keys_per_node(NodeCounts) ->
 
                 {KeySum2, NodeSum2, InternalKSum2, InternalNSum2}
             end,
-            {0, 0, 9, 0},
+            {0, 0, 0, 0},
             NodeCounts
         ),
 
     %%%
 
-    case KeySum =:= 0 of
-        true ->
-            {undefined, undefined, undefined};
-        %
-        false ->
-            {
-                KeySum / NodeSum,
-                InternalKSum / InternalNSum,
-                (KeySum - InternalKSum) / (NodeSum - InternalNSum)
-            }
-    end.
+    LeafKSum = KeySum - InternalKSum,
+    LeafNSum = NodeSum - InternalNSum,
+
+    %%%
+
+    {
+        avg(KeySum, NodeSum),
+        avg(InternalKSum, InternalNSum),
+        avg(LeafKSum, LeafNSum)
+    }.
+
+avg(KeySum, _) when KeySum =:= 0 ->
+    undefined;
+avg(KeySum, NodeSum) ->
+    KeySum / NodeSum.
 
 is_node_type_internal(NodeType) ->
     case atom_to_binary(NodeType) of

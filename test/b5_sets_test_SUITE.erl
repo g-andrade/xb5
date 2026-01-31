@@ -1,4 +1,3 @@
-%% @doc B5 Sets test suite modeled after existing b5_trees and b5_ranks test suites
 -module(b5_sets_test_SUITE).
 
 -ifndef(NO_CT_SUITE_BEHAVIOUR).
@@ -10,75 +9,115 @@
 %% CT exports
 -export([all/0, groups/0, init_per_suite/1, end_per_suite/1]).
 
-%% Test exports - Basic API tests
+%% Test exports - Basic API
 -export([
-    test_new_function/1,
-    test_from_list_operations/1,
-    test_to_list_operations/1,
-    test_singleton_operations/1,
-    test_size_is_empty_operations/1
+    test_construction/1,
+    test_construction_repeated/1,
+    test_lookup/1,
+    test_add/1,
+    test_insert/1,
+    test_delete/1
 ]).
 
-%% Test exports - Membership operations
+%% Test exports - smaller and larger
 -export([
-    test_add_operations/1,
-    test_insert_operations/1,
-    test_delete_operations/1,
-    test_delete_any_operations/1,
-    test_is_member_operations/1,
-    test_is_set_operations/1
+    test_smallest/1,
+    test_largest/1,
+    test_smaller/1,
+    test_larger/1,
+    test_take_smallest/1,
+    test_take_largest/1
 ]).
 
-%% Test exports - Set operations
+%% Test exports - set operations
 -export([
-    test_union_operations/1,
-    test_intersection_operations/1,
-    test_difference_operations/1,
-    test_is_disjoint_operations/1,
-    test_is_subset_operations/1,
-    test_is_equal_operations/1
+    test_difference/1,
+    test_intersection/1,
+    test_intersection3/1,
+    test_is_disjoint/1,
+    test_is_equal/1,
+    test_is_subset/1,
+    test_union/1,
+    test_union3/1
 ]).
 
-%% Test exports - Iterator operations
+%% Test exports - iterators
 -export([
-    test_iterator_operations/1,
-    test_iterator_ordered_operations/1,
-    test_iterator_reversed_operations/1,
-    test_iterator_from_operations/1,
-    test_iterator_from_ordered_operations/1,
-    test_iterator_from_reversed_operations/1
+    test_iterator/1,
+    test_iterator_reversed/1,
+    test_iterator_from/1,
+    test_iterator_from_reversed/1
 ]).
 
-%% Test exports - Range operations
+%% Test exports - additional functions
 -export([
-    test_smaller_larger_operations/1,
-    test_smallest_largest_operations/1,
-    test_take_smallest_operations/1,
-    test_take_largest_operations/1
+    test_filter/1,
+    test_filtermap/1,
+    test_fold/1,
+    test_is_set/1,
+    test_map/1
 ]).
 
-%% Test exports - Higher-order operations
+%% Test exports - structure
 -export([
-    test_fold_operations/1,
-    test_map_operations/1,
-    test_filter_operations/1,
-    test_filtermap_operations/1
-]).
-
-%% Test exports - Compatibility operations
--export([
-    test_compatibility_aliases/1
-]).
-
-%% Test exports - Empty set edge cases
--export([
-    test_empty_set_exceptions/1
+    test_structure_sequentially_built/1,
+    test_structure_randomly_built/1,
+    test_structure_build_seqIns2x_seqDelSmallerHalf/1,
+    test_structure_build_seqIns2x_seqDelGreaterHalf/1,
+    test_structure_build_seqIns2x_randomlyDelHalf/1,
+    test_structure_build_randomlyIns2x_randomlyDelHalf/1,
+    test_structure_build_randomlyIns2x_seqDelSmallerHalf/1,
+    test_structure_build_adversarial_deletion/1
 ]).
 
 %% Test constants
--define(TESTED_SET_SIZES,
+-define(TESTED_SIZES,
     (lists:seq(0, 50) ++ lists:seq(55, 200, 5) ++ [997])
 ).
+
+-define(STRUCTURE_TEST_ITERATIONS, 1000).
+-define(STRUCTURE_TEST_BASE_SIZE, 1000).
+
+-define(Z_SCORE_95, 1.960).
+
+-define(assertListsCanonEqual(ExpectedL, TestedL),
+    (?assertEqual(
+        lists:map(fun canon_element/1, (ExpectedL)),
+        lists:map(fun canon_element/1, (TestedL))
+    ))
+).
+
+-define(assertCanonEqual(Expected, Tested),
+    (?assertEqual(
+        canon_element(Expected),
+        canon_element(Tested)
+    ))
+).
+
+-define(assertPreciseStat(Id, SingleValue, CondensedStats),
+    (?assertMatch(
+        #{
+            min := SingleValue,
+            max := SingleValue
+        },
+        maps:get(Id, CondensedStats)
+    ))
+).
+
+-define(assertConfidentStat(Id, ExpectedAvg, CondensedStats),
+    (begin
+        ?assertMatch(
+            #{
+                lower := Lower,
+                higher := Higher
+            } when Lower =< ExpectedAvg andalso ExpectedAvg =< Higher,
+            observed_error_margin(Id, CondensedStats)
+        )
+    end)
+).
+
+%% Reference data of most hardcoded tests was generated using this Google spreadsheet:
+%% * https://docs.google.com/spreadsheets/d/1U2_9zVV0ZoLMHz1n7Hw-qENwbl-uCe93BUrOzCI4zvI/edit?gid=1769164134#gid=1769164134
 
 %% ------------------------------------------------------------------
 %% CT Setup
@@ -90,53 +129,53 @@ all() ->
 groups() ->
     [
         {basic_api, [parallel], [
-            test_new_function,
-            test_from_list_operations,
-            test_to_list_operations,
-            test_singleton_operations,
-            test_size_is_empty_operations
+            test_construction,
+            test_construction_repeated,
+            test_lookup,
+            test_add,
+            test_insert,
+            test_delete
         ]},
-        {membership_operations, [parallel], [
-            test_add_operations,
-            test_insert_operations,
-            test_delete_operations,
-            test_delete_any_operations,
-            test_is_member_operations,
-            test_is_set_operations
+        {smaller_and_larger, [parallel], [
+            test_smallest,
+            test_largest,
+            test_smaller,
+            test_larger,
+            test_take_smallest,
+            test_take_largest
         ]},
         {set_operations, [parallel], [
-            test_union_operations,
-            test_intersection_operations,
-            test_difference_operations,
-            test_is_disjoint_operations,
-            test_is_subset_operations,
-            test_is_equal_operations
+            test_difference,
+            test_intersection,
+            test_intersection3,
+            test_is_disjoint,
+            test_is_equal,
+            test_is_subset,
+            test_union,
+            test_union3
         ]},
-        {iterator_operations, [parallel], [
-            test_iterator_operations,
-            test_iterator_ordered_operations,
-            test_iterator_reversed_operations,
-            test_iterator_from_operations,
-            test_iterator_from_ordered_operations,
-            test_iterator_from_reversed_operations
+        {iterators, [parallel], [
+            test_iterator,
+            test_iterator_reversed,
+            test_iterator_from,
+            test_iterator_from_reversed
         ]},
-        {range_operations, [parallel], [
-            test_smaller_larger_operations,
-            test_smallest_largest_operations,
-            test_take_smallest_operations,
-            test_take_largest_operations
+        {additional_functions, [parallel], [
+            test_filter,
+            test_filtermap,
+            test_fold,
+            test_is_set,
+            test_map
         ]},
-        {higher_order_operations, [parallel], [
-            test_fold_operations,
-            test_map_operations,
-            test_filter_operations,
-            test_filtermap_operations
-        ]},
-        {compatibility_operations, [parallel], [
-            test_compatibility_aliases
-        ]},
-        {empty_set_edge_cases, [parallel], [
-            test_empty_set_exceptions
+        {structure, [parallel], [
+            test_structure_sequentially_built,
+            test_structure_randomly_built,
+            test_structure_build_seqIns2x_seqDelSmallerHalf,
+            test_structure_build_seqIns2x_seqDelGreaterHalf,
+            test_structure_build_seqIns2x_randomlyDelHalf,
+            test_structure_build_randomlyIns2x_randomlyDelHalf,
+            test_structure_build_randomlyIns2x_seqDelSmallerHalf,
+            test_structure_build_adversarial_deletion
         ]}
     ].
 
@@ -147,1181 +186,1831 @@ end_per_suite(_Config) ->
     ok.
 
 %% ------------------------------------------------------------------
-%% Basic API Tests
+%% Tests - Basic API
 %% ------------------------------------------------------------------
 
-test_new_function(_Config) ->
-    Set = new_empty_set(),
-    ?assertEqual(0, b5_sets:size(Set)),
-    ?assertEqual(Set, b5_sets:empty()),
-    ?assertEqual(true, b5_sets:is_empty(Set)),
-    ?assertEqual([], b5_sets:to_list(Set)).
+test_construction(_Config) ->
+    foreach_tested_size(
+        fun(Size, RefElements) ->
+            Set = b5_sets:from_list(RefElements),
+            ?assertListsCanonEqual(RefElements, b5_sets:to_list(Set)),
+            ?assertEqual(Size, b5_sets:size(Set)),
+            ?assertEqual(Size =:= 0, b5_sets:is_empty(Set)),
+            ?assertEqual(Set, new_set_from_each_inserted(RefElements)),
+            ?assertEqual(Set, b5_sets:from_ordset(RefElements)),
 
-test_from_list_operations(_Config) ->
-    %% Empty list
-    Set1 = b5_sets:from_list([]),
-    ?assertEqual(0, b5_sets:size(Set1)),
-    ?assertEqual([], b5_sets:to_list(Set1)),
-
-    %% Single element
-    Set2 = b5_sets:from_list([42]),
-    ?assertEqual(1, b5_sets:size(Set2)),
-    ?assertEqual([42], b5_sets:to_list(Set2)),
-
-    %% Multiple elements
-    Set3 = b5_sets:from_list([3, 1, 4, 1, 5, 9, 2, 6]),
-    ?assertEqual(7, b5_sets:size(Set3)),
-    ?assertEqual([1, 2, 3, 4, 5, 6, 9], b5_sets:to_list(Set3)),
-
-    %% Test with different types
-    Set4 = b5_sets:from_list([atom, "string", 42, 3.14]),
-    ?assertEqual(4, b5_sets:size(Set4)).
-
-test_to_list_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        ?assertEqual(gb_sets:to_list(RefSet), b5_sets:to_list(TestSet))
-    end).
-
-test_singleton_operations(_Config) ->
-    Set1 = b5_sets:singleton(42),
-    ?assertEqual(1, b5_sets:size(Set1)),
-    ?assertEqual([42], b5_sets:to_list(Set1)),
-    ?assertEqual(true, b5_sets:is_member(42, Set1)),
-
-    Set2 = b5_sets:singleton(atom),
-    ?assertEqual(1, b5_sets:size(Set2)),
-    ?assertEqual([atom], b5_sets:to_list(Set2)),
-    ?assertEqual(true, b5_sets:is_member(atom, Set2)).
-
-test_size_is_empty_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        ExpectedSize = gb_sets:size(RefSet),
-        ?assertEqual(ExpectedSize, b5_sets:size(TestSet)),
-        ?assertEqual(ExpectedSize =:= 0, b5_sets:is_empty(TestSet))
-    end).
-
-%% ------------------------------------------------------------------
-%% Membership Operation Tests
-%% ------------------------------------------------------------------
-
-test_add_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        %% Add existing elements - should not change set
-        foreach_randomly_retyped_element(
-            fun(Element) ->
-                UpdatedSet = b5_sets:add(Element, TestSet),
-                ?assertEqual(TestSet, UpdatedSet)
-            end,
-            RefSet
-        ),
-
-        foreach_non_existent_element(
-            fun(NewElement) ->
-                UpdatedRef = gb_sets:add(NewElement, RefSet),
-                UpdatedSet = b5_sets:add(NewElement, TestSet),
-                ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet)),
-                ?assertEqual(b5_sets:size(TestSet) + 1, b5_sets:size(UpdatedSet)),
-                ?assertEqual(true, b5_sets:is_member(NewElement, UpdatedSet)),
-                ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet))
-            end,
-            RefSet,
-            50
-        )
-    end).
-
-test_insert_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        foreach_randomly_retyped_element(
-            fun(Element) ->
-                %% Insert existing elements - should throw error
-                ?assertError({key_exists, Element}, b5_sets:insert(Element, TestSet))
-            end,
-            RefSet
-        ),
-
-        foreach_non_existent_element(
-            fun(NewElement) ->
-                UpdatedRef = gb_sets:insert(NewElement, RefSet),
-                UpdatedSet = b5_sets:insert(NewElement, TestSet),
-                ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet)),
-                ?assertEqual(b5_sets:size(TestSet) + 1, b5_sets:size(UpdatedSet)),
-                ?assertEqual(true, b5_sets:is_member(NewElement, UpdatedSet)),
-                ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet))
-            end,
-            RefSet,
-            50
-        )
-    end).
-
-test_delete_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        %% Delete existing elements
-        _ = fold_randomly_retyped_shuffled_elements(
-            fun(Element, {RefAcc, TestAcc}) ->
-                UpdatedRef = gb_sets:delete(Element, RefAcc),
-                UpdatedSet = b5_sets:delete(Element, TestAcc),
-                ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet)),
-                ?assertEqual(b5_sets:size(TestAcc) - 1, b5_sets:size(UpdatedSet)),
-                ?assertEqual(false, b5_sets:is_member(Element, UpdatedSet)),
-                ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet)),
-                {UpdatedRef, UpdatedSet}
-            end,
-            {RefSet, TestSet},
-            RefSet
-        ),
-
-        foreach_non_existent_element(
-            fun(NonExistentElement) ->
-                %% Delete non-existent element - should throw error
-                ?assertError(
-                    {badkey, NonExistentElement}, b5_sets:delete(NonExistentElement, TestSet)
-                )
-            end,
-            RefSet,
-            50
-        )
-    end).
-
-test_delete_any_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        %% Delete existing elements
-        _ = fold_randomly_retyped_shuffled_elements(
-            fun(Element, {RefAcc, TestAcc}) ->
-                UpdatedRef = gb_sets:delete(Element, RefAcc),
-                UpdatedSet = b5_sets:delete(Element, TestAcc),
-                ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet)),
-                ?assertEqual(b5_sets:size(TestAcc) - 1, b5_sets:size(UpdatedSet)),
-                ?assertEqual(false, b5_sets:is_member(Element, UpdatedSet)),
-                ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet)),
-                {UpdatedRef, UpdatedSet}
-            end,
-            {RefSet, TestSet},
-            RefSet
-        ),
-
-        foreach_non_existent_element(
-            fun(NonExistentElement) ->
-                %% Delete non-existent element - keeps the set as is
-                ?assertEqual(TestSet, b5_sets:delete_any(NonExistentElement, TestSet))
-            end,
-            RefSet,
-            50
-        )
-    end).
-
-test_is_member_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        %% Test existing elements
-        foreach_randomly_retyped_element(
-            fun(Element) ->
-                ?assertEqual(true, b5_sets:is_member(Element, TestSet))
-            end,
-            RefSet
-        ),
-
-        %% Test non-existent elements
-        foreach_non_existent_element(
-            fun(NonExistentElement) ->
-                ?assertEqual(false, b5_sets:is_member(NonExistentElement, TestSet))
-            end,
-            RefSet,
-            50
-        )
-    end).
-
-test_is_set_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        ?assertEqual(false, b5_sets:is_set(RefSet)),
-        ?assertEqual(true, b5_sets:is_set(TestSet))
-    end).
-
-%% ------------------------------------------------------------------
-%% Set Operation Tests
-%% ------------------------------------------------------------------
-
-%%%%%%%%%%%%%
-%% Union
-
-test_union_operations(_Config) ->
-    foreach_set(
-        fun(RefSet1, TestSet1) ->
-            % Union with self
-            ?assertEqual(
-                gb_sets:to_list(RefSet1), b5_sets:to_list(b5_sets:union(TestSet1, TestSet1))
-            ),
-
-            foreach_set_op_variant(
-                RefSet1,
-                fun(RefSet2, TestSet2) ->
-                    RefUnion = gb_sets:union(RefSet1, RefSet2),
-                    ExpectedElements = gb_sets:to_list(RefUnion),
-                    ExpectedSize = length(ExpectedElements),
-
-                    TestUnion = b5_sets:union(TestSet1, TestSet2),
-                    TestUnionComm = b5_sets:union(TestSet1, TestSet2),
-
-                    ?assertEqual([], diff_lists(ExpectedElements, b5_sets:to_list(TestUnion))),
-                    ?assertEqual([], diff_lists(ExpectedElements, b5_sets:to_list(TestUnionComm))),
-
-                    ?assertEqual(ExpectedSize, b5_sets:size(TestUnion)),
-                    ?assertEqual(ExpectedSize, b5_sets:size(TestUnionComm))
-                end
-            )
-        end
-    ).
-
-%%%%%%%%%%%%%
-%% Intersection
-
-test_intersection_operations(_Config) ->
-    foreach_set(
-        fun(RefSet1, TestSet1) ->
-            % Intersect with self
-            ?assertEqual(
-                gb_sets:to_list(RefSet1), b5_sets:to_list(b5_sets:intersection(TestSet1, TestSet1))
-            ),
-
-            foreach_set_op_variant(
-                RefSet1,
-                fun(RefSet2, TestSet2) ->
-                    RefIntersect = gb_sets:intersection(RefSet1, RefSet2),
-                    ExpectedElements = gb_sets:to_list(RefIntersect),
-                    ExpectedSize = length(ExpectedElements),
-
-                    TestIntersect = b5_sets:intersection(TestSet1, TestSet2),
-                    TestIntersectComm = b5_sets:intersection(TestSet1, TestSet2),
-
-                    ?assertEqual([], diff_lists(ExpectedElements, b5_sets:to_list(TestIntersect))),
-                    ?assertEqual(
-                        [], diff_lists(ExpectedElements, b5_sets:to_list(TestIntersectComm))
-                    ),
-
-                    ?assertEqual(ExpectedSize, b5_sets:size(TestIntersect)),
-                    ?assertEqual(ExpectedSize, b5_sets:size(TestIntersectComm))
-                end
-            )
-        end
-    ).
-
-%%%%%%%%%%%%%
-%% Difference
-
-test_difference_operations(_Config) ->
-    foreach_set(
-        fun(RefSet1, TestSet1) ->
-            % Difference with self
-            ?assertEqual([], b5_sets:to_list(b5_sets:difference(TestSet1, TestSet1))),
-
-            foreach_set_op_variant(
-                RefSet1,
-                fun(RefSet2, TestSet2) ->
-                    RefDifferenceA = gb_sets:difference(RefSet1, RefSet2),
-                    ExpectedElementsA = gb_sets:to_list(RefDifferenceA),
-                    ExpectedSizeA = length(ExpectedElementsA),
-                    TestDifferenceA = b5_sets:difference(TestSet1, TestSet2),
-                    ?assertEqual(ExpectedElementsA, b5_sets:to_list(TestDifferenceA)),
-                    ?assertEqual(ExpectedSizeA, b5_sets:size(TestDifferenceA)),
-
-                    RefDifferenceB = gb_sets:difference(RefSet2, RefSet1),
-                    ExpectedElementsB = gb_sets:to_list(RefDifferenceB),
-                    ExpectedSizeB = length(ExpectedElementsB),
-                    TestDifferenceB = b5_sets:difference(TestSet2, TestSet1),
-                    ?assertEqual(ExpectedElementsB, b5_sets:to_list(TestDifferenceB)),
-                    ?assertEqual(ExpectedSizeB, b5_sets:size(TestDifferenceB))
-                end
-            )
-        end
-    ).
-
-test_is_disjoint_operations(_Config) ->
-    foreach_set(
-        fun(RefSet1, TestSet1) ->
-            % is_disjoint with self
-            IsEmpty = b5_sets:is_empty(TestSet1),
-            ?assertEqual(IsEmpty, b5_sets:is_disjoint(TestSet1, TestSet1)),
-
-            % is_disjoint with rebuilt variants of self
-            foreach_rebuilt_variant(
-                TestSet1,
-                fun(TestSetVariant) ->
-                    ?assertEqual(IsEmpty, b5_sets:is_disjoint(TestSet1, TestSetVariant)),
-                    ?assertEqual(IsEmpty, b5_sets:is_disjoint(TestSetVariant, TestSet1))
-                end
-            ),
-
-            foreach_set_op_variant(
-                RefSet1,
-                fun(RefSet2, TestSet2) ->
-                    ?assertEqual(
-                        gb_sets:is_disjoint(RefSet1, RefSet2),
-                        b5_sets:is_disjoint(TestSet1, TestSet2)
-                    ),
-                    ?assertEqual(
-                        gb_sets:is_disjoint(RefSet1, RefSet2),
-                        b5_sets:is_disjoint(TestSet2, TestSet1)
-                    ),
-                    ?assertEqual(
-                        gb_sets:is_disjoint(RefSet2, RefSet1),
-                        b5_sets:is_disjoint(TestSet2, TestSet1)
-                    )
-                end
-            )
-        end
-    ).
-
-test_is_subset_operations(_Config) ->
-    foreach_set(
-        fun(RefSet1, TestSet1) ->
-            % is_subset with self
-            ?assertEqual(true, b5_sets:is_subset(TestSet1, TestSet1)),
-
-            % is_subset with rebuilt variants of self
-            foreach_rebuilt_variant(
-                TestSet1,
-                fun(TestSetVariant) ->
-                    ?assertEqual(true, b5_sets:is_subset(TestSet1, TestSetVariant)),
-                    ?assertEqual(true, b5_sets:is_subset(TestSetVariant, TestSet1))
-                end
-            ),
-
-            foreach_set_op_variant(
-                RefSet1,
-                fun(RefSet2, TestSet2) ->
-                    ?assertEqual(
-                        gb_sets:is_subset(RefSet1, RefSet2), b5_sets:is_subset(TestSet1, TestSet2)
-                    ),
-                    ?assertEqual(
-                        gb_sets:is_subset(RefSet2, RefSet1), b5_sets:is_subset(TestSet2, TestSet1)
-                    )
-                end
-            )
-        end
-    ).
-
-test_is_equal_operations(_Config) ->
-    foreach_set(
-        fun(RefSet1, TestSet1) ->
-            % is_equal with self
-            ?assertEqual(true, b5_sets:is_equal(TestSet1, TestSet1)),
-
-            % is_subset with rebuilt variants of self
-            foreach_rebuilt_variant(
-                TestSet1,
-                fun(TestSetVariant) ->
-                    ?assertEqual(true, b5_sets:is_equal(TestSet1, TestSetVariant)),
-                    ?assertEqual(true, b5_sets:is_equal(TestSetVariant, TestSet1))
-                end
-            ),
-
-            foreach_set_op_variant(
-                RefSet1,
-                fun(RefSet2, TestSet2) ->
-                    ?assertEqual(
-                        gb_sets:is_equal(RefSet1, RefSet2), b5_sets:is_equal(TestSet1, TestSet2)
-                    ),
-                    ?assertEqual(
-                        gb_sets:is_equal(RefSet1, RefSet2), b5_sets:is_equal(TestSet2, TestSet1)
-                    ),
-                    ?assertEqual(
-                        gb_sets:is_equal(RefSet2, RefSet1), b5_sets:is_equal(TestSet2, TestSet1)
-                    )
-                end
-            )
-        end
-    ).
-
-%%%%%%%%%%%%%%
-
-foreach_set_op_variant(RefSet, Fun) ->
-    RefSize = gb_sets:size(RefSet),
-    RefList = gb_sets:to_list(RefSet),
-
-    %
-    % Variants focused on union/2, difference/2, is_disjoint/2, is_subset/2
-    %
-
-    lists:foreach(
-        fun(Size2) ->
-            lists:foreach(
-                fun(StartingOffset) ->
-                    {RefSet2, TestSet2} = test_set_op_variant(RefSet, Size2, StartingOffset),
-                    Fun(RefSet2, TestSet2)
-                end,
-                lists:usort([
-                    -20, -1, 0, 1, Size2 div 2, max(0, Size2 - 1), Size2, Size2 + 1, Size2 + 20
-                ])
-            )
-        end,
-        lists:usort([
-            0, 1, 5, RefSize div 2, max(0, RefSize - 1), RefSize, RefSize + 1, RefSize + 10
-        ])
-    ),
-
-    %
-    % Variants focused on is_subset/2, is_equal/2
-    %
-
-    lists:foreach(
-        fun(Where) ->
-            HopefullyNewElement =
-                case Where of
-                    smaller ->
-                        hd_or_zero(RefList) - 1;
-                    mid ->
-                        Min = trunc(hd_or_zero(RefList)),
-                        Max = trunc(last_or_zero(RefList)),
-                        rand:uniform(max(1, 1 + Max - Min - 1));
-                    larger ->
-                        last_or_zero(RefList) + 1
-                end,
-
-            NewList = shuffle_list(randomly_switch_types([HopefullyNewElement | RefList])),
-
-            RefSet2 = gb_sets:from_list(NewList),
-            TestSet2 = b5_sets:from_list(NewList),
-            Fun(RefSet2, TestSet2)
-        end,
-        [smaller, mid, larger]
-    ).
-
-test_set_op_variant(RefSet, Size2, StartingOffset) ->
-    List2 = prepare_set_op_variant(RefSet, Size2, StartingOffset),
-    RefSet2 = gb_sets:from_list(shuffle_list(List2)),
-    TestSet2 = b5_sets:from_list(shuffle_list(List2)),
-    {RefSet2, TestSet2}.
-
-prepare_set_op_variant(RefSet, Size2, StartingOffset) ->
-    if
-        Size2 =:= 0 ->
-            [];
-        %
-        StartingOffset < 0 ->
-            RefList = gb_sets:to_list(RefSet),
-            MinElement = hd_or_zero(RefList),
-            PrependSize = min(Size2, -StartingOffset),
-            PrependFirst = trunc(MinElement + StartingOffset),
-            PrependLast = PrependFirst + PrependSize - 1,
-            PrependElements = randomly_switch_types(lists:seq(PrependFirst, PrependLast, +1)),
-            PrependElements ++ prepare_set_op_variant_recur(RefList, Size2 - PrependSize);
-        %
-        StartingOffset >= 0 ->
-            RefList = gb_sets:to_list(RefSet),
-
-            case lists:sublist(RefList, StartingOffset + 1) of
-                [_ | _] = AdvancedRefList ->
-                    prepare_set_op_variant_recur(AdvancedRefList, Size2);
-                %
+            case RefElements of
                 [] ->
-                    LastElement = last_or_zero(RefList),
-                    AppendOffset = StartingOffset - gb_sets:size(RefSet),
-                    AppendFirst = trunc(LastElement + AppendOffset),
-                    AppendLast = AppendFirst + Size2 - 1,
-                    AppendElements = randomly_switch_types(lists:seq(AppendFirst, AppendLast, +1)),
-                    AppendElements
+                    ?assertEqual(Set, b5_sets:empty());
+                %
+                [SingleElement] ->
+                    ?assertEqual(Set, b5_sets:singleton(SingleElement));
+                %
+                _ ->
+                    ok
             end
-    end.
+        end
+    ).
 
-hd_or_zero([H | _]) -> H;
-hd_or_zero([]) -> 0.
+test_construction_repeated(_Config) ->
+    foreach_tested_size(fun run_construction_repeated_test/2).
 
-last_or_zero([_ | _] = L) -> lists:last(L);
-last_or_zero([]) -> 0.
+test_lookup(_Config) ->
+    foreach_test_set(
+        fun(Size, RefElements, Set) ->
+            foreach_existing_element(
+                fun(Element) ->
+                    ?assertEqual(true, b5_sets:is_member(Element, Set)),
+                    ?assertEqual(true, b5_sets:is_element(Element, Set))
+                end,
+                RefElements,
+                Size
+            ),
 
-prepare_set_op_variant_recur([ElemA | [_ | _] = Next], Size2) when Size2 > 0 ->
-    case rand:uniform(3) of
-        1 ->
-            % Pick guaranteed conflicting element
-            TestElem = randomly_switch_type(ElemA),
-            [TestElem | prepare_set_op_variant_recur(Next, Size2 - 1)];
-        %
-        _ ->
-            % Pick element that's very likely to be new
-            TestElem = randomly_switch_type(ElemA + 1.3),
-            [TestElem | prepare_set_op_variant_recur(Next, Size2 - 1)]
-    end;
-prepare_set_op_variant_recur([LastElement], Size2) when Size2 > 0 ->
-    AppendFirst =
-        case rand:uniform(3) of
-            1 ->
-                % Pick guaranteed conflicting element
-                trunc(LastElement);
-            _ ->
-                % Pick element that's likely to be new
-                trunc(LastElement) + 1
-        end,
+            %%%%%%%%%%%
 
-    AppendLast = AppendFirst + Size2 - 1,
-    AppendElements = randomly_switch_types(lists:seq(AppendFirst, AppendLast, +1)),
-    AppendElements;
-prepare_set_op_variant_recur(RefList, Size2) when RefList =:= [] orelse Size2 =:= 0 ->
-    [].
-
-%% ------------------------------------------------------------------
-%% Iterator Operation Tests
-%% ------------------------------------------------------------------
-
-test_iterator_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        TestIter = b5_sets:iterator(TestSet),
-        IteratedElements = iterate_to_list(TestIter),
-        ?assertEqual(gb_sets:to_list(RefSet), IteratedElements),
-
-        ?assertEqual(gb_sets:size(RefSet), length(IteratedElements)),
-        ?assertEqual(gb_sets:size(RefSet), b5_sets:size(TestSet))
-    end).
-
-test_iterator_ordered_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        TestIter = b5_sets:iterator(TestSet, ordered),
-        IteratedElements = iterate_to_list(TestIter),
-        ?assertEqual(gb_sets:to_list(RefSet), IteratedElements),
-
-        ?assertEqual(gb_sets:size(RefSet), length(IteratedElements)),
-        ?assertEqual(gb_sets:size(RefSet), b5_sets:size(TestSet))
-    end).
-
-test_iterator_reversed_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        TestIter = b5_sets:iterator(TestSet, reversed),
-        IteratedElements = iterate_to_list(TestIter),
-        ?assertEqual(gb_sets:to_list(RefSet), lists:reverse(IteratedElements)),
-
-        ?assertEqual(gb_sets:size(RefSet), length(IteratedElements)),
-        ?assertEqual(gb_sets:size(RefSet), b5_sets:size(TestSet))
-    end).
-
-test_iterator_from_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        RefList = gb_sets:to_list(RefSet),
-
-        WholeFromValues = randomly_switch_types(
-            lists:usort(
-                [
-                    hd_or_zero(RefList) - 10,
-                    hd_or_zero(RefList) - 1,
-                    last_or_zero(RefList) + 1,
-                    last_or_zero(RefList) + 10
-                ] ++
-                    RefList
+            foreach_non_existent_element(
+                fun(Element) ->
+                    ?assertEqual(false, b5_sets:is_member(Element, Set)),
+                    ?assertEqual(false, b5_sets:is_element(Element, Set))
+                end,
+                RefElements,
+                100
             )
-        ),
+        end
+    ).
 
-        FromValues =
-            (lists:map(
-                fun(From) -> From + 0.5 end,
-                take_random(WholeFromValues, 10)
-            ) ++
-                WholeFromValues),
+test_add(_Config) ->
+    foreach_test_set(
+        fun(Size, RefElements, Set) ->
+            foreach_existing_element(
+                fun(Element) ->
+                    Set2 = b5_sets:add(Element, Set),
+                    ?assertEqual(Size, b5_sets:size(Set2)),
+                    ?assertListsCanonEqual(
+                        RefElements,
+                        b5_sets:to_list(Set2)
+                    ),
 
-        lists:foreach(
-            fun(From) ->
-                RefIter = gb_sets:iterator_from(From, RefSet),
-                RefIteratedElements = ref_iterate_to_list(RefIter),
-                ExpectedList = lists:dropwhile(fun(Elem) -> Elem < From end, RefList),
-                ?assertEqual(RefIteratedElements, ExpectedList),
+                    ?assertEqual(Set2, b5_sets:add_element(Element, Set))
+                end,
+                RefElements,
+                min(50, Size)
+            ),
 
-                TestIter = b5_sets:iterator_from(From, TestSet),
-                IteratedElements = iterate_to_list(TestIter),
-                ?assertEqual(ExpectedList, IteratedElements),
+            %%%%%%%%%%%%%%%%%%
 
-                ?assert(b5_sets:size(TestSet) >= length(IteratedElements))
-            end,
-            FromValues
-        )
-    end).
+            foreach_non_existent_element(
+                fun(Element) ->
+                    Set2 = b5_sets:add(Element, Set),
+                    ?assertEqual(Size + 1, b5_sets:size(Set2)),
+                    ?assertListsCanonEqual(
+                        add_to_sorted_list(Element, RefElements),
+                        b5_sets:to_list(Set2)
+                    ),
 
-test_iterator_from_ordered_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        RefList = gb_sets:to_list(RefSet),
-
-        WholeFromValues = randomly_switch_types(
-            lists:usort(
-                [
-                    hd_or_zero(RefList) - 10,
-                    hd_or_zero(RefList) - 1,
-                    last_or_zero(RefList) + 1,
-                    last_or_zero(RefList) + 10
-                ] ++
-                    RefList
+                    ?assertEqual(Set2, b5_sets:add_element(Element, Set))
+                end,
+                RefElements,
+                50
             )
-        ),
+        end
+    ).
 
-        FromValues =
-            (lists:map(
-                fun(From) -> From + 0.5 end,
-                take_random(WholeFromValues, 10)
-            ) ++
-                WholeFromValues),
+test_insert(_Config) ->
+    foreach_test_set(
+        fun(Size, RefElements, Set) ->
+            foreach_existing_element(
+                fun(Element) ->
+                    ?assertError({key_exists, Element}, b5_sets:insert(Element, Set))
+                end,
+                RefElements,
+                min(50, Size)
+            ),
 
-        lists:foreach(
-            fun(From) ->
-                RefIter = gb_sets:iterator_from(From, RefSet, ordered),
-                RefIteratedElements = ref_iterate_to_list(RefIter),
-                ExpectedList = lists:dropwhile(fun(Elem) -> Elem < From end, RefList),
-                ?assertEqual(RefIteratedElements, ExpectedList),
+            %%%%%%%%%%%%%%%%%%
 
-                TestIter = b5_sets:iterator_from(From, TestSet, ordered),
-                IteratedElements = iterate_to_list(TestIter),
-                ?assertEqual(ExpectedList, IteratedElements),
-
-                ?assert(b5_sets:size(TestSet) >= length(IteratedElements))
-            end,
-            FromValues
-        )
-    end).
-
-test_iterator_from_reversed_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        RefList = gb_sets:to_list(RefSet),
-
-        WholeFromValues = randomly_switch_types(
-            lists:usort(
-                [
-                    hd_or_zero(RefList) - 10,
-                    hd_or_zero(RefList) - 1,
-                    last_or_zero(RefList) + 1,
-                    last_or_zero(RefList) + 10
-                ] ++
-                    RefList
+            foreach_non_existent_element(
+                fun(Element) ->
+                    Set2 = b5_sets:insert(Element, Set),
+                    ?assertEqual(Size + 1, b5_sets:size(Set2)),
+                    ?assertListsCanonEqual(
+                        add_to_sorted_list(Element, RefElements),
+                        b5_sets:to_list(Set2)
+                    )
+                end,
+                RefElements,
+                50
             )
-        ),
+        end
+    ).
 
-        FromValues =
-            (lists:map(
-                fun(From) -> From + 0.5 end,
-                take_random(WholeFromValues, 10)
-            ) ++
-                WholeFromValues),
+test_delete(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            DeleteKeys = lists:map(fun randomly_switch_number_type/1, list_shuffle(RefElements)),
 
-        lists:foreach(
-            fun(From) ->
-                RefIter = gb_sets:iterator_from(From, RefSet, reversed),
-                RefIteratedElements = ref_iterate_to_list(RefIter),
-                ExpectedList = lists:reverse(
-                    lists:takewhile(fun(Elem) -> Elem =< From end, RefList)
+            {SetN, []} =
+                lists:foldl(
+                    fun(Element, {Set1, RemainingElements1}) ->
+                        test_delete_non_existing_keys(Set1, RemainingElements1, 3),
+
+                        Set2 = b5_sets:delete(Element, Set1),
+                        RemainingElements2 = remove_from_sorted_list(Element, RemainingElements1),
+                        ?assertListsCanonEqual(RemainingElements2, b5_sets:to_list(Set2)),
+                        ?assertEqual(length(RemainingElements2), b5_sets:size(Set2)),
+                        ?assertEqual(RemainingElements2 =:= [], b5_sets:is_empty(Set2)),
+
+                        ?assertEqual(Set2, b5_sets:delete_any(Element, Set1)),
+                        ?assertEqual(Set2, b5_sets:del_element(Element, Set1)),
+
+                        {Set2, RemainingElements2}
+                    end,
+                    {Set, lists:sort(DeleteKeys)},
+                    DeleteKeys
                 ),
-                ?assertEqual(RefIteratedElements, ExpectedList),
 
-                TestIter = b5_sets:iterator_from(From, TestSet, reversed),
-                IteratedElements = iterate_to_list(TestIter),
-                ?assertEqual(ExpectedList, IteratedElements),
+            ?assertEqual([], b5_sets:to_list(SetN)),
+            ?assertEqual(0, b5_sets:size(SetN)),
+            ?assertEqual(true, b5_sets:is_empty(SetN)),
 
-                ?assert(b5_sets:size(TestSet) >= length(IteratedElements))
-            end,
-            FromValues
-        )
-    end).
+            test_delete_non_existing_keys(SetN, [], 3)
+        end
+    ).
 
 %% ------------------------------------------------------------------
-%% Range Operation Tests
+%% Tests - Smaller and Larger
 %% ------------------------------------------------------------------
 
-test_smaller_larger_operations(_Config) ->
-    foreach_set(fun(RefSet, TestSet) ->
-        RefList = gb_sets:to_list(RefSet),
+test_smallest(_Config) ->
+    foreach_test_set(
+        fun
+            (0, _RefElements, Set) ->
+                ?assertError(empty_set, b5_sets:smallest(Set));
+            %
+            (_Size, RefElements, Set) ->
+                ?assert(b5_sets:smallest(Set) == hd(RefElements))
+        end
+    ).
 
-        WholePivots = randomly_switch_types(
-            lists:usort(
-                [
-                    hd_or_zero(RefList) - 10,
-                    hd_or_zero(RefList) - 1,
-                    last_or_zero(RefList) + 1,
-                    last_or_zero(RefList) + 10
-                ] ++
-                    RefList
-            )
+test_largest(_Config) ->
+    foreach_test_set(
+        fun
+            (0, _RefElements, Set) ->
+                ?assertError(empty_set, b5_sets:largest(Set));
+            %
+            (_Size, RefElements, Set) ->
+                ?assert(b5_sets:largest(Set) == lists:last(RefElements))
+        end
+    ).
+
+test_smaller(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            run_smaller(RefElements, Set)
+        end
+    ).
+
+test_larger(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            run_larger(RefElements, Set)
+        end
+    ).
+
+test_take_smallest(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            run_take_smallest(RefElements, Set)
+        end
+    ).
+
+test_take_largest(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            run_take_largest(lists:reverse(RefElements), Set)
+        end
+    ).
+
+%% ------------------------------------------------------------------
+%% Tests - Set Operations
+%% ------------------------------------------------------------------
+
+test_difference(_Config) ->
+    foreach_test_set(fun run_difference_test/3).
+
+test_intersection(_Config) ->
+    ?assertEqual(b5_sets:new(), b5_sets:intersection([])),
+    foreach_test_set(fun run_intersection_test/3).
+
+test_intersection3(_Config) ->
+    foreach_test_set(fun run_intersection3_test/3).
+
+test_is_disjoint(_Config) ->
+    foreach_test_set(fun run_is_disjoint_test/3).
+
+test_is_equal(_Config) ->
+    foreach_test_set(fun run_is_equal_test/3).
+
+test_is_subset(_Config) ->
+    foreach_test_set(fun run_is_subset_test/3).
+
+test_union(_Config) ->
+    ?assertEqual(b5_sets:new(), b5_sets:union([])),
+    foreach_test_set(fun run_union_test/3).
+
+test_union3(_Config) ->
+    foreach_test_set(fun run_union3_test/3).
+
+%% ------------------------------------------------------------------
+%% Tests - Iterators
+%% ------------------------------------------------------------------
+
+test_iterator(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            Iter = new_iterator(Set),
+            ?assertListsCanonEqual(RefElements, iterate(Iter))
+        end
+    ).
+
+test_iterator_reversed(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            Iter = b5_sets:iterator(Set, reversed),
+            ?assertListsCanonEqual(lists:reverse(RefElements), iterate(Iter))
+        end
+    ).
+
+test_iterator_from(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            run_iterator_from(RefElements, Set)
+        end
+    ).
+
+test_iterator_from_reversed(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            run_iterator_from_reversed(RefElements, Set)
+        end
+    ).
+
+%% ------------------------------------------------------------------
+%% Tests - Additional Functions
+%% ------------------------------------------------------------------
+
+test_filter(_Config) ->
+    foreach_test_set(
+        fun(Size, RefElements, Set) ->
+            run_filter(Size, RefElements, Set)
+        end
+    ).
+
+test_filtermap(_Config) ->
+    foreach_test_set(
+        fun(Size, RefElements, Set) ->
+            run_filtermap(Size, RefElements, Set)
+        end
+    ).
+
+test_fold(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            run_fold(RefElements, Set)
+        end
+    ).
+
+test_is_set(_Config) ->
+    ?assertEqual(false, b5_sets:is_set(foobar)),
+    ?assertEqual(false, b5_sets:is_set(b5_trees:new())),
+    ?assertEqual(false, b5_sets:is_set(b5_items:new())),
+
+    foreach_test_set(
+        fun(_Size, _RefElements, Set) ->
+            ?assertEqual(true, b5_sets:is_set(Set)),
+
+            {b5_sets, Size, Root} = b5_trees_util:dialyzer_opaque_term(Set),
+
+            ?assertEqual(true, b5_sets:is_set({b5_sets, Size, Root})),
+
+            ?assertEqual(false, b5_sets:is_set({b5_sets, -1, Root})),
+
+            ?assertEqual((Size =:= 0), b5_sets:is_set({b5_sets, 0, Root})),
+
+            ?assertEqual(false, b5_sets:is_set({b5_sets, Size, invalid_root})),
+
+            ?assertEqual(false, b5_sets:is_set({b5_sets, not_an_integer, Root}))
+        end
+    ).
+
+test_map(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Set) ->
+            run_map(RefElements, Set)
+        end
+    ).
+
+%% ------------------------------------------------------------------
+%% Tests - Structure
+%% ------------------------------------------------------------------
+
+test_structure_sequentially_built(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                ?assertEqual(RefElements, lists:usort(RefElements)),
+
+                case rand:uniform(4) of
+                    1 ->
+                        new_set_from_each_inserted(RefElements);
+                    2 ->
+                        b5_sets:from_list(RefElements);
+                    3 ->
+                        new_set_from_each_inserted(lists:reverse(RefElements));
+                    4 ->
+                        b5_sets:from_list(lists:reverse(RefElements))
+                end
+            end
         ),
 
-        Pivots =
-            (lists:map(
-                fun(From) -> From + 0.5 end,
-                take_random(WholePivots, 10)
-            ) ++
-                WholePivots),
+    %%%%%%%%%%
 
-        lists:foreach(
-            fun(Pivot) ->
-                RefSmaller = gb_sets:smaller(Pivot, RefSet),
-                ExpectedSmaller = expected_smaller(Pivot, RefList),
-                ?assertEqual(RefSmaller, ExpectedSmaller),
+    ?assertPreciseStat(height, 5.0, CondensedStats),
 
-                TestedSmaller = b5_sets:smaller(Pivot, TestSet),
-                ?assertEqual(ExpectedSmaller, TestedSmaller),
+    ?assertPreciseStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
 
-                %%%
+%%%%
 
-                RefLarger = gb_sets:larger(Pivot, RefSet),
-                ExpectedLarger = expected_larger(Pivot, RefList),
-                ?assertEqual(RefLarger, ExpectedLarger),
-
-                TestedLarger = b5_sets:larger(Pivot, TestSet),
-                ?assertEqual(ExpectedLarger, TestedLarger)
-            end,
-            Pivots
-        )
-    end).
-
-expected_smaller(Pivot, RefList) ->
-    case lists:filter(fun(Elem) -> Elem < Pivot end, RefList) of
-        [] ->
-            none;
-        %
-        Filtered ->
-            {found, lists:last(Filtered)}
-    end.
-
-expected_larger(Pivot, RefList) ->
-    case lists:dropwhile(fun(Elem) -> Elem =< Pivot end, RefList) of
-        [] ->
-            none;
-        %
-        [Elem | _] ->
-            {found, Elem}
-    end.
-
-%%%
-
-test_smallest_largest_operations(_Config) ->
-    foreach_set(
-        fun(RefSet, TestSet) ->
-            case gb_sets:to_list(RefSet) of
-                [] ->
-                    ?assertError(function_clause, gb_sets:smallest(RefSet)),
-                    ?assertError(function_clause, gb_sets:largest(RefSet)),
-
-                    % FIXME should we return the exact same exception instead? (`function_clause')
-                    ?assertError(empty_set, b5_sets:smallest(TestSet)),
-                    ?assertError(empty_set, b5_sets:largest(TestSet));
-                %
-                [ExpectedSmallest | _] = RefList ->
-                    ExpectedLargest = lists:last(RefList),
-
-                    ?assertEqual(ExpectedSmallest, b5_sets:smallest(TestSet)),
-                    ?assertEqual(ExpectedLargest, b5_sets:largest(TestSet))
+test_structure_randomly_built(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                new_set_from_each_inserted(list_shuffle(RefElements))
             end
-        end
-    ).
+        ),
 
-test_take_smallest_operations(_Config) ->
-    foreach_set(
-        fun(RefSet, TestSet) ->
-            lists:foldl(
-                fun(_, {RefAcc, TestAcc}) ->
-                    case gb_sets:to_list(RefAcc) of
-                        [] ->
-                            ?assertError(function_clause, gb_sets:take_smallest(RefAcc)),
-                            ?assertEqual(0, gb_sets:size(RefAcc)),
+    %%%%%%%%%%
 
-                            % FIXME should we return the exact same exception instead? (`function_clause')
-                            ?assertError(empty_set, b5_sets:take_smallest(TestAcc)),
-                            ?assertEqual(0, b5_sets:size(TestAcc)),
-                            finished;
-                        %
-                        [ExpectedSmallest | ExpectedRemaining] ->
-                            ExpectedSize = length(ExpectedRemaining),
+    ?assertConfidentStat(height, 5.0, CondensedStats),
 
-                            {RefSmallest, RefUpdated} = gb_sets:take_smallest(RefAcc),
-                            ?assertEqual(RefSmallest, ExpectedSmallest),
-                            ?assertEqual(gb_sets:to_list(RefUpdated), ExpectedRemaining),
-                            ?assertEqual(gb_sets:size(RefUpdated), ExpectedSize),
+    ?assertConfidentStat(avg_keys_per_node, 2.9143881267511302, CondensedStats).
 
-                            {TestSmallest, TestUpdated} = b5_sets:take_smallest(TestAcc),
-                            ?assertEqual(TestSmallest, ExpectedSmallest),
-                            ?assertEqual(ExpectedRemaining, b5_sets:to_list(TestUpdated)),
-                            ?assertEqual(ExpectedSize, b5_sets:size(TestUpdated)),
+%%%%
 
-                            {RefUpdated, TestUpdated}
-                    end
-                end,
-                {RefSet, TestSet},
-                lists:seq(1, gb_sets:size(RefSet) + 1)
-            )
-        end
-    ).
+test_structure_build_seqIns2x_seqDelSmallerHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build sequentially
+                Set1 = new_set_from_each_inserted(RefElements),
 
-test_take_largest_operations(_Config) ->
-    foreach_set(
-        fun(RefSet, TestSet) ->
-            lists:foldl(
-                fun(_, {RefAcc, TestAcc}) ->
-                    case gb_sets:fold(fun(Elem, Acc) -> [Elem | Acc] end, [], RefAcc) of
-                        [] ->
-                            ?assertError(function_clause, gb_sets:take_largest(RefAcc)),
-                            ?assertEqual(0, gb_sets:size(RefAcc)),
+                % 2) delete smaller half sequentially
+                AmountToDelete = b5_sets:size(Set1) div 2,
+                ItemsToDelete = lists:sublist(RefElements, AmountToDelete),
+                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
 
-                            ?assertError(empty_set, b5_sets:take_largest(TestAcc)),
-                            ?assertEqual(0, b5_sets:size(TestAcc)),
-                            finished;
-                        %
-                        [ExpectedLargest | ExpectedRemainingReverse] ->
-                            ExpectedRemaining = lists:reverse(ExpectedRemainingReverse),
-                            ExpectedSize = length(ExpectedRemaining),
+    %%%%%%%%%%
 
-                            {RefLargest, RefUpdated} = gb_sets:take_largest(RefAcc),
-                            ?assertEqual(RefLargest, ExpectedLargest),
-                            ?assertEqual(gb_sets:to_list(RefUpdated), ExpectedRemaining),
-                            ?assertEqual(gb_sets:size(RefUpdated), ExpectedSize),
+    ?assertPreciseStat(height, 5.0, CondensedStats),
 
-                            {TestLargest, TestUpdated} = b5_sets:take_largest(TestAcc),
-                            ?assertEqual(TestLargest, ExpectedLargest),
-                            ?assertEqual(ExpectedRemaining, b5_sets:to_list(TestUpdated)),
-                            ?assertEqual(ExpectedSize, b5_sets:size(TestUpdated)),
+    ?assertPreciseStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
 
-                            {RefUpdated, TestUpdated}
-                    end
-                end,
-                {RefSet, TestSet},
-                lists:seq(1, gb_sets:size(RefSet) + 1)
-            )
-        end
-    ).
+%%%%
 
-%% ------------------------------------------------------------------
-%% Higher-Order Operation Tests
-%% ------------------------------------------------------------------
+test_structure_build_seqIns2x_seqDelGreaterHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build sequentially
+                Set1 = new_set_from_each_inserted(RefElements),
 
-test_fold_operations(_Config) ->
-    foreach_set(
-        fun(RefSet, TestSet) ->
-            {FoldFun, Acc0} =
-                case rand:uniform(3) of
-                    1 ->
-                        {fun(_Elem, _Acc) -> no end, no};
-                    %
-                    2 ->
-                        {fun(Elem, Acc) -> Elem + Acc end, 0};
-                    %
-                    3 ->
-                        Multiplier = rand:uniform(10),
-                        {fun(Elem, Acc) -> [Multiplier * Elem | Acc] end, []}
-                end,
+                % 2) delete greater half sequentially
+                AmountToDelete = b5_sets:size(Set1) div 2,
+                ItemsToDelete = lists:sublist(lists:reverse(RefElements), AmountToDelete),
+                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
 
-            ?assertEqual(
-                gb_sets:fold(FoldFun, Acc0, RefSet),
-                b5_sets:fold(FoldFun, Acc0, TestSet)
-            )
-        end
-    ).
+    %%%%%%%%%%
 
-test_map_operations(_Config) ->
-    foreach_set(
-        fun(RefSet, TestSet) ->
-            MapFun =
-                case rand:uniform(3) of
-                    1 ->
-                        fun(_Elem) -> no end;
-                    %
-                    2 ->
-                        fun(Elem) -> Elem div 100 end;
-                    %
-                    3 ->
-                        fun(Elem) -> Elem * 100.0 end
-                end,
+    ?assertPreciseStat(height, 5.0, CondensedStats),
 
-            UpdatedRef = gb_sets:map(MapFun, RefSet),
-            UpdatedSet = b5_sets:map(MapFun, TestSet),
+    ?assertPreciseStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
 
-            ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet)),
-            ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet))
-        end
-    ).
+%%%%
 
-test_filter_operations(_Config) ->
-    foreach_set(
-        fun(RefSet, TestSet) ->
-            RefList = gb_sets:to_list(RefSet),
+test_structure_build_seqIns2x_randomlyDelHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build sequentially
+                Set1 = new_set_from_each_inserted(RefElements),
 
-            FilterFun =
-                case rand:uniform(3) of
-                    1 ->
-                        fun(_Elem) -> false end;
-                    %
-                    2 ->
-                        fun(Elem) -> trunc(Elem) rem 2 =:= 0 end;
-                    %
-                    3 ->
-                        FilteredAmount = rand:uniform(length(RefList) + 1) - 1,
-                        FilteredElements = gb_sets:from_list(take_random(RefList, FilteredAmount)),
-                        fun(Elem) -> gb_sets:is_element(Elem, FilteredElements) end
-                end,
+                % 2) delete half randomly
+                AmountToDelete = b5_sets:size(Set1) div 2,
+                ItemsToDelete = lists:sublist(list_shuffle(RefElements), AmountToDelete),
+                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
 
-            UpdatedRef = gb_sets:filter(FilterFun, RefSet),
-            UpdatedSet = b5_sets:filter(FilterFun, TestSet),
+    %%%%%%%%%%
 
-            ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet)),
-            ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet))
-        end
-    ).
+    ?assertConfidentStat(height, 5.826, CondensedStats),
 
-test_filtermap_operations(_Config) ->
-    foreach_set(
-        fun(RefSet, TestSet) ->
-            RefList = gb_sets:to_list(RefSet),
+    ?assertConfidentStat(avg_keys_per_node, 2.5855965970699875, CondensedStats).
 
-            FilterFun =
-                case rand:uniform(3) of
-                    1 ->
-                        fun(_Elem) -> false end;
-                    %
-                    2 ->
-                        fun(Elem) -> trunc(Elem) rem 2 =:= 0 andalso {true, Elem div 3} end;
-                    %
-                    3 ->
-                        FilteredAmount = rand:uniform(length(RefList) + 1) - 1,
-                        FilteredList = take_random(RefList, FilteredAmount),
-                        FilteredElements = gb_sets:from_list(FilteredList),
+%%%%
 
-                        MappedAmount = rand:uniform(length(FilteredList) + 1) - 1,
-                        MappedElements = gb_sets:from_list(take_random(FilteredList, MappedAmount)),
+test_structure_build_randomlyIns2x_randomlyDelHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build randomly
+                Set1 = new_set_from_each_inserted(list_shuffle(RefElements)),
 
-                        SingleValueMap = make_ref(),
+                % 2) delete half randomly
+                AmountToDelete = b5_sets:size(Set1) div 2,
+                ItemsToDelete = lists:sublist(list_shuffle(RefElements), AmountToDelete),
+                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
 
-                        fun(Elem) ->
-                            case gb_sets:is_element(Elem, FilteredElements) of
-                                true ->
-                                    case gb_sets:is_element(Elem, MappedElements) of
-                                        true ->
-                                            {true, SingleValueMap};
-                                        false ->
-                                            true
-                                    end;
-                                false ->
-                                    false
-                            end
-                        end
-                end,
+    %%%%%%%%%%
 
-            UpdatedRef = gb_sets:filtermap(FilterFun, RefSet),
-            UpdatedSet = b5_sets:filtermap(FilterFun, TestSet),
+    ?assertConfidentStat(height, 5.82, CondensedStats),
 
-            ?assertEqual(gb_sets:to_list(UpdatedRef), b5_sets:to_list(UpdatedSet)),
-            ?assertEqual(gb_sets:size(UpdatedRef), b5_sets:size(UpdatedSet))
-        end
-    ).
+    ?assertConfidentStat(avg_keys_per_node, 2.59362583949796, CondensedStats).
+
+%%%%
+
+test_structure_build_randomlyIns2x_seqDelSmallerHalf(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build randomly
+                Set1 = new_set_from_each_inserted(list_shuffle(RefElements)),
+
+                % 2) delete smaller half sequentially
+                AmountToDelete = b5_sets:size(Set1) div 2,
+                ItemsToDelete = lists:sublist(RefElements, AmountToDelete),
+                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+            end,
+            [{size_multiplier, 2}]
+        ),
+
+    %%%%%%%%%%
+
+    ?assertConfidentStat(height, 5.01, CondensedStats),
+
+    ?assertConfidentStat(avg_keys_per_node, 2.9089119962162733, CondensedStats).
+
+%%%%
+
+test_structure_build_adversarial_deletion(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                % 1) build sequentially
+                Set1 = new_set_from_each_inserted(RefElements),
+
+                % 2) delete every 5th item sequentially
+                ItemsToDelete =
+                    lists:filtermap(
+                        fun({Index, E}) ->
+                            ((Index rem 5 =:= 0) andalso
+                                {true, E})
+                        end,
+                        lists:enumerate(RefElements)
+                    ),
+
+                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+            end,
+            [{size_multiplier, 1.25}]
+        ),
+
+    %%%%%%%%%%
+
+    ?assertPreciseStat(height, 5.00, CondensedStats),
+
+    % NOTE: if we delete every _4th_ item, it's actually worse for `avg_keys_per_internal_node`.
+
+    ?assertConfidentStat(avg_keys_per_node, 2.3980815347722086, CondensedStats).
 
 %% ------------------------------------------------------------------
-%% Compatibility Operation Tests
+%% Helper Functions: shared
 %% ------------------------------------------------------------------
 
-test_compatibility_aliases(_Config) ->
-    Set1 = new_empty_set(),
+foreach_test_set(Fun) ->
+    foreach_test_set(Fun, []).
 
-    %% add_element/2 should behave like add/2
-    Set2 = b5_sets:add_element(42, Set1),
-    Set3 = b5_sets:add(42, Set1),
-    ?assertEqual(Set2, Set3),
+foreach_test_set(Fun, Opts) ->
+    foreach_tested_size(
+        fun(Size, RefElements) ->
+            Set = b5_sets:from_list(maybe_shuffle_elements_for_new_set(RefElements)),
+            ?assertEqual(Size, b5_sets:size(Set)),
 
-    %% del_element/2 should behave like delete_any/2
-    Set4 = b5_sets:del_element(42, Set2),
-    Set5 = b5_sets:delete_any(42, Set2),
-    ?assertEqual(Set4, Set5),
+            Stats = b5_sets:structural_stats(Set),
+            ?assertEqual(Size, proplists:get_value(total_keys, Stats)),
 
-    %% is_element/2 should behave like is_member/2
-    ?assertEqual(b5_sets:is_element(42, Set2), b5_sets:is_member(42, Set2)),
-    ?assertEqual(b5_sets:is_element(99, Set2), b5_sets:is_member(99, Set2)),
-
-    %% subtract/2 should behave like difference/2
-    SetA = b5_sets:from_list([1, 2, 3]),
-    SetB = b5_sets:from_list([2, 3, 4]),
-    SubtractResult = b5_sets:subtract(SetA, SetB),
-    DifferenceResult = b5_sets:difference(SetA, SetB),
-    ?assertEqual(SubtractResult, DifferenceResult).
-
-%% ------------------------------------------------------------------
-%% Empty Set Edge Case Tests
-%% ------------------------------------------------------------------
-
-test_empty_set_exceptions(_Config) ->
-    % TODO we may not need this
-    EmptySet = new_empty_set(),
-
-    %% Test operations on empty sets
-    ?assertError({badkey, arbitrary_element}, b5_sets:delete(arbitrary_element, EmptySet)),
-    ?assertEqual(none, b5_sets:smaller(arbitrary_element, EmptySet)),
-    ?assertEqual(none, b5_sets:larger(arbitrary_element, EmptySet)),
-    ?assertError(empty_set, b5_sets:smallest(EmptySet)),
-    ?assertError(empty_set, b5_sets:largest(EmptySet)),
-    ?assertError(empty_set, b5_sets:take_smallest(EmptySet)),
-    ?assertError(empty_set, b5_sets:take_largest(EmptySet)),
-
-    %% Test with various element types
-    TestElements = [
-        42,
-        atom,
-        "string",
-        [1, 2, 3],
-        {tuple, element},
-        3.14159,
-        #{map => element}
-    ],
-
-    lists:foreach(
-        fun(Element) ->
-            ?assertError({badkey, Element}, b5_sets:delete(Element, EmptySet)),
-            ?assertEqual(none, b5_sets:smaller(Element, EmptySet)),
-            ?assertEqual(none, b5_sets:larger(Element, EmptySet))
+            Fun(Size, RefElements, Set)
         end,
-        TestElements
-    ),
+        Opts
+    ).
 
-    %% Verify these operations work fine on non-empty sets
-    NonEmptySet = b5_sets:from_list([1, 2, 3]),
+maybe_shuffle_elements_for_new_set(RefElements) ->
+    % Sequential insertion takes very different paths from random insertion,
+    % the occasional shuffle means we get good coverage of both.
 
-    %% These should work without throwing exceptions
+    case rand:uniform() < 1 / 3 of
+        true ->
+            list_shuffle(RefElements);
+        %
+        false ->
+            RefElements
+    end.
 
-    % smallest has no smaller
-    ?assertEqual(none, b5_sets:smaller(1, NonEmptySet)),
-    % largest has no larger
-    ?assertEqual(none, b5_sets:larger(3, NonEmptySet)),
-    ?assertEqual({found, 1}, b5_sets:smaller(2, NonEmptySet)),
-    ?assertEqual({found, 3}, b5_sets:larger(2, NonEmptySet)),
+foreach_tested_size(Fun) ->
+    foreach_tested_size(Fun, []).
 
-    %% These should throw badkey for non-existent elements
-    ?assertError({badkey, 99}, b5_sets:delete(99, NonEmptySet)),
+foreach_tested_size(Fun, Opts) ->
+    NumericOnly = proplists:get_value(numeric_only, Opts, false),
 
-    %% These should work for elements that exist
-    {Smallest, _} = b5_sets:take_smallest(NonEmptySet),
-    ?assertEqual(1, Smallest),
-
-    {Largest, _} = b5_sets:take_largest(NonEmptySet),
-    ?assertEqual(3, Largest).
-
-%% ------------------------------------------------------------------
-%% Helper Functions
-%% ------------------------------------------------------------------
-
-foreach_set(Fun) ->
     lists:foreach(
         fun(Size) ->
-            ElementsList = generate_unique_elements_list(Size),
-            RefSet = gb_sets:from_list(shuffle_list(ElementsList)),
-            TestSet = b5_sets:from_list(shuffle_list(ElementsList)),
-            Fun(RefSet, TestSet)
+            NrOfSubIterations =
+                case Size =:= 0 of
+                    true ->
+                        1;
+                    %
+                    false ->
+                        max(3, ceil(1000 / Size))
+                end,
+
+            lists:foreach(
+                fun(_) ->
+                    run_test_for_size(Size, NumericOnly, Fun)
+                end,
+                lists:seq(1, NrOfSubIterations)
+            )
         end,
-        ?TESTED_SET_SIZES
+        ?TESTED_SIZES
     ).
 
-foreach_rebuilt_variant(TestSet, Fun) ->
-    lists:foreach(
-        fun(_) ->
-            List = b5_sets:to_list(TestSet),
-            ShuffledRetyped = randomly_switch_types(shuffle_list(List)),
-            Fun(b5_sets:from_list(ShuffledRetyped))
-        end,
-        lists:seq(1, 10)
-    ).
+run_test_for_size(Size, NumericOnly, Fun) ->
+    RefElements = new_ref_elements(Size, NumericOnly),
+    Fun(Size, RefElements).
 
-generate_unique_elements_list(Size) ->
-    generate_unique_elements_list_recur(Size, #{}).
+new_ref_elements(Size, NumericOnly) ->
+    new_ref_elements_recur(Size, NumericOnly, _Acc = []).
 
-generate_unique_elements_list_recur(Size, Acc) when Size > 0 ->
-    New = rand:uniform(10000),
+new_ref_elements_recur(Size, NumericOnly, Acc) when Size > 0 ->
+    NewElement = new_element(NumericOnly),
 
-    case is_map_key(New, Acc) of
+    case lists:member(NewElement, Acc) of
         false ->
-            UpdatedAcc = maps:put(New, value, Acc),
-            generate_unique_elements_list_recur(Size - 1, UpdatedAcc);
+            UpdatedAcc = [NewElement | Acc],
+            new_ref_elements_recur(Size - 1, NumericOnly, UpdatedAcc);
         %
         true ->
-            generate_unique_elements_list_recur(Size, Acc)
+            new_ref_elements_recur(Size, NumericOnly, Acc)
     end;
-generate_unique_elements_list_recur(0, Acc) ->
-    maps:keys(Acc).
+new_ref_elements_recur(0, _, Acc) ->
+    lists:sort(Acc).
 
-generate_new_element_not_in_set(RefSet) ->
-    generate_new_element_not_in_set(RefSet, 1000).
-
-generate_new_element_not_in_set(RefSet, Candidate) ->
-    case gb_sets:is_member(Candidate, RefSet) of
-        true -> generate_new_element_not_in_set(RefSet, Candidate + 1);
-        false -> Candidate
-    end.
-
-%% @doc Take N random elements from a list
-take_random(List, N) when N >= length(List) ->
-    List;
-take_random(List, N) when N > 0 ->
-    Shuffled = shuffle_list(List),
-    lists:sublist(Shuffled, N);
-take_random(_List, 0) ->
-    [].
-
-%% @doc Shuffle a list randomly
-shuffle_list(List) ->
-    [X || {_, X} <- lists:sort([{rand:uniform(), X} || X <- List])].
-
-%% @doc Iterate through all elements using iterator
-iterate_to_list(Iter) ->
-    iterate_to_list(Iter, []).
-
-iterate_to_list(Iter, Acc) ->
-    case b5_sets:next(Iter) of
-        none -> lists:reverse(Acc);
-        {Element, NextIter} -> iterate_to_list(NextIter, [Element | Acc])
-    end.
-
-ref_iterate_to_list(Iter) ->
-    ref_iterate_to_list(Iter, []).
-
-ref_iterate_to_list(Iter, Acc) ->
-    case gb_sets:next(Iter) of
-        none -> lists:reverse(Acc);
-        {Element, NextIter} -> ref_iterate_to_list(NextIter, [Element | Acc])
-    end.
-
-fold_randomly_retyped_shuffled_elements(Fun, Acc0, RefSet) ->
-    lists:foldl(
-        fun(Element, Acc) ->
-            Fun(randomly_switch_type(Element), Acc)
-        end,
-        Acc0,
-        shuffle_list(gb_sets:to_list(RefSet))
-    ).
-
-foreach_randomly_retyped_element(Fun, RefSet) ->
-    gb_sets:fold(
-        fun(Element, _) ->
-            Fun(randomly_switch_type(Element)),
-            ok
-        end,
-        ok,
-        RefSet
-    ).
-
-foreach_non_existent_element(Fun, RefSet, Amount) ->
-    lists:foreach(
-        fun(_) ->
-            Element = randomly_switch_type(generate_new_element_not_in_set(RefSet)),
-            Fun(Element)
-        end,
-        lists:seq(1, Amount)
-    ).
-
-randomly_switch_types(List) ->
-    lists:map(fun randomly_switch_type/1, List).
-
-randomly_switch_type(Element) ->
-    case rand:uniform(2) of
+randomly_switch_number_type(Element) ->
+    case rand:uniform(3) of
         1 when is_integer(Element) ->
             float(Element);
         %
         1 when is_float(Element) ->
             trunc(Element);
         %
-        2 ->
+        _ ->
             Element
     end.
 
-diff_lists([A | NextA], [B | NextB]) ->
-    if
-        A == B ->
-            diff_lists(NextA, NextB);
+canon_element(Element) when is_float(Element) ->
+    case math:fmod(Element, 1.0) == 0 of
+        true ->
+            trunc(Element);
+        %
+        false ->
+            Element
+    end;
+canon_element(Integer) when is_integer(Integer) ->
+    Integer;
+canon_element(List) when is_list(List) ->
+    canon_list(List);
+canon_element(Tuple) when is_tuple(Tuple) ->
+    List = tuple_to_list(Tuple),
+    Mapped = lists:map(fun canon_element/1, List),
+    list_to_tuple(Mapped);
+canon_element(Map) when is_map(Map) ->
+    List = maps:to_list(Map),
+    Mapped = lists:map(fun canon_element/1, List),
+    maps:from_list(Mapped);
+canon_element(Other) ->
+    Other.
+
+canon_list([H | T]) ->
+    [canon_element(H) | canon_list(T)];
+canon_list([]) ->
+    [];
+canon_list(ImproperTail) ->
+    canon_element(ImproperTail).
+
+new_set_from_each_inserted(List) ->
+    Set = b5_sets:new(),
+
+    ?assertEqual(0, b5_sets:size(Set)),
+    ?assertEqual(true, b5_sets:is_empty(Set)),
+
+    new_set_from_each_inserted_recur(List, Set).
+
+new_set_from_each_inserted_recur([Element | Next], Set) ->
+    UpdatedSet = b5_sets:insert(Element, Set),
+    new_set_from_each_inserted_recur(Next, UpdatedSet);
+new_set_from_each_inserted_recur([], Set) ->
+    Set.
+
+%%%%%%%%%%%%%%%
+
+foreach_existing_element(Fun, RefElements, Amount) ->
+    Chosen = lists:sublist(list_shuffle(RefElements), Amount),
+
+    lists:foreach(
+        fun(Element) ->
+            Fun(randomly_switch_number_type(Element))
+        end,
+        Chosen
+    ).
+
+foreach_non_existent_element(Fun, RefElements, Amount) when Amount > 0 ->
+    Element = new_element(),
+
+    case lists:any(fun(E) -> E == Element end, RefElements) of
+        false ->
+            Fun(Element),
+            foreach_non_existent_element(Fun, RefElements, Amount - 1);
         %
         true ->
-            [{different, A, B}]
+            foreach_non_existent_element(Fun, RefElements, Amount)
     end;
-diff_lists([], []) ->
-    [].
+foreach_non_existent_element(_, _, 0) ->
+    ok.
 
-new_empty_set() ->
-    b5_trees_util:dialyzer_opaque_term(b5_sets:new()).
+list_shuffle(List) ->
+    WithWeights = lists:map(fun(V) -> [rand:uniform() | V] end, List),
+    Shuffled = lists:sort(WithWeights),
+    lists:map(fun([_ | V]) -> V end, Shuffled).
+
+add_to_sorted_list(Elem, [H | T]) ->
+    case Elem > H of
+        true ->
+            [H | add_to_sorted_list(Elem, T)];
+        %
+        false ->
+            [Elem, H | T]
+    end;
+add_to_sorted_list(Elem, []) ->
+    [Elem].
+
+remove_from_sorted_list(Elem, [H | T]) ->
+    if
+        Elem > H ->
+            [H | remove_from_sorted_list(Elem, T)];
+        %
+        Elem == H ->
+            T
+    end.
+
+%% ------------------------------------------------------------------
+%% Helper Functions: construction repeated
+%% ------------------------------------------------------------------
+
+run_construction_repeated_test(Size, RefElements) ->
+    run_construction_repeated_test_recur(Size, RefElements, []).
+
+run_construction_repeated_test_recur(Size, [ElementToRepeat | Next], Prev) ->
+    List = lists:reverse(Prev, [
+        ElementToRepeat, randomly_switch_number_type(ElementToRepeat) | Next
+    ]),
+
+    Set = b5_sets:from_list(List),
+
+    ?assertEqual(Size, b5_sets:size(Set)),
+
+    ?assertListsCanonEqual(
+        lists:usort(List),
+        b5_sets:to_list(Set)
+    ),
+
+    %%%
+
+    SetShuffled = b5_sets:from_list(list_shuffle(List)),
+
+    ?assertEqual(Size, b5_sets:size(SetShuffled)),
+
+    ?assertListsCanonEqual(
+        lists:usort(List),
+        b5_sets:to_list(SetShuffled)
+    ),
+
+    %%%
+
+    run_construction_repeated_test_recur(Size, Next, [ElementToRepeat | Prev]);
+run_construction_repeated_test_recur(_, [], _) ->
+    ok.
+
+%% ------------------------------------------------------------------
+%% Helpers: deletion
+%% ------------------------------------------------------------------
+
+test_delete_non_existing_keys(Set, RemainingElements, Amount) when Amount > 0 ->
+    Element = new_element(),
+
+    case lists:any(fun(E) -> E == Element end, RemainingElements) of
+        false ->
+            ?assertError({badkey, Element}, b5_sets:delete(Element, Set)),
+            ?assertEqual(Set, b5_sets:delete_any(Element, Set)),
+
+            ?assertEqual(Set, b5_sets:del_element(Element, Set)),
+
+            test_delete_non_existing_keys(Set, RemainingElements, Amount - 1);
+        %
+        true ->
+            test_delete_non_existing_keys(Set, RemainingElements, Amount)
+    end;
+test_delete_non_existing_keys(_, _, 0) ->
+    ok.
+
+%% ------------------------------------------------------------------
+%% Helpers: smaller and larger
+%% ------------------------------------------------------------------
+
+run_smaller(RefElements, Set) ->
+    case RefElements of
+        [] ->
+            Element = new_element(),
+            ?assertEqual(none, b5_sets:smaller(Element, Set));
+        %
+        [SingleElement] ->
+            ?assertEqual(none, b5_sets:smaller(randomly_switch_number_type(SingleElement), Set)),
+
+            LargerElement = element_larger(SingleElement),
+            ?assert(b5_sets:smaller(LargerElement, Set) == {found, SingleElement}),
+
+            SmallerElement = element_smaller(SingleElement),
+            ?assertEqual(none, b5_sets:smaller(SmallerElement, Set));
+        %
+        [FirstElement | Next] ->
+            ?assertEqual(none, b5_sets:smaller(randomly_switch_number_type(FirstElement), Set)),
+
+            SmallerElement = element_smaller(FirstElement),
+            ?assertEqual(none, b5_sets:smaller(SmallerElement, Set)),
+
+            run_smaller_recur(FirstElement, Next, Set)
+    end.
+
+run_smaller_recur(Expected, [LastElement], Set) ->
+    ?assertCanonEqual(
+        {found, Expected},
+        b5_sets:smaller(randomly_switch_number_type(LastElement), Set)
+    ),
+
+    LargerElement = element_larger(LastElement),
+    ?assert(LargerElement > LastElement),
+    ?assert(b5_sets:smaller(LargerElement, Set) == {found, LastElement});
+run_smaller_recur(Expected, [Element | Next], Set) ->
+    ?assert(b5_sets:smaller(randomly_switch_number_type(Element), Set) == {found, Expected}),
+
+    case element_in_between(Expected, Element) of
+        {found, InBetween} ->
+            ?assert(InBetween > Expected),
+            ?assert(InBetween < Element),
+            ?assert(b5_sets:smaller(InBetween, Set) == {found, Expected});
+        %
+        none ->
+            ok
+    end,
+
+    run_smaller_recur(Element, Next, Set).
+
+%%%%%%%%%%%%%%%%%
+
+run_larger(RefElements, Set) ->
+    case lists:reverse(RefElements) of
+        [] ->
+            Element = new_element(),
+            ?assertEqual(none, b5_sets:larger(Element, Set));
+        %
+        [SingleElement] ->
+            ?assertEqual(none, b5_sets:larger(SingleElement, Set)),
+
+            LargerElement = element_larger(SingleElement),
+            ?assertEqual(none, b5_sets:larger(LargerElement, Set)),
+
+            SmallerElement = element_smaller(SingleElement),
+            ?assert(b5_sets:larger(SmallerElement, Set) == {found, SingleElement});
+        %
+        [LastElement | Next] ->
+            ?assertEqual(none, b5_sets:larger(randomly_switch_number_type(LastElement), Set)),
+
+            LargerElement = element_larger(LastElement),
+            ?assertEqual(none, b5_sets:larger(LargerElement, Set)),
+
+            run_larger_recur(LastElement, Next, Set)
+    end.
+
+run_larger_recur(Expected, [FirstElement], Set) ->
+    ?assertCanonEqual(
+        {found, Expected},
+        b5_sets:larger(randomly_switch_number_type(FirstElement), Set)
+    ),
+
+    SmallerElement = element_smaller(FirstElement),
+    ?assert(SmallerElement < FirstElement),
+    ?assert(b5_sets:larger(SmallerElement, Set) == {found, FirstElement});
+run_larger_recur(Expected, [Element | Next], Set) ->
+    ?assert(b5_sets:larger(randomly_switch_number_type(Element), Set) == {found, Expected}),
+
+    case element_in_between(Element, Expected) of
+        {found, InBetween} ->
+            ?assert(InBetween < Expected),
+            ?assert(InBetween > Element),
+            ?assert(b5_sets:larger(InBetween, Set) == {found, Expected});
+        %
+        none ->
+            ok
+    end,
+
+    run_larger_recur(Element, Next, Set).
+
+%%%%%%%%%%%%%%%%%
+
+run_take_smallest([Expected | Next], Set) ->
+    {Taken, Set2} = b5_sets:take_smallest(Set),
+    ?assert(Taken == Expected),
+    ?assertEqual(length(Next), b5_sets:size(Set2)),
+    run_take_smallest(Next, Set2);
+run_take_smallest([], Set) ->
+    ?assertError(empty_set, b5_sets:take_smallest(Set)).
+
+run_take_largest([Expected | Next], Set) ->
+    {Taken, Set2} = b5_sets:take_largest(Set),
+    ?assert(Taken == Expected),
+    ?assertEqual(length(Next), b5_sets:size(Set2)),
+    run_take_largest(Next, Set2);
+run_take_largest([], Set) ->
+    ?assertError(empty_set, b5_sets:take_largest(Set)).
+
+%% ------------------------------------------------------------------
+%% Helpers: Difference
+%% ------------------------------------------------------------------
+
+run_difference_test(Size, RefElements, Set) ->
+    SelfDifference = b5_sets:difference(Set, Set),
+
+    ?assertEqual(0, b5_sets:size(SelfDifference)),
+    ?assertEqual([], b5_sets:to_list(SelfDifference)),
+
+    %%%%%%%%%%%%%%%
+
+    foreach_second_set(
+        fun(RefElements2, Set2) ->
+            Difference = b5_sets:difference(Set, Set2),
+
+            %%
+
+            ExpectedRemainingElements = ordsets:subtract(
+                ordsets:from_list(RefElements), ordsets:from_list(RefElements2)
+            ),
+
+            ?assertEqual(
+                ordsets:size(ExpectedRemainingElements),
+                b5_sets:size(Difference)
+            ),
+
+            ?assertListsCanonEqual(
+                ordsets:to_list(ExpectedRemainingElements),
+                b5_sets:to_list(Difference)
+            ),
+
+            %%
+
+            ?assertEqual(Difference, b5_sets:subtract(Set, Set2))
+        end,
+        Size,
+        RefElements
+    ).
+
+%%%
+
+foreach_second_set(Fun, Size, RefElements) ->
+    foreach_second_set(Fun, Size, RefElements, _Opts = []).
+
+foreach_second_set(Fun, Size, RefElements, Opts) ->
+    Amounts2 = lists:usort([
+        0,
+        1,
+        Size,
+        rand:uniform(max(1, Size)),
+        rand:uniform(Size + 100)
+    ]),
+
+    PercentagesInCommon = [0.0, 0.5, 1.0],
+
+    ParamCombos = [
+        {Amount2, PercentageInCommon}
+     || Amount2 <- Amounts2,
+        PercentageInCommon <- PercentagesInCommon
+    ],
+
+    MaxCombos = proplists:get_value(max_combos, Opts, length(ParamCombos)),
+
+    lists:foreach(
+        fun({Amount2, PercentageInCommon}) ->
+            RepeatedAmount = floor(PercentageInCommon * min(Amount2, Size)),
+            NewAmount = Amount2 - RepeatedAmount,
+
+            RepeatedElements = lists:sublist(list_shuffle(RefElements), RepeatedAmount),
+            NewElements = [new_element() || _ <- lists:seq(1, NewAmount)],
+
+            RefElements2 = lists:map(
+                fun randomly_switch_number_type/1, lists:usort(RepeatedElements ++ NewElements)
+            ),
+
+            Set2 = b5_sets:from_list(maybe_shuffle_elements_for_new_set(RefElements2)),
+
+            Fun(RefElements2, Set2)
+        end,
+        lists:sublist(list_shuffle(ParamCombos), MaxCombos)
+    ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Intersection
+%% ------------------------------------------------------------------
+
+run_intersection_test(Size, RefElements, Set) ->
+    SelfIntersect = b5_sets:intersection(Set, Set),
+
+    ?assertEqual(Size, b5_sets:size(SelfIntersect)),
+
+    ?assertListsCanonEqual(
+        RefElements,
+        b5_sets:to_list(SelfIntersect)
+    ),
+
+    %%%%%%%%%%%%%%%
+
+    foreach_second_set(
+        fun(RefElements2, Set2) ->
+            Intersection = b5_sets:intersection(Set, Set2),
+
+            %%
+
+            ExpectedRemainingElements = ordsets:intersection(
+                ordsets:from_list(RefElements), ordsets:from_list(RefElements2)
+            ),
+
+            ?assertEqual(
+                ordsets:size(ExpectedRemainingElements),
+                b5_sets:size(Intersection)
+            ),
+
+            ?assertListsCanonEqual(
+                ordsets:to_list(ExpectedRemainingElements),
+                b5_sets:to_list(Intersection)
+            ),
+
+            %%
+
+            ?assertListsCanonEqual(
+                ordsets:to_list(ExpectedRemainingElements),
+                b5_sets:to_list(b5_sets:intersection(Set, Set2))
+            )
+        end,
+        Size,
+        RefElements
+    ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Intersection 3
+%% ------------------------------------------------------------------
+
+run_intersection3_test(Size, RefElements, Set) ->
+    foreach_second_set(
+        fun(RefElements2, Set2) ->
+            foreach_second_set(
+                fun(RefElements3, Set3) ->
+                    ExpectedRemainingElements = ordsets:intersection([
+                        ordsets:from_list(RefElements),
+                        ordsets:from_list(RefElements2),
+                        ordsets:from_list(RefElements3)
+                    ]),
+
+                    IntersectionInputs = [Set, Set2, Set3],
+
+                    Intersection = b5_sets:intersection(IntersectionInputs),
+
+                    ?assertEqual(length(ExpectedRemainingElements), b5_sets:size(Intersection)),
+
+                    ?assertListsCanonEqual(
+                        ExpectedRemainingElements, b5_sets:to_list(Intersection)
+                    ),
+
+                    %%%
+
+                    Intersection2 = b5_sets:intersection(list_shuffle(IntersectionInputs)),
+
+                    ?assertEqual(length(ExpectedRemainingElements), b5_sets:size(Intersection2)),
+
+                    ?assertListsCanonEqual(
+                        ExpectedRemainingElements, b5_sets:to_list(Intersection2)
+                    ),
+
+                    %%%
+
+                    Intersection3 = b5_sets:intersection(list_shuffle(IntersectionInputs)),
+
+                    ?assertEqual(length(ExpectedRemainingElements), b5_sets:size(Intersection3)),
+
+                    ?assertListsCanonEqual(
+                        ExpectedRemainingElements, b5_sets:to_list(Intersection3)
+                    )
+                end,
+                Size,
+                RefElements,
+                [{max_combos, 4}]
+            )
+        end,
+        Size,
+        RefElements,
+        [{max_combos, 4}]
+    ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Is Disjoint
+%% ------------------------------------------------------------------
+
+run_is_disjoint_test(Size, RefElements, Set) ->
+    ?assertEqual((Size =:= 0), b5_sets:is_disjoint(Set, Set)),
+
+    %%%%%%%
+
+    foreach_second_set(
+        fun(RefElements2, Set2) ->
+            IsDisjoint = b5_sets:is_disjoint(Set, Set2),
+
+            ExpectedIsDisjoint = ordsets:is_disjoint(
+                ordsets:from_list(RefElements), ordsets:from_list(RefElements2)
+            ),
+
+            ?assertEqual(ExpectedIsDisjoint, IsDisjoint),
+
+            ?assertEqual(ExpectedIsDisjoint, b5_sets:is_disjoint(Set2, Set))
+        end,
+        Size,
+        RefElements
+    ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Is Equal
+%% ------------------------------------------------------------------
+
+run_is_equal_test(Size, RefElements, Set) ->
+    ?assertEqual(true, b5_sets:is_equal(Set, Set)),
+
+    %%%%%%%
+
+    foreach_second_set(
+        fun(RefElements2, Set2) ->
+            IsEqual = b5_sets:is_equal(Set, Set2),
+
+            ExpectedIsEqual = (RefElements == RefElements2),
+
+            ?assertEqual(ExpectedIsEqual, IsEqual),
+
+            %%
+
+            ?assertEqual(ExpectedIsEqual, b5_sets:is_equal(Set2, Set))
+        end,
+        Size,
+        RefElements
+    ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Is Subset
+%% ------------------------------------------------------------------
+
+run_is_subset_test(Size, RefElements, Set) ->
+    ?assertEqual(true, b5_sets:is_subset(Set, Set)),
+
+    %%%%%%
+
+    foreach_second_set(
+        fun(RefElements2, Set2) ->
+            IsSubset = b5_sets:is_subset(Set, Set2),
+
+            ExpectedIsSubset = ordsets:is_subset(
+                ordsets:from_list(RefElements), ordsets:from_list(RefElements2)
+            ),
+
+            ?assertEqual(ExpectedIsSubset, IsSubset),
+
+            %%
+
+            Size1 = b5_sets:size(Set),
+            Size2 = b5_sets:size(Set2),
+
+            case Size1 =:= Size2 of
+                true ->
+                    ?assertEqual(IsSubset, b5_sets:is_subset(Set2, Set));
+                _ ->
+                    ok
+            end
+        end,
+        Size,
+        RefElements
+    ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Union
+%% ------------------------------------------------------------------
+
+run_union_test(Size, RefElements, Set) ->
+    SelfUnion = b5_sets:union(Set, Set),
+
+    ?assertEqual(Size, b5_sets:size(SelfUnion)),
+
+    ?assertListsCanonEqual(RefElements, b5_sets:to_list(SelfUnion)),
+
+    %%%%%%%%%%%%%%
+
+    foreach_second_set(
+        fun(RefElements2, Set2) ->
+            ExpectedUnionElements = lists:usort(RefElements ++ RefElements2),
+
+            Union = b5_sets:union(Set, Set2),
+
+            ?assertEqual(
+                length(ExpectedUnionElements),
+                b5_sets:size(Union)
+            ),
+
+            ?assertListsCanonEqual(
+                ExpectedUnionElements,
+                b5_sets:to_list(Union)
+            ),
+
+            %%%%%%%
+
+            Union2 = b5_sets:union(Set2, Set),
+
+            ?assertEqual(
+                length(ExpectedUnionElements),
+                b5_sets:size(Union2)
+            ),
+
+            ?assertListsCanonEqual(
+                ExpectedUnionElements,
+                b5_sets:to_list(Union2)
+            ),
+
+            %%%%%%%%%
+
+            Union3 = b5_sets:union([Set, Set2]),
+
+            ?assertEqual(
+                length(ExpectedUnionElements),
+                b5_sets:size(Union3)
+            ),
+
+            ?assertListsCanonEqual(
+                ExpectedUnionElements,
+                b5_sets:to_list(Union3)
+            ),
+
+            %%%%%%%%%
+
+            Union4 = b5_sets:union([Set2, Set]),
+
+            ?assertEqual(
+                length(ExpectedUnionElements),
+                b5_sets:size(Union4)
+            ),
+
+            ?assertListsCanonEqual(
+                ExpectedUnionElements,
+                b5_sets:to_list(Union4)
+            ),
+
+            %%%%%%%%%
+
+            Union5Inputs = list_shuffle(
+                lists:duplicate(rand:uniform(10), Set) ++
+                    lists:duplicate(rand:uniform(10), Set2)
+            ),
+            Union5 = b5_sets:union(Union5Inputs),
+
+            ?assertEqual(
+                length(ExpectedUnionElements),
+                b5_sets:size(Union5)
+            ),
+
+            ?assertListsCanonEqual(
+                ExpectedUnionElements,
+                b5_sets:to_list(Union5)
+            )
+        end,
+        Size,
+        RefElements
+    ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Union List
+%% ------------------------------------------------------------------
+
+run_union3_test(Size, RefElements, Set) ->
+    foreach_second_set(
+        fun(RefElements2, Set2) ->
+            foreach_second_set(
+                fun(RefElements3, Set3) ->
+                    ExpectedUnionElements = lists:usort(
+                        RefElements ++ RefElements2 ++ RefElements3
+                    ),
+                    UnionInputs = [Set, Set2, Set3],
+
+                    Union = b5_sets:union(UnionInputs),
+
+                    ?assertEqual(length(ExpectedUnionElements), b5_sets:size(Union)),
+
+                    ?assertListsCanonEqual(ExpectedUnionElements, b5_sets:to_list(Union)),
+
+                    %%%
+
+                    Union2 = b5_sets:union(list_shuffle(UnionInputs)),
+
+                    ?assertEqual(length(ExpectedUnionElements), b5_sets:size(Union2)),
+
+                    ?assertListsCanonEqual(ExpectedUnionElements, b5_sets:to_list(Union2)),
+
+                    %%%
+
+                    Union3 = b5_sets:union(list_shuffle(UnionInputs)),
+
+                    ?assertEqual(length(ExpectedUnionElements), b5_sets:size(Union3)),
+
+                    ?assertListsCanonEqual(ExpectedUnionElements, b5_sets:to_list(Union3))
+                end,
+                Size,
+                RefElements,
+                [{max_combos, 4}]
+            )
+        end,
+        Size,
+        RefElements,
+        [{max_combos, 4}]
+    ).
+
+%% ------------------------------------------------------------------
+%% Helpers: iterators
+%% ------------------------------------------------------------------
+
+run_iterator_from(RefElements, Set) ->
+    case RefElements of
+        [] ->
+            Iter = new_iterator_from(new_element(), Set),
+            ?assertEqual([], iterate(Iter));
+        %
+        [SingleElement] ->
+            Iter = new_iterator_from(randomly_switch_number_type(SingleElement), Set),
+            ?assertListsCanonEqual(RefElements, iterate(Iter)),
+
+            SmallerElement = element_smaller(SingleElement),
+            Iter2 = new_iterator_from(SmallerElement, Set),
+            ?assertListsCanonEqual(RefElements, iterate(Iter2)),
+
+            LargerElement = element_larger(SingleElement),
+            Iter3 = new_iterator_from(LargerElement, Set),
+            ?assertEqual([], iterate(Iter3));
+        %
+        [FirstElement | _] ->
+            SmallerElement = element_smaller(FirstElement),
+            Iter = new_iterator_from(SmallerElement, Set),
+            ?assertListsCanonEqual(RefElements, iterate(Iter)),
+
+            run_iterator_from_recur(RefElements, Set)
+    end.
+
+run_iterator_from_recur([LastElement], Set) ->
+    run_iterator_from_last_element(LastElement, Set);
+run_iterator_from_recur([Elem1 | [Elem2 | _] = Next] = List, Set) ->
+    Iter = new_iterator_from(Elem1, Set),
+    ?assertListsCanonEqual(List, iterate(Iter)),
+
+    case element_in_between(Elem1, Elem2) of
+        {found, InBetween} ->
+            ?assert(InBetween > Elem1),
+            ?assert(InBetween < Elem2),
+            Iter2 = new_iterator_from(InBetween, Set),
+            ?assertListsCanonEqual(Next, iterate(Iter2));
+        %
+        none ->
+            ok
+    end,
+
+    run_iterator_from_recur(Next, Set).
+
+run_iterator_from_last_element(LastElement, Set) ->
+    Iter = new_iterator_from(randomly_switch_number_type(LastElement), Set),
+    ?assertListsCanonEqual([LastElement], iterate(Iter)),
+
+    LargerElement = element_larger(LastElement),
+    Iter2 = new_iterator_from(LargerElement, Set),
+    ?assertEqual([], iterate(Iter2)).
+
+new_iterator_from(Elem, Set) ->
+    Iter = b5_sets:iterator_from(Elem, Set),
+    ?assertEqual(Iter, b5_sets:iterator_from(Elem, Set, ordered)),
+    Iter.
+
+%%%%%%%%%%%%%%%%%
+
+run_iterator_from_reversed(RefElements, Set) ->
+    case lists:reverse(RefElements) of
+        [] ->
+            Iter = b5_sets:iterator_from(new_element(), Set, reversed),
+            ?assertEqual([], iterate(Iter));
+        %
+        [SingleElement] ->
+            Iter = b5_sets:iterator_from(
+                randomly_switch_number_type(SingleElement), Set, reversed
+            ),
+            ?assertListsCanonEqual([SingleElement], iterate(Iter)),
+
+            SmallerElement = element_smaller(SingleElement),
+            Iter2 = b5_sets:iterator_from(SmallerElement, Set, reversed),
+            ?assertEqual([], iterate(Iter2)),
+
+            LargerElement = element_larger(SingleElement),
+            Iter3 = b5_sets:iterator_from(LargerElement, Set, reversed),
+            ?assertListsCanonEqual([SingleElement], iterate(Iter3));
+        %
+        [LastElement | _] = ReverseRefElements ->
+            LargerElement = element_larger(LastElement),
+            Iter = b5_sets:iterator_from(LargerElement, Set, reversed),
+            ?assertListsCanonEqual(ReverseRefElements, iterate(Iter)),
+
+            run_iterator_from_reversed_recur(ReverseRefElements, Set)
+    end.
+
+run_iterator_from_reversed_recur([FirstElement], Set) ->
+    run_iterator_from_reversed_first_element(FirstElement, Set);
+run_iterator_from_reversed_recur([Elem2 | [Elem1 | _] = Tail] = List, Set) ->
+    Iter = b5_sets:iterator_from(Elem2, Set, reversed),
+    ?assertListsCanonEqual(List, iterate(Iter)),
+
+    case element_in_between(Elem1, Elem2) of
+        {found, InBetween} ->
+            ?assert(InBetween > Elem1),
+            ?assert(InBetween < Elem2),
+            Iter2 = b5_sets:iterator_from(InBetween, Set, reversed),
+            ?assertListsCanonEqual(Tail, iterate(Iter2));
+        %
+        none ->
+            ok
+    end,
+
+    run_iterator_from_reversed_recur(Tail, Set).
+
+run_iterator_from_reversed_first_element(FirstElement, Set) ->
+    Iter = b5_sets:iterator_from(randomly_switch_number_type(FirstElement), Set, reversed),
+    ?assertListsCanonEqual([FirstElement], iterate(Iter)),
+
+    SmallerElement = element_smaller(FirstElement),
+    Iter2 = b5_sets:iterator_from(SmallerElement, Set, reversed),
+    ?assertEqual([], iterate(Iter2)).
+
+%%%%%%%%%%%%%%%%%
+
+new_iterator(Set) ->
+    Iter = b5_sets:iterator(Set),
+    ?assertEqual(Iter, b5_sets:iterator(Set, ordered)),
+    Iter.
+
+iterate(Iter) ->
+    case b5_sets:next(Iter) of
+        {Element, Iter2} ->
+            [Element | iterate(Iter2)];
+        %
+        none ->
+            []
+    end.
+
+%% ------------------------------------------------------------------
+%% Helper Functions: filter
+%% ------------------------------------------------------------------
+
+run_filter(Size, RefElements, Set) ->
+    AmountsToRemove =
+        case Size of
+            0 ->
+                [0];
+            %
+            _ ->
+                lists:usort([
+                    0, 1, Size, Size - 1, rand:uniform(Size), rand:uniform(Size), rand:uniform(Size)
+                ])
+        end,
+
+    lists:foreach(
+        fun(AmountToRemove) ->
+            FilterFun =
+                case Size of
+                    0 ->
+                        fun(_) -> error(not_to_be_called) end;
+                    %
+                    _ ->
+                        ElementsToRemove = lists:sublist(
+                            list_shuffle(RefElements), AmountToRemove
+                        ),
+                        AuxSet = gb_sets:from_list(ElementsToRemove),
+                        fun(E) -> not gb_sets:is_element(E, AuxSet) end
+                end,
+
+            FilteredSet = b5_sets:filter(FilterFun, Set),
+
+            ExpectedElementsRemaining = lists:filter(FilterFun, RefElements),
+            ?assertListsCanonEqual(ExpectedElementsRemaining, b5_sets:to_list(FilteredSet)),
+
+            ?assertEqual(length(ExpectedElementsRemaining), b5_sets:size(FilteredSet))
+        end,
+        AmountsToRemove
+    ).
+
+%% ------------------------------------------------------------------
+%% Helper Functions: filtermap
+%% ------------------------------------------------------------------
+
+run_filtermap(Size, RefElements, Set) ->
+    AmountsToKeep =
+        case Size of
+            0 ->
+                [0];
+            %
+            _ ->
+                lists:usort([
+                    0, 1, Size, Size - 1, rand:uniform(Size), rand:uniform(Size), rand:uniform(Size)
+                ])
+        end,
+
+    PercentagesToMap =
+        case Size of
+            0 ->
+                [0.0];
+            %
+            _ ->
+                [0.0, 0.2, 0.5, 0.8, 1.0]
+        end,
+
+    ParamCombos = [
+        {AmountToKeep, PercentageToMap}
+     || AmountToKeep <- AmountsToKeep,
+        PercentageToMap <- PercentagesToMap
+    ],
+
+    %%%%
+
+    lists:foreach(
+        fun({AmountToKeep, PercentageToMap}) ->
+            AmountToMap = floor(PercentageToMap * AmountToKeep),
+
+            FiltermapFun =
+                case Size of
+                    0 ->
+                        fun(_) -> error(not_to_be_called) end;
+                    %
+                    _ ->
+                        ElementsToKeep = lists:sublist(
+                            list_shuffle(RefElements), AmountToKeep
+                        ),
+                        ElementsToMap = lists:sublist(
+                            list_shuffle(ElementsToKeep), AmountToMap
+                        ),
+
+                        KeepSet = gb_sets:from_list(ElementsToKeep),
+                        MapSet = gb_sets:from_list(ElementsToMap),
+
+                        fun(E) ->
+                            case gb_sets:is_element(E, MapSet) of
+                                true ->
+                                    {true, erlang:phash2(canon_element(E), 4)};
+                                %
+                                false ->
+                                    gb_sets:is_element(E, KeepSet)
+                            end
+                        end
+                end,
+
+            FiltermappedSet = b5_sets:filtermap(FiltermapFun, Set),
+
+            ExpectedElementsRemaining = lists:usort(lists:filtermap(FiltermapFun, RefElements)),
+            ?assertListsCanonEqual(ExpectedElementsRemaining, b5_sets:to_list(FiltermappedSet)),
+
+            ?assertEqual(length(ExpectedElementsRemaining), b5_sets:size(FiltermappedSet))
+        end,
+        ParamCombos
+    ).
+
+%% ------------------------------------------------------------------
+%% Helper Functions: fold
+%% ------------------------------------------------------------------
+
+run_fold(RefElements, Set) ->
+    run_fold_count(RefElements, Set),
+
+    RandomFactor = rand:uniform(),
+
+    Fun =
+        fun(E, Acc) ->
+            case erlang:phash2([canon_element(E) | RandomFactor], 3) of
+                0 ->
+                    [E | Acc];
+                %
+                _ ->
+                    Acc
+            end
+        end,
+
+    ?assertListsCanonEqual(
+        lists:foldl(Fun, [], RefElements),
+        b5_sets:fold(Fun, [], Set)
+    ).
+
+run_fold_count(RefElements, Set) ->
+    Count = b5_sets:fold(fun(_E, Acc) -> Acc + 1 end, 0, Set),
+    ?assertEqual(length(RefElements), Count).
+
+%% ------------------------------------------------------------------
+%% Helper Functions: map
+%% ------------------------------------------------------------------
+
+run_map(RefElements, Set) ->
+    PercentagesMapped = [
+        0.0,
+        0.2,
+        0.5,
+        0.7,
+        1.0
+    ],
+
+    %%%%
+
+    lists:foreach(
+        fun(PercentageMapped) ->
+            PHashRange = 100000,
+            PHashCeiling = round(PercentageMapped * PHashRange),
+            RandomFactor = rand:uniform(),
+
+            MapFun =
+                fun(E) ->
+                    case erlang:phash2(canon_element(E), PHashRange) < PHashCeiling of
+                        true ->
+                            erlang:phash2([RandomFactor | canon_element(E)], 3);
+                        %
+                        false ->
+                            E
+                    end
+                end,
+
+            MappedSet = b5_sets:map(MapFun, Set),
+
+            ExpectedMappedRef = lists:usort(lists:map(MapFun, RefElements)),
+
+            ?assertEqual(
+                length(ExpectedMappedRef),
+                b5_sets:size(MappedSet)
+            ),
+
+            ?assertListsCanonEqual(
+                ExpectedMappedRef,
+                b5_sets:to_list(MappedSet)
+            )
+        end,
+        PercentagesMapped
+    ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Structural Tests
+%% ------------------------------------------------------------------
+
+run_structure_test(InitFun) ->
+    run_structure_test(InitFun, []).
+
+run_structure_test(InitFun, Opts) ->
+    SizeMultiplier = proplists:get_value(size_multiplier, Opts, 1),
+    Size = round(SizeMultiplier * ?STRUCTURE_TEST_BASE_SIZE),
+
+    rand:seed(exsss, 1404887150367571),
+
+    StatsAcc =
+        lists:foldl(
+            fun(_, Acc) ->
+                % faster with numeric only
+                NumericOnly = true,
+                RefElements = new_ref_elements(Size, NumericOnly),
+
+                Set = InitFun(RefElements),
+                ?assertEqual(?STRUCTURE_TEST_BASE_SIZE, b5_sets:size(Set)),
+
+                Stats = b5_sets:structural_stats(Set),
+
+                %%%%%%%%%%
+
+                {_, Height} = lists:keyfind(height, 1, Stats),
+                {_, NodePercentages} = lists:keyfind(node_percentages, 1, Stats),
+                {_, AvgKeysPerNode} = lists:keyfind(avg_keys_per_node, 1, Stats),
+
+                Acc2 = structure_test_stats_acc(height, Height, Acc),
+                Acc3 = structure_test_stats_acc(avg_keys_per_node, AvgKeysPerNode, Acc2),
+
+                lists:foldl(
+                    fun({NodeType, Percentage}, SubAcc) ->
+                        structure_test_stats_acc({node_percentage, NodeType}, Percentage, SubAcc)
+                    end,
+                    Acc3,
+                    NodePercentages
+                )
+            end,
+            #{},
+            lists:seq(1, ?STRUCTURE_TEST_ITERATIONS)
+        ),
+
+    %%%%%
+
+    maps:map(fun condense_stats/2, StatsAcc).
+
+structure_test_stats_acc(Id, Sample, Acc) ->
+    try maps:get(Id, Acc) of
+        PrevSamples ->
+            Acc#{Id := [Sample | PrevSamples]}
+    catch
+        error:{badkey, K} when K =:= Id ->
+            maps:put(Id, [Sample], Acc)
+    end.
+
+condense_stats(_Id, Samples) ->
+    Sorted = lists:sort(Samples),
+    Len = length(Sorted),
+
+    Min = hd(Sorted),
+    Max = lists:last(Sorted),
+
+    Avg = lists:sum(Sorted) / Len,
+
+    Median = list_median(Sorted, Len),
+
+    StdDev = float(list_std_dev(Avg, Sorted)),
+
+    #{
+        min => float(Min),
+        max => float(Max),
+        avg => Avg,
+        std_dev => StdDev,
+        std_err => StdDev / math:sqrt(Len),
+        median => float(Median)
+    }.
+
+list_median(SortedList, Len) ->
+    case Len rem 2 of
+        0 ->
+            LeftPos = (Len div 2),
+            [Left, Right] = lists:sublist(SortedList, LeftPos, 2),
+            (Left + Right) / 2.0;
+        %
+        1 ->
+            MidPos = (Len div 2) + 1,
+            lists:nth(MidPos, SortedList)
+    end.
+
+list_std_dev(Avg, List) ->
+    SquareDevs = lists:map(fun(Sample) -> math:pow(Sample - Avg, 2.0) end, List),
+    Variance = lists:sum(SquareDevs) / length(SquareDevs),
+    math:sqrt(Variance).
+
+observed_error_margin(Id, CondensedStats) ->
+    #{
+        avg := ObservedAvg,
+        std_err := ObservedStdErr
+    } = Stats = maps:get(Id, CondensedStats),
+
+    Margin = ?Z_SCORE_95 * ObservedStdErr,
+
+    Lower = ObservedAvg - Margin,
+    Higher = ObservedAvg + Margin,
+
+    #{lower => Lower, higher => Higher, stats => Stats}.
+
+%% ------------------------------------------------------------------
+%% Helpers: element generation
+%% ------------------------------------------------------------------
+
+new_element() ->
+    new_element(_NumericOnly = false).
+
+new_element(NumericOnly) when NumericOnly ->
+    new_number();
+new_element(NumericOnly) when not NumericOnly ->
+    Die = rand:uniform(30),
+
+    case Die of
+        _ when Die =< 25 ->
+            new_number();
+        %
+        26 ->
+            BinSize = rand:uniform(16),
+            crypto:strong_rand_bytes(BinSize);
+        %
+        27 ->
+            TupleSize = rand:uniform(10) - 1,
+            List = lists:map(fun(_) -> new_number() end, lists:seq(1, TupleSize)),
+            list_to_tuple(List);
+        %
+        28 ->
+            ListSize = rand:uniform(10) - 1,
+            lists:map(fun(_) -> new_number() end, lists:seq(1, ListSize));
+        %
+        29 ->
+            LikelyMapSize = rand:uniform(10) - 1,
+            List = lists:map(
+                fun(_) -> {new_number(), new_number()} end, lists:seq(1, LikelyMapSize)
+            ),
+            maps:from_list(List);
+        %
+        30 ->
+            make_ref()
+    end.
+
+new_number() ->
+    randomly_switch_number_type(rand:uniform(1 bsl 50) - (1 bsl 49)).
+
+% number < atom < reference < fun < port < pid < tuple < map < nil < list < bit string
+element_in_between(Element1, Element2) ->
+    case element_type(Element1) of
+        number ->
+            case element_type(Element2) of
+                number when Element2 - Element1 > 1 ->
+                    {found, Element1 + 1};
+                %
+                number ->
+                    none;
+                %
+                _ ->
+                    {found, Element1 + 1}
+            end;
+        %
+        %
+        _ ->
+            % Not worth the effort
+            none
+    end.
+
+element_smaller(Element) ->
+    case element_type(Element) of
+        number ->
+            Element - 1;
+        %
+        _ ->
+            % Ensured to be smaller
+            -100
+    end.
+
+element_larger(Element) ->
+    case element_type(Element) of
+        binary ->
+            <<Element/bytes, Element/bytes>>;
+        %
+        _ ->
+            <<"ensured to be larger">>
+    end.
+
+element_type(Element) when is_number(Element) ->
+    number;
+element_type(Element) when is_binary(Element) ->
+    binary;
+element_type(Element) when is_tuple(Element) ->
+    tuple;
+element_type(Element) when is_list(Element) ->
+    list;
+element_type(Element) when is_map(Element) ->
+    map;
+element_type(Element) when is_reference(Element) ->
+    reference.

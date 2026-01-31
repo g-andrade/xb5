@@ -1170,6 +1170,8 @@ test_structure_build_adversarial_deletion(_Config) ->
 
     ?assertPreciseStat(height, 5.00, CondensedStats),
 
+    % NOTE: if we delete every _4th_ item, it's actually worse for `avg_keys_per_internal_node`.
+
     ?assertConfidentStat(avg_keys_per_node, 2.403846153846179, CondensedStats).
 
 %% ------------------------------------------------------------------
