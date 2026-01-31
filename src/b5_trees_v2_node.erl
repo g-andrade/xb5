@@ -132,9 +132,10 @@
 
 %%%%%%%
 
--define(INTERNAL2_COMPACTION_THRESHOLD, 9).
--define(INTERNAL3_COMPACTION_THRESHOLD, 11).
--define(INTERNAL4_COMPACTION_THRESHOLD, 14).
+% FIXME
+-define(INTERNAL2_COMPACTION_THRESHOLD, 0).
+-define(INTERNAL3_COMPACTION_THRESHOLD, 0).
+-define(INTERNAL4_COMPACTION_THRESHOLD, 0).
 
 -define(INTERNAL1_COMPACTION_MAX, 9).
 -define(INTERNAL2_COMPACTION_MAX, 13).
@@ -7198,6 +7199,10 @@ del_rebalance_leaf_from_left_sibling(
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%% EXPERIMENTAL
+
+%% TODO next: vary compaction thresholds depending on depth, i.e. more
+%% agressive compaction when the height difference between gb_trees and
+%% b5_trees is more pronounced
 
 -compile({inline, maybe_compact_INTERNAL4/?INTERNAL4_ARITY}).
 maybe_compact_INTERNAL4(?INTERNAL4_ARGS) ->
