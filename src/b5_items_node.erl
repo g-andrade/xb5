@@ -6405,7 +6405,7 @@ del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
     UpdatedO4 = O4 - 1,
 
     case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
-        no ->
+        balanced ->
             ?new_INTERNAL4(
                 E1,
                 E2,
@@ -6482,7 +6482,7 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
             C3
         )
     of
-        no ->
+        balanced ->
             ?new_INTERNAL4(
                 E1,
                 E2,
@@ -6558,7 +6558,7 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
             C4
         )
     of
-        no ->
+        balanced ->
             ?new_INTERNAL4(
                 E1,
                 E2,
@@ -6633,7 +6633,7 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
             C5
         )
     of
-        no ->
+        balanced ->
             ?new_INTERNAL4(
                 E1,
                 E2,
@@ -6698,7 +6698,7 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL4_C5 / ?INTERNAL4_ARITY}).
 del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C5, E4, C4, O4 - O3) of
-        no ->
+        balanced ->
             ?INTERNAL4_UPD_C5(C5);
         %
         none ->
@@ -6755,7 +6755,7 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
     UpdatedO3 = O3 - 1,
 
     case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
-        no ->
+        balanced ->
             ?new_INTERNAL3(
                 E1,
                 E2,
@@ -6822,7 +6822,7 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
             C3
         )
     of
-        no ->
+        balanced ->
             ?new_INTERNAL3(
                 E1,
                 E2,
@@ -6888,7 +6888,7 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
             C4
         )
     of
-        no ->
+        balanced ->
             ?new_INTERNAL3(
                 E1,
                 E2,
@@ -6944,7 +6944,7 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL3_C4 / ?INTERNAL3_ARITY}).
 del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C4, E3, C3, O3 - O2) of
-        no ->
+        balanced ->
             ?INTERNAL3_UPD_C4(C4);
         %
         none ->
@@ -6994,7 +6994,7 @@ del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
     UpdatedO2 = O2 - 1,
 
     case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
-        no ->
+        balanced ->
             ?new_INTERNAL2(
                 E1,
                 E2,
@@ -7051,7 +7051,7 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
             C3
         )
     of
-        no ->
+        balanced ->
             ?new_INTERNAL2(
                 E1,
                 E2,
@@ -7098,7 +7098,7 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL2_C3 / ?INTERNAL2_ARITY}).
 del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C3, E2, C2, O2 - O1) of
-        no ->
+        balanced ->
             ?INTERNAL2_UPD_C3(C3);
         %
         none ->
@@ -7141,7 +7141,7 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
     UpdatedO1 = O1 - 1,
 
     case del_rebalance_maybe_from_right_sibling(C1, UpdatedO1, E1, C2) of
-        no ->
+        balanced ->
             ?new_INTERNAL1(
                 E1,
                 %
@@ -7176,7 +7176,7 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
 -compile({inline, del_rebalance_INTERNAL1_C2 / ?INTERNAL1_ARITY}).
 del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
     case del_rebalance_maybe_from_left_sibling(C2, E1, C1, O1) of
-        no ->
+        balanced ->
             ?INTERNAL1_UPD_C2(C2);
         %
         none ->
@@ -7229,7 +7229,7 @@ del_rebalance_maybe_from_right_sibling(Child, ChildOffset, RParentE, Right) ->
             none;
         %
         _ ->
-            no
+            balanced
     end.
 
 %-compile({inline,
@@ -7405,7 +7405,7 @@ del_rebalance_maybe_from_left_sibling(Child, LParentE, Left, LeftOffset) ->
             none;
         %
         _ ->
-            no
+            balanced
     end.
 
 %-compile({inline, del_rebalance_internal_from_left_sibling/7}).
