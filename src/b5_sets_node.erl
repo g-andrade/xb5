@@ -568,11 +568,14 @@ intersection(Root1, Root2) ->
 
 -spec is_disjoint(t(_), non_neg_integer(), t(_), non_neg_integer()) -> boolean().
 is_disjoint(Root1, Size1, Root2, Size2) ->
-    case Size1 < Size2 of
-        true ->
+    if
+        Size1 =:= 0 orelse Size2 =:= 0 ->
+            true;
+        %
+        Size1 < Size2 ->
             is_disjoint_root(Root1, Root2);
         %
-        _ ->
+        true ->
             is_disjoint_root(Root2, Root1)
     end.
 
