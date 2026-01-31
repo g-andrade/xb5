@@ -400,7 +400,7 @@ test_difference(_Config) ->
     foreach_test_set(fun run_difference_test/3).
 
 test_intersection(_Config) ->
-    ?assertEqual(b5_sets:new(), b5_sets:intersection([])),
+    ?assertError(function_clause, b5_sets:intersection(b5_trees_util:dialyzer_opaque_term([]))),
     foreach_test_set(fun run_intersection_test/3).
 
 test_intersection3(_Config) ->
@@ -889,6 +889,12 @@ remove_from_sorted_list(Elem, [H | T]) ->
         %
         Elem == H ->
             T
+    end.
+
+-dialyzer({nowarn_function, fun1_error_not_to_be_called/0}).
+fun1_error_not_to_be_called() ->
+    fun(_) ->
+        error(not_to_be_called)
     end.
 
 %% ------------------------------------------------------------------
@@ -1636,7 +1642,7 @@ run_filter(Size, RefElements, Set) ->
             FilterFun =
                 case Size of
                     0 ->
-                        fun(_) -> error(not_to_be_called) end;
+                        fun1_error_not_to_be_called();
                     %
                     _ ->
                         ElementsToRemove = lists:sublist(
@@ -1696,7 +1702,7 @@ run_filtermap(Size, RefElements, Set) ->
             FiltermapFun =
                 case Size of
                     0 ->
-                        fun(_) -> error(not_to_be_called) end;
+                        fun1_error_not_to_be_called();
                     %
                     _ ->
                         ElementsToKeep = lists:sublist(
@@ -1819,7 +1825,7 @@ run_structure_test(InitFun, Opts) ->
     SizeMultiplier = proplists:get_value(size_multiplier, Opts, 1),
     Size = round(SizeMultiplier * ?STRUCTURE_TEST_BASE_SIZE),
 
-    rand:seed(exsss, 1404887150367571),
+    _ = rand:seed(exsss, 1404887150367571),
 
     StatsAcc =
         lists:foldl(
