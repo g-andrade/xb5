@@ -105,21 +105,6 @@
 
 %%%%%%%%%
 
-% list
--define(MID_MERGED(MergedNode), [MergedNode]).
--define(MID_MERGED_MATCH(MergedNode), [MergedNode | _]).
-
-% 4 elements
--define(MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight),
-    {UpElem, MovedSize, UpdatedNode, UpdatedRight}
-).
-% 5 elements
--define(MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedNode, UpdatedRight),
-    {from_left, UpElem, MovedSize, UpdatedNode, UpdatedRight}
-).
-
-%%%
-
 % 4 elements
 -define(ROTATED(UpElem, MovedSize, UpdatedLeft, UpdatedRight),
     {UpElem, MovedSize, UpdatedLeft, UpdatedRight}
@@ -6489,13 +6474,9 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
     UpdatedO4 = O4 - 1,
 
     case
-        del_rebalance_maybe_from_either_sibling(
+        del_rebalance_maybe_from_right_sibling(
             C2,
             UpdatedO2 - O1,
-            %
-            E1,
-            C1,
-            O1,
             %
             E2,
             C3
@@ -6523,23 +6504,7 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
         none ->
             none;
         %
-        ?MID_MERGED_MATCH(MergedC1C2) ->
-            ?new_INTERNAL3(
-                E2,
-                E3,
-                E4,
-                %
-                UpdatedO2,
-                UpdatedO3,
-                UpdatedO4,
-                %
-                MergedC1C2,
-                C3,
-                C4,
-                C5
-            );
-        %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
+        ?ROTATED(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL4(
                 E1,
                 UpElem,
@@ -6558,21 +6523,18 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
                 C5
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC1, RebalancedC2) ->
-            ?new_INTERNAL4(
-                UpElem,
-                E2,
+        ?MERGED_MATCH(MergedC2C3) ->
+            ?new_INTERNAL3(
+                E1,
                 E3,
                 E4,
                 %
-                O1 - MovedSize,
-                UpdatedO2,
+                O1,
                 UpdatedO3,
                 UpdatedO4,
                 %
-                UpdatedC1,
-                RebalancedC2,
-                C3,
+                C1,
+                MergedC2C3,
                 C4,
                 C5
             )
@@ -6588,13 +6550,9 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
     UpdatedO4 = O4 - 1,
 
     case
-        del_rebalance_maybe_from_either_sibling(
+        del_rebalance_maybe_from_right_sibling(
             C3,
             UpdatedO3 - O2,
-            %
-            E2,
-            C2,
-            O2 - O1,
             %
             E3,
             C4
@@ -6622,23 +6580,7 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
         none ->
             none;
         %
-        ?MID_MERGED_MATCH(MergedC2C3) ->
-            ?new_INTERNAL3(
-                E1,
-                E3,
-                E4,
-                %
-                O1,
-                UpdatedO3,
-                UpdatedO4,
-                %
-                C1,
-                MergedC2C3,
-                C4,
-                C5
-            );
-        %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC3, UpdatedC4) ->
+        ?ROTATED(UpElem, MovedSize, RebalancedC3, UpdatedC4) ->
             ?new_INTERNAL4(
                 E1,
                 E2,
@@ -6657,22 +6599,19 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
                 C5
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC2, RebalancedC3) ->
-            ?new_INTERNAL4(
+        ?MERGED_MATCH(MergedC3C4) ->
+            ?new_INTERNAL3(
                 E1,
-                UpElem,
-                E3,
+                E2,
                 E4,
                 %
                 O1,
-                O2 - MovedSize,
-                UpdatedO3,
+                O2,
                 UpdatedO4,
                 %
                 C1,
-                UpdatedC2,
-                RebalancedC3,
-                C4,
+                C2,
+                MergedC3C4,
                 C5
             )
     end.
@@ -6686,13 +6625,9 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
     UpdatedO4 = O4 - 1,
 
     case
-        del_rebalance_maybe_from_either_sibling(
+        del_rebalance_maybe_from_right_sibling(
             C4,
             UpdatedO4 - O3,
-            %
-            E3,
-            C3,
-            O3 - O2,
             %
             E4,
             C5
@@ -6720,23 +6655,7 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
         none ->
             none;
         %
-        ?MID_MERGED_MATCH(MergedC3C4) ->
-            ?new_INTERNAL3(
-                E1,
-                E2,
-                E4,
-                %
-                O1,
-                O2,
-                UpdatedO4,
-                %
-                C1,
-                C2,
-                MergedC3C4,
-                C5
-            );
-        %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC4, UpdatedC5) ->
+        ?ROTATED(UpElem, MovedSize, RebalancedC4, UpdatedC5) ->
             ?new_INTERNAL4(
                 E1,
                 E2,
@@ -6755,23 +6674,20 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
                 UpdatedC5
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC3, RebalancedC4) ->
-            ?new_INTERNAL4(
+        ?MERGED_MATCH(MergedC4C5) ->
+            ?new_INTERNAL3(
                 E1,
                 E2,
-                UpElem,
-                E4,
+                E3,
                 %
                 O1,
                 O2,
-                O3 - MovedSize,
-                UpdatedO4,
+                O3,
                 %
                 C1,
                 C2,
-                UpdatedC3,
-                RebalancedC4,
-                C5
+                C3,
+                MergedC4C5
             )
     end.
 
@@ -6898,13 +6814,9 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
     UpdatedO3 = O3 - 1,
 
     case
-        del_rebalance_maybe_from_either_sibling(
+        del_rebalance_maybe_from_right_sibling(
             C2,
             UpdatedO2 - O1,
-            %
-            E1,
-            C1,
-            O1,
             %
             E2,
             C3
@@ -6929,20 +6841,7 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
         none ->
             none;
         %
-        ?MID_MERGED_MATCH(MergedC1C2) ->
-            ?new_INTERNAL2(
-                E2,
-                E3,
-                %
-                UpdatedO2,
-                UpdatedO3,
-                %
-                MergedC1C2,
-                C3,
-                C4
-            );
-        %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
+        ?ROTATED(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL3(
                 E1,
                 UpElem,
@@ -6958,19 +6857,16 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
                 C4
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC1, RebalancedC2) ->
-            ?new_INTERNAL3(
-                UpElem,
-                E2,
+        ?MERGED_MATCH(MergedC2C3) ->
+            ?new_INTERNAL2(
+                E1,
                 E3,
                 %
-                O1 - MovedSize,
-                UpdatedO2,
+                O1,
                 UpdatedO3,
                 %
-                UpdatedC1,
-                RebalancedC2,
-                C3,
+                C1,
+                MergedC2C3,
                 C4
             )
     end.
@@ -6984,13 +6880,9 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
     UpdatedO3 = O3 - 1,
 
     case
-        del_rebalance_maybe_from_either_sibling(
+        del_rebalance_maybe_from_right_sibling(
             C3,
             UpdatedO3 - O2,
-            %
-            E2,
-            C2,
-            O2 - O1,
             %
             E3,
             C4
@@ -7015,20 +6907,7 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
         none ->
             none;
         %
-        ?MID_MERGED_MATCH(MergedC2C3) ->
-            ?new_INTERNAL2(
-                E1,
-                E3,
-                %
-                O1,
-                UpdatedO3,
-                %
-                C1,
-                MergedC2C3,
-                C4
-            );
-        %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC3, UpdatedC4) ->
+        ?ROTATED(UpElem, MovedSize, RebalancedC3, UpdatedC4) ->
             ?new_INTERNAL3(
                 E1,
                 E2,
@@ -7044,20 +6923,17 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
                 UpdatedC4
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC2, RebalancedC3) ->
-            ?new_INTERNAL3(
+        ?MERGED_MATCH(MergedC3C4) ->
+            ?new_INTERNAL2(
                 E1,
-                UpElem,
-                E3,
+                E2,
                 %
                 O1,
-                O2 - MovedSize,
-                UpdatedO3,
+                O2,
                 %
                 C1,
-                UpdatedC2,
-                RebalancedC3,
-                C4
+                C2,
+                MergedC3C4
             )
     end.
 
@@ -7167,13 +7043,9 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
     UpdatedO2 = O2 - 1,
 
     case
-        del_rebalance_maybe_from_either_sibling(
+        del_rebalance_maybe_from_right_sibling(
             C2,
             UpdatedO2 - O1,
-            %
-            E1,
-            C1,
-            O1,
             %
             E2,
             C3
@@ -7195,17 +7067,7 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
         none ->
             none;
         %
-        ?MID_MERGED_MATCH(MergedC1C2) ->
-            ?new_INTERNAL1(
-                E2,
-                %
-                UpdatedO2,
-                %
-                MergedC1C2,
-                C3
-            );
-        %
-        ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
+        ?ROTATED(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL2(
                 E1,
                 UpElem,
@@ -7218,17 +7080,14 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
                 UpdatedC3
             );
         %
-        ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedC1, RebalancedC2) ->
-            ?new_INTERNAL2(
-                UpElem,
-                E2,
+        ?MERGED_MATCH(MergedC2C3) ->
+            ?new_INTERNAL1(
+                E1,
                 %
-                O1 - MovedSize,
-                UpdatedO2,
+                O1,
                 %
-                UpdatedC1,
-                RebalancedC2,
-                C3
+                C1,
+                MergedC2C3
             )
     end.
 
@@ -7690,320 +7549,6 @@ del_rebalance_leaf_from_left_sibling(
             UpdatedLeft = ?new_LEAF3(E1, E2, E3),
 
             ?ROTATED(UpElem, MovedSize, UpdatedLeft, UpdatedNode)
-    end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: Deletion - Rebalance a node from either left/right sibling
-%% ------------------------------------------------------------------
-
--compile({inline, del_rebalance_maybe_from_either_sibling/7}).
-del_rebalance_maybe_from_either_sibling(
-    Child,
-    ChildOffset,
-    %
-    LParentE,
-    Left,
-    LeftOffset,
-    %
-    RParentE,
-    Right
-) ->
-    case Child of
-        ?INTERNAL1_MATCH(CElem, CLeftOffset, CLeft, CRight) ->
-            del_rebalance_internal_from_either_sibling(
-                CElem,
-                CLeftOffset,
-                CLeft,
-                CRight,
-                %
-                ChildOffset,
-                %
-                LParentE,
-                Left,
-                LeftOffset,
-                %
-                RParentE,
-                Right
-            );
-        %
-        ?LEAF1_MATCH(CElem) ->
-            del_rebalance_leaf_from_either_sibling(
-                CElem,
-                %
-                LParentE,
-                Left,
-                %
-                RParentE,
-                Right
-            );
-        %
-        none ->
-            none;
-        %
-        _ ->
-            no
-    end.
-
-%-compile({inline, del_rebalance_internal_from_either_sibling/10}).
-del_rebalance_internal_from_either_sibling(
-    CElem,
-    CLeftOffset,
-    CLeft,
-    CRight,
-    %
-    ChildOffset,
-    %
-    LParentE,
-    Left,
-    LeftOffset,
-    %
-    RParentE,
-    Right
-) ->
-    case Left of
-        ?INTERNAL2_MATCH(
-            LE1,
-            LE2,
-            %
-            LO1,
-            LO2,
-            %
-            LC1,
-            LC2,
-            LC3
-        ) ->
-            %
-            %
-            case Right of
-                ?INTERNAL3_MATCH_ALL ->
-                    UpElem = E1,
-                    MovedC = C1,
-                    MovedSize = O1,
-
-                    UpdatedNode = ?new_INTERNAL2(
-                        CElem,
-                        RParentE,
-                        %
-                        CLeftOffset,
-                        ChildOffset,
-                        %
-                        CLeft,
-                        CRight,
-                        MovedC
-                    ),
-
-                    UpdatedRight = ?new_INTERNAL2(
-                        E2,
-                        E3,
-                        %
-                        O2 - O1,
-                        O3 - O1,
-                        %
-                        C2,
-                        C3,
-                        C4
-                    ),
-
-                    ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight);
-                %
-                %
-                ?INTERNAL4_MATCH_ALL ->
-                    UpElem = E1,
-                    MovedC = C1,
-                    MovedSize = O1,
-
-                    UpdatedNode = ?new_INTERNAL2(
-                        CElem,
-                        RParentE,
-                        %
-                        CLeftOffset,
-                        ChildOffset,
-                        %
-                        CLeft,
-                        CRight,
-                        MovedC
-                    ),
-
-                    UpdatedRight = ?new_INTERNAL3(
-                        E2,
-                        E3,
-                        E4,
-                        %
-                        O2 - O1,
-                        O3 - O1,
-                        O4 - O1,
-                        %
-                        C2,
-                        C3,
-                        C4,
-                        C5
-                    ),
-
-                    ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight);
-                %
-                %
-                _ ->
-                    % Merge with left since we already unpacked it
-                    MergedNode = ?new_INTERNAL4(
-                        LE1,
-                        LE2,
-                        LParentE,
-                        CElem,
-                        %
-                        LO1,
-                        LO2,
-                        LeftOffset,
-                        LeftOffset + CLeftOffset,
-                        %
-                        LC1,
-                        LC2,
-                        LC3,
-                        CLeft,
-                        CRight
-                    ),
-
-                    ?MID_MERGED(MergedNode)
-            end;
-        %
-        %
-        %
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            UpElem = E3,
-            MovedC = C4,
-            MovedSize = LeftOffset - O3,
-
-            UpdatedNode = ?new_INTERNAL2(
-                LParentE,
-                CElem,
-                %
-                MovedSize,
-                MovedSize + CLeftOffset,
-                %
-                MovedC,
-                CLeft,
-                CRight
-            ),
-
-            UpdatedLeft = ?new_INTERNAL2(
-                E1,
-                E2,
-                %
-                O1,
-                O2,
-                %
-                C1,
-                C2,
-                C3
-            ),
-
-            ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedLeft, UpdatedNode);
-        %
-        %
-        %
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            UpElem = E4,
-            MovedC = C5,
-            MovedSize = LeftOffset - O4,
-
-            UpdatedNode = ?new_INTERNAL2(
-                LParentE,
-                CElem,
-                %
-                MovedSize,
-                MovedSize + CLeftOffset,
-                %
-                MovedC,
-                CLeft,
-                CRight
-            ),
-
-            UpdatedLeft = ?new_INTERNAL3(
-                E1,
-                E2,
-                E3,
-                %
-                O1,
-                O2,
-                O3,
-                %
-                C1,
-                C2,
-                C3,
-                C4
-            ),
-
-            ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedLeft, UpdatedNode)
-    end.
-
-%-compile({inline, del_rebalance_leaf_from_either_sibling/8}).
-del_rebalance_leaf_from_either_sibling(
-    CElem,
-    %
-    LParentE,
-    Left,
-    %
-    RParentE,
-    Right
-) ->
-    case Left of
-        ?LEAF2_MATCH(LE1, LE2) ->
-            %
-            case Right of
-                ?LEAF4_MATCH_ALL ->
-                    UpElem = E1,
-                    MovedSize = 1,
-
-                    UpdatedNode = ?new_LEAF2(CElem, RParentE),
-                    UpdatedRight = ?new_LEAF3(E2, E3, E4),
-
-                    ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight);
-                %
-                %
-                ?LEAF3_MATCH_ALL ->
-                    UpElem = E1,
-                    MovedSize = 1,
-
-                    UpdatedNode = ?new_LEAF2(CElem, RParentE),
-                    UpdatedRight = ?new_LEAF2(E2, E3),
-
-                    ?MID_ROTATED_FROM_RIGHT(UpElem, MovedSize, UpdatedNode, UpdatedRight);
-                %
-                %
-                _ ->
-                    % Merge with left since we already unpacked it
-                    MergedNode = ?new_LEAF4(
-                        LE1,
-                        LE2,
-                        LParentE,
-                        CElem
-                    ),
-
-                    ?MID_MERGED(MergedNode)
-            end;
-        %
-        %
-        %
-        ?LEAF3_MATCH_ALL ->
-            UpElem = E3,
-            MovedSize = 1,
-
-            UpdatedNode = ?new_LEAF2(LParentE, CElem),
-            UpdatedLeft = ?new_LEAF2(E1, E2),
-
-            ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedLeft, UpdatedNode);
-        %
-        %
-        %
-        ?LEAF4_MATCH_ALL ->
-            UpElem = E4,
-            MovedSize = 1,
-
-            UpdatedNode = ?new_LEAF2(LParentE, CElem),
-            UpdatedLeft = ?new_LEAF3(E1, E2, E3),
-
-            ?MID_ROTATED_FROM_LEFT(UpElem, MovedSize, UpdatedLeft, UpdatedNode)
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1092,9 +1092,9 @@ test_structure_build_seqIns2x_randomlyDelHalf(_Config) ->
 
     %%%%%%%%%%
 
-    ?assertConfidentStat(height, 5.9512, CondensedStats),
+    ?assertConfidentStat(height, 5.748, CondensedStats),
 
-    ?assertConfidentStat(avg_keys_per_node, 2.50, CondensedStats).
+    ?assertConfidentStat(avg_keys_per_node, 2.6014331611359016, CondensedStats).
 
 %%%%
 
@@ -1115,9 +1115,9 @@ test_structure_build_randomlyIns2x_randomlyDelHalf(_Config) ->
 
     %%%%%%%%%%
 
-    ?assertConfidentStat(height, 5.9556, CondensedStats),
+    ?assertConfidentStat(height, 5.847, CondensedStats),
 
-    ?assertConfidentStat(avg_keys_per_node, 2.5023622163176475, CondensedStats).
+    ?assertConfidentStat(avg_keys_per_node, 2.59362583949796, CondensedStats).
 
 %%%%
 
@@ -1170,7 +1170,7 @@ test_structure_build_adversarial_deletion(_Config) ->
 
     ?assertPreciseStat(height, 5.00, CondensedStats),
 
-    ?assertConfidentStat(avg_keys_per_node, 2.3980815347722086, CondensedStats).
+    ?assertConfidentStat(avg_keys_per_node, 2.403846153846179, CondensedStats).
 
 %% ------------------------------------------------------------------
 %% Helper Functions: shared
