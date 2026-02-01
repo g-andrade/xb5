@@ -15,7 +15,8 @@
     test_lookup/1,
     test_add/1,
     test_insert/1,
-    test_delete/1
+    test_delete_sequential/1,
+    test_delete_shuffled/1
 ]).
 
 %% Test exports - smaller and larger
@@ -156,7 +157,8 @@ groups() ->
             test_lookup,
             test_add,
             test_insert,
-            test_delete
+            test_delete_sequential,
+            test_delete_shuffled
         ]},
         {smaller_and_larger, [parallel], [
             test_smallest,
@@ -311,7 +313,39 @@ test_insert(_Config) ->
         end
     ).
 
-test_delete(_Config) ->
+test_delete_sequential(_Config) ->
+    foreach_test_set(
+        fun(_Size, RefElements, Col) ->
+            DeleteKeys = lists:map(fun randomly_switch_number_type/1, RefElements),
+
+            {ColN, []} =
+                lists:foldl(
+                    fun(Element, {Col1, RemainingElements1}) ->
+                        test_delete_non_existing_keys(Col1, RemainingElements1, 3),
+
+                        Col2 = b5_items:delete(Element, Col1),
+                        RemainingElements2 = remove_from_sorted_list(Element, RemainingElements1),
+                        ?assertListsCanonEqual(RemainingElements2, b5_items:to_list(Col2)),
+                        ?assertEqual(length(RemainingElements2), b5_items:size(Col2)),
+                        ?assertEqual(RemainingElements2 =:= [], b5_items:is_empty(Col2)),
+
+                        ?assertEqual(Col2, b5_items:delete_any(Element, Col1)),
+
+                        {Col2, RemainingElements2}
+                    end,
+                    {Col, RefElements},
+                    DeleteKeys
+                ),
+
+            ?assertEqual([], b5_items:to_list(ColN)),
+            ?assertEqual(0, b5_items:size(ColN)),
+            ?assertEqual(true, b5_items:is_empty(ColN)),
+
+            test_delete_non_existing_keys(ColN, [], 3)
+        end
+    ).
+
+test_delete_shuffled(_Config) ->
     foreach_test_set(
         fun(_Size, RefElements, Col) ->
             DeleteKeys = lists:map(fun randomly_switch_number_type/1, list_shuffle(RefElements)),
@@ -331,7 +365,7 @@ test_delete(_Config) ->
 
                         {Col2, RemainingElements2}
                     end,
-                    {Col, lists:sort(DeleteKeys)},
+                    {Col, RefElements},
                     DeleteKeys
                 ),
 
@@ -1185,6 +1219,10 @@ foreach_test_set(Fun, Opts) ->
     foreach_tested_size(
         fun(Size, RefElements) ->
             Col = b5_items:from_list(maybe_shuffle_elements_for_new_collection(RefElements)),
+
+            Stats = b5_items:structural_stats(Col),
+            ?assertEqual(Size, proplists:get_value(total_keys, Stats)),
+
             Fun(Size, RefElements, Col)
         end,
         Opts
@@ -2527,29 +2565,24 @@ run_filtermap(Size, RefElements, Col) ->
 %% ------------------------------------------------------------------
 
 run_fold(RefElements, Col) ->
-    run_fold_count(RefElements, Col),
-
-    RandomFactor = rand:uniform(),
+    Tag = make_ref(),
 
     Fun =
         fun(E, Acc) ->
-            case erlang:phash2([canon_element(E) | RandomFactor], 3) of
-                0 ->
-                    [E | Acc];
-                %
-                _ ->
-                    Acc
-            end
+            case Acc of
+                [{_, PrevE} | _] ->
+                    ?assert(PrevE =< E);
+                [] ->
+                    ok
+            end,
+
+            [{Tag, E} | Acc]
         end,
 
     ?assertListsCanonEqual(
         lists:foldl(Fun, [], RefElements),
         b5_items:fold(Fun, [], Col)
     ).
-
-run_fold_count(RefElements, Col) ->
-    Count = b5_items:fold(fun(_E, Acc) -> Acc + 1 end, 0, Col),
-    ?assertEqual(length(RefElements), Count).
 
 %% ------------------------------------------------------------------
 %% Helper Functions: map

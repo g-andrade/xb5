@@ -2259,8 +2259,6 @@ intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root) ->
 %% Internal Function Definitions: is_disjoint/2
 %% ------------------------------------------------------------------
 
-is_disjoint_root(_Root1, ?LEAF0) ->
-    true;
 is_disjoint_root(Root1, Root2) ->
     MinElem = smallest(Root2),
     MaxElem = largest(Root2),
