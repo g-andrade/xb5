@@ -1,4 +1,4 @@
-{application, b5_trees, [
+{application, xb5, [
     {description, "FIXME"},
     {vsn, git},
     {registered, []},
@@ -14,7 +14,7 @@
 
     {licenses, ["MIT"]},
     {links, [
-        {"GitHub", "https://github.com/g-andrade/b5_trees"},
-        {"GitLab", "https://gitlab.com/g-andrade/b5_trees"}
+        {"GitHub", "https://github.com/g-andrade/xb5"},
+        {"GitLab", "https://gitlab.com/g-andrade/xb5"}
     ]}
 ]}.

@@ -1,4 +1,4 @@
--module(b5_trees_test_SUITE).
+-module(xb5_trees_test_SUITE).
 
 -ifndef(NO_CT_SUITE_BEHAVIOUR).
 -behaviour(ct_suite).
@@ -181,14 +181,14 @@ end_per_suite(_Config) ->
 test_construction(_Config) ->
     foreach_tested_size(
         fun(Size, RefKvs) ->
-            Tree = b5_trees:from_list(RefKvs),
-            ?assertKvListsCanonEqual(RefKvs, b5_trees:to_list(Tree)),
-            ?assertEqual(Size, b5_trees:size(Tree)),
-            ?assertEqual(Size =:= 0, b5_trees:is_empty(Tree)),
+            Tree = xb5_trees:from_list(RefKvs),
+            ?assertKvListsCanonEqual(RefKvs, xb5_trees:to_list(Tree)),
+            ?assertEqual(Size, xb5_trees:size(Tree)),
+            ?assertEqual(Size =:= 0, xb5_trees:is_empty(Tree)),
             ?assertEqual(Tree, new_tree_from_each_inserted(RefKvs)),
-            ?assertEqual(Tree, b5_trees:from_orddict(RefKvs)),
+            ?assertEqual(Tree, xb5_trees:from_orddict(RefKvs)),
 
-            _ = (Size =:= 0 andalso ?assertEqual(Tree, b5_trees:empty()))
+            _ = (Size =:= 0 andalso ?assertEqual(Tree, xb5_trees:empty()))
         end
     ).
 
@@ -200,9 +200,9 @@ test_lookup(_Config) ->
         fun(Size, RefKvs, Tree) ->
             foreach_existing_pair(
                 fun(Key, Value) ->
-                    ?assertEqual(true, b5_trees:is_defined(Key, Tree)),
-                    ?assertEqual(Value, b5_trees:get(Key, Tree)),
-                    ?assertEqual({value, Value}, b5_trees:lookup(Key, Tree))
+                    ?assertEqual(true, xb5_trees:is_defined(Key, Tree)),
+                    ?assertEqual(Value, xb5_trees:get(Key, Tree)),
+                    ?assertEqual({value, Value}, xb5_trees:lookup(Key, Tree))
                 end,
                 RefKvs,
                 Size
@@ -212,9 +212,9 @@ test_lookup(_Config) ->
 
             foreach_non_existent_key(
                 fun(Key) ->
-                    ?assertEqual(false, b5_trees:is_defined(Key, Tree)),
-                    ?assertError({badkey, Key}, b5_trees:get(Key, Tree)),
-                    ?assertEqual(none, b5_trees:lookup(Key, Tree))
+                    ?assertEqual(false, xb5_trees:is_defined(Key, Tree)),
+                    ?assertError({badkey, Key}, xb5_trees:get(Key, Tree)),
+                    ?assertEqual(none, xb5_trees:lookup(Key, Tree))
                 end,
                 RefKvs,
                 100
@@ -227,7 +227,7 @@ test_insert(_Config) ->
         fun(Size, RefKvs, Tree) ->
             foreach_existing_pair(
                 fun(Key, _Value) ->
-                    ?assertError({key_exists, Key}, b5_trees:insert(Key, new_value, Tree))
+                    ?assertError({key_exists, Key}, xb5_trees:insert(Key, new_value, Tree))
                 end,
                 RefKvs,
                 min(50, Size)
@@ -238,11 +238,11 @@ test_insert(_Config) ->
             foreach_non_existent_key(
                 fun(Key) ->
                     Value = {new_value, make_ref()},
-                    Tree2 = b5_trees:insert(Key, Value, Tree),
-                    ?assertEqual(Size + 1, b5_trees:size(Tree2)),
+                    Tree2 = xb5_trees:insert(Key, Value, Tree),
+                    ?assertEqual(Size + 1, xb5_trees:size(Tree2)),
                     ?assertKvListsCanonEqual(
                         add_to_sorted_list(Key, Value, RefKvs),
-                        b5_trees:to_list(Tree2)
+                        xb5_trees:to_list(Tree2)
                     )
                 end,
                 RefKvs,
@@ -257,7 +257,7 @@ test_insert_with(_Config) ->
             foreach_existing_pair(
                 fun(Key, _Value) ->
                     Fun = fun0_error_not_to_be_called(),
-                    ?assertError({key_exists, Key}, b5_trees:insert_with(Key, Fun, Tree))
+                    ?assertError({key_exists, Key}, xb5_trees:insert_with(Key, Fun, Tree))
                 end,
                 RefKvs,
                 min(50, Size)
@@ -269,11 +269,11 @@ test_insert_with(_Config) ->
                 fun(Key) ->
                     Value = {new_value, make_ref()},
                     Fun = fun() -> Value end,
-                    Tree2 = b5_trees:insert_with(Key, Fun, Tree),
-                    ?assertEqual(Size + 1, b5_trees:size(Tree2)),
+                    Tree2 = xb5_trees:insert_with(Key, Fun, Tree),
+                    ?assertEqual(Size + 1, xb5_trees:size(Tree2)),
                     ?assertKvListsCanonEqual(
                         add_to_sorted_list(Key, Value, RefKvs),
-                        b5_trees:to_list(Tree2)
+                        xb5_trees:to_list(Tree2)
                     )
                 end,
                 RefKvs,
@@ -292,13 +292,13 @@ test_delete_sequential(_Config) ->
                     fun(Key, {Tree1, RemainingKvs1}) ->
                         test_delete_non_existing_keys(Tree1, RemainingKvs1, 3),
 
-                        Tree2 = b5_trees:delete(Key, Tree1),
+                        Tree2 = xb5_trees:delete(Key, Tree1),
                         RemainingKvs2 = remove_from_sorted_list(Key, RemainingKvs1),
-                        ?assertKvListsCanonEqual(RemainingKvs2, b5_trees:to_list(Tree2)),
-                        ?assertEqual(length(RemainingKvs2), b5_trees:size(Tree2)),
-                        ?assertEqual(RemainingKvs2 =:= [], b5_trees:is_empty(Tree2)),
+                        ?assertKvListsCanonEqual(RemainingKvs2, xb5_trees:to_list(Tree2)),
+                        ?assertEqual(length(RemainingKvs2), xb5_trees:size(Tree2)),
+                        ?assertEqual(RemainingKvs2 =:= [], xb5_trees:is_empty(Tree2)),
 
-                        ?assertEqual(Tree2, b5_trees:delete_any(Key, Tree1)),
+                        ?assertEqual(Tree2, xb5_trees:delete_any(Key, Tree1)),
 
                         {Tree2, RemainingKvs2}
                     end,
@@ -306,9 +306,9 @@ test_delete_sequential(_Config) ->
                     DeleteKeys
                 ),
 
-            ?assertEqual([], b5_trees:to_list(TreeN)),
-            ?assertEqual(0, b5_trees:size(TreeN)),
-            ?assertEqual(true, b5_trees:is_empty(TreeN)),
+            ?assertEqual([], xb5_trees:to_list(TreeN)),
+            ?assertEqual(0, xb5_trees:size(TreeN)),
+            ?assertEqual(true, xb5_trees:is_empty(TreeN)),
 
             test_delete_non_existing_keys(TreeN, [], 3)
         end
@@ -326,13 +326,13 @@ test_delete_shuffled(_Config) ->
                     fun(Key, {Tree1, RemainingKvs1}) ->
                         test_delete_non_existing_keys(Tree1, RemainingKvs1, 3),
 
-                        Tree2 = b5_trees:delete(Key, Tree1),
+                        Tree2 = xb5_trees:delete(Key, Tree1),
                         RemainingKvs2 = remove_from_sorted_list(Key, RemainingKvs1),
-                        ?assertKvListsCanonEqual(RemainingKvs2, b5_trees:to_list(Tree2)),
-                        ?assertEqual(length(RemainingKvs2), b5_trees:size(Tree2)),
-                        ?assertEqual(RemainingKvs2 =:= [], b5_trees:is_empty(Tree2)),
+                        ?assertKvListsCanonEqual(RemainingKvs2, xb5_trees:to_list(Tree2)),
+                        ?assertEqual(length(RemainingKvs2), xb5_trees:size(Tree2)),
+                        ?assertEqual(RemainingKvs2 =:= [], xb5_trees:is_empty(Tree2)),
 
-                        ?assertEqual(Tree2, b5_trees:delete_any(Key, Tree1)),
+                        ?assertEqual(Tree2, xb5_trees:delete_any(Key, Tree1)),
 
                         {Tree2, RemainingKvs2}
                     end,
@@ -340,9 +340,9 @@ test_delete_shuffled(_Config) ->
                     DeleteKeys
                 ),
 
-            ?assertEqual([], b5_trees:to_list(TreeN)),
-            ?assertEqual(0, b5_trees:size(TreeN)),
-            ?assertEqual(true, b5_trees:is_empty(TreeN)),
+            ?assertEqual([], xb5_trees:to_list(TreeN)),
+            ?assertEqual(0, xb5_trees:size(TreeN)),
+            ?assertEqual(true, xb5_trees:is_empty(TreeN)),
 
             test_delete_non_existing_keys(TreeN, [], 3)
         end
@@ -354,13 +354,13 @@ test_update(_Config) ->
             foreach_existing_pair(
                 fun(Key, _Value) ->
                     NewValue = {new_value, make_ref()},
-                    Tree2 = b5_trees:update(Key, NewValue, Tree),
+                    Tree2 = xb5_trees:update(Key, NewValue, Tree),
 
-                    ?assertEqual(Size, b5_trees:size(Tree2)),
+                    ?assertEqual(Size, xb5_trees:size(Tree2)),
 
                     ?assertKvListsCanonEqual(
                         update_in_sorted_list(Key, NewValue, RefKvs),
-                        b5_trees:to_list(Tree2)
+                        xb5_trees:to_list(Tree2)
                     )
                 end,
                 RefKvs,
@@ -372,7 +372,7 @@ test_update(_Config) ->
             foreach_non_existent_key(
                 fun(Key) ->
                     NewValue = {new_value, make_ref()},
-                    ?assertError({badkey, Key}, b5_trees:update(Key, NewValue, Tree))
+                    ?assertError({badkey, Key}, xb5_trees:update(Key, NewValue, Tree))
                 end,
                 RefKvs,
                 50
@@ -393,13 +393,13 @@ test_update_with3(_Config) ->
                             NewValue
                         end,
 
-                    Tree2 = b5_trees:update_with(Key, Fun, Tree),
+                    Tree2 = xb5_trees:update_with(Key, Fun, Tree),
 
-                    ?assertEqual(Size, b5_trees:size(Tree2)),
+                    ?assertEqual(Size, xb5_trees:size(Tree2)),
 
                     ?assertKvListsCanonEqual(
                         update_in_sorted_list(Key, NewValue, RefKvs),
-                        b5_trees:to_list(Tree2)
+                        xb5_trees:to_list(Tree2)
                     )
                 end,
                 RefKvs,
@@ -411,7 +411,7 @@ test_update_with3(_Config) ->
             foreach_non_existent_key(
                 fun(Key) ->
                     Fun = fun1_error_not_to_be_called(),
-                    ?assertError({badkey, Key}, b5_trees:update_with(Key, Fun, Tree))
+                    ?assertError({badkey, Key}, xb5_trees:update_with(Key, Fun, Tree))
                 end,
                 RefKvs,
                 50
@@ -434,13 +434,13 @@ test_update_with4(_Config) ->
 
                     InitValue = make_ref(),
 
-                    Tree2 = b5_trees:update_with(Key, Fun, InitValue, Tree),
+                    Tree2 = xb5_trees:update_with(Key, Fun, InitValue, Tree),
 
-                    ?assertEqual(Size, b5_trees:size(Tree2)),
+                    ?assertEqual(Size, xb5_trees:size(Tree2)),
 
                     ?assertKvListsCanonEqual(
                         update_in_sorted_list(Key, NewValue, RefKvs),
-                        b5_trees:to_list(Tree2)
+                        xb5_trees:to_list(Tree2)
                     )
                 end,
                 RefKvs,
@@ -454,13 +454,13 @@ test_update_with4(_Config) ->
                     Fun = fun1_error_not_to_be_called(),
                     InitValue = make_ref(),
 
-                    Tree2 = b5_trees:update_with(Key, Fun, InitValue, Tree),
+                    Tree2 = xb5_trees:update_with(Key, Fun, InitValue, Tree),
 
-                    ?assertEqual(Size + 1, b5_trees:size(Tree2)),
+                    ?assertEqual(Size + 1, xb5_trees:size(Tree2)),
 
                     ?assertKvListsCanonEqual(
                         add_to_sorted_list(Key, InitValue, RefKvs),
-                        b5_trees:to_list(Tree2)
+                        xb5_trees:to_list(Tree2)
                     )
                 end,
                 RefKvs,
@@ -475,13 +475,13 @@ test_enter(_Config) ->
             foreach_existing_pair(
                 fun(Key, _Value) ->
                     NewValue = {new_value, make_ref()},
-                    Tree2 = b5_trees:enter(Key, NewValue, Tree),
+                    Tree2 = xb5_trees:enter(Key, NewValue, Tree),
 
-                    ?assertEqual(Size, b5_trees:size(Tree2)),
+                    ?assertEqual(Size, xb5_trees:size(Tree2)),
 
                     ?assertKvListsCanonEqual(
                         update_in_sorted_list(Key, NewValue, RefKvs),
-                        b5_trees:to_list(Tree2)
+                        xb5_trees:to_list(Tree2)
                     )
                 end,
                 RefKvs,
@@ -493,11 +493,11 @@ test_enter(_Config) ->
             foreach_non_existent_key(
                 fun(Key) ->
                     Value = {new_value, make_ref()},
-                    Tree2 = b5_trees:enter(Key, Value, Tree),
-                    ?assertEqual(Size + 1, b5_trees:size(Tree2)),
+                    Tree2 = xb5_trees:enter(Key, Value, Tree),
+                    ?assertEqual(Size + 1, xb5_trees:size(Tree2)),
                     ?assertKvListsCanonEqual(
                         add_to_sorted_list(Key, Value, RefKvs),
-                        b5_trees:to_list(Tree2)
+                        xb5_trees:to_list(Tree2)
                     )
                 end,
                 RefKvs,
@@ -511,7 +511,7 @@ test_keys(_Config) ->
         fun(_Size, RefKvs, Tree) ->
             ?assertEqual(
                 lists:map(fun canon_key/1, list_keys(RefKvs)),
-                lists:map(fun canon_key/1, b5_trees:keys(Tree))
+                lists:map(fun canon_key/1, xb5_trees:keys(Tree))
             )
         end
     ).
@@ -521,7 +521,7 @@ test_values(_Config) ->
         fun(_Size, RefKvs, Tree) ->
             ?assertEqual(
                 list_values(RefKvs),
-                b5_trees:values(Tree)
+                xb5_trees:values(Tree)
             )
         end
     ).
@@ -536,15 +536,15 @@ test_take_sequential(_Config) ->
                     fun({Key, Value}, {Tree1, RemainingKvs1}) ->
                         test_take_non_existing_keys(Tree1, RemainingKvs1, 3),
 
-                        {TakenValue, Tree2} = b5_trees:take(Key, Tree1),
+                        {TakenValue, Tree2} = xb5_trees:take(Key, Tree1),
                         ?assertEqual(Value, TakenValue),
 
                         RemainingKvs2 = remove_from_sorted_list(Key, RemainingKvs1),
-                        ?assertKvListsCanonEqual(RemainingKvs2, b5_trees:to_list(Tree2)),
-                        ?assertEqual(length(RemainingKvs2), b5_trees:size(Tree2)),
-                        ?assertEqual(RemainingKvs2 =:= [], b5_trees:is_empty(Tree2)),
+                        ?assertKvListsCanonEqual(RemainingKvs2, xb5_trees:to_list(Tree2)),
+                        ?assertEqual(length(RemainingKvs2), xb5_trees:size(Tree2)),
+                        ?assertEqual(RemainingKvs2 =:= [], xb5_trees:is_empty(Tree2)),
 
-                        ?assertEqual({TakenValue, Tree2}, b5_trees:take_any(Key, Tree1)),
+                        ?assertEqual({TakenValue, Tree2}, xb5_trees:take_any(Key, Tree1)),
 
                         {Tree2, RemainingKvs2}
                     end,
@@ -552,9 +552,9 @@ test_take_sequential(_Config) ->
                     TakePairs
                 ),
 
-            ?assertEqual([], b5_trees:to_list(TreeN)),
-            ?assertEqual(0, b5_trees:size(TreeN)),
-            ?assertEqual(true, b5_trees:is_empty(TreeN)),
+            ?assertEqual([], xb5_trees:to_list(TreeN)),
+            ?assertEqual(0, xb5_trees:size(TreeN)),
+            ?assertEqual(true, xb5_trees:is_empty(TreeN)),
 
             test_take_non_existing_keys(TreeN, [], 3)
         end
@@ -570,15 +570,15 @@ test_take_shuffled(_Config) ->
                     fun({Key, Value}, {Tree1, RemainingKvs1}) ->
                         test_take_non_existing_keys(Tree1, RemainingKvs1, 3),
 
-                        {TakenValue, Tree2} = b5_trees:take(Key, Tree1),
+                        {TakenValue, Tree2} = xb5_trees:take(Key, Tree1),
                         ?assertEqual(Value, TakenValue),
 
                         RemainingKvs2 = remove_from_sorted_list(Key, RemainingKvs1),
-                        ?assertKvListsCanonEqual(RemainingKvs2, b5_trees:to_list(Tree2)),
-                        ?assertEqual(length(RemainingKvs2), b5_trees:size(Tree2)),
-                        ?assertEqual(RemainingKvs2 =:= [], b5_trees:is_empty(Tree2)),
+                        ?assertKvListsCanonEqual(RemainingKvs2, xb5_trees:to_list(Tree2)),
+                        ?assertEqual(length(RemainingKvs2), xb5_trees:size(Tree2)),
+                        ?assertEqual(RemainingKvs2 =:= [], xb5_trees:is_empty(Tree2)),
 
-                        ?assertEqual({TakenValue, Tree2}, b5_trees:take_any(Key, Tree1)),
+                        ?assertEqual({TakenValue, Tree2}, xb5_trees:take_any(Key, Tree1)),
 
                         {Tree2, RemainingKvs2}
                     end,
@@ -586,9 +586,9 @@ test_take_shuffled(_Config) ->
                     TakePairs
                 ),
 
-            ?assertEqual([], b5_trees:to_list(TreeN)),
-            ?assertEqual(0, b5_trees:size(TreeN)),
-            ?assertEqual(true, b5_trees:is_empty(TreeN)),
+            ?assertEqual([], xb5_trees:to_list(TreeN)),
+            ?assertEqual(0, xb5_trees:size(TreeN)),
+            ?assertEqual(true, xb5_trees:is_empty(TreeN)),
 
             test_take_non_existing_keys(TreeN, [], 3)
         end
@@ -602,10 +602,10 @@ test_smallest(_Config) ->
     foreach_test_tree(
         fun
             (0, _RefKvs, Tree) ->
-                ?assertError(empty_tree, b5_trees:smallest(Tree));
+                ?assertError(empty_tree, xb5_trees:smallest(Tree));
             %
             (_Size, RefKvs, Tree) ->
-                ?assertCanonEqual(hd(RefKvs), b5_trees:smallest(Tree))
+                ?assertCanonEqual(hd(RefKvs), xb5_trees:smallest(Tree))
         end
     ).
 
@@ -613,10 +613,10 @@ test_largest(_Config) ->
     foreach_test_tree(
         fun
             (0, _RefKvs, Tree) ->
-                ?assertError(empty_tree, b5_trees:largest(Tree));
+                ?assertError(empty_tree, xb5_trees:largest(Tree));
             %
             (_Size, RefKvs, Tree) ->
-                ?assertCanonEqual(lists:last(RefKvs), b5_trees:largest(Tree))
+                ?assertCanonEqual(lists:last(RefKvs), xb5_trees:largest(Tree))
         end
     ).
 
@@ -663,7 +663,7 @@ test_iterator(_Config) ->
 test_iterator_reversed(_Config) ->
     foreach_test_tree(
         fun(_Size, RefKvs, Tree) ->
-            Iter = b5_trees:iterator(Tree, reversed),
+            Iter = xb5_trees:iterator(Tree, reversed),
             ?assertKvListsCanonEqual(lists:reverse(RefKvs), iterate(Iter))
         end
     ).
@@ -721,11 +721,11 @@ test_structure_sequentially_built(_Config) ->
                     1 ->
                         new_tree_from_each_inserted(RefKvs);
                     2 ->
-                        b5_trees:from_list(RefKvs);
+                        xb5_trees:from_list(RefKvs);
                     3 ->
                         new_tree_from_each_inserted(lists:reverse(RefKvs));
                     4 ->
-                        b5_trees:from_list(lists:reverse(RefKvs))
+                        xb5_trees:from_list(lists:reverse(RefKvs))
                 end
             end
         ),
@@ -762,9 +762,9 @@ test_structure_build_seqIns2x_seqDelSmallerHalf(_Config) ->
                 Tree1 = new_tree_from_each_inserted(RefKvs),
 
                 % 2) delete smaller half sequentially
-                AmountToDelete = b5_trees:size(Tree1) div 2,
+                AmountToDelete = xb5_trees:size(Tree1) div 2,
                 KeysToDelete = list_keys(lists:sublist(RefKvs, AmountToDelete)),
-                lists:foldl(fun b5_trees:delete/2, Tree1, KeysToDelete)
+                lists:foldl(fun xb5_trees:delete/2, Tree1, KeysToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -785,9 +785,9 @@ test_structure_build_seqIns2x_seqDelGreaterHalf(_Config) ->
                 Tree1 = new_tree_from_each_inserted(RefKvs),
 
                 % 2) delete greater half sequentially
-                AmountToDelete = b5_trees:size(Tree1) div 2,
+                AmountToDelete = xb5_trees:size(Tree1) div 2,
                 KeysToDelete = list_keys(lists:sublist(lists:reverse(RefKvs), AmountToDelete)),
-                lists:foldl(fun b5_trees:delete/2, Tree1, KeysToDelete)
+                lists:foldl(fun xb5_trees:delete/2, Tree1, KeysToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -808,9 +808,9 @@ test_structure_build_seqIns2x_randomlyDelHalf(_Config) ->
                 Tree1 = new_tree_from_each_inserted(RefKvs),
 
                 % 2) delete half randomly
-                AmountToDelete = b5_trees:size(Tree1) div 2,
+                AmountToDelete = xb5_trees:size(Tree1) div 2,
                 KeysToDelete = list_keys(lists:sublist(list_shuffle(RefKvs), AmountToDelete)),
-                lists:foldl(fun b5_trees:delete/2, Tree1, KeysToDelete)
+                lists:foldl(fun xb5_trees:delete/2, Tree1, KeysToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -831,9 +831,9 @@ test_structure_build_randomlyIns2x_randomlyDelHalf(_Config) ->
                 Tree1 = new_tree_from_each_inserted(list_shuffle(RefKvs)),
 
                 % 2) delete half randomly
-                AmountToDelete = b5_trees:size(Tree1) div 2,
+                AmountToDelete = xb5_trees:size(Tree1) div 2,
                 KeysToDelete = list_keys(lists:sublist(list_shuffle(RefKvs), AmountToDelete)),
-                lists:foldl(fun b5_trees:delete/2, Tree1, KeysToDelete)
+                lists:foldl(fun xb5_trees:delete/2, Tree1, KeysToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -854,9 +854,9 @@ test_structure_build_randomlyIns2x_seqDelSmallerHalf(_Config) ->
                 Tree1 = new_tree_from_each_inserted(list_shuffle(RefKvs)),
 
                 % 2) delete smaller half sequentially
-                AmountToDelete = b5_trees:size(Tree1) div 2,
+                AmountToDelete = xb5_trees:size(Tree1) div 2,
                 KeysToDelete = list_keys(lists:sublist(RefKvs, AmountToDelete)),
-                lists:foldl(fun b5_trees:delete/2, Tree1, KeysToDelete)
+                lists:foldl(fun xb5_trees:delete/2, Tree1, KeysToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -886,7 +886,7 @@ test_structure_build_adversarial_deletion(_Config) ->
                         lists:enumerate(RefKvs)
                     ),
 
-                lists:foldl(fun b5_trees:delete/2, Tree1, KeysToDelete)
+                lists:foldl(fun xb5_trees:delete/2, Tree1, KeysToDelete)
             end,
             [{size_multiplier, 1.25}]
         ),
@@ -909,10 +909,10 @@ foreach_test_tree(Fun) ->
 foreach_test_tree(Fun, Opts) ->
     foreach_tested_size(
         fun(Size, RefKvs) ->
-            Tree = b5_trees:from_list(maybe_shuffle_list_for_new_tree(RefKvs)),
-            ?assertEqual(Size, b5_trees:size(Tree)),
+            Tree = xb5_trees:from_list(maybe_shuffle_list_for_new_tree(RefKvs)),
+            ?assertEqual(Size, xb5_trees:size(Tree)),
 
-            Stats = b5_trees:structural_stats(Tree),
+            Stats = xb5_trees:structural_stats(Tree),
             ?assertEqual(Size, proplists:get_value(total_keys, Stats)),
 
             Fun(Size, RefKvs, Tree)
@@ -1027,15 +1027,15 @@ canon_list(ImproperTail) ->
     canon_key(ImproperTail).
 
 new_tree_from_each_inserted(List) ->
-    Tree = b5_trees:new(),
+    Tree = xb5_trees:new(),
 
-    ?assertEqual(0, b5_trees:size(Tree)),
-    ?assertEqual(true, b5_trees:is_empty(Tree)),
+    ?assertEqual(0, xb5_trees:size(Tree)),
+    ?assertEqual(true, xb5_trees:is_empty(Tree)),
 
     new_tree_from_each_inserted_recur(List, Tree).
 
 new_tree_from_each_inserted_recur([{Key, Value} | Next], Tree) ->
-    UpdatedTree = b5_trees:insert(Key, Value, Tree),
+    UpdatedTree = xb5_trees:insert(Key, Value, Tree),
     new_tree_from_each_inserted_recur(Next, UpdatedTree);
 new_tree_from_each_inserted_recur([], Tree) ->
     Tree.
@@ -1142,27 +1142,27 @@ run_construction_repeated_test_recur(Size, [{KeyToRepeat, Value} | Next], Prev) 
         | Next
     ]),
 
-    Tree = b5_trees:from_list(List),
+    Tree = xb5_trees:from_list(List),
 
-    ?assertEqual(Size, b5_trees:size(Tree)),
+    ?assertEqual(Size, xb5_trees:size(Tree)),
 
     % Last repeated key is the one that's kept
     ?assertKvListsCanonEqual(
         sort_kv_list_keep_last_repeated(List),
-        b5_trees:to_list(Tree)
+        xb5_trees:to_list(Tree)
     ),
 
     %%%
 
     ShuffledList = list_shuffle(List),
-    TreeShuffled = b5_trees:from_list(ShuffledList),
+    TreeShuffled = xb5_trees:from_list(ShuffledList),
 
-    ?assertEqual(Size, b5_trees:size(TreeShuffled)),
+    ?assertEqual(Size, xb5_trees:size(TreeShuffled)),
 
     % Last repeated key is the one that's kept
     ?assertKvListsCanonEqual(
         sort_kv_list_keep_last_repeated(ShuffledList),
-        b5_trees:to_list(TreeShuffled)
+        xb5_trees:to_list(TreeShuffled)
     ),
 
     %%%
@@ -1180,8 +1180,8 @@ test_delete_non_existing_keys(Tree, RemainingKeys, Amount) when Amount > 0 ->
 
     case lists:any(fun({K, _}) -> K == Key end, RemainingKeys) of
         false ->
-            ?assertError({badkey, Key}, b5_trees:delete(Key, Tree)),
-            ?assertEqual(Tree, b5_trees:delete_any(Key, Tree)),
+            ?assertError({badkey, Key}, xb5_trees:delete(Key, Tree)),
+            ?assertEqual(Tree, xb5_trees:delete_any(Key, Tree)),
 
             test_delete_non_existing_keys(Tree, RemainingKeys, Amount - 1);
         %
@@ -1196,8 +1196,8 @@ test_take_non_existing_keys(Tree, RemainingKeys, Amount) when Amount > 0 ->
 
     case lists:any(fun({K, _}) -> K == Key end, RemainingKeys) of
         false ->
-            ?assertError({badkey, Key}, b5_trees:take(Key, Tree)),
-            ?assertEqual(error, b5_trees:take_any(Key, Tree)),
+            ?assertError({badkey, Key}, xb5_trees:take(Key, Tree)),
+            ?assertEqual(error, xb5_trees:take_any(Key, Tree)),
 
             test_take_non_existing_keys(Tree, RemainingKeys, Amount - 1);
         %
@@ -1215,22 +1215,22 @@ run_smaller(RefKvs, Tree) ->
     case RefKvs of
         [] ->
             Key = new_key(),
-            ?assertEqual(none, b5_trees:smaller(Key, Tree));
+            ?assertEqual(none, xb5_trees:smaller(Key, Tree));
         %
         [{SingleKey, _} = SinglePair] ->
-            ?assertEqual(none, b5_trees:smaller(randomly_switch_number_type(SingleKey), Tree)),
+            ?assertEqual(none, xb5_trees:smaller(randomly_switch_number_type(SingleKey), Tree)),
 
             LargerKey = key_larger(SingleKey),
-            ?assertEqual(SinglePair, b5_trees:smaller(LargerKey, Tree)),
+            ?assertEqual(SinglePair, xb5_trees:smaller(LargerKey, Tree)),
 
             SmallerKey = key_smaller(SingleKey),
-            ?assertEqual(none, b5_trees:smaller(SmallerKey, Tree));
+            ?assertEqual(none, xb5_trees:smaller(SmallerKey, Tree));
         %
         [{FirstKey, FirstValue} | Next] ->
-            ?assertEqual(none, b5_trees:smaller(randomly_switch_number_type(FirstKey), Tree)),
+            ?assertEqual(none, xb5_trees:smaller(randomly_switch_number_type(FirstKey), Tree)),
 
             SmallerKey = key_smaller(FirstKey),
-            ?assertEqual(none, b5_trees:smaller(SmallerKey, Tree)),
+            ?assertEqual(none, xb5_trees:smaller(SmallerKey, Tree)),
 
             run_smaller_recur(FirstKey, FirstValue, Next, Tree)
     end.
@@ -1238,22 +1238,22 @@ run_smaller(RefKvs, Tree) ->
 run_smaller_recur(ExpectedKey, ExpectedValue, [{LastKey, LastValue}], Tree) ->
     ?assertCanonEqual(
         {ExpectedKey, ExpectedValue},
-        b5_trees:smaller(randomly_switch_number_type(LastKey), Tree)
+        xb5_trees:smaller(randomly_switch_number_type(LastKey), Tree)
     ),
 
     LargerKey = key_larger(LastKey),
     ?assert(LargerKey > LastKey),
-    ?assert(b5_trees:smaller(LargerKey, Tree) == {LastKey, LastValue});
+    ?assert(xb5_trees:smaller(LargerKey, Tree) == {LastKey, LastValue});
 run_smaller_recur(ExpectedKey, ExpectedValue, [{Key, Value} | Next], Tree) ->
     ?assert(
-        b5_trees:smaller(randomly_switch_number_type(Key), Tree) == {ExpectedKey, ExpectedValue}
+        xb5_trees:smaller(randomly_switch_number_type(Key), Tree) == {ExpectedKey, ExpectedValue}
     ),
 
     case key_in_between(ExpectedKey, Key) of
         {found, InBetween} ->
             ?assert(InBetween > ExpectedKey),
             ?assert(InBetween < Key),
-            ?assertCanonEqual({ExpectedKey, ExpectedValue}, b5_trees:smaller(InBetween, Tree));
+            ?assertCanonEqual({ExpectedKey, ExpectedValue}, xb5_trees:smaller(InBetween, Tree));
         %
         none ->
             ok
@@ -1267,22 +1267,22 @@ run_larger(RefKvs, Tree) ->
     case lists:reverse(RefKvs) of
         [] ->
             Key = new_key(),
-            ?assertEqual(none, b5_trees:larger(Key, Tree));
+            ?assertEqual(none, xb5_trees:larger(Key, Tree));
         %
         [{SingleKey, SingleValue}] ->
-            ?assertEqual(none, b5_trees:larger(SingleKey, Tree)),
+            ?assertEqual(none, xb5_trees:larger(SingleKey, Tree)),
 
             LargerKey = key_larger(SingleKey),
-            ?assertEqual(none, b5_trees:larger(LargerKey, Tree)),
+            ?assertEqual(none, xb5_trees:larger(LargerKey, Tree)),
 
             SmallerKey = key_smaller(SingleKey),
-            ?assertEqual({SingleKey, SingleValue}, b5_trees:larger(SmallerKey, Tree));
+            ?assertEqual({SingleKey, SingleValue}, xb5_trees:larger(SmallerKey, Tree));
         %
         [{LastKey, LastValue} | Next] ->
-            ?assertEqual(none, b5_trees:larger(randomly_switch_number_type(LastKey), Tree)),
+            ?assertEqual(none, xb5_trees:larger(randomly_switch_number_type(LastKey), Tree)),
 
             LargerKey = key_larger(LastKey),
-            ?assertEqual(none, b5_trees:larger(LargerKey, Tree)),
+            ?assertEqual(none, xb5_trees:larger(LargerKey, Tree)),
 
             run_larger_recur(LastKey, LastValue, Next, Tree)
     end.
@@ -1290,22 +1290,22 @@ run_larger(RefKvs, Tree) ->
 run_larger_recur(ExpectedKey, ExpectedValue, [{FirstKey, FirstValue}], Tree) ->
     ?assertCanonEqual(
         {ExpectedKey, ExpectedValue},
-        b5_trees:larger(randomly_switch_number_type(FirstKey), Tree)
+        xb5_trees:larger(randomly_switch_number_type(FirstKey), Tree)
     ),
 
     SmallerKey = key_smaller(FirstKey),
     ?assert(SmallerKey < FirstKey),
-    ?assertEqual({FirstKey, FirstValue}, b5_trees:larger(SmallerKey, Tree));
+    ?assertEqual({FirstKey, FirstValue}, xb5_trees:larger(SmallerKey, Tree));
 run_larger_recur(ExpectedKey, ExpectedValue, [{Key, Value} | Next], Tree) ->
     ?assertEqual(
-        {ExpectedKey, ExpectedValue}, b5_trees:larger(randomly_switch_number_type(Key), Tree)
+        {ExpectedKey, ExpectedValue}, xb5_trees:larger(randomly_switch_number_type(Key), Tree)
     ),
 
     case key_in_between(Key, ExpectedKey) of
         {found, InBetween} ->
             ?assert(InBetween < ExpectedKey),
             ?assert(InBetween > Key),
-            ?assertCanonEqual({ExpectedKey, ExpectedValue}, b5_trees:larger(InBetween, Tree));
+            ?assertCanonEqual({ExpectedKey, ExpectedValue}, xb5_trees:larger(InBetween, Tree));
         %
         none ->
             ok
@@ -1316,20 +1316,20 @@ run_larger_recur(ExpectedKey, ExpectedValue, [{Key, Value} | Next], Tree) ->
 %%%%%%%%%%%%%%%%%
 
 run_take_smallest([{ExpectedKey, ExpectedValue} | Next], Tree) ->
-    {TakenKey, TakenValue, Tree2} = b5_trees:take_smallest(Tree),
+    {TakenKey, TakenValue, Tree2} = xb5_trees:take_smallest(Tree),
     ?assertEqual({ExpectedKey, ExpectedValue}, {TakenKey, TakenValue}),
-    ?assertEqual(length(Next), b5_trees:size(Tree2)),
+    ?assertEqual(length(Next), xb5_trees:size(Tree2)),
     run_take_smallest(Next, Tree2);
 run_take_smallest([], Tree) ->
-    ?assertError(empty_tree, b5_trees:take_smallest(Tree)).
+    ?assertError(empty_tree, xb5_trees:take_smallest(Tree)).
 
 run_take_largest([{ExpectedKey, ExpectedValue} | Next], Tree) ->
-    {TakenKey, TakenValue, Tree2} = b5_trees:take_largest(Tree),
+    {TakenKey, TakenValue, Tree2} = xb5_trees:take_largest(Tree),
     ?assertEqual({ExpectedKey, ExpectedValue}, {TakenKey, TakenValue}),
-    ?assertEqual(length(Next), b5_trees:size(Tree2)),
+    ?assertEqual(length(Next), xb5_trees:size(Tree2)),
     run_take_largest(Next, Tree2);
 run_take_largest([], Tree) ->
-    ?assertError(empty_tree, b5_trees:take_largest(Tree)).
+    ?assertError(empty_tree, xb5_trees:take_largest(Tree)).
 
 %% ------------------------------------------------------------------
 %% Helpers: iterators
@@ -1389,8 +1389,8 @@ run_iterator_from_last_element(LastKey, LastValue, Tree) ->
     ?assertEqual([], iterate(Iter2)).
 
 new_iterator_from(Key, Tree) ->
-    Iter = b5_trees:iterator_from(Key, Tree),
-    ?assertEqual(Iter, b5_trees:iterator_from(Key, Tree, ordered)),
+    Iter = xb5_trees:iterator_from(Key, Tree),
+    ?assertEqual(Iter, xb5_trees:iterator_from(Key, Tree, ordered)),
     Iter.
 
 %%%%%%%%%%%%%%%%%
@@ -1398,26 +1398,26 @@ new_iterator_from(Key, Tree) ->
 run_iterator_from_reversed(RefKvs, Tree) ->
     case lists:reverse(RefKvs) of
         [] ->
-            Iter = b5_trees:iterator_from(new_key(), Tree, reversed),
+            Iter = xb5_trees:iterator_from(new_key(), Tree, reversed),
             ?assertEqual([], iterate(Iter));
         %
         [{SingleKey, _}] ->
-            Iter = b5_trees:iterator_from(
+            Iter = xb5_trees:iterator_from(
                 randomly_switch_number_type(SingleKey), Tree, reversed
             ),
             ?assertKvListsCanonEqual(RefKvs, iterate(Iter)),
 
             SmallerKey = key_smaller(SingleKey),
-            Iter2 = b5_trees:iterator_from(SmallerKey, Tree, reversed),
+            Iter2 = xb5_trees:iterator_from(SmallerKey, Tree, reversed),
             ?assertEqual([], iterate(Iter2)),
 
             LargerKey = key_larger(SingleKey),
-            Iter3 = b5_trees:iterator_from(LargerKey, Tree, reversed),
+            Iter3 = xb5_trees:iterator_from(LargerKey, Tree, reversed),
             ?assertKvListsCanonEqual(RefKvs, iterate(Iter3));
         %
         [{LastKey, _} | _] = ReverseRefKvs ->
             LargerKey = key_larger(LastKey),
-            Iter = b5_trees:iterator_from(LargerKey, Tree, reversed),
+            Iter = xb5_trees:iterator_from(LargerKey, Tree, reversed),
             ?assertKvListsCanonEqual(ReverseRefKvs, iterate(Iter)),
 
             run_iterator_from_reversed_recur(ReverseRefKvs, Tree)
@@ -1426,14 +1426,14 @@ run_iterator_from_reversed(RefKvs, Tree) ->
 run_iterator_from_reversed_recur([{FirstKey, FirstValue}], Tree) ->
     run_iterator_from_reversed_first_key(FirstKey, FirstValue, Tree);
 run_iterator_from_reversed_recur([{Key2, _} | [{Key1, _} | _] = Tail] = List, Tree) ->
-    Iter = b5_trees:iterator_from(Key2, Tree, reversed),
+    Iter = xb5_trees:iterator_from(Key2, Tree, reversed),
     ?assertKvListsCanonEqual(List, iterate(Iter)),
 
     case key_in_between(Key1, Key2) of
         {found, InBetween} ->
             ?assert(InBetween > Key1),
             ?assert(InBetween < Key2),
-            Iter2 = b5_trees:iterator_from(InBetween, Tree, reversed),
+            Iter2 = xb5_trees:iterator_from(InBetween, Tree, reversed),
             ?assertKvListsCanonEqual(Tail, iterate(Iter2));
         %
         none ->
@@ -1443,22 +1443,22 @@ run_iterator_from_reversed_recur([{Key2, _} | [{Key1, _} | _] = Tail] = List, Tr
     run_iterator_from_reversed_recur(Tail, Tree).
 
 run_iterator_from_reversed_first_key(FirstKey, FirstValue, Tree) ->
-    Iter = b5_trees:iterator_from(randomly_switch_number_type(FirstKey), Tree, reversed),
+    Iter = xb5_trees:iterator_from(randomly_switch_number_type(FirstKey), Tree, reversed),
     ?assertKvListsCanonEqual([{FirstKey, FirstValue}], iterate(Iter)),
 
     SmallerKey = key_smaller(FirstKey),
-    Iter2 = b5_trees:iterator_from(SmallerKey, Tree, reversed),
+    Iter2 = xb5_trees:iterator_from(SmallerKey, Tree, reversed),
     ?assertEqual([], iterate(Iter2)).
 
 %%%%%%%%%%%%%%%%%
 
 new_iterator(Tree) ->
-    Iter = b5_trees:iterator(Tree),
-    ?assertEqual(Iter, b5_trees:iterator(Tree, ordered)),
+    Iter = xb5_trees:iterator(Tree),
+    ?assertEqual(Iter, xb5_trees:iterator(Tree, ordered)),
     Iter.
 
 iterate(Iter) ->
-    case b5_trees:next(Iter) of
+    case xb5_trees:next(Iter) of
         {Key, Value, Iter2} ->
             [{Key, Value} | iterate(Iter2)];
         %
@@ -1487,7 +1487,7 @@ run_foldl(RefKvs, Tree) ->
 
     ?assertKvListsCanonEqual(
         orddict:fold(Fun, [], orddict:from_list(RefKvs)),
-        b5_trees:foldl(Fun, [], Tree)
+        xb5_trees:foldl(Fun, [], Tree)
     ).
 
 %% ------------------------------------------------------------------
@@ -1518,7 +1518,7 @@ run_foldr(RefKvs, Tree) ->
             RefKvs
         ),
         %
-        b5_trees:foldr(Fun, [], Tree)
+        xb5_trees:foldr(Fun, [], Tree)
     ).
 
 %% ------------------------------------------------------------------
@@ -1553,18 +1553,18 @@ run_map(RefKvs, Tree) ->
                     end
                 end,
 
-            MappedTree = b5_trees:map(MapFun, Tree),
+            MappedTree = xb5_trees:map(MapFun, Tree),
 
             ExpectedMappedRef = orddict:to_list(orddict:map(MapFun, orddict:from_list(RefKvs))),
 
             ?assertEqual(
                 length(ExpectedMappedRef),
-                b5_trees:size(MappedTree)
+                xb5_trees:size(MappedTree)
             ),
 
             ?assertKvListsCanonEqual(
                 ExpectedMappedRef,
-                b5_trees:to_list(MappedTree)
+                xb5_trees:to_list(MappedTree)
             )
         end,
         PercentagesMapped
@@ -1591,9 +1591,9 @@ run_structure_test(InitFun, Opts) ->
                 RefKvs = new_ref_kvs(Size, NumericOnly),
 
                 Tree = InitFun(RefKvs),
-                ?assertEqual(?STRUCTURE_TEST_BASE_SIZE, b5_trees:size(Tree)),
+                ?assertEqual(?STRUCTURE_TEST_BASE_SIZE, xb5_trees:size(Tree)),
 
-                Stats = b5_trees:structural_stats(Tree),
+                Stats = xb5_trees:structural_stats(Tree),
 
                 %%%%%%%%%%
 

@@ -1,5 +1,5 @@
 %% @private
--module(b5_structural_stats).
+-module(xb5_structural_stats).
 
 %% ------------------------------------------------------------------
 %% API Function Exports

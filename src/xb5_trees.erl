@@ -1,4 +1,4 @@
--module(b5_trees).
+-module(xb5_trees).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -91,18 +91,18 @@
 %% API Type Definitions
 %% ------------------------------------------------------------------
 
--record(b5_trees, {size, root}).
+-record(xb5_tree, {size, root}).
 
--opaque tree(Key, Value) :: #b5_trees{
+-opaque tree(Key, Value) :: #xb5_tree{
     size :: non_neg_integer(),
-    root :: b5_trees_node:t(Key, Value)
+    root :: xb5_trees_node:t(Key, Value)
 }.
 -export_type([tree/2]).
 
 -type tree() :: tree(_, _).
 -export_type([tree/0]).
 
--type iter(Key, Value) :: b5_trees_node:iter(Key, Value).
+-type iter(Key, Value) :: xb5_trees_node:iter(Key, Value).
 -export_type([iter/2]).
 
 -type iter() :: iter(_, _).
@@ -112,7 +112,7 @@
 
 -type unwrapped_tree(Key, Value) :: #{
     size := non_neg_integer(),
-    root := b5_trees_node:t(Key, Value)
+    root := xb5_trees_node:t(Key, Value)
 }.
 -export_type([unwrapped_tree/2]).
 
@@ -124,13 +124,13 @@
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-delete(Key, #b5_trees{root = Root, size = Size} = Tree) ->
-    case b5_trees_node:delete_att(Key, Root) of
+delete(Key, #xb5_tree{root = Root, size = Size} = Tree) ->
+    case xb5_trees_node:delete_att(Key, Root) of
         none ->
             error_badkey(Key);
         %
         UpdatedRoot ->
-            Tree#b5_trees{
+            Tree#xb5_tree{
                 root = UpdatedRoot,
                 size = Size - 1
             }
@@ -142,13 +142,13 @@ delete(Key, #b5_trees{root = Root, size = Size} = Tree) ->
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-delete_any(Key, #b5_trees{root = Root, size = Size} = Tree) ->
-    case b5_trees_node:delete_att(Key, Root) of
+delete_any(Key, #xb5_tree{root = Root, size = Size} = Tree) ->
+    case xb5_trees_node:delete_att(Key, Root) of
         none ->
             Tree;
         %
         UpdatedRoot ->
-            Tree#b5_trees{
+            Tree#xb5_tree{
                 root = UpdatedRoot,
                 size = Size - 1
             }
@@ -166,14 +166,14 @@ empty() -> new().
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-enter(Key, Value, #b5_trees{size = Size, root = Root} = Tree) ->
-    case b5_trees_node:insert_att(Key, eager, Value, Root) of
+enter(Key, Value, #xb5_tree{size = Size, root = Root} = Tree) ->
+    case xb5_trees_node:insert_att(Key, eager, Value, Root) of
         none ->
-            UpdatedRoot = b5_trees_node:update_att(Key, eager, Value, Root),
-            Tree#b5_trees{root = UpdatedRoot};
+            UpdatedRoot = xb5_trees_node:update_att(Key, eager, Value, Root),
+            Tree#xb5_tree{root = UpdatedRoot};
         %
         UpdatedRoot ->
-            Tree#b5_trees{
+            Tree#xb5_tree{
                 root = UpdatedRoot,
                 size = Size + 1
             }
@@ -189,8 +189,8 @@ enter(Key, Value, #b5_trees{size = Size, root = Root} = Tree) ->
     AccOut :: Acc,
     Tree :: tree(Key, Value).
 
-foldl(Fun, Acc0, #b5_trees{root = Root}) ->
-    b5_trees_node:foldl(Fun, Acc0, Root).
+foldl(Fun, Acc0, #xb5_tree{root = Root}) ->
+    xb5_trees_node:foldl(Fun, Acc0, Root).
 
 %%
 
@@ -202,8 +202,8 @@ foldl(Fun, Acc0, #b5_trees{root = Root}) ->
     AccOut :: Acc,
     Tree :: tree(Key, Value).
 
-foldr(Fun, Acc0, #b5_trees{root = Root}) ->
-    b5_trees_node:foldr(Fun, Acc0, Root).
+foldr(Fun, Acc0, #xb5_tree{root = Root}) ->
+    xb5_trees_node:foldr(Fun, Acc0, Root).
 
 %%
 
@@ -213,7 +213,7 @@ foldr(Fun, Acc0, #b5_trees{root = Root}) ->
 
 from_list(List) ->
     Size = 0,
-    Root = b5_trees_node:new(),
+    Root = xb5_trees_node:new(),
     from_list_recur(List, Size, Root).
 
 %%
@@ -231,8 +231,8 @@ from_orddict(Orddict) ->
 -spec get(Key, Tree) -> Value when
     Tree :: tree(Key, Value).
 
-get(Key, #b5_trees{root = Root}) ->
-    b5_trees_node:get(Key, Root).
+get(Key, #xb5_tree{root = Root}) ->
+    xb5_trees_node:get(Key, Root).
 
 %%
 
@@ -240,13 +240,13 @@ get(Key, #b5_trees{root = Root}) ->
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-insert(Key, Value, #b5_trees{size = Size, root = Root} = Tree) ->
-    case b5_trees_node:insert_att(Key, eager, Value, Root) of
+insert(Key, Value, #xb5_tree{size = Size, root = Root} = Tree) ->
+    case xb5_trees_node:insert_att(Key, eager, Value, Root) of
         none ->
             error_key_exists(Key);
         %
         UpdatedRoot ->
-            Tree#b5_trees{
+            Tree#xb5_tree{
                 size = Size + 1,
                 root = UpdatedRoot
             }
@@ -259,13 +259,13 @@ insert(Key, Value, #b5_trees{size = Size, root = Root} = Tree) ->
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-insert_with(Key, Fun, #b5_trees{size = Size, root = Root} = Tree) ->
-    case b5_trees_node:insert_att(Key, lazy, Fun, Root) of
+insert_with(Key, Fun, #xb5_tree{size = Size, root = Root} = Tree) ->
+    case xb5_trees_node:insert_att(Key, lazy, Fun, Root) of
         none ->
             error_key_exists(Key);
         %
         UpdatedRoot ->
-            Tree#b5_trees{
+            Tree#xb5_tree{
                 size = Size + 1,
                 root = UpdatedRoot
             }
@@ -276,15 +276,15 @@ insert_with(Key, Fun, #b5_trees{size = Size, root = Root} = Tree) ->
 -spec is_defined(Key, Tree) -> boolean() when
     Tree :: tree(Key, Value :: term()).
 
-is_defined(Key, #b5_trees{root = Root}) ->
-    b5_trees_node:is_defined(Key, Root).
+is_defined(Key, #xb5_tree{root = Root}) ->
+    xb5_trees_node:is_defined(Key, Root).
 
 %%
 
 -spec is_empty(Tree) -> boolean() when
     Tree :: tree().
 
-is_empty(#b5_trees{size = Size}) ->
+is_empty(#xb5_tree{size = Size}) ->
     Size =:= 0.
 
 %%
@@ -303,8 +303,8 @@ iterator(Tree) ->
     Iter :: iter(Key, Value),
     Order :: ordered | reversed.
 
-iterator(#b5_trees{root = Root}, Order) ->
-    b5_trees_node:iterator(Root, Order).
+iterator(#xb5_tree{root = Root}, Order) ->
+    xb5_trees_node:iterator(Root, Order).
 
 %%
 
@@ -322,16 +322,16 @@ iterator_from(Key, Tree) ->
     Iter :: iter(Key, Value),
     Order :: ordered | reversed.
 
-iterator_from(Key, #b5_trees{root = Root}, Order) ->
-    b5_trees_node:iterator_from(Key, Root, Order).
+iterator_from(Key, #xb5_tree{root = Root}, Order) ->
+    xb5_trees_node:iterator_from(Key, Root, Order).
 
 %%
 
 -spec keys(Tree) -> [Key] when
     Tree :: tree(Key, _).
 
-keys(#b5_trees{root = Root}) ->
-    b5_trees_node:keys(Root).
+keys(#xb5_tree{root = Root}) ->
+    xb5_trees_node:keys(Root).
 
 %%
 
@@ -340,17 +340,17 @@ keys(#b5_trees{root = Root}) ->
     Key2 :: Key,
     Tree :: tree(Key, Value).
 
-larger(Key, #b5_trees{root = Root}) ->
-    b5_trees_node:larger(Key, Root).
+larger(Key, #xb5_tree{root = Root}) ->
+    xb5_trees_node:larger(Key, Root).
 
 %%
 
 -spec largest(Tree) -> {Key, Value} when
     Tree :: tree(Key, Value).
 
-largest(#b5_trees{size = Size, root = Root}) when Size =/= 0 ->
-    b5_trees_node:largest(Root);
-largest(#b5_trees{}) ->
+largest(#xb5_tree{size = Size, root = Root}) when Size =/= 0 ->
+    xb5_trees_node:largest(Root);
+largest(#xb5_tree{}) ->
     error_empty_tree().
 
 %%
@@ -358,8 +358,8 @@ largest(#b5_trees{}) ->
 -spec lookup(Key, Tree) -> 'none' | {'value', Value} when
     Tree :: tree(Key, Value).
 
-lookup(Key, #b5_trees{root = Root}) ->
-    b5_trees_node:lookup(Key, Root).
+lookup(Key, #xb5_tree{root = Root}) ->
+    xb5_trees_node:lookup(Key, Root).
 
 %%
 
@@ -368,14 +368,14 @@ lookup(Key, #b5_trees{root = Root}) ->
     Tree1 :: tree(Key, Value1),
     Tree2 :: tree(Key, Value2).
 
-map(Fun, #b5_trees{root = Root} = Tree) ->
-    Tree#b5_trees{root = b5_trees_node:map(Fun, Root)}.
+map(Fun, #xb5_tree{root = Root} = Tree) ->
+    Tree#xb5_tree{root = xb5_trees_node:map(Fun, Root)}.
 
 %%
 
 -spec new() -> tree().
 
-new() -> #b5_trees{root = b5_trees_node:new(), size = 0}.
+new() -> #xb5_tree{root = xb5_trees_node:new(), size = 0}.
 
 %%
 
@@ -384,14 +384,14 @@ new() -> #b5_trees{root = b5_trees_node:new(), size = 0}.
     Iter2 :: iter(Key, Value).
 
 next(Iter) ->
-    b5_trees_node:next(Iter).
+    xb5_trees_node:next(Iter).
 
 %%
 
 -spec size(Tree) -> non_neg_integer() when
     Tree :: tree().
 
-size(#b5_trees{size = Size}) -> Size.
+size(#xb5_tree{size = Size}) -> Size.
 
 %%
 
@@ -400,27 +400,27 @@ size(#b5_trees{size = Size}) -> Size.
     Key2 :: Key,
     Tree :: tree(Key, Value).
 
-smaller(Key, #b5_trees{root = Root}) ->
-    b5_trees_node:smaller(Key, Root).
+smaller(Key, #xb5_tree{root = Root}) ->
+    xb5_trees_node:smaller(Key, Root).
 
 %%
 
 -spec smallest(Tree) -> {Key, Value} when
     Tree :: tree(Key, Value).
 
-smallest(#b5_trees{size = Size, root = Root}) when Size =/= 0 ->
-    b5_trees_node:smallest(Root);
-smallest(#b5_trees{}) ->
+smallest(#xb5_tree{size = Size, root = Root}) when Size =/= 0 ->
+    xb5_trees_node:smallest(Root);
+smallest(#xb5_tree{}) ->
     error_empty_tree().
 
 %%
 
 -spec structural_stats(Tree) -> Stats when
     Tree :: tree(),
-    Stats :: b5_structural_stats:t().
+    Stats :: xb5_structural_stats:t().
 
-structural_stats(#b5_trees{root = Root}) ->
-    b5_trees_node:structural_stats(Root).
+structural_stats(#xb5_tree{root = Root}) ->
+    xb5_trees_node:structural_stats(Root).
 
 %%
 
@@ -430,13 +430,13 @@ structural_stats(#b5_trees{root = Root}) ->
     Key :: term(),
     Value :: term().
 
-take(Key, #b5_trees{size = Size, root = Root} = Tree) ->
-    case b5_trees_node:take_att(Key, Root) of
+take(Key, #xb5_tree{size = Size, root = Root} = Tree) ->
+    case xb5_trees_node:take_att(Key, Root) of
         none ->
             error_badkey(Key);
         %
         [TakenPair | UpdatedRoot] ->
-            UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
+            UpdatedTree = Tree#xb5_tree{size = Size - 1, root = UpdatedRoot},
 
             [_ | Value] = TakenPair,
             {Value, UpdatedTree}
@@ -450,13 +450,13 @@ take(Key, #b5_trees{size = Size, root = Root} = Tree) ->
     Key :: term(),
     Value :: term().
 
-take_any(Key, #b5_trees{size = Size, root = Root} = Tree) ->
-    case b5_trees_node:take_att(Key, Root) of
+take_any(Key, #xb5_tree{size = Size, root = Root} = Tree) ->
+    case xb5_trees_node:take_att(Key, Root) of
         none ->
             error;
         %
         [TakenPair | UpdatedRoot] ->
-            UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
+            UpdatedTree = Tree#xb5_tree{size = Size - 1, root = UpdatedRoot},
 
             [_ | Value] = TakenPair,
             {Value, UpdatedTree}
@@ -468,13 +468,13 @@ take_any(Key, #b5_trees{size = Size, root = Root} = Tree) ->
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take_largest(#b5_trees{size = Size, root = Root} = Tree) when Size =/= 0 ->
-    [TakenPair | UpdatedRoot] = b5_trees_node:take_largest(Root),
-    UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
+take_largest(#xb5_tree{size = Size, root = Root} = Tree) when Size =/= 0 ->
+    [TakenPair | UpdatedRoot] = xb5_trees_node:take_largest(Root),
+    UpdatedTree = Tree#xb5_tree{size = Size - 1, root = UpdatedRoot},
 
     [Key | Value] = TakenPair,
     {Key, Value, UpdatedTree};
-take_largest(#b5_trees{}) ->
+take_largest(#xb5_tree{}) ->
     error_empty_tree().
 
 %%
@@ -483,13 +483,13 @@ take_largest(#b5_trees{}) ->
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-take_smallest(#b5_trees{size = Size, root = Root} = Tree) when Size =/= 0 ->
-    [TakenPair | UpdatedRoot] = b5_trees_node:take_smallest(Root),
-    UpdatedTree = Tree#b5_trees{size = Size - 1, root = UpdatedRoot},
+take_smallest(#xb5_tree{size = Size, root = Root} = Tree) when Size =/= 0 ->
+    [TakenPair | UpdatedRoot] = xb5_trees_node:take_smallest(Root),
+    UpdatedTree = Tree#xb5_tree{size = Size - 1, root = UpdatedRoot},
 
     [Key | Value] = TakenPair,
     {Key, Value, UpdatedTree};
-take_smallest(#b5_trees{}) ->
+take_smallest(#xb5_tree{}) ->
     error_empty_tree().
 
 %%
@@ -497,8 +497,8 @@ take_smallest(#b5_trees{}) ->
 -spec to_list(Tree) -> [{Key, Value}] when
     Tree :: tree(Key, Value).
 
-to_list(#b5_trees{root = Root}) ->
-    b5_trees_node:to_list(Root).
+to_list(#xb5_tree{root = Root}) ->
+    xb5_trees_node:to_list(Root).
 
 %%
 
@@ -506,7 +506,7 @@ to_list(#b5_trees{root = Root}) ->
     Tree :: tree(Key, Value),
     Unwrapped :: unwrapped_tree(Key, Value).
 
-unwrap(#b5_trees{size = Size, root = Root}) ->
+unwrap(#xb5_tree{size = Size, root = Root}) ->
     #{size => Size, root => Root}.
 
 %%
@@ -515,13 +515,13 @@ unwrap(#b5_trees{size = Size, root = Root}) ->
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
 
-update(Key, Value, #b5_trees{root = Root} = Tree) ->
-    case b5_trees_node:update_att(Key, eager, Value, Root) of
+update(Key, Value, #xb5_tree{root = Root} = Tree) ->
+    case xb5_trees_node:update_att(Key, eager, Value, Root) of
         none ->
             error_badkey(Key);
         %
         UpdatedRoot ->
-            Tree#b5_trees{root = UpdatedRoot}
+            Tree#xb5_tree{root = UpdatedRoot}
     end.
 
 %%
@@ -531,13 +531,13 @@ update(Key, Value, #b5_trees{root = Root} = Tree) ->
     Tree1 :: tree(Key, Value | Value1),
     Tree2 :: tree(Key, Value | Value2).
 
-update_with(Key, Fun, #b5_trees{root = Root} = Tree) ->
-    case b5_trees_node:update_att(Key, lazy, Fun, Root) of
+update_with(Key, Fun, #xb5_tree{root = Root} = Tree) ->
+    case xb5_trees_node:update_att(Key, lazy, Fun, Root) of
         none ->
             error_badkey(Key);
         %
         UpdatedRoot ->
-            Tree#b5_trees{root = UpdatedRoot}
+            Tree#xb5_tree{root = UpdatedRoot}
     end.
 
 %%
@@ -547,16 +547,16 @@ update_with(Key, Fun, #b5_trees{root = Root} = Tree) ->
     Tree1 :: tree(Key, Value | Value1),
     Tree2 :: tree(Key, Value | Value2 | Init).
 
-update_with(Key, Fun, Init, #b5_trees{root = Root} = Tree) ->
-    case b5_trees_node:update_att(Key, lazy, Fun, Root) of
+update_with(Key, Fun, Init, #xb5_tree{root = Root} = Tree) ->
+    case xb5_trees_node:update_att(Key, lazy, Fun, Root) of
         none ->
-            Tree#b5_trees{
-                root = b5_trees_node:insert_att(Key, eager, Init, Root),
-                size = Tree#b5_trees.size + 1
+            Tree#xb5_tree{
+                root = xb5_trees_node:insert_att(Key, eager, Init, Root),
+                size = Tree#xb5_tree.size + 1
             };
         %
         UpdatedRoot ->
-            Tree#b5_trees{root = UpdatedRoot}
+            Tree#xb5_tree{root = UpdatedRoot}
     end.
 
 %%
@@ -564,20 +564,20 @@ update_with(Key, Fun, Init, #b5_trees{root = Root} = Tree) ->
 -spec values(Tree) -> [Value] when
     Tree :: tree(_, Value).
 
-values(#b5_trees{root = Root}) ->
-    b5_trees_node:values(Root).
+values(#xb5_tree{root = Root}) ->
+    xb5_trees_node:values(Root).
 
 %%
 
 -spec wrap(_) -> {ok, Tree} | error when Tree :: tree().
 wrap(#{root := Root, size := Size}) when is_integer(Size) andalso Size >= 0 ->
-    try b5_trees_node:structural_stats(Root) of
+    try xb5_trees_node:structural_stats(Root) of
         Stats ->
             {_, TotalKeys} = lists:keyfind(total_keys, 1, Stats),
 
             case TotalKeys =:= Size of
                 true ->
-                    {ok, #b5_trees{root = Root, size = Size}};
+                    {ok, #xb5_tree{root = Root, size = Size}};
                 %
                 false ->
                     error
@@ -609,13 +609,13 @@ error_key_exists(Key) ->
     error({key_exists, Key}).
 
 from_list_recur([{Key, Value} | Next], Size, Root) ->
-    case b5_trees_node:insert_att(Key, eager, Value, Root) of
+    case xb5_trees_node:insert_att(Key, eager, Value, Root) of
         none ->
-            UpdatedRoot = b5_trees_node:update_att(Key, eager, Value, Root),
+            UpdatedRoot = xb5_trees_node:update_att(Key, eager, Value, Root),
             from_list_recur(Next, Size, UpdatedRoot);
         %
         UpdatedRoot ->
             from_list_recur(Next, Size + 1, UpdatedRoot)
     end;
 from_list_recur([], Size, Root) ->
-    #b5_trees{size = Size, root = Root}.
+    #xb5_tree{size = Size, root = Root}.

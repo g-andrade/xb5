@@ -1,4 +1,4 @@
--module(b5_sets).
+-module(xb5_sets).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -69,15 +69,15 @@
 %% Type Definitions
 %% ------------------------------------------------------------------
 
--record(b5_sets, {size, root}).
+-record(xb5_set, {size, root}).
 
--opaque set(Element) :: #b5_sets{size :: non_neg_integer(), root :: b5_sets_node:t(Element)}.
+-opaque set(Element) :: #xb5_set{size :: non_neg_integer(), root :: xb5_sets_node:t(Element)}.
 -export_type([set/1]).
 
 -type set() :: set(_).
 -export_type([set/0]).
 
--type iter(Element) :: b5_sets_node:iter(Element).
+-type iter(Element) :: xb5_sets_node:iter(Element).
 -export_type([iter/1]).
 
 -type iter() :: iter(_).
@@ -91,13 +91,13 @@
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-add(Element, #b5_sets{size = Size, root = Root} = Set) ->
-    case b5_sets_node:insert_att(Element, Root) of
+add(Element, #xb5_set{size = Size, root = Root} = Set) ->
+    case xb5_sets_node:insert_att(Element, Root) of
         none ->
             Set;
         %
         UpdatedRoot ->
-            Set#b5_sets{size = Size + 1, root = UpdatedRoot}
+            Set#xb5_set{size = Size + 1, root = UpdatedRoot}
     end.
 
 %%
@@ -126,13 +126,13 @@ del_element(Element, Set) ->
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-delete(Element, #b5_sets{size = Size, root = Root} = Set) ->
-    case b5_sets_node:delete_att(Element, Root) of
+delete(Element, #xb5_set{size = Size, root = Root} = Set) ->
+    case xb5_sets_node:delete_att(Element, Root) of
         none ->
             error_badkey(Element);
         %
         UpdatedRoot ->
-            Set#b5_sets{size = Size - 1, root = UpdatedRoot}
+            Set#xb5_set{size = Size - 1, root = UpdatedRoot}
     end.
 
 %%
@@ -142,13 +142,13 @@ delete(Element, #b5_sets{size = Size, root = Root} = Set) ->
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-delete_any(Element, #b5_sets{size = Size, root = Root} = Set) ->
-    case b5_sets_node:delete_att(Element, Root) of
+delete_any(Element, #xb5_set{size = Size, root = Root} = Set) ->
+    case xb5_sets_node:delete_att(Element, Root) of
         none ->
             Set;
         %
         UpdatedRoot ->
-            Set#b5_sets{size = Size - 1, root = UpdatedRoot}
+            Set#xb5_set{size = Size - 1, root = UpdatedRoot}
     end.
 
 %%
@@ -158,9 +158,9 @@ delete_any(Element, #b5_sets{size = Size, root = Root} = Set) ->
     Set2 :: set(Element),
     Set3 :: set(Element).
 
-difference(#b5_sets{size = Size1, root = Root1} = Set1, #b5_sets{root = Root2}) ->
-    [RemovedCount | UpdatedRoot1] = b5_sets_node:difference(Root1, Root2),
-    Set1#b5_sets{size = Size1 - RemovedCount, root = UpdatedRoot1}.
+difference(#xb5_set{size = Size1, root = Root1} = Set1, #xb5_set{root = Root2}) ->
+    [RemovedCount | UpdatedRoot1] = xb5_sets_node:difference(Root1, Root2),
+    Set1#xb5_set{size = Size1 - RemovedCount, root = UpdatedRoot1}.
 
 %%
 
@@ -176,9 +176,9 @@ empty() ->
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-filter(Fun, #b5_sets{root = Root}) ->
-    [FilteredSize | FilteredRoot] = b5_sets_node:filter(Fun, Root),
-    #b5_sets{size = FilteredSize, root = FilteredRoot}.
+filter(Fun, #xb5_set{root = Root}) ->
+    [FilteredSize | FilteredRoot] = xb5_sets_node:filter(Fun, Root),
+    #xb5_set{size = FilteredSize, root = FilteredRoot}.
 
 %%
 
@@ -187,9 +187,9 @@ filter(Fun, #b5_sets{root = Root}) ->
     Set1 :: set(Element1),
     Set2 :: set(Element1 | Element2).
 
-filtermap(Fun, #b5_sets{root = Root}) ->
-    [FilteredSize | FilteredRoot] = b5_sets_node:filtermap(Fun, Root),
-    #b5_sets{size = FilteredSize, root = FilteredRoot}.
+filtermap(Fun, #xb5_set{root = Root}) ->
+    [FilteredSize | FilteredRoot] = xb5_sets_node:filtermap(Fun, Root),
+    #xb5_set{size = FilteredSize, root = FilteredRoot}.
 
 %%
 
@@ -201,8 +201,8 @@ filtermap(Fun, #b5_sets{root = Root}) ->
     AccOut :: Acc,
     Set :: set(Element).
 
-fold(Fun, Acc, #b5_sets{root = Root}) ->
-    b5_sets_node:fold(Fun, Acc, Root).
+fold(Fun, Acc, #xb5_set{root = Root}) ->
+    xb5_sets_node:fold(Fun, Acc, Root).
 
 %%
 
@@ -211,7 +211,7 @@ fold(Fun, Acc, #b5_sets{root = Root}) ->
     Set :: set(Element).
 
 from_list(List) ->
-    Root = b5_sets_node:new(),
+    Root = xb5_sets_node:new(),
     Size = 0,
     from_list_recur(List, Root, Size).
 
@@ -231,13 +231,13 @@ from_ordset(Ordset) ->
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-insert(Element, #b5_sets{size = Size, root = Root} = Set) ->
-    case b5_sets_node:insert_att(Element, Root) of
+insert(Element, #xb5_set{size = Size, root = Root} = Set) ->
+    case xb5_sets_node:insert_att(Element, Root) of
         none ->
             error_key_exists(Element);
         %
         UpdatedRoot ->
-            Set#b5_sets{size = Size + 1, root = UpdatedRoot}
+            Set#xb5_set{size = Size + 1, root = UpdatedRoot}
     end.
 
 %%
@@ -246,9 +246,9 @@ insert(Element, #b5_sets{size = Size, root = Root} = Set) ->
     SetList :: [set(Element), ...],
     Set :: set(Element).
 
-intersection(#b5_sets{root = Root1}, #b5_sets{root = Root2}) ->
-    [NewSize | NewRoot] = b5_sets_node:intersection(Root1, Root2),
-    #b5_sets{size = NewSize, root = NewRoot}.
+intersection(#xb5_set{root = Root1}, #xb5_set{root = Root2}) ->
+    [NewSize | NewRoot] = xb5_sets_node:intersection(Root1, Root2),
+    #xb5_set{size = NewSize, root = NewRoot}.
 
 %%
 
@@ -257,7 +257,7 @@ intersection(#b5_sets{root = Root1}, #b5_sets{root = Root2}) ->
     Set2 :: set(Element),
     Set3 :: set(Element).
 
-intersection([#b5_sets{size = Size1, root = Root1} | Others]) ->
+intersection([#xb5_set{size = Size1, root = Root1} | Others]) ->
     intersection_recur(Root1, Size1, Others).
 
 %%
@@ -266,8 +266,8 @@ intersection([#b5_sets{size = Size1, root = Root1} | Others]) ->
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-is_disjoint(#b5_sets{root = Root1, size = Size1}, #b5_sets{root = Root2, size = Size2}) ->
-    b5_sets_node:is_disjoint(Root1, Size1, Root2, Size2).
+is_disjoint(#xb5_set{root = Root1, size = Size1}, #xb5_set{root = Root2, size = Size2}) ->
+    xb5_sets_node:is_disjoint(Root1, Size1, Root2, Size2).
 
 %%
 
@@ -282,7 +282,7 @@ is_element(Element, Set) ->
 -spec is_empty(Set) -> boolean() when
     Set :: set().
 
-is_empty(#b5_sets{size = Size}) ->
+is_empty(#xb5_set{size = Size}) ->
     Size =:= 0.
 
 %%
@@ -291,24 +291,24 @@ is_empty(#b5_sets{size = Size}) ->
     Set1 :: set(),
     Set2 :: set().
 
-is_equal(#b5_sets{root = Root1, size = Size1}, #b5_sets{root = Root2, size = Size2}) ->
-    (Size1 =:= Size2) andalso b5_sets_node:is_equal(Root1, Root2).
+is_equal(#xb5_set{root = Root1, size = Size1}, #xb5_set{root = Root2, size = Size2}) ->
+    (Size1 =:= Size2) andalso xb5_sets_node:is_equal(Root1, Root2).
 
 %%
 
 -spec is_member(Element, Set) -> boolean() when
     Set :: set(Element).
 
-is_member(Element, #b5_sets{root = Root}) ->
-    b5_sets_node:is_member(Element, Root).
+is_member(Element, #xb5_set{root = Root}) ->
+    xb5_sets_node:is_member(Element, Root).
 
 %%
 
 -spec is_set(Term) -> boolean() when
     Term :: term().
 
-is_set(#b5_sets{size = Size, root = Root}) ->
-    b5_sets_node:does_root_look_legit(Root, Size);
+is_set(#xb5_set{size = Size, root = Root}) ->
+    xb5_sets_node:does_root_look_legit(Root, Size);
 is_set(_) ->
     false.
 
@@ -318,8 +318,8 @@ is_set(_) ->
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-is_subset(#b5_sets{root = Root1}, #b5_sets{root = Root2}) ->
-    b5_sets_node:is_subset(Root1, Root2).
+is_subset(#xb5_set{root = Root1}, #xb5_set{root = Root2}) ->
+    xb5_sets_node:is_subset(Root1, Root2).
 
 %%
 
@@ -337,8 +337,8 @@ iterator(Set) ->
     Iter :: iter(Element),
     Order :: ordered | reversed.
 
-iterator(#b5_sets{root = Root}, Order) ->
-    b5_sets_node:iterator(Root, Order).
+iterator(#xb5_set{root = Root}, Order) ->
+    xb5_sets_node:iterator(Root, Order).
 
 %%
 
@@ -356,8 +356,8 @@ iterator_from(Element, Set) ->
     Iter :: iter(Element),
     Order :: ordered | reversed.
 
-iterator_from(Element, #b5_sets{root = Root}, Order) ->
-    b5_sets_node:iterator_from(Element, Root, Order).
+iterator_from(Element, #xb5_set{root = Root}, Order) ->
+    xb5_sets_node:iterator_from(Element, Root, Order).
 
 %%
 
@@ -366,17 +366,17 @@ iterator_from(Element, #b5_sets{root = Root}, Order) ->
     Element2 :: Element,
     Set :: set(Element).
 
-larger(Element, #b5_sets{root = Root}) ->
-    b5_sets_node:larger(Element, Root).
+larger(Element, #xb5_set{root = Root}) ->
+    xb5_sets_node:larger(Element, Root).
 
 %%
 
 -spec largest(Set) -> Element when
     Set :: set(Element).
 
-largest(#b5_sets{size = Size, root = Root}) when Size =/= 0 ->
-    b5_sets_node:largest(Root);
-largest(#b5_sets{}) ->
+largest(#xb5_set{size = Size, root = Root}) when Size =/= 0 ->
+    xb5_sets_node:largest(Root);
+largest(#xb5_set{}) ->
     error_empty_set().
 
 %%
@@ -386,9 +386,9 @@ largest(#b5_sets{}) ->
     Set1 :: set(Element1),
     Set2 :: set(Element2).
 
-map(Fun, #b5_sets{root = Root}) ->
-    [NewSize | MappedRoot] = b5_sets_node:map(Fun, Root),
-    #b5_sets{size = NewSize, root = MappedRoot}.
+map(Fun, #xb5_set{root = Root}) ->
+    [NewSize | MappedRoot] = xb5_sets_node:map(Fun, Root),
+    #xb5_set{size = NewSize, root = MappedRoot}.
 
 %%
 
@@ -396,7 +396,7 @@ map(Fun, #b5_sets{root = Root}) ->
     Set :: set(_).
 
 new() ->
-    #b5_sets{size = 0, root = b5_sets_node:new()}.
+    #xb5_set{size = 0, root = xb5_sets_node:new()}.
 
 %%
 
@@ -405,21 +405,21 @@ new() ->
     Iter2 :: iter(Element).
 
 next(Iter) ->
-    b5_sets_node:next(Iter).
+    xb5_sets_node:next(Iter).
 
 %%
 
 -spec singleton(Element) -> set(Element).
 
 singleton(Element) ->
-    #b5_sets{size = 1, root = b5_sets_node:singleton(Element)}.
+    #xb5_set{size = 1, root = xb5_sets_node:singleton(Element)}.
 
 %%
 
 -spec size(Set) -> non_neg_integer() when
     Set :: set().
 
-size(#b5_sets{size = Size}) ->
+size(#xb5_set{size = Size}) ->
     Size.
 
 %%
@@ -429,27 +429,27 @@ size(#b5_sets{size = Size}) ->
     Element2 :: Element,
     Set :: set(Element).
 
-smaller(Element, #b5_sets{root = Root}) ->
-    b5_sets_node:smaller(Element, Root).
+smaller(Element, #xb5_set{root = Root}) ->
+    xb5_sets_node:smaller(Element, Root).
 
 %%
 
 -spec smallest(Set) -> Element when
     Set :: set(Element).
 
-smallest(#b5_sets{size = Size, root = Root}) when Size =/= 0 ->
-    b5_sets_node:smallest(Root);
-smallest(#b5_sets{}) ->
+smallest(#xb5_set{size = Size, root = Root}) when Size =/= 0 ->
+    xb5_sets_node:smallest(Root);
+smallest(#xb5_set{}) ->
     error_empty_set().
 
 %%
 
 -spec structural_stats(Set) -> Stats when
     Set :: set(),
-    Stats :: b5_structural_stats:t().
+    Stats :: xb5_structural_stats:t().
 
-structural_stats(#b5_sets{root = Root}) ->
-    b5_sets_node:structural_stats(Root).
+structural_stats(#xb5_set{root = Root}) ->
+    xb5_sets_node:structural_stats(Root).
 
 %%
 
@@ -467,10 +467,10 @@ subtract(Set1, Set2) ->
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-take_largest(#b5_sets{size = Size, root = Root} = Set) when Size =/= 0 ->
-    [Largest | UpdatedRoot] = b5_sets_node:take_largest(Root),
-    {Largest, Set#b5_sets{root = UpdatedRoot, size = Size - 1}};
-take_largest(#b5_sets{}) ->
+take_largest(#xb5_set{size = Size, root = Root} = Set) when Size =/= 0 ->
+    [Largest | UpdatedRoot] = xb5_sets_node:take_largest(Root),
+    {Largest, Set#xb5_set{root = UpdatedRoot, size = Size - 1}};
+take_largest(#xb5_set{}) ->
     error_empty_set().
 
 %%
@@ -479,10 +479,10 @@ take_largest(#b5_sets{}) ->
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-take_smallest(#b5_sets{size = Size, root = Root} = Set) when Size =/= 0 ->
-    [Smallest | UpdatedRoot] = b5_sets_node:take_smallest(Root),
-    {Smallest, Set#b5_sets{root = UpdatedRoot, size = Size - 1}};
-take_smallest(#b5_sets{}) ->
+take_smallest(#xb5_set{size = Size, root = Root} = Set) when Size =/= 0 ->
+    [Smallest | UpdatedRoot] = xb5_sets_node:take_smallest(Root),
+    {Smallest, Set#xb5_set{root = UpdatedRoot, size = Size - 1}};
+take_smallest(#xb5_set{}) ->
     error_empty_set().
 
 %%
@@ -491,8 +491,8 @@ take_smallest(#b5_sets{}) ->
     Set :: set(Element),
     List :: [Element].
 
-to_list(#b5_sets{root = Root}) ->
-    b5_sets_node:to_list(Root).
+to_list(#xb5_set{root = Root}) ->
+    xb5_sets_node:to_list(Root).
 
 %%
 
@@ -500,7 +500,7 @@ to_list(#b5_sets{root = Root}) ->
     SetList :: [set(Element)],
     Set :: set(Element).
 
-union([#b5_sets{size = Size1, root = Root1} | Others]) ->
+union([#xb5_set{size = Size1, root = Root1} | Others]) ->
     union_recur(Root1, Size1, Others);
 union([]) ->
     new().
@@ -512,9 +512,9 @@ union([]) ->
     Set2 :: set(Element),
     Set3 :: set(Element).
 
-union(#b5_sets{root = Root1, size = Size1}, #b5_sets{root = Root2, size = Size2}) ->
-    [NewSize | NewRoot] = b5_sets_node:union(Root1, Size1, Root2, Size2),
-    #b5_sets{size = NewSize, root = NewRoot}.
+union(#xb5_set{root = Root1, size = Size1}, #xb5_set{root = Root2, size = Size2}) ->
+    [NewSize | NewRoot] = xb5_sets_node:union(Root1, Size1, Root2, Size2),
+    #xb5_set{size = NewSize, root = NewRoot}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
@@ -538,7 +538,7 @@ error_key_exists(Elem) ->
 %%
 
 from_list_recur([Element | Next], Root, Size) ->
-    case b5_sets_node:insert_att(Element, Root) of
+    case xb5_sets_node:insert_att(Element, Root) of
         none ->
             from_list_recur(Next, Root, Size);
         %
@@ -547,38 +547,38 @@ from_list_recur([Element | Next], Root, Size) ->
             from_list_recur(Next, UpdatedRoot, UpdatedSize)
     end;
 from_list_recur([], Root, Size) ->
-    #b5_sets{size = Size, root = Root}.
+    #xb5_set{size = Size, root = Root}.
 
 %%
 
-intersection_recur(Root1, _Size1, [#b5_sets{root = Root2} | Next]) ->
-    [NewSize | NewRoot] = b5_sets_node:intersection(Root1, Root2),
+intersection_recur(Root1, _Size1, [#xb5_set{root = Root2} | Next]) ->
+    [NewSize | NewRoot] = xb5_sets_node:intersection(Root1, Root2),
     intersection_recur(NewRoot, NewSize, Next);
 intersection_recur(Root, Size, []) ->
-    #b5_sets{size = Size, root = Root}.
+    #xb5_set{size = Size, root = Root}.
 
 %%
 
-union_recur(Root1, Size1, [#b5_sets{root = Root2, size = Size2} | Next]) ->
-    [NewSize | NewRoot] = b5_sets_node:union(Root1, Size1, Root2, Size2),
+union_recur(Root1, Size1, [#xb5_set{root = Root2, size = Size2} | Next]) ->
+    [NewSize | NewRoot] = xb5_sets_node:union(Root1, Size1, Root2, Size2),
     union_recur(NewRoot, NewSize, Next);
 union_recur(Root, Size, []) ->
-    #b5_sets{size = Size, root = Root}.
+    #xb5_set{size = Size, root = Root}.
 
 %%
 
 -spec from_constituent_parts(#{
-    root := b5_sets_node:t(Element), size := non_neg_integer()
+    root := xb5_sets_node:t(Element), size := non_neg_integer()
 }) -> set(Element).
 from_constituent_parts(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
-    #b5_sets{root = Root, size = Size}.
+    #xb5_set{root = Root, size = Size}.
 
 %%
 
 -spec to_constituent_parts
-    (set(Element)) -> {ok, #{root := b5_sets_node:t(Element), size := non_neg_integer()}};
+    (set(Element)) -> {ok, #{root := xb5_sets_node:t(Element), size := non_neg_integer()}};
     (term()) -> error.
-to_constituent_parts(#b5_sets{root = Root, size = Size}) when is_integer(Size), Size >= 0 ->
+to_constituent_parts(#xb5_set{root = Root, size = Size}) when is_integer(Size), Size >= 0 ->
     {ok, #{root => Root, size => Size}};
 to_constituent_parts(_) ->
     error.

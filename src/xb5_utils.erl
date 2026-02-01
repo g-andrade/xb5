@@ -1,5 +1,5 @@
 %% @private
--module(b5_trees_util).
+-module(xb5_utils).
 
 %% ------------------------------------------------------------------
 %% API Function Exports

@@ -1,4 +1,4 @@
--module(b5_sets_test_SUITE).
+-module(xb5_sets_test_SUITE).
 
 -ifndef(NO_CT_SUITE_BEHAVIOUR).
 -behaviour(ct_suite).
@@ -191,19 +191,19 @@ end_per_suite(_Config) ->
 test_construction(_Config) ->
     foreach_tested_size(
         fun(Size, RefElements) ->
-            Set = b5_sets:from_list(RefElements),
-            ?assertListsCanonEqual(RefElements, b5_sets:to_list(Set)),
-            ?assertEqual(Size, b5_sets:size(Set)),
-            ?assertEqual(Size =:= 0, b5_sets:is_empty(Set)),
+            Set = xb5_sets:from_list(RefElements),
+            ?assertListsCanonEqual(RefElements, xb5_sets:to_list(Set)),
+            ?assertEqual(Size, xb5_sets:size(Set)),
+            ?assertEqual(Size =:= 0, xb5_sets:is_empty(Set)),
             ?assertEqual(Set, new_set_from_each_inserted(RefElements)),
-            ?assertEqual(Set, b5_sets:from_ordset(RefElements)),
+            ?assertEqual(Set, xb5_sets:from_ordset(RefElements)),
 
             case RefElements of
                 [] ->
-                    ?assertEqual(Set, b5_sets:empty());
+                    ?assertEqual(Set, xb5_sets:empty());
                 %
                 [SingleElement] ->
-                    ?assertEqual(Set, b5_sets:singleton(SingleElement));
+                    ?assertEqual(Set, xb5_sets:singleton(SingleElement));
                 %
                 _ ->
                     ok
@@ -219,8 +219,8 @@ test_lookup(_Config) ->
         fun(Size, RefElements, Set) ->
             foreach_existing_element(
                 fun(Element) ->
-                    ?assertEqual(true, b5_sets:is_member(Element, Set)),
-                    ?assertEqual(true, b5_sets:is_element(Element, Set))
+                    ?assertEqual(true, xb5_sets:is_member(Element, Set)),
+                    ?assertEqual(true, xb5_sets:is_element(Element, Set))
                 end,
                 RefElements,
                 Size
@@ -230,8 +230,8 @@ test_lookup(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    ?assertEqual(false, b5_sets:is_member(Element, Set)),
-                    ?assertEqual(false, b5_sets:is_element(Element, Set))
+                    ?assertEqual(false, xb5_sets:is_member(Element, Set)),
+                    ?assertEqual(false, xb5_sets:is_element(Element, Set))
                 end,
                 RefElements,
                 100
@@ -244,14 +244,14 @@ test_add(_Config) ->
         fun(Size, RefElements, Set) ->
             foreach_existing_element(
                 fun(Element) ->
-                    Set2 = b5_sets:add(Element, Set),
-                    ?assertEqual(Size, b5_sets:size(Set2)),
+                    Set2 = xb5_sets:add(Element, Set),
+                    ?assertEqual(Size, xb5_sets:size(Set2)),
                     ?assertListsCanonEqual(
                         RefElements,
-                        b5_sets:to_list(Set2)
+                        xb5_sets:to_list(Set2)
                     ),
 
-                    ?assertEqual(Set2, b5_sets:add_element(Element, Set))
+                    ?assertEqual(Set2, xb5_sets:add_element(Element, Set))
                 end,
                 RefElements,
                 min(50, Size)
@@ -261,14 +261,14 @@ test_add(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    Set2 = b5_sets:add(Element, Set),
-                    ?assertEqual(Size + 1, b5_sets:size(Set2)),
+                    Set2 = xb5_sets:add(Element, Set),
+                    ?assertEqual(Size + 1, xb5_sets:size(Set2)),
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
-                        b5_sets:to_list(Set2)
+                        xb5_sets:to_list(Set2)
                     ),
 
-                    ?assertEqual(Set2, b5_sets:add_element(Element, Set))
+                    ?assertEqual(Set2, xb5_sets:add_element(Element, Set))
                 end,
                 RefElements,
                 50
@@ -281,7 +281,7 @@ test_insert(_Config) ->
         fun(Size, RefElements, Set) ->
             foreach_existing_element(
                 fun(Element) ->
-                    ?assertError({key_exists, Element}, b5_sets:insert(Element, Set))
+                    ?assertError({key_exists, Element}, xb5_sets:insert(Element, Set))
                 end,
                 RefElements,
                 min(50, Size)
@@ -291,11 +291,11 @@ test_insert(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    Set2 = b5_sets:insert(Element, Set),
-                    ?assertEqual(Size + 1, b5_sets:size(Set2)),
+                    Set2 = xb5_sets:insert(Element, Set),
+                    ?assertEqual(Size + 1, xb5_sets:size(Set2)),
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
-                        b5_sets:to_list(Set2)
+                        xb5_sets:to_list(Set2)
                     )
                 end,
                 RefElements,
@@ -314,14 +314,14 @@ test_delete_sequential(_Config) ->
                     fun(Element, {Set1, RemainingElements1}) ->
                         test_delete_non_existing_keys(Set1, RemainingElements1, 3),
 
-                        Set2 = b5_sets:delete(Element, Set1),
+                        Set2 = xb5_sets:delete(Element, Set1),
                         RemainingElements2 = remove_from_sorted_list(Element, RemainingElements1),
-                        ?assertListsCanonEqual(RemainingElements2, b5_sets:to_list(Set2)),
-                        ?assertEqual(length(RemainingElements2), b5_sets:size(Set2)),
-                        ?assertEqual(RemainingElements2 =:= [], b5_sets:is_empty(Set2)),
+                        ?assertListsCanonEqual(RemainingElements2, xb5_sets:to_list(Set2)),
+                        ?assertEqual(length(RemainingElements2), xb5_sets:size(Set2)),
+                        ?assertEqual(RemainingElements2 =:= [], xb5_sets:is_empty(Set2)),
 
-                        ?assertEqual(Set2, b5_sets:delete_any(Element, Set1)),
-                        ?assertEqual(Set2, b5_sets:del_element(Element, Set1)),
+                        ?assertEqual(Set2, xb5_sets:delete_any(Element, Set1)),
+                        ?assertEqual(Set2, xb5_sets:del_element(Element, Set1)),
 
                         {Set2, RemainingElements2}
                     end,
@@ -329,9 +329,9 @@ test_delete_sequential(_Config) ->
                     DeleteKeys
                 ),
 
-            ?assertEqual([], b5_sets:to_list(SetN)),
-            ?assertEqual(0, b5_sets:size(SetN)),
-            ?assertEqual(true, b5_sets:is_empty(SetN)),
+            ?assertEqual([], xb5_sets:to_list(SetN)),
+            ?assertEqual(0, xb5_sets:size(SetN)),
+            ?assertEqual(true, xb5_sets:is_empty(SetN)),
 
             test_delete_non_existing_keys(SetN, [], 3)
         end
@@ -347,14 +347,14 @@ test_delete_shuffled(_Config) ->
                     fun(Element, {Set1, RemainingElements1}) ->
                         test_delete_non_existing_keys(Set1, RemainingElements1, 3),
 
-                        Set2 = b5_sets:delete(Element, Set1),
+                        Set2 = xb5_sets:delete(Element, Set1),
                         RemainingElements2 = remove_from_sorted_list(Element, RemainingElements1),
-                        ?assertListsCanonEqual(RemainingElements2, b5_sets:to_list(Set2)),
-                        ?assertEqual(length(RemainingElements2), b5_sets:size(Set2)),
-                        ?assertEqual(RemainingElements2 =:= [], b5_sets:is_empty(Set2)),
+                        ?assertListsCanonEqual(RemainingElements2, xb5_sets:to_list(Set2)),
+                        ?assertEqual(length(RemainingElements2), xb5_sets:size(Set2)),
+                        ?assertEqual(RemainingElements2 =:= [], xb5_sets:is_empty(Set2)),
 
-                        ?assertEqual(Set2, b5_sets:delete_any(Element, Set1)),
-                        ?assertEqual(Set2, b5_sets:del_element(Element, Set1)),
+                        ?assertEqual(Set2, xb5_sets:delete_any(Element, Set1)),
+                        ?assertEqual(Set2, xb5_sets:del_element(Element, Set1)),
 
                         {Set2, RemainingElements2}
                     end,
@@ -362,9 +362,9 @@ test_delete_shuffled(_Config) ->
                     DeleteKeys
                 ),
 
-            ?assertEqual([], b5_sets:to_list(SetN)),
-            ?assertEqual(0, b5_sets:size(SetN)),
-            ?assertEqual(true, b5_sets:is_empty(SetN)),
+            ?assertEqual([], xb5_sets:to_list(SetN)),
+            ?assertEqual(0, xb5_sets:size(SetN)),
+            ?assertEqual(true, xb5_sets:is_empty(SetN)),
 
             test_delete_non_existing_keys(SetN, [], 3)
         end
@@ -378,10 +378,10 @@ test_smallest(_Config) ->
     foreach_test_set(
         fun
             (0, _RefElements, Set) ->
-                ?assertError(empty_set, b5_sets:smallest(Set));
+                ?assertError(empty_set, xb5_sets:smallest(Set));
             %
             (_Size, RefElements, Set) ->
-                ?assert(b5_sets:smallest(Set) == hd(RefElements))
+                ?assert(xb5_sets:smallest(Set) == hd(RefElements))
         end
     ).
 
@@ -389,10 +389,10 @@ test_largest(_Config) ->
     foreach_test_set(
         fun
             (0, _RefElements, Set) ->
-                ?assertError(empty_set, b5_sets:largest(Set));
+                ?assertError(empty_set, xb5_sets:largest(Set));
             %
             (_Size, RefElements, Set) ->
-                ?assert(b5_sets:largest(Set) == lists:last(RefElements))
+                ?assert(xb5_sets:largest(Set) == lists:last(RefElements))
         end
     ).
 
@@ -432,7 +432,7 @@ test_difference(_Config) ->
     foreach_test_set(fun run_difference_test/3).
 
 test_intersection(_Config) ->
-    ?assertError(function_clause, b5_sets:intersection(b5_trees_util:dialyzer_opaque_term([]))),
+    ?assertError(function_clause, xb5_sets:intersection(xb5_utils:dialyzer_opaque_term([]))),
     foreach_test_set(fun run_intersection_test/3).
 
 test_intersection3(_Config) ->
@@ -448,7 +448,7 @@ test_is_subset(_Config) ->
     foreach_test_set(fun run_is_subset_test/3).
 
 test_union(_Config) ->
-    ?assertEqual(b5_sets:new(), b5_sets:union([])),
+    ?assertEqual(xb5_sets:new(), xb5_sets:union([])),
     foreach_test_set(fun run_union_test/3).
 
 test_union3(_Config) ->
@@ -469,7 +469,7 @@ test_iterator(_Config) ->
 test_iterator_reversed(_Config) ->
     foreach_test_set(
         fun(_Size, RefElements, Set) ->
-            Iter = b5_sets:iterator(Set, reversed),
+            Iter = xb5_sets:iterator(Set, reversed),
             ?assertListsCanonEqual(lists:reverse(RefElements), iterate(Iter))
         end
     ).
@@ -514,25 +514,25 @@ test_fold(_Config) ->
     ).
 
 test_is_set(_Config) ->
-    ?assertEqual(false, b5_sets:is_set(foobar)),
-    ?assertEqual(false, b5_sets:is_set(b5_trees:new())),
-    ?assertEqual(false, b5_sets:is_set(b5_items:new())),
+    ?assertEqual(false, xb5_sets:is_set(foobar)),
+    ?assertEqual(false, xb5_sets:is_set(xb5_trees:new())),
+    ?assertEqual(false, xb5_sets:is_set(xb5_items:new())),
 
     foreach_test_set(
         fun(_Size, _RefElements, Set) ->
-            ?assertEqual(true, b5_sets:is_set(Set)),
+            ?assertEqual(true, xb5_sets:is_set(Set)),
 
-            {b5_sets, Size, Root} = b5_trees_util:dialyzer_opaque_term(Set),
+            {xb5_set, Size, Root} = xb5_utils:dialyzer_opaque_term(Set),
 
-            ?assertEqual(true, b5_sets:is_set({b5_sets, Size, Root})),
+            ?assertEqual(true, xb5_sets:is_set({xb5_set, Size, Root})),
 
-            ?assertEqual(false, b5_sets:is_set({b5_sets, -1, Root})),
+            ?assertEqual(false, xb5_sets:is_set({xb5_set, -1, Root})),
 
-            ?assertEqual((Size =:= 0), b5_sets:is_set({b5_sets, 0, Root})),
+            ?assertEqual((Size =:= 0), xb5_sets:is_set({xb5_set, 0, Root})),
 
-            ?assertEqual(false, b5_sets:is_set({b5_sets, Size, invalid_root})),
+            ?assertEqual(false, xb5_sets:is_set({xb5_set, Size, invalid_root})),
 
-            ?assertEqual(false, b5_sets:is_set({b5_sets, not_an_integer, Root}))
+            ?assertEqual(false, xb5_sets:is_set({xb5_set, not_an_integer, Root}))
         end
     ).
 
@@ -557,11 +557,11 @@ test_structure_sequentially_built(_Config) ->
                     1 ->
                         new_set_from_each_inserted(RefElements);
                     2 ->
-                        b5_sets:from_list(RefElements);
+                        xb5_sets:from_list(RefElements);
                     3 ->
                         new_set_from_each_inserted(lists:reverse(RefElements));
                     4 ->
-                        b5_sets:from_list(lists:reverse(RefElements))
+                        xb5_sets:from_list(lists:reverse(RefElements))
                 end
             end
         ),
@@ -598,9 +598,9 @@ test_structure_build_seqIns2x_seqDelSmallerHalf(_Config) ->
                 Set1 = new_set_from_each_inserted(RefElements),
 
                 % 2) delete smaller half sequentially
-                AmountToDelete = b5_sets:size(Set1) div 2,
+                AmountToDelete = xb5_sets:size(Set1) div 2,
                 ItemsToDelete = lists:sublist(RefElements, AmountToDelete),
-                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+                lists:foldl(fun xb5_sets:delete/2, Set1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -621,9 +621,9 @@ test_structure_build_seqIns2x_seqDelGreaterHalf(_Config) ->
                 Set1 = new_set_from_each_inserted(RefElements),
 
                 % 2) delete greater half sequentially
-                AmountToDelete = b5_sets:size(Set1) div 2,
+                AmountToDelete = xb5_sets:size(Set1) div 2,
                 ItemsToDelete = lists:sublist(lists:reverse(RefElements), AmountToDelete),
-                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+                lists:foldl(fun xb5_sets:delete/2, Set1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -644,9 +644,9 @@ test_structure_build_seqIns2x_randomlyDelHalf(_Config) ->
                 Set1 = new_set_from_each_inserted(RefElements),
 
                 % 2) delete half randomly
-                AmountToDelete = b5_sets:size(Set1) div 2,
+                AmountToDelete = xb5_sets:size(Set1) div 2,
                 ItemsToDelete = lists:sublist(list_shuffle(RefElements), AmountToDelete),
-                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+                lists:foldl(fun xb5_sets:delete/2, Set1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -667,9 +667,9 @@ test_structure_build_randomlyIns2x_randomlyDelHalf(_Config) ->
                 Set1 = new_set_from_each_inserted(list_shuffle(RefElements)),
 
                 % 2) delete half randomly
-                AmountToDelete = b5_sets:size(Set1) div 2,
+                AmountToDelete = xb5_sets:size(Set1) div 2,
                 ItemsToDelete = lists:sublist(list_shuffle(RefElements), AmountToDelete),
-                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+                lists:foldl(fun xb5_sets:delete/2, Set1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -690,9 +690,9 @@ test_structure_build_randomlyIns2x_seqDelSmallerHalf(_Config) ->
                 Set1 = new_set_from_each_inserted(list_shuffle(RefElements)),
 
                 % 2) delete smaller half sequentially
-                AmountToDelete = b5_sets:size(Set1) div 2,
+                AmountToDelete = xb5_sets:size(Set1) div 2,
                 ItemsToDelete = lists:sublist(RefElements, AmountToDelete),
-                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+                lists:foldl(fun xb5_sets:delete/2, Set1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -722,7 +722,7 @@ test_structure_build_adversarial_deletion(_Config) ->
                         lists:enumerate(RefElements)
                     ),
 
-                lists:foldl(fun b5_sets:delete/2, Set1, ItemsToDelete)
+                lists:foldl(fun xb5_sets:delete/2, Set1, ItemsToDelete)
             end,
             [{size_multiplier, 1.25}]
         ),
@@ -745,10 +745,10 @@ foreach_test_set(Fun) ->
 foreach_test_set(Fun, Opts) ->
     foreach_tested_size(
         fun(Size, RefElements) ->
-            Set = b5_sets:from_list(maybe_shuffle_elements_for_new_set(RefElements)),
-            ?assertEqual(Size, b5_sets:size(Set)),
+            Set = xb5_sets:from_list(maybe_shuffle_elements_for_new_set(RefElements)),
+            ?assertEqual(Size, xb5_sets:size(Set)),
 
-            Stats = b5_sets:structural_stats(Set),
+            Stats = xb5_sets:structural_stats(Set),
             ?assertEqual(Size, proplists:get_value(total_keys, Stats)),
 
             Fun(Size, RefElements, Set)
@@ -859,15 +859,15 @@ canon_list(ImproperTail) ->
     canon_element(ImproperTail).
 
 new_set_from_each_inserted(List) ->
-    Set = b5_sets:new(),
+    Set = xb5_sets:new(),
 
-    ?assertEqual(0, b5_sets:size(Set)),
-    ?assertEqual(true, b5_sets:is_empty(Set)),
+    ?assertEqual(0, xb5_sets:size(Set)),
+    ?assertEqual(true, xb5_sets:is_empty(Set)),
 
     new_set_from_each_inserted_recur(List, Set).
 
 new_set_from_each_inserted_recur([Element | Next], Set) ->
-    UpdatedSet = b5_sets:insert(Element, Set),
+    UpdatedSet = xb5_sets:insert(Element, Set),
     new_set_from_each_inserted_recur(Next, UpdatedSet);
 new_set_from_each_inserted_recur([], Set) ->
     Set.
@@ -941,24 +941,24 @@ run_construction_repeated_test_recur(Size, [ElementToRepeat | Next], Prev) ->
         ElementToRepeat, randomly_switch_number_type(ElementToRepeat) | Next
     ]),
 
-    Set = b5_sets:from_list(List),
+    Set = xb5_sets:from_list(List),
 
-    ?assertEqual(Size, b5_sets:size(Set)),
+    ?assertEqual(Size, xb5_sets:size(Set)),
 
     ?assertListsCanonEqual(
         lists:usort(List),
-        b5_sets:to_list(Set)
+        xb5_sets:to_list(Set)
     ),
 
     %%%
 
-    SetShuffled = b5_sets:from_list(list_shuffle(List)),
+    SetShuffled = xb5_sets:from_list(list_shuffle(List)),
 
-    ?assertEqual(Size, b5_sets:size(SetShuffled)),
+    ?assertEqual(Size, xb5_sets:size(SetShuffled)),
 
     ?assertListsCanonEqual(
         lists:usort(List),
-        b5_sets:to_list(SetShuffled)
+        xb5_sets:to_list(SetShuffled)
     ),
 
     %%%
@@ -976,10 +976,10 @@ test_delete_non_existing_keys(Set, RemainingElements, Amount) when Amount > 0 ->
 
     case lists:any(fun(E) -> E == Element end, RemainingElements) of
         false ->
-            ?assertError({badkey, Element}, b5_sets:delete(Element, Set)),
-            ?assertEqual(Set, b5_sets:delete_any(Element, Set)),
+            ?assertError({badkey, Element}, xb5_sets:delete(Element, Set)),
+            ?assertEqual(Set, xb5_sets:delete_any(Element, Set)),
 
-            ?assertEqual(Set, b5_sets:del_element(Element, Set)),
+            ?assertEqual(Set, xb5_sets:del_element(Element, Set)),
 
             test_delete_non_existing_keys(Set, RemainingElements, Amount - 1);
         %
@@ -997,22 +997,22 @@ run_smaller(RefElements, Set) ->
     case RefElements of
         [] ->
             Element = new_element(),
-            ?assertEqual(none, b5_sets:smaller(Element, Set));
+            ?assertEqual(none, xb5_sets:smaller(Element, Set));
         %
         [SingleElement] ->
-            ?assertEqual(none, b5_sets:smaller(randomly_switch_number_type(SingleElement), Set)),
+            ?assertEqual(none, xb5_sets:smaller(randomly_switch_number_type(SingleElement), Set)),
 
             LargerElement = element_larger(SingleElement),
-            ?assert(b5_sets:smaller(LargerElement, Set) == {found, SingleElement}),
+            ?assert(xb5_sets:smaller(LargerElement, Set) == {found, SingleElement}),
 
             SmallerElement = element_smaller(SingleElement),
-            ?assertEqual(none, b5_sets:smaller(SmallerElement, Set));
+            ?assertEqual(none, xb5_sets:smaller(SmallerElement, Set));
         %
         [FirstElement | Next] ->
-            ?assertEqual(none, b5_sets:smaller(randomly_switch_number_type(FirstElement), Set)),
+            ?assertEqual(none, xb5_sets:smaller(randomly_switch_number_type(FirstElement), Set)),
 
             SmallerElement = element_smaller(FirstElement),
-            ?assertEqual(none, b5_sets:smaller(SmallerElement, Set)),
+            ?assertEqual(none, xb5_sets:smaller(SmallerElement, Set)),
 
             run_smaller_recur(FirstElement, Next, Set)
     end.
@@ -1020,20 +1020,20 @@ run_smaller(RefElements, Set) ->
 run_smaller_recur(Expected, [LastElement], Set) ->
     ?assertCanonEqual(
         {found, Expected},
-        b5_sets:smaller(randomly_switch_number_type(LastElement), Set)
+        xb5_sets:smaller(randomly_switch_number_type(LastElement), Set)
     ),
 
     LargerElement = element_larger(LastElement),
     ?assert(LargerElement > LastElement),
-    ?assert(b5_sets:smaller(LargerElement, Set) == {found, LastElement});
+    ?assert(xb5_sets:smaller(LargerElement, Set) == {found, LastElement});
 run_smaller_recur(Expected, [Element | Next], Set) ->
-    ?assert(b5_sets:smaller(randomly_switch_number_type(Element), Set) == {found, Expected}),
+    ?assert(xb5_sets:smaller(randomly_switch_number_type(Element), Set) == {found, Expected}),
 
     case element_in_between(Expected, Element) of
         {found, InBetween} ->
             ?assert(InBetween > Expected),
             ?assert(InBetween < Element),
-            ?assert(b5_sets:smaller(InBetween, Set) == {found, Expected});
+            ?assert(xb5_sets:smaller(InBetween, Set) == {found, Expected});
         %
         none ->
             ok
@@ -1047,22 +1047,22 @@ run_larger(RefElements, Set) ->
     case lists:reverse(RefElements) of
         [] ->
             Element = new_element(),
-            ?assertEqual(none, b5_sets:larger(Element, Set));
+            ?assertEqual(none, xb5_sets:larger(Element, Set));
         %
         [SingleElement] ->
-            ?assertEqual(none, b5_sets:larger(SingleElement, Set)),
+            ?assertEqual(none, xb5_sets:larger(SingleElement, Set)),
 
             LargerElement = element_larger(SingleElement),
-            ?assertEqual(none, b5_sets:larger(LargerElement, Set)),
+            ?assertEqual(none, xb5_sets:larger(LargerElement, Set)),
 
             SmallerElement = element_smaller(SingleElement),
-            ?assert(b5_sets:larger(SmallerElement, Set) == {found, SingleElement});
+            ?assert(xb5_sets:larger(SmallerElement, Set) == {found, SingleElement});
         %
         [LastElement | Next] ->
-            ?assertEqual(none, b5_sets:larger(randomly_switch_number_type(LastElement), Set)),
+            ?assertEqual(none, xb5_sets:larger(randomly_switch_number_type(LastElement), Set)),
 
             LargerElement = element_larger(LastElement),
-            ?assertEqual(none, b5_sets:larger(LargerElement, Set)),
+            ?assertEqual(none, xb5_sets:larger(LargerElement, Set)),
 
             run_larger_recur(LastElement, Next, Set)
     end.
@@ -1070,20 +1070,20 @@ run_larger(RefElements, Set) ->
 run_larger_recur(Expected, [FirstElement], Set) ->
     ?assertCanonEqual(
         {found, Expected},
-        b5_sets:larger(randomly_switch_number_type(FirstElement), Set)
+        xb5_sets:larger(randomly_switch_number_type(FirstElement), Set)
     ),
 
     SmallerElement = element_smaller(FirstElement),
     ?assert(SmallerElement < FirstElement),
-    ?assert(b5_sets:larger(SmallerElement, Set) == {found, FirstElement});
+    ?assert(xb5_sets:larger(SmallerElement, Set) == {found, FirstElement});
 run_larger_recur(Expected, [Element | Next], Set) ->
-    ?assert(b5_sets:larger(randomly_switch_number_type(Element), Set) == {found, Expected}),
+    ?assert(xb5_sets:larger(randomly_switch_number_type(Element), Set) == {found, Expected}),
 
     case element_in_between(Element, Expected) of
         {found, InBetween} ->
             ?assert(InBetween < Expected),
             ?assert(InBetween > Element),
-            ?assert(b5_sets:larger(InBetween, Set) == {found, Expected});
+            ?assert(xb5_sets:larger(InBetween, Set) == {found, Expected});
         %
         none ->
             ok
@@ -1094,36 +1094,36 @@ run_larger_recur(Expected, [Element | Next], Set) ->
 %%%%%%%%%%%%%%%%%
 
 run_take_smallest([Expected | Next], Set) ->
-    {Taken, Set2} = b5_sets:take_smallest(Set),
+    {Taken, Set2} = xb5_sets:take_smallest(Set),
     ?assert(Taken == Expected),
-    ?assertEqual(length(Next), b5_sets:size(Set2)),
+    ?assertEqual(length(Next), xb5_sets:size(Set2)),
     run_take_smallest(Next, Set2);
 run_take_smallest([], Set) ->
-    ?assertError(empty_set, b5_sets:take_smallest(Set)).
+    ?assertError(empty_set, xb5_sets:take_smallest(Set)).
 
 run_take_largest([Expected | Next], Set) ->
-    {Taken, Set2} = b5_sets:take_largest(Set),
+    {Taken, Set2} = xb5_sets:take_largest(Set),
     ?assert(Taken == Expected),
-    ?assertEqual(length(Next), b5_sets:size(Set2)),
+    ?assertEqual(length(Next), xb5_sets:size(Set2)),
     run_take_largest(Next, Set2);
 run_take_largest([], Set) ->
-    ?assertError(empty_set, b5_sets:take_largest(Set)).
+    ?assertError(empty_set, xb5_sets:take_largest(Set)).
 
 %% ------------------------------------------------------------------
 %% Helpers: Difference
 %% ------------------------------------------------------------------
 
 run_difference_test(Size, RefElements, Set) ->
-    SelfDifference = b5_sets:difference(Set, Set),
+    SelfDifference = xb5_sets:difference(Set, Set),
 
-    ?assertEqual(0, b5_sets:size(SelfDifference)),
-    ?assertEqual([], b5_sets:to_list(SelfDifference)),
+    ?assertEqual(0, xb5_sets:size(SelfDifference)),
+    ?assertEqual([], xb5_sets:to_list(SelfDifference)),
 
     %%%%%%%%%%%%%%%
 
     foreach_second_set(
         fun(RefElements2, Set2) ->
-            Difference = b5_sets:difference(Set, Set2),
+            Difference = xb5_sets:difference(Set, Set2),
 
             %%
 
@@ -1133,17 +1133,17 @@ run_difference_test(Size, RefElements, Set) ->
 
             ?assertEqual(
                 ordsets:size(ExpectedRemainingElements),
-                b5_sets:size(Difference)
+                xb5_sets:size(Difference)
             ),
 
             ?assertListsCanonEqual(
                 ordsets:to_list(ExpectedRemainingElements),
-                b5_sets:to_list(Difference)
+                xb5_sets:to_list(Difference)
             ),
 
             %%
 
-            ?assertEqual(Difference, b5_sets:subtract(Set, Set2))
+            ?assertEqual(Difference, xb5_sets:subtract(Set, Set2))
         end,
         Size,
         RefElements
@@ -1185,7 +1185,7 @@ foreach_second_set(Fun, Size, RefElements, Opts) ->
                 fun randomly_switch_number_type/1, lists:usort(RepeatedElements ++ NewElements)
             ),
 
-            Set2 = b5_sets:from_list(maybe_shuffle_elements_for_new_set(RefElements2)),
+            Set2 = xb5_sets:from_list(maybe_shuffle_elements_for_new_set(RefElements2)),
 
             Fun(RefElements2, Set2)
         end,
@@ -1197,20 +1197,20 @@ foreach_second_set(Fun, Size, RefElements, Opts) ->
 %% ------------------------------------------------------------------
 
 run_intersection_test(Size, RefElements, Set) ->
-    SelfIntersect = b5_sets:intersection(Set, Set),
+    SelfIntersect = xb5_sets:intersection(Set, Set),
 
-    ?assertEqual(Size, b5_sets:size(SelfIntersect)),
+    ?assertEqual(Size, xb5_sets:size(SelfIntersect)),
 
     ?assertListsCanonEqual(
         RefElements,
-        b5_sets:to_list(SelfIntersect)
+        xb5_sets:to_list(SelfIntersect)
     ),
 
     %%%%%%%%%%%%%%%
 
     foreach_second_set(
         fun(RefElements2, Set2) ->
-            Intersection = b5_sets:intersection(Set, Set2),
+            Intersection = xb5_sets:intersection(Set, Set2),
 
             %%
 
@@ -1220,19 +1220,19 @@ run_intersection_test(Size, RefElements, Set) ->
 
             ?assertEqual(
                 ordsets:size(ExpectedRemainingElements),
-                b5_sets:size(Intersection)
+                xb5_sets:size(Intersection)
             ),
 
             ?assertListsCanonEqual(
                 ordsets:to_list(ExpectedRemainingElements),
-                b5_sets:to_list(Intersection)
+                xb5_sets:to_list(Intersection)
             ),
 
             %%
 
             ?assertListsCanonEqual(
                 ordsets:to_list(ExpectedRemainingElements),
-                b5_sets:to_list(b5_sets:intersection(Set, Set2))
+                xb5_sets:to_list(xb5_sets:intersection(Set, Set2))
             )
         end,
         Size,
@@ -1256,32 +1256,32 @@ run_intersection3_test(Size, RefElements, Set) ->
 
                     IntersectionInputs = [Set, Set2, Set3],
 
-                    Intersection = b5_sets:intersection(IntersectionInputs),
+                    Intersection = xb5_sets:intersection(IntersectionInputs),
 
-                    ?assertEqual(length(ExpectedRemainingElements), b5_sets:size(Intersection)),
+                    ?assertEqual(length(ExpectedRemainingElements), xb5_sets:size(Intersection)),
 
                     ?assertListsCanonEqual(
-                        ExpectedRemainingElements, b5_sets:to_list(Intersection)
+                        ExpectedRemainingElements, xb5_sets:to_list(Intersection)
                     ),
 
                     %%%
 
-                    Intersection2 = b5_sets:intersection(list_shuffle(IntersectionInputs)),
+                    Intersection2 = xb5_sets:intersection(list_shuffle(IntersectionInputs)),
 
-                    ?assertEqual(length(ExpectedRemainingElements), b5_sets:size(Intersection2)),
+                    ?assertEqual(length(ExpectedRemainingElements), xb5_sets:size(Intersection2)),
 
                     ?assertListsCanonEqual(
-                        ExpectedRemainingElements, b5_sets:to_list(Intersection2)
+                        ExpectedRemainingElements, xb5_sets:to_list(Intersection2)
                     ),
 
                     %%%
 
-                    Intersection3 = b5_sets:intersection(list_shuffle(IntersectionInputs)),
+                    Intersection3 = xb5_sets:intersection(list_shuffle(IntersectionInputs)),
 
-                    ?assertEqual(length(ExpectedRemainingElements), b5_sets:size(Intersection3)),
+                    ?assertEqual(length(ExpectedRemainingElements), xb5_sets:size(Intersection3)),
 
                     ?assertListsCanonEqual(
-                        ExpectedRemainingElements, b5_sets:to_list(Intersection3)
+                        ExpectedRemainingElements, xb5_sets:to_list(Intersection3)
                     )
                 end,
                 Size,
@@ -1299,13 +1299,13 @@ run_intersection3_test(Size, RefElements, Set) ->
 %% ------------------------------------------------------------------
 
 run_is_disjoint_test(Size, RefElements, Set) ->
-    ?assertEqual((Size =:= 0), b5_sets:is_disjoint(Set, Set)),
+    ?assertEqual((Size =:= 0), xb5_sets:is_disjoint(Set, Set)),
 
     %%%%%%%
 
     foreach_second_set(
         fun(RefElements2, Set2) ->
-            IsDisjoint = b5_sets:is_disjoint(Set, Set2),
+            IsDisjoint = xb5_sets:is_disjoint(Set, Set2),
 
             ExpectedIsDisjoint = ordsets:is_disjoint(
                 ordsets:from_list(RefElements), ordsets:from_list(RefElements2)
@@ -1313,7 +1313,7 @@ run_is_disjoint_test(Size, RefElements, Set) ->
 
             ?assertEqual(ExpectedIsDisjoint, IsDisjoint),
 
-            ?assertEqual(ExpectedIsDisjoint, b5_sets:is_disjoint(Set2, Set))
+            ?assertEqual(ExpectedIsDisjoint, xb5_sets:is_disjoint(Set2, Set))
         end,
         Size,
         RefElements
@@ -1324,13 +1324,13 @@ run_is_disjoint_test(Size, RefElements, Set) ->
 %% ------------------------------------------------------------------
 
 run_is_equal_test(Size, RefElements, Set) ->
-    ?assertEqual(true, b5_sets:is_equal(Set, Set)),
+    ?assertEqual(true, xb5_sets:is_equal(Set, Set)),
 
     %%%%%%%
 
     foreach_second_set(
         fun(RefElements2, Set2) ->
-            IsEqual = b5_sets:is_equal(Set, Set2),
+            IsEqual = xb5_sets:is_equal(Set, Set2),
 
             ExpectedIsEqual = (RefElements == RefElements2),
 
@@ -1338,7 +1338,7 @@ run_is_equal_test(Size, RefElements, Set) ->
 
             %%
 
-            ?assertEqual(ExpectedIsEqual, b5_sets:is_equal(Set2, Set))
+            ?assertEqual(ExpectedIsEqual, xb5_sets:is_equal(Set2, Set))
         end,
         Size,
         RefElements
@@ -1349,13 +1349,13 @@ run_is_equal_test(Size, RefElements, Set) ->
 %% ------------------------------------------------------------------
 
 run_is_subset_test(Size, RefElements, Set) ->
-    ?assertEqual(true, b5_sets:is_subset(Set, Set)),
+    ?assertEqual(true, xb5_sets:is_subset(Set, Set)),
 
     %%%%%%
 
     foreach_second_set(
         fun(RefElements2, Set2) ->
-            IsSubset = b5_sets:is_subset(Set, Set2),
+            IsSubset = xb5_sets:is_subset(Set, Set2),
 
             ExpectedIsSubset = ordsets:is_subset(
                 ordsets:from_list(RefElements), ordsets:from_list(RefElements2)
@@ -1365,12 +1365,12 @@ run_is_subset_test(Size, RefElements, Set) ->
 
             %%
 
-            Size1 = b5_sets:size(Set),
-            Size2 = b5_sets:size(Set2),
+            Size1 = xb5_sets:size(Set),
+            Size2 = xb5_sets:size(Set2),
 
             case Size1 =:= Size2 of
                 true ->
-                    ?assertEqual(IsSubset, b5_sets:is_subset(Set2, Set));
+                    ?assertEqual(IsSubset, xb5_sets:is_subset(Set2, Set));
                 _ ->
                     ok
             end
@@ -1384,11 +1384,11 @@ run_is_subset_test(Size, RefElements, Set) ->
 %% ------------------------------------------------------------------
 
 run_union_test(Size, RefElements, Set) ->
-    SelfUnion = b5_sets:union(Set, Set),
+    SelfUnion = xb5_sets:union(Set, Set),
 
-    ?assertEqual(Size, b5_sets:size(SelfUnion)),
+    ?assertEqual(Size, xb5_sets:size(SelfUnion)),
 
-    ?assertListsCanonEqual(RefElements, b5_sets:to_list(SelfUnion)),
+    ?assertListsCanonEqual(RefElements, xb5_sets:to_list(SelfUnion)),
 
     %%%%%%%%%%%%%%
 
@@ -1396,58 +1396,58 @@ run_union_test(Size, RefElements, Set) ->
         fun(RefElements2, Set2) ->
             ExpectedUnionElements = lists:usort(RefElements ++ RefElements2),
 
-            Union = b5_sets:union(Set, Set2),
+            Union = xb5_sets:union(Set, Set2),
 
             ?assertEqual(
                 length(ExpectedUnionElements),
-                b5_sets:size(Union)
+                xb5_sets:size(Union)
             ),
 
             ?assertListsCanonEqual(
                 ExpectedUnionElements,
-                b5_sets:to_list(Union)
+                xb5_sets:to_list(Union)
             ),
 
             %%%%%%%
 
-            Union2 = b5_sets:union(Set2, Set),
+            Union2 = xb5_sets:union(Set2, Set),
 
             ?assertEqual(
                 length(ExpectedUnionElements),
-                b5_sets:size(Union2)
+                xb5_sets:size(Union2)
             ),
 
             ?assertListsCanonEqual(
                 ExpectedUnionElements,
-                b5_sets:to_list(Union2)
+                xb5_sets:to_list(Union2)
             ),
 
             %%%%%%%%%
 
-            Union3 = b5_sets:union([Set, Set2]),
+            Union3 = xb5_sets:union([Set, Set2]),
 
             ?assertEqual(
                 length(ExpectedUnionElements),
-                b5_sets:size(Union3)
+                xb5_sets:size(Union3)
             ),
 
             ?assertListsCanonEqual(
                 ExpectedUnionElements,
-                b5_sets:to_list(Union3)
+                xb5_sets:to_list(Union3)
             ),
 
             %%%%%%%%%
 
-            Union4 = b5_sets:union([Set2, Set]),
+            Union4 = xb5_sets:union([Set2, Set]),
 
             ?assertEqual(
                 length(ExpectedUnionElements),
-                b5_sets:size(Union4)
+                xb5_sets:size(Union4)
             ),
 
             ?assertListsCanonEqual(
                 ExpectedUnionElements,
-                b5_sets:to_list(Union4)
+                xb5_sets:to_list(Union4)
             ),
 
             %%%%%%%%%
@@ -1456,16 +1456,16 @@ run_union_test(Size, RefElements, Set) ->
                 lists:duplicate(rand:uniform(10), Set) ++
                     lists:duplicate(rand:uniform(10), Set2)
             ),
-            Union5 = b5_sets:union(Union5Inputs),
+            Union5 = xb5_sets:union(Union5Inputs),
 
             ?assertEqual(
                 length(ExpectedUnionElements),
-                b5_sets:size(Union5)
+                xb5_sets:size(Union5)
             ),
 
             ?assertListsCanonEqual(
                 ExpectedUnionElements,
-                b5_sets:to_list(Union5)
+                xb5_sets:to_list(Union5)
             )
         end,
         Size,
@@ -1486,27 +1486,27 @@ run_union3_test(Size, RefElements, Set) ->
                     ),
                     UnionInputs = [Set, Set2, Set3],
 
-                    Union = b5_sets:union(UnionInputs),
+                    Union = xb5_sets:union(UnionInputs),
 
-                    ?assertEqual(length(ExpectedUnionElements), b5_sets:size(Union)),
+                    ?assertEqual(length(ExpectedUnionElements), xb5_sets:size(Union)),
 
-                    ?assertListsCanonEqual(ExpectedUnionElements, b5_sets:to_list(Union)),
-
-                    %%%
-
-                    Union2 = b5_sets:union(list_shuffle(UnionInputs)),
-
-                    ?assertEqual(length(ExpectedUnionElements), b5_sets:size(Union2)),
-
-                    ?assertListsCanonEqual(ExpectedUnionElements, b5_sets:to_list(Union2)),
+                    ?assertListsCanonEqual(ExpectedUnionElements, xb5_sets:to_list(Union)),
 
                     %%%
 
-                    Union3 = b5_sets:union(list_shuffle(UnionInputs)),
+                    Union2 = xb5_sets:union(list_shuffle(UnionInputs)),
 
-                    ?assertEqual(length(ExpectedUnionElements), b5_sets:size(Union3)),
+                    ?assertEqual(length(ExpectedUnionElements), xb5_sets:size(Union2)),
 
-                    ?assertListsCanonEqual(ExpectedUnionElements, b5_sets:to_list(Union3))
+                    ?assertListsCanonEqual(ExpectedUnionElements, xb5_sets:to_list(Union2)),
+
+                    %%%
+
+                    Union3 = xb5_sets:union(list_shuffle(UnionInputs)),
+
+                    ?assertEqual(length(ExpectedUnionElements), xb5_sets:size(Union3)),
+
+                    ?assertListsCanonEqual(ExpectedUnionElements, xb5_sets:to_list(Union3))
                 end,
                 Size,
                 RefElements,
@@ -1576,8 +1576,8 @@ run_iterator_from_last_element(LastElement, Set) ->
     ?assertEqual([], iterate(Iter2)).
 
 new_iterator_from(Elem, Set) ->
-    Iter = b5_sets:iterator_from(Elem, Set),
-    ?assertEqual(Iter, b5_sets:iterator_from(Elem, Set, ordered)),
+    Iter = xb5_sets:iterator_from(Elem, Set),
+    ?assertEqual(Iter, xb5_sets:iterator_from(Elem, Set, ordered)),
     Iter.
 
 %%%%%%%%%%%%%%%%%
@@ -1585,26 +1585,26 @@ new_iterator_from(Elem, Set) ->
 run_iterator_from_reversed(RefElements, Set) ->
     case lists:reverse(RefElements) of
         [] ->
-            Iter = b5_sets:iterator_from(new_element(), Set, reversed),
+            Iter = xb5_sets:iterator_from(new_element(), Set, reversed),
             ?assertEqual([], iterate(Iter));
         %
         [SingleElement] ->
-            Iter = b5_sets:iterator_from(
+            Iter = xb5_sets:iterator_from(
                 randomly_switch_number_type(SingleElement), Set, reversed
             ),
             ?assertListsCanonEqual([SingleElement], iterate(Iter)),
 
             SmallerElement = element_smaller(SingleElement),
-            Iter2 = b5_sets:iterator_from(SmallerElement, Set, reversed),
+            Iter2 = xb5_sets:iterator_from(SmallerElement, Set, reversed),
             ?assertEqual([], iterate(Iter2)),
 
             LargerElement = element_larger(SingleElement),
-            Iter3 = b5_sets:iterator_from(LargerElement, Set, reversed),
+            Iter3 = xb5_sets:iterator_from(LargerElement, Set, reversed),
             ?assertListsCanonEqual([SingleElement], iterate(Iter3));
         %
         [LastElement | _] = ReverseRefElements ->
             LargerElement = element_larger(LastElement),
-            Iter = b5_sets:iterator_from(LargerElement, Set, reversed),
+            Iter = xb5_sets:iterator_from(LargerElement, Set, reversed),
             ?assertListsCanonEqual(ReverseRefElements, iterate(Iter)),
 
             run_iterator_from_reversed_recur(ReverseRefElements, Set)
@@ -1613,14 +1613,14 @@ run_iterator_from_reversed(RefElements, Set) ->
 run_iterator_from_reversed_recur([FirstElement], Set) ->
     run_iterator_from_reversed_first_element(FirstElement, Set);
 run_iterator_from_reversed_recur([Elem2 | [Elem1 | _] = Tail] = List, Set) ->
-    Iter = b5_sets:iterator_from(Elem2, Set, reversed),
+    Iter = xb5_sets:iterator_from(Elem2, Set, reversed),
     ?assertListsCanonEqual(List, iterate(Iter)),
 
     case element_in_between(Elem1, Elem2) of
         {found, InBetween} ->
             ?assert(InBetween > Elem1),
             ?assert(InBetween < Elem2),
-            Iter2 = b5_sets:iterator_from(InBetween, Set, reversed),
+            Iter2 = xb5_sets:iterator_from(InBetween, Set, reversed),
             ?assertListsCanonEqual(Tail, iterate(Iter2));
         %
         none ->
@@ -1630,22 +1630,22 @@ run_iterator_from_reversed_recur([Elem2 | [Elem1 | _] = Tail] = List, Set) ->
     run_iterator_from_reversed_recur(Tail, Set).
 
 run_iterator_from_reversed_first_element(FirstElement, Set) ->
-    Iter = b5_sets:iterator_from(randomly_switch_number_type(FirstElement), Set, reversed),
+    Iter = xb5_sets:iterator_from(randomly_switch_number_type(FirstElement), Set, reversed),
     ?assertListsCanonEqual([FirstElement], iterate(Iter)),
 
     SmallerElement = element_smaller(FirstElement),
-    Iter2 = b5_sets:iterator_from(SmallerElement, Set, reversed),
+    Iter2 = xb5_sets:iterator_from(SmallerElement, Set, reversed),
     ?assertEqual([], iterate(Iter2)).
 
 %%%%%%%%%%%%%%%%%
 
 new_iterator(Set) ->
-    Iter = b5_sets:iterator(Set),
-    ?assertEqual(Iter, b5_sets:iterator(Set, ordered)),
+    Iter = xb5_sets:iterator(Set),
+    ?assertEqual(Iter, xb5_sets:iterator(Set, ordered)),
     Iter.
 
 iterate(Iter) ->
-    case b5_sets:next(Iter) of
+    case xb5_sets:next(Iter) of
         {Element, Iter2} ->
             [Element | iterate(Iter2)];
         %
@@ -1684,12 +1684,12 @@ run_filter(Size, RefElements, Set) ->
                         fun(E) -> not gb_sets:is_element(E, AuxSet) end
                 end,
 
-            FilteredSet = b5_sets:filter(FilterFun, Set),
+            FilteredSet = xb5_sets:filter(FilterFun, Set),
 
             ExpectedElementsRemaining = lists:filter(FilterFun, RefElements),
-            ?assertListsCanonEqual(ExpectedElementsRemaining, b5_sets:to_list(FilteredSet)),
+            ?assertListsCanonEqual(ExpectedElementsRemaining, xb5_sets:to_list(FilteredSet)),
 
-            ?assertEqual(length(ExpectedElementsRemaining), b5_sets:size(FilteredSet))
+            ?assertEqual(length(ExpectedElementsRemaining), xb5_sets:size(FilteredSet))
         end,
         AmountsToRemove
     ).
@@ -1758,12 +1758,12 @@ run_filtermap(Size, RefElements, Set) ->
                         end
                 end,
 
-            FiltermappedSet = b5_sets:filtermap(FiltermapFun, Set),
+            FiltermappedSet = xb5_sets:filtermap(FiltermapFun, Set),
 
             ExpectedElementsRemaining = lists:usort(lists:filtermap(FiltermapFun, RefElements)),
-            ?assertListsCanonEqual(ExpectedElementsRemaining, b5_sets:to_list(FiltermappedSet)),
+            ?assertListsCanonEqual(ExpectedElementsRemaining, xb5_sets:to_list(FiltermappedSet)),
 
-            ?assertEqual(length(ExpectedElementsRemaining), b5_sets:size(FiltermappedSet))
+            ?assertEqual(length(ExpectedElementsRemaining), xb5_sets:size(FiltermappedSet))
         end,
         ParamCombos
     ).
@@ -1789,7 +1789,7 @@ run_fold(RefElements, Set) ->
 
     ?assertListsCanonEqual(
         ordsets:fold(Fun, [], ordsets:from_list(RefElements)),
-        b5_sets:fold(Fun, [], Set)
+        xb5_sets:fold(Fun, [], Set)
     ).
 
 %% ------------------------------------------------------------------
@@ -1824,18 +1824,18 @@ run_map(RefElements, Set) ->
                     end
                 end,
 
-            MappedSet = b5_sets:map(MapFun, Set),
+            MappedSet = xb5_sets:map(MapFun, Set),
 
             ExpectedMappedRef = lists:usort(lists:map(MapFun, RefElements)),
 
             ?assertEqual(
                 length(ExpectedMappedRef),
-                b5_sets:size(MappedSet)
+                xb5_sets:size(MappedSet)
             ),
 
             ?assertListsCanonEqual(
                 ExpectedMappedRef,
-                b5_sets:to_list(MappedSet)
+                xb5_sets:to_list(MappedSet)
             )
         end,
         PercentagesMapped
@@ -1862,9 +1862,9 @@ run_structure_test(InitFun, Opts) ->
                 RefElements = new_ref_elements(Size, NumericOnly),
 
                 Set = InitFun(RefElements),
-                ?assertEqual(?STRUCTURE_TEST_BASE_SIZE, b5_sets:size(Set)),
+                ?assertEqual(?STRUCTURE_TEST_BASE_SIZE, xb5_sets:size(Set)),
 
-                Stats = b5_sets:structural_stats(Set),
+                Stats = xb5_sets:structural_stats(Set),
 
                 %%%%%%%%%%
 

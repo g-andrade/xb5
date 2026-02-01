@@ -1,5 +1,5 @@
 % TODO document
--module(b5_sets_node).
+-module(xb5_sets_node).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -671,31 +671,31 @@ smallest(?LEAF1_MATCH(E1)) ->
 smallest(Root) ->
     smallest_recur(Root).
 
--spec structural_stats(t(_)) -> b5_structural_stats:t().
+-spec structural_stats(t(_)) -> xb5_structural_stats:t().
 structural_stats(Root) ->
-    Acc = b5_structural_stats:new(),
+    Acc = xb5_structural_stats:new(),
 
     case Root of
         ?INTERNAL1_MATCH(_, C1, C2) ->
             Height = 1,
-            Acc2 = b5_structural_stats:inc_count(internal1, Acc),
+            Acc2 = xb5_structural_stats:inc_count(internal1, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
-            b5_structural_stats:return(Acc4);
+            xb5_structural_stats:return(Acc4);
         %
         ?LEAF1_MATCH(_) ->
             Height = 1,
-            Acc2 = b5_structural_stats:inc_count(leaf1, Acc),
-            Acc3 = b5_structural_stats:set_height(Height, Acc2),
-            b5_structural_stats:return(Acc3);
+            Acc2 = xb5_structural_stats:inc_count(leaf1, Acc),
+            Acc3 = xb5_structural_stats:set_height(Height, Acc2),
+            xb5_structural_stats:return(Acc3);
         %
         ?LEAF0 ->
-            b5_structural_stats:return(Acc);
+            xb5_structural_stats:return(Acc);
         %
         _ ->
             Height = 1,
             Acc2 = structural_stats_recur(Root, Acc, Height),
-            b5_structural_stats:return(Acc2)
+            xb5_structural_stats:return(Acc2)
     end.
 
 -spec take_largest(t(Elem)) -> take_result(Elem).
@@ -3697,32 +3697,32 @@ smallest_recur(Node) ->
 structural_stats_recur(Node, Acc, Height) ->
     case Node of
         ?LEAF2_MATCH(_, _) ->
-            Acc2 = b5_structural_stats:inc_count(leaf2, Acc),
-            b5_structural_stats:set_height(Height, Acc2);
+            Acc2 = xb5_structural_stats:inc_count(leaf2, Acc),
+            xb5_structural_stats:set_height(Height, Acc2);
         %
         ?LEAF3_MATCH(_, _, _) ->
-            Acc2 = b5_structural_stats:inc_count(leaf3, Acc),
-            b5_structural_stats:set_height(Height, Acc2);
+            Acc2 = xb5_structural_stats:inc_count(leaf3, Acc),
+            xb5_structural_stats:set_height(Height, Acc2);
         %
         ?LEAF4_MATCH(_, _, _, _) ->
-            Acc2 = b5_structural_stats:inc_count(leaf4, Acc),
-            b5_structural_stats:set_height(Height, Acc2);
+            Acc2 = xb5_structural_stats:inc_count(leaf4, Acc),
+            xb5_structural_stats:set_height(Height, Acc2);
         %
         ?INTERNAL2_MATCH(_, _, C1, C2, C3) ->
-            Acc2 = b5_structural_stats:inc_count(internal2, Acc),
+            Acc2 = xb5_structural_stats:inc_count(internal2, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             _Acc5 = structural_stats_recur(C3, Acc4, Height + 1);
         %
         ?INTERNAL3_MATCH(_, _, _, C1, C2, C3, C4) ->
-            Acc2 = b5_structural_stats:inc_count(internal3, Acc),
+            Acc2 = xb5_structural_stats:inc_count(internal3, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             Acc5 = structural_stats_recur(C3, Acc4, Height + 1),
             _Acc6 = structural_stats_recur(C4, Acc5, Height + 1);
         %
         ?INTERNAL4_MATCH(_, _, _, _, C1, C2, C3, C4, C5) ->
-            Acc2 = b5_structural_stats:inc_count(internal4, Acc),
+            Acc2 = xb5_structural_stats:inc_count(internal4, Acc),
             Acc3 = structural_stats_recur(C1, Acc2, Height + 1),
             Acc4 = structural_stats_recur(C2, Acc3, Height + 1),
             Acc5 = structural_stats_recur(C3, Acc4, Height + 1),
