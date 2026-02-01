@@ -51,18 +51,9 @@
     take_smallest/1,
     to_list/1,
     union/1,
-    union/2
-]).
-
--export([
-    % FIXME
-    from_constituent_parts/1,
-    to_constituent_parts/1
-]).
-
--ignore_xref([
-    from_constituent_parts/1,
-    to_constituent_parts/1
+    union/2,
+    unwrap/1,
+    wrap/1
 ]).
 
 %% ------------------------------------------------------------------
@@ -82,6 +73,14 @@
 
 -type iter() :: iter(_).
 -export_type([iter/0]).
+
+%%
+
+-type unwrapped_set(Element) :: #{
+    size := non_neg_integer(),
+    root := xb5_sets_node:t(Element)
+}.
+-export_type([unwrapped_set/1]).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -515,6 +514,40 @@ union([]) ->
 union(#xb5_set{root = Root1, size = Size1}, #xb5_set{root = Root2, size = Size2}) ->
     [NewSize | NewRoot] = xb5_sets_node:union(Root1, Size1, Root2, Size2),
     #xb5_set{size = NewSize, root = NewRoot}.
+
+%%
+
+-spec unwrap(Set) -> Unwrapped when
+    Set :: set(Element),
+    Unwrapped :: unwrapped_set(Element).
+
+unwrap(#xb5_set{size = Size, root = Root}) ->
+    #{size => Size, root => Root}.
+
+%%
+
+-spec wrap
+    (unwrapped_set(Element)) -> set(Element) | error;
+    (_) -> error.
+
+wrap(#{root := Root, size := Size}) when is_integer(Size) andalso Size >= 0 ->
+    try xb5_sets_node:structural_stats(Root) of
+        Stats ->
+            {_, TotalKeys} = lists:keyfind(total_keys, 1, Stats),
+
+            case TotalKeys =:= Size of
+                true ->
+                    {ok, #xb5_set{root = Root, size = Size}};
+                %
+                false ->
+                    error
+            end
+    catch
+        _Class:_Reason ->
+            error
+    end;
+wrap(_) ->
+    ok.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions

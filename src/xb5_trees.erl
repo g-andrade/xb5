@@ -569,7 +569,10 @@ values(#xb5_tree{root = Root}) ->
 
 %%
 
--spec wrap(_) -> {ok, Tree} | error when Tree :: tree().
+-spec wrap
+    (unwrapped_tree(Key, Value)) -> tree(Key, Value) | error;
+    (_) -> error.
+
 wrap(#{root := Root, size := Size}) when is_integer(Size) andalso Size >= 0 ->
     try xb5_trees_node:structural_stats(Root) of
         Stats ->

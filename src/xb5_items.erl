@@ -40,7 +40,9 @@
     structural_stats/1,
     take_largest/1,
     take_smallest/1,
-    to_list/1
+    to_list/1,
+    unwrap/1,
+    wrap/1
 ]).
 
 %% ------------------------------------------------------------------
@@ -87,6 +89,14 @@
     value := Element
 }.
 -export_type([percentile_bracket_bound/1]).
+
+%%
+
+-type unwrapped_items(Element) :: #{
+    size := non_neg_integer(),
+    root := xb5_items_node:t(Element)
+}.
+-export_type([unwrapped_items/1]).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -512,6 +522,40 @@ take_smallest(#xb5_items{}) ->
 
 to_list(#xb5_items{root = Root}) ->
     xb5_items_node:to_list(Root).
+
+%%
+
+-spec unwrap(Items) -> Unwrapped when
+    Items :: items(Element),
+    Unwrapped :: unwrapped_items(Element).
+
+unwrap(#xb5_items{size = Size, root = Root}) ->
+    #{size => Size, root => Root}.
+
+%%
+
+-spec wrap
+    (unwrapped_items(Element)) -> items(Element) | error;
+    (_) -> error.
+
+wrap(#{root := Root, size := Size}) when is_integer(Size) andalso Size >= 0 ->
+    try xb5_items_node:structural_stats(Root) of
+        Stats ->
+            {_, TotalKeys} = lists:keyfind(total_keys, 1, Stats),
+
+            case TotalKeys =:= Size of
+                true ->
+                    {ok, #xb5_items{root = Root, size = Size}};
+                %
+                false ->
+                    error
+            end
+    catch
+        _Class:_Reason ->
+            error
+    end;
+wrap(_) ->
+    ok.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
