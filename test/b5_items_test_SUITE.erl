@@ -140,6 +140,8 @@
     end)
 ).
 
+-define(OPAQUE_TERM(V), (b5_trees_util:dialyzer_opaque_term((V)))).
+
 %% Reference data of most hardcoded tests was generated using this Google spreadsheet:
 %% * https://docs.google.com/spreadsheets/d/1U2_9zVV0ZoLMHz1n7Hw-qENwbl-uCe93BUrOzCI4zvI/edit?gid=1769164134#gid=1769164134
 
@@ -1408,6 +1410,12 @@ remove_from_sorted_list(Elem, [H | T]) ->
             T
     end.
 
+-dialyzer({nowarn_function, fun1_error_not_to_be_called/0}).
+fun1_error_not_to_be_called() ->
+    fun(_) ->
+        error(not_to_be_called)
+    end.
+
 %% ------------------------------------------------------------------
 %% Helpers: deletion
 %% ------------------------------------------------------------------
@@ -1704,28 +1712,30 @@ iterate(Iter) ->
 test_invalid_nth(Size, Col) ->
     lists:foreach(
         fun(_) ->
-            ?assertError({badarg, not_numerical}, b5_items:nth(not_numerical, Col)),
+            ?assertError({badarg, not_numerical}, b5_items:nth(?OPAQUE_TERM(not_numerical), Col)),
 
             BelowN = -(rand:uniform(100) - 1),
             BelowFloat = float(BelowN),
             ?assertError({badarg, BelowN}, b5_items:nth(BelowN, Col)),
-            ?assertError({badarg, BelowFloat}, b5_items:nth(BelowFloat, Col)),
+            ?assertError({badarg, BelowFloat}, b5_items:nth(?OPAQUE_TERM(BelowFloat), Col)),
 
             BeyondN = Size + rand:uniform(100),
             BeyondFloat = float(BeyondN),
             ?assertError({badarg, BeyondN}, b5_items:nth(BeyondN, Col)),
-            ?assertError({badarg, BeyondFloat}, b5_items:nth(BeyondFloat, Col)),
+            ?assertError({badarg, BeyondFloat}, b5_items:nth(?OPAQUE_TERM(BeyondFloat), Col)),
 
             (Size > 1 andalso
                 begin
                     InBetween = rand:uniform(Size - 1) + 0.5,
-                    ?assertError({badarg, InBetween}, b5_items:nth(InBetween, Col))
+                    ?assertError({badarg, InBetween}, b5_items:nth(?OPAQUE_TERM(InBetween), Col))
                 end),
 
             (Size =/= 0 andalso
                 begin
                     ValidButFloat = float(rand:uniform(Size)),
-                    ?assertError({badarg, ValidButFloat}, b5_items:nth(ValidButFloat, Col))
+                    ?assertError(
+                        {badarg, ValidButFloat}, b5_items:nth(?OPAQUE_TERM(ValidButFloat), Col)
+                    )
                 end)
         end,
         lists:seq(1, 20)
@@ -1841,13 +1851,17 @@ test_invalid_percentile_inclusive(Col) ->
     ?assertError({badarg, 2}, new_percentile_bracket_inclusive(2, Col)),
     ?assertError({badarg, 100}, new_percentile_bracket_inclusive(100, Col)),
     ?assertError({badarg, 50}, new_percentile_bracket_inclusive(50, Col)),
-    ?assertError({badarg, not_numerical}, new_percentile_bracket_inclusive(not_numerical, Col)),
+    ?assertError(
+        {badarg, not_numerical}, new_percentile_bracket_inclusive(?OPAQUE_TERM(not_numerical), Col)
+    ),
 
     ?assertError({badarg, -1}, new_percentile_inclusive(-1, Col)),
     ?assertError({badarg, 2}, new_percentile_inclusive(2, Col)),
     ?assertError({badarg, 100}, new_percentile_inclusive(100, Col)),
     ?assertError({badarg, 50}, new_percentile_inclusive(50, Col)),
-    ?assertError({badarg, not_numerical}, new_percentile_inclusive(not_numerical, Col)).
+    ?assertError(
+        {badarg, not_numerical}, new_percentile_inclusive(?OPAQUE_TERM(not_numerical), Col)
+    ).
 
 test_valid_percentile_inclusive(0 = Size, _, Col) ->
     foreach_percentile(
@@ -2024,13 +2038,17 @@ test_invalid_percentile_exclusive(Col) ->
     ?assertError({badarg, 2}, new_percentile_bracket_exclusive(2, Col)),
     ?assertError({badarg, 100}, new_percentile_bracket_exclusive(100, Col)),
     ?assertError({badarg, 50}, new_percentile_bracket_exclusive(50, Col)),
-    ?assertError({badarg, not_numerical}, new_percentile_bracket_exclusive(not_numerical, Col)),
+    ?assertError(
+        {badarg, not_numerical}, new_percentile_bracket_exclusive(?OPAQUE_TERM(not_numerical), Col)
+    ),
 
     ?assertError({badarg, -1}, new_percentile_exclusive(-1, Col)),
     ?assertError({badarg, 2}, new_percentile_exclusive(2, Col)),
     ?assertError({badarg, 100}, new_percentile_exclusive(100, Col)),
     ?assertError({badarg, 50}, new_percentile_exclusive(50, Col)),
-    ?assertError({badarg, not_numerical}, new_percentile_exclusive(not_numerical, Col)).
+    ?assertError(
+        {badarg, not_numerical}, new_percentile_exclusive(?OPAQUE_TERM(not_numerical), Col)
+    ).
 
 test_valid_percentile_exclusive(0 = Size, _, Col) ->
     foreach_percentile(
@@ -2201,13 +2219,18 @@ test_invalid_percentile_nearest_rank(Col) ->
     ?assertError({badarg, 2}, new_percentile_bracket_nearest_rank(2, Col)),
     ?assertError({badarg, 100}, new_percentile_bracket_nearest_rank(100, Col)),
     ?assertError({badarg, 50}, new_percentile_bracket_nearest_rank(50, Col)),
-    ?assertError({badarg, not_numerical}, new_percentile_bracket_nearest_rank(not_numerical, Col)),
+    ?assertError(
+        {badarg, not_numerical},
+        new_percentile_bracket_nearest_rank(?OPAQUE_TERM(not_numerical), Col)
+    ),
 
     ?assertError({badarg, -1}, new_percentile_nearest_rank(-1, Col)),
     ?assertError({badarg, 2}, new_percentile_nearest_rank(2, Col)),
     ?assertError({badarg, 100}, new_percentile_nearest_rank(100, Col)),
     ?assertError({badarg, 50}, new_percentile_nearest_rank(50, Col)),
-    ?assertError({badarg, not_numerical}, new_percentile_nearest_rank(not_numerical, Col)).
+    ?assertError(
+        {badarg, not_numerical}, new_percentile_nearest_rank(?OPAQUE_TERM(not_numerical), Col)
+    ).
 
 test_valid_percentile_nearest_rank(0 = Size, _, Col) ->
     foreach_percentile(
@@ -2466,7 +2489,7 @@ run_filter(Size, RefElements, Col) ->
             FilterFun =
                 case Size of
                     0 ->
-                        fun(_) -> error(not_to_be_called) end;
+                        fun1_error_not_to_be_called();
                     %
                     _ ->
                         ElementsToRemove = lists:sublist(
@@ -2526,7 +2549,7 @@ run_filtermap(Size, RefElements, Col) ->
             FiltermapFun =
                 case Size of
                     0 ->
-                        fun(_) -> error(not_to_be_called) end;
+                        fun1_error_not_to_be_called();
                     %
                     _ ->
                         ElementsToKeep = lists:sublist(
@@ -2698,7 +2721,7 @@ run_structure_test(InitFun, Opts) ->
     SizeMultiplier = proplists:get_value(size_multiplier, Opts, 1),
     Size = round(SizeMultiplier * ?STRUCTURE_TEST_BASE_SIZE),
 
-    rand:seed(exsss, 1404887150367571),
+    _ = rand:seed(exsss, 1404887150367571),
 
     StatsAcc =
         lists:foldl(

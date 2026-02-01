@@ -54,13 +54,58 @@
 }.
 -export_type([items/1]).
 
+-type items() :: items(_).
+-export_type([items/0]).
+
+-type iter(Element) :: b5_items_node:iter(Element).
+-export_type([iter/1]).
+
+-type iter() :: iter(_).
+-export_type([iter/0]).
+
+%%%
+
+-type percentile_bracket_opt() ::
+    ({method, percentile_bracket_method()}).
+-export_type([percentile_bracket_opt/0]).
+
+-type percentile_bracket_method() ::
+    (inclusive
+    | exclusive
+    | nearest_rank).
+-export_type([percentile_bracket_method/0]).
+
+-type percentile_bracket(Element) ::
+    ({exact, Element}
+    | {between, percentile_bracket_bound(Element), percentile_bracket_bound(Element)}
+    | none).
+-export_type([percentile_bracket/1]).
+
+-type percentile_bracket_bound(Element) :: #{
+    percentile := float(),
+    weight := float(),
+    value := Element
+}.
+-export_type([percentile_bracket_bound/1]).
+
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-spec add(Element, Items1) -> Items2 when
+    Items1 :: items(Element),
+    Items2 :: items(Element).
+
 add(Element, #b5_items{size = Size, root = Root} = Items) ->
     UpdatedRoot = b5_items_node:add(Element, Root),
     Items#b5_items{size = Size + 1, root = UpdatedRoot}.
+
+%%
+
+-spec delete(Element, Items1) -> Items2 | no_return() when
+    Element :: term(),
+    Items1 :: items(Element),
+    Items2 :: items(Element).
 
 delete(Element, #b5_items{size = Size, root = Root} = Items) ->
     case b5_items_node:delete_att(Element, Root) of
@@ -71,6 +116,13 @@ delete(Element, #b5_items{size = Size, root = Root} = Items) ->
             Items#b5_items{size = Size - 1, root = UpdatedRoot}
     end.
 
+%%
+
+-spec delete_any(Element, Items1) -> Items2 when
+    Element :: term(),
+    Items1 :: items(Element),
+    Items2 :: items(Element).
+
 delete_any(Element, #b5_items{size = Size, root = Root} = Items) ->
     case b5_items_node:delete_att(Element, Root) of
         none ->
@@ -80,25 +132,67 @@ delete_any(Element, #b5_items{size = Size, root = Root} = Items) ->
             Items#b5_items{size = Size - 1, root = UpdatedRoot}
     end.
 
+%%
+
+-spec filter(Pred, Items1) -> Items2 when
+    Pred :: fun((Element) -> boolean()),
+    Items1 :: items(Element),
+    Items2 :: items(Element).
+
 filter(Fun, #b5_items{root = Root} = Items) ->
     [FilteredSize | FilteredRoot] = b5_items_node:filter(Fun, Root),
     Items#b5_items{size = FilteredSize, root = FilteredRoot}.
+
+%%
+
+-spec filtermap(Fun, Items1) -> Items2 when
+    Fun :: fun((Element1) -> boolean() | {true, Element2}),
+    Items1 :: items(Element1),
+    Items2 :: items(Element1 | Element2).
 
 filtermap(Fun, #b5_items{root = Root} = Items) ->
     [FilteredSize | FilteredRoot] = b5_items_node:filtermap(Fun, Root),
     Items#b5_items{size = FilteredSize, root = FilteredRoot}.
 
+%%
+
+-spec fold(Function, Acc0, Items) -> Acc1 when
+    Function :: fun((Element, AccIn) -> AccOut),
+    Acc0 :: Acc,
+    Acc1 :: Acc,
+    AccIn :: Acc,
+    AccOut :: Acc,
+    Items :: items(Element).
+
 fold(Fun, Acc, #b5_items{root = Root}) ->
     b5_items_node:fold(Fun, Acc, Root).
+
+%%
+
+-spec from_list(List) -> Items when
+    List :: [Element],
+    Items :: items(Element).
 
 from_list(List) ->
     Root = b5_items_node:new(),
     Size = 0,
     from_list_recur(List, Size, Root).
 
+%%
+
+-spec from_ordset(List) -> Items when
+    List :: ordsets:ordset(Element),
+    Items :: items(Element).
+
 from_ordset(Ordset) ->
     List = ordsets:to_list(Ordset),
     from_list(List).
+
+%%
+
+-spec insert(Element, Items1) -> Items2 when
+    Items1 :: items(Element),
+    Items2 :: items(Element).
 
 insert(Element, #b5_items{size = Size, root = Root} = Items) ->
     case b5_items_node:insert_att(Element, Root) of
@@ -109,35 +203,94 @@ insert(Element, #b5_items{size = Size, root = Root} = Items) ->
             Items#b5_items{size = Size + 1, root = UpdatedRoot}
     end.
 
+%%
+
+-spec is_empty(Items) -> boolean() when
+    Items :: items().
+
 is_empty(#b5_items{size = Size}) ->
     Size =:= 0.
+
+%%
 
 is_member(Element, #b5_items{root = Root}) ->
     b5_items_node:is_member(Element, Root).
 
+%%
+
+-spec iterator(Items) -> Iter when
+    Items :: items(Element),
+    Iter :: iter(Element).
+
 iterator(Items) ->
     iterator(Items, ordered).
+
+%%
+
+-spec iterator(Items, Order) -> Iter when
+    Items :: items(Element),
+    Iter :: iter(Element),
+    Order :: ordered | reversed.
 
 iterator(#b5_items{root = Root}, Order) ->
     b5_items_node:iterator(Root, Order).
 
+%%
+
+-spec iterator_from(Element, Items) -> Iter when
+    Items :: items(Element),
+    Iter :: iter(Element).
+
 iterator_from(Element, Items) ->
     iterator_from(Element, Items, ordered).
+
+%%
+
+-spec iterator_from(Element, Items, Order) -> Iter when
+    Items :: items(Element),
+    Iter :: iter(Element),
+    Order :: ordered | reversed.
 
 iterator_from(Element, #b5_items{root = Root}, Order) ->
     b5_items_node:iterator_from(Element, Root, Order).
 
+%%
+
+-spec larger(Element1, Items) -> none | {found, Element2} when
+    Element1 :: Element,
+    Element2 :: Element,
+    Items :: items(Element).
+
 larger(Element, #b5_items{root = Root}) ->
     b5_items_node:larger(Element, Root).
+
+%%
+
+-spec largest(Items) -> Element when
+    Items :: items(Element).
 
 largest(#b5_items{size = Size, root = Root}) when Size =/= 0 ->
     b5_items_node:largest(Root);
 largest(#b5_items{}) ->
     error_empty_items().
 
+%%
+
+-spec map(Fun, Items1) -> Items2 when
+    Fun :: fun((Element1) -> Element2),
+    Items1 :: items(Element1),
+    Items2 :: items(Element2).
+
 map(Fun, #b5_items{root = Root} = Items) ->
     MappedRoot = b5_items_node:map(Fun, Root),
     Items#b5_items{root = MappedRoot}.
+
+%%
+
+-spec merge(Items1, Items2) -> Items3 when
+    Items1 :: items(Element),
+    Items2 :: items(Element),
+    Items3 :: items(Element).
 
 merge(
     #b5_items{size = Size1, root = Root1} = Items1,
@@ -146,26 +299,71 @@ merge(
     MergedRoot = b5_items_node:merge(Size1, Root1, Size2, Root2),
     Items1#b5_items{size = Size1 + Size2, root = MergedRoot}.
 
+%%
+
+-spec new() -> Items when
+    Items :: items(_).
+
 new() ->
     #b5_items{size = 0, root = b5_items_node:new()}.
 
+%%
+
+-spec next(Iter1) -> {Element, Iter2} | 'none' when
+    Iter1 :: iter(Element),
+    Iter2 :: iter(Element).
+
 next(Iter) ->
     b5_items_node:next(Iter).
+
+%%
+
+-spec nth(Rank, Items) -> Element when Rank :: pos_integer(), Items :: items(Element).
 
 nth(Rank, #b5_items{size = Size, root = Root}) when is_integer(Rank), Rank >= 1, Rank =< Size ->
     b5_items_node:nth(Rank, Root);
 nth(Rank, #b5_items{}) ->
     error({badarg, Rank}).
 
+%%
+
+-spec percentile(Percentile, Items) -> {value, Element | InterpolationResult} | none when
+    Percentile :: float() | 0 | 1,
+    Items :: items(Element),
+    InterpolationResult :: number().
+
 percentile(Percentile, Items) ->
     percentile(Percentile, Items, []).
+
+%%
+
+-spec percentile(Percentile, Items, Opts) -> {value, Element | InterpolationResult} | none when
+    Percentile :: float() | 0 | 1,
+    Items :: items(Element),
+    InterpolationResult :: number(),
+    Opts :: [percentile_bracket_opt()].
 
 percentile(Percentile, Items, Opts) ->
     Bracket = percentile_bracket(Percentile, Items, Opts),
     linear_interpolated_percentile(Bracket).
 
+%%
+
+-spec percentile_bracket(Percentile, Items) -> Bracket when
+    Percentile :: float() | 0 | 1,
+    Items :: items(Element),
+    Bracket :: percentile_bracket(Element).
+
 percentile_bracket(Percentile, Items) ->
     percentile_bracket(Percentile, Items, []).
+
+%%
+
+-spec percentile_bracket(Percentile, Items, Opts) -> Bracket when
+    Percentile :: float() | 0 | 1,
+    Items :: items(Element),
+    Opts :: [percentile_bracket_opt()],
+    Bracket :: percentile_bracket(Element).
 
 percentile_bracket(Percentile, #b5_items{size = Size, root = Root}, Opts) when
     is_number(Percentile), Percentile >= 0.0, Percentile =< 1.0
@@ -193,6 +391,12 @@ percentile_bracket(Percentile, #b5_items{size = Size, root = Root}, Opts) when
 percentile_bracket(Percentile, #b5_items{}, _Opts) ->
     error({badarg, Percentile}).
 
+%%
+
+-spec percentile_rank(Element, Items) -> Rank when
+    Items :: items(Element),
+    Rank :: float().
+
 percentile_rank(Elem, #b5_items{size = Size, root = Root}) when Size > 0 ->
     % As described in Wikipedia:
     % https://en.wikipedia.org/wiki/Percentile_rank
@@ -205,6 +409,14 @@ percentile_rank(Elem, #b5_items{size = Size, root = Root}) when Size > 0 ->
 percentile_rank(_, #b5_items{}) ->
     error_empty_items().
 
+%%
+
+-spec rank_larger(Element1, Items) -> {Rank, Element2} | none when
+    Element1 :: Element,
+    Element2 :: Element,
+    Items :: items(Element),
+    Rank :: pos_integer().
+
 rank_larger(Elem, #b5_items{root = Root}) ->
     case b5_items_node:rank_larger(Elem, Root) of
         [Rank | Larger] ->
@@ -213,6 +425,14 @@ rank_larger(Elem, #b5_items{root = Root}) ->
         none ->
             none
     end.
+
+%%
+
+-spec rank_smaller(Element1, Items) -> {Rank, Element2} | none when
+    Element1 :: Element,
+    Element2 :: Element,
+    Items :: items(Element),
+    Rank :: pos_integer().
 
 rank_smaller(Elem, #b5_items{root = Root}) ->
     case b5_items_node:rank_smaller(Elem, Root) of
@@ -223,19 +443,48 @@ rank_smaller(Elem, #b5_items{root = Root}) ->
             none
     end.
 
+%%
+
+-spec size(Items) -> non_neg_integer() when
+    Items :: items().
+
 size(#b5_items{size = Size}) ->
     Size.
 
+%%
+
+-spec smaller(Element1, Items) -> none | {found, Element2} when
+    Element1 :: Element,
+    Element2 :: Element,
+    Items :: items(Element).
+
 smaller(Element, #b5_items{root = Root}) ->
     b5_items_node:smaller(Element, Root).
+
+%%
+
+-spec smallest(Items) -> Element when
+    Items :: items(Element).
 
 smallest(#b5_items{size = Size, root = Root}) when Size =/= 0 ->
     b5_items_node:smallest(Root);
 smallest(#b5_items{}) ->
     error_empty_items().
 
+%%
+
+-spec structural_stats(Items) -> Stats when
+    Items :: items(),
+    Stats :: b5_structural_stats:t().
+
 structural_stats(#b5_items{root = Root}) ->
     b5_items_node:structural_stats(Root).
+
+%%
+
+-spec take_largest(Items1) -> {Element, Items2} when
+    Items1 :: items(Element),
+    Items2 :: items(Element).
 
 take_largest(#b5_items{root = Root, size = Size} = Items) when Size =/= 0 ->
     [Largest | UpdatedRoot] = b5_items_node:take_largest(Root),
@@ -243,11 +492,23 @@ take_largest(#b5_items{root = Root, size = Size} = Items) when Size =/= 0 ->
 take_largest(#b5_items{}) ->
     error_empty_items().
 
+%%
+
+-spec take_smallest(Items1) -> {Element, Items2} when
+    Items1 :: items(Element),
+    Items2 :: items(Element).
+
 take_smallest(#b5_items{root = Root, size = Size} = Items) when Size =/= 0 ->
     [Smallest | UpdatedRoot] = b5_items_node:take_smallest(Root),
     {Smallest, Items#b5_items{root = UpdatedRoot, size = Size - 1}};
 take_smallest(#b5_items{}) ->
     error_empty_items().
+
+%%
+
+-spec to_list(Items) -> List when
+    Items :: items(Element),
+    List :: [Element].
 
 to_list(#b5_items{root = Root}) ->
     b5_items_node:to_list(Root).

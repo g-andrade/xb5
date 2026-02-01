@@ -445,7 +445,7 @@ smallest(#b5_trees{size = Size, root = Root}) when Size =/= 0 ->
 smallest(#b5_trees{}) ->
     error_empty_tree().
 
-% TODO document
+-spec structural_stats(tree(_, _)) -> b5_structural_stats:t().
 structural_stats(#b5_trees{root = Root}) ->
     b5_trees_node:structural_stats(Root).
 
