@@ -12,6 +12,7 @@
     foldl/3,
     foldr/3,
     from_list/1,
+    from_orddict/1,
     get/2,
     insert/3,
     insert_with/3,
@@ -51,6 +52,7 @@
     foldl/3,
     foldr/3,
     from_list/1,
+    from_orddict/1,
     get/2,
     insert/3,
     insert_with/3,
@@ -205,6 +207,10 @@ from_list(List) ->
     Size = 0,
     Root = b5_trees_node:new(),
     from_list_recur(List, Size, Root).
+
+from_orddict(Orddict) ->
+    List = orddict:to_list(Orddict),
+    from_list(List).
 
 -if(?OTP_RELEASE >= 27).
 -doc """

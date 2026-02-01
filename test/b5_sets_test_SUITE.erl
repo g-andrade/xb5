@@ -117,9 +117,6 @@
     end)
 ).
 
-%% Reference data of most hardcoded tests was generated using this Google spreadsheet:
-%% * https://docs.google.com/spreadsheets/d/1U2_9zVV0ZoLMHz1n7Hw-qENwbl-uCe93BUrOzCI4zvI/edit?gid=1769164134#gid=1769164134
-
 %% ------------------------------------------------------------------
 %% CT Setup
 %% ------------------------------------------------------------------
