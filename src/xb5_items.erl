@@ -1,8 +1,8 @@
 -module(xb5_items).
 
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
+%% ------------------------------------------------------------------
+%% API Function Exports
+%% ------------------------------------------------------------------
 
 -export([
     add/2,
@@ -46,6 +46,15 @@
 ]).
 
 %% ------------------------------------------------------------------
+%% Linter Tweaks
+%% ------------------------------------------------------------------
+
+-elvis([
+    % Large URLs below require this
+    {elvis_text_style, line_length, #{limit => 120}}
+]).
+
+%% ------------------------------------------------------------------
 %% Type Definitions
 %% ------------------------------------------------------------------
 
@@ -75,6 +84,18 @@
     (inclusive
     | exclusive
     | nearest_rank).
+
+% Inclusive: as in Excel PERCENTILE.INC:
+% * https://support.microsoft.com/en-us/office/percentile-inc-function-680f9539-45eb-410b-9a5e-c1355e5fe2ed
+% * (Claude says this is Hyndman-Fan Type 7)
+%
+% Exclusive: as in Excel PERCENTILE.EXC:
+% * https://support.microsoft.com/en-us/office/percentile-exc-function-bbaa7204-e9e1-4010-85bf-c31dc5dce4ba
+% * (Claude says this is Hyndman-Fan Type 6)
+%
+% Nearest rank: as described in Wikipedia:
+% * https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+
 -export_type([percentile_bracket_method/0]).
 
 -type percentile_bracket(Element) ::
@@ -383,17 +404,6 @@ percentile_bracket(Percentile, #xb5_items{size = Size, root = Root}, Opts) when
             none;
         %
         _ ->
-            % Inclusive: as in Excel PERCENTILE.INC:
-            % * https://support.microsoft.com/en-us/office/percentile-inc-function-680f9539-45eb-410b-9a5e-c1355e5fe2ed
-            % * (Claude says this is Hyndman-Fan Type 7)
-            %
-            % Exclusive: as in Excel PERCENTILE.EXC:
-            % * https://support.microsoft.com/en-us/office/percentile-exc-function-bbaa7204-e9e1-4010-85bf-c31dc5dce4ba
-            % * (Claude says this is Hyndman-Fan Type 6)
-            %
-            % Nearest rank: as described in Wikipedia:
-            % * https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
-            %
             Method = proplists:get_value(method, Opts, inclusive),
             Pos = percentile_bracket_pos(Percentile, Size, Method),
             percentile_bracket_for_pos(Percentile, Pos, Size, Root, Method)
