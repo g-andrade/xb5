@@ -1,15 +1,12 @@
 % TODO document
 -module(xb5_items_node).
 
--include_lib("eunit/include/eunit.hrl").
-
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
 
 -export([
     add/2,
-    check_root/2,
     delete_att/2,
     filter/2,
     filtermap/2,
@@ -120,10 +117,6 @@
 
 -define(ITER_ELEM(Elem), [Elem]).
 -define(REV_ITER_TAG, reversed).
-
-%%%%%%%
-
--define(is_pos_integer(V), (is_integer((V)) andalso ((V) >= 1))).
 
 %% ------------------------------------------------------------------
 %% Macro Definitions: Boilerplate Helpers
@@ -271,47 +264,52 @@
 
 %%
 
--define(TAKEN(Elem, UpdatedNode), [Elem | UpdatedNode]).
+-define(TAKEN(Pair, UpdatedNode), [Pair | UpdatedNode]).
 
 %%
 
--define(CHECK_EVERY_NODE_BUILT, false).
+% defined(TEST)).
+-define(NODE_CHECK_ENABLED, false).
 
--if(?CHECK_EVERY_NODE_BUILT).
--define(CHECK_NODE_BUILD(Node), check_node_build(?LINE, Node, top)).
--define(CHECK_NODE_BUILD_RECUR(Node), check_node_build(?LINE, Node, recur)).
+-if(?NODE_CHECK_ENABLED).
+
+-include_lib("stdlib/include/assert.hrl").
+
+-define(CHECK_NODE(Node), check_node(?LINE, Node, top)).
+-define(CHECK_NODE_RECUR(Node), check_node(?LINE, Node, recur)).
+
 -else.
--define(CHECK_NODE_BUILD(Node), Node).
--define(CHECK_NODE_BUILD_RECUR(Node), Node).
+-define(CHECK_NODE(Node), Node).
+-define(CHECK_NODE_RECUR(Node), Node).
 -endif.
 
 %
 
 -define(new_INTERNAL4(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5),
-    ?CHECK_NODE_BUILD_RECUR(?INTERNAL4(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5))
+    ?CHECK_NODE_RECUR(?INTERNAL4(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5))
 ).
 
 -define(new_INTERNAL3(E1, E2, E3, O1, O2, O3, C1, C2, C3, C4),
-    ?CHECK_NODE_BUILD_RECUR(?INTERNAL3(E1, E2, E3, O1, O2, O3, C1, C2, C3, C4))
+    ?CHECK_NODE_RECUR(?INTERNAL3(E1, E2, E3, O1, O2, O3, C1, C2, C3, C4))
 ).
 
 -define(new_INTERNAL2(E1, E2, O1, O2, C1, C2, C3),
-    ?CHECK_NODE_BUILD_RECUR(?INTERNAL2(E1, E2, O1, O2, C1, C2, C3))
+    ?CHECK_NODE_RECUR(?INTERNAL2(E1, E2, O1, O2, C1, C2, C3))
 ).
 
--define(new_INTERNAL1(E1, O1, C1, C2), ?CHECK_NODE_BUILD(?INTERNAL1(E1, O1, C1, C2))).
+-define(new_INTERNAL1(E1, O1, C1, C2), ?CHECK_NODE(?INTERNAL1(E1, O1, C1, C2))).
 
 %
 
 -define(new_LEAF4(E1, E2, E3, E4),
-    ?CHECK_NODE_BUILD_RECUR(?LEAF4(E1, E2, E3, E4))
+    ?CHECK_NODE_RECUR(?LEAF4(E1, E2, E3, E4))
 ).
 
--define(new_LEAF3(E1, E2, E3), ?CHECK_NODE_BUILD_RECUR(?LEAF3(E1, E2, E3))).
+-define(new_LEAF3(E1, E2, E3), ?CHECK_NODE_RECUR(?LEAF3(E1, E2, E3))).
 
--define(new_LEAF2(E1, E2), ?CHECK_NODE_BUILD_RECUR(?LEAF2(E1, E2))).
+-define(new_LEAF2(E1, E2), ?CHECK_NODE_RECUR(?LEAF2(E1, E2))).
 
--define(new_LEAF1(E1), ?CHECK_NODE_BUILD(?LEAF1(E1))).
+-define(new_LEAF1(E1), ?CHECK_NODE(?LEAF1(E1))).
 
 %% ------------------------------------------------------------------
 %% Type Definitions
@@ -469,26 +467,6 @@ add(Elem, Root) ->
         %
         UpdatedRoot ->
             UpdatedRoot
-    end.
-
--spec check_root(term(), non_neg_integer()) -> ok | {error, term()}.
-check_root(Root, Size) ->
-    try check_node_recur(Root, _Depth = 0) of
-        [_Smallest, _Largest | KeyCount] ->
-            case KeyCount =:= Size of
-                true ->
-                    ok;
-                %
-                false ->
-                    {error,
-                        {mismatched_sizes, [
-                            {expected, Size},
-                            {but_counted, KeyCount}
-                        ]}}
-            end
-    catch
-        throw:Reason ->
-            {error, Reason}
     end.
 
 -spec delete_att(_, t(Elem)) -> none | t(Elem).
@@ -7188,7 +7166,7 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
         %
         ?MERGED_MATCH(MergedC1C2) ->
             % Can only happen at root - height is reduced
-            ?CHECK_NODE_BUILD(MergedC1C2)
+            ?CHECK_NODE(MergedC1C2)
     end.
 
 %%
@@ -7216,7 +7194,7 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
         %
         ?MERGED_MATCH(MergedC1C2) ->
             % Can only happen at root - height is reduced
-            ?CHECK_NODE_BUILD(MergedC1C2)
+            ?CHECK_NODE(MergedC1C2)
     end.
 
 %% ------------------------------------------------------------------
@@ -7582,339 +7560,170 @@ del_rebalance_leaf_from_left_sibling(
 %% Internal Function Definitions: Node Well-Formedness Checks
 %% ------------------------------------------------------------------
 
--if(?CHECK_EVERY_NODE_BUILT).
-check_node_build(Line, Node, DepthType) ->
-    try check_node_recur(Node, DepthType) of
-        [_Smallest, _Largest | _Size] ->
+-if(?NODE_CHECK_ENABLED).
+
+check_node(LineNumber, Node, Variant) ->
+    try do_check_node(LineNumber, Node, Variant) of
+        ok ->
             Node
     catch
-        throw:Reason ->
-            throw(
-                {bad_node_build, [
-                    {line, Line},
-                    {reason, Reason}
-                ]}
-            )
-    end.
--endif.
-
-check_node_recur(Node, DepthType) ->
-    try do_check_node(Node, DepthType) of
-        Result ->
-            Result
-    catch
-        throw:Reason ->
-            throw([{node, Node} | Reason])
+        error:{bad_node, _} = Reason:Stacktrace ->
+            erlang:raise(error, Reason, Stacktrace);
+        %
+        Class:Reason:Stacktrace ->
+            fail_node_check(LineNumber, unknown, Node, {Class, Reason, Stacktrace})
     end.
 
-do_check_node(Node, DepthType) ->
+do_check_node(LineNumber, Node, Variant) ->
+    Type = node_type(Node, Variant),
+    check_node_elements(LineNumber, Type, Node),
+    check_node_offsets(LineNumber, Type, Node),
+    ok.
+
+node_type(Node, top) ->
+    node_type(Node);
+node_type(Node, recur) ->
+    recur_node_type(Node).
+
+check_node_elements(LineNumber, Type, Node) ->
+    List = to_list(Node),
+    MissortedElements = check_node_elements(List),
+
+    case MissortedElements of
+        [] ->
+            Node;
+        %
+        [_ | _] ->
+            fail_node_check(LineNumber, Type, Node, {missorted_elements, MissortedElements})
+    end.
+
+node_type(Node) ->
     case Node of
-        ?INTERNAL4(
-            E1,
-            E2,
-            E3,
-            E4,
-            %
-            O1,
-            O2,
-            O3,
-            O4,
-            %
-            C1,
-            C2,
-            C3,
-            C4,
-            C5
-        ) ->
-            _ = (?is_pos_integer(O1) orelse throw([{bad_offset, 'O1', O1}])),
-            _ = (?is_pos_integer(O2) orelse throw([{bad_offset, 'O2', O2}])),
-            _ = (?is_pos_integer(O3) orelse throw([{bad_offset, 'O3', O3}])),
-            _ = (?is_pos_integer(O4) orelse throw([{bad_offset, 'O4', O4}])),
-
-            _ =
-                (E1 =< E2 orelse
-                    throw([{keys_out_of_order, 'E1', [E1, E2]}])),
-            _ =
-                (E2 =< E3 orelse
-                    throw([{keys_out_of_order, 'E2', [E2, E3]}])),
-            _ =
-                (E3 =< E4 orelse
-                    throw([{keys_out_of_order, 'E3', [E3, E4]}])),
-
-            Smallest = check_left_child_constraints(C1, O1, O1 - 1, E1),
-            check_mid_child_constraints('C2', C2, O2, O2 - O1 - 1, E1, E2),
-            check_mid_child_constraints('C3', C3, O3, O3 - O2 - 1, E2, E3),
-            check_mid_child_constraints('C4', C4, O4, O4 - O3 - 1, E3, E4),
-            [Largest | Size5] = check_right_child_constraints('C5', C5, E4),
-
-            Size = O4 + Size5,
-            [Smallest, Largest | Size];
+        ?INTERNAL1(_, _, _, _) ->
+            'INTERNAL1';
         %
+        ?LEAF1(_) ->
+            'LEAF1';
         %
-        %
-        ?INTERNAL3(
-            E1,
-            E2,
-            E3,
-            %
-            O1,
-            O2,
-            O3,
-            %
-            C1,
-            C2,
-            C3,
-            C4
-        ) ->
-            _ = (?is_pos_integer(O1) orelse throw([{bad_offset, 'O1', O1}])),
-            _ = (?is_pos_integer(O2) orelse throw([{bad_offset, 'O2', O2}])),
-            _ = (?is_pos_integer(O3) orelse throw([{bad_offset, 'O3', O3}])),
-
-            _ =
-                (E1 =< E2 orelse
-                    throw([{keys_out_of_order, 'E1', [E1, E2]}])),
-            _ =
-                (E2 =< E3 orelse
-                    throw([{keys_out_of_order, 'E2', [E2, E3]}])),
-
-            Smallest = check_left_child_constraints(C1, O1, O1 - 1, E1),
-            check_mid_child_constraints('C2', C2, O2, O2 - O1 - 1, E1, E2),
-            check_mid_child_constraints('C3', C3, O3, O3 - O2 - 1, E2, E3),
-            [Largest | Size4] = check_right_child_constraints('C4', C4, E3),
-
-            Size = O3 + Size4,
-            [Smallest, Largest | Size];
-        %
-        %
-        %
-        ?INTERNAL2(
-            E1,
-            E2,
-            %
-            O1,
-            O2,
-            %
-            C1,
-            C2,
-            C3
-        ) ->
-            _ = (?is_pos_integer(O1) orelse throw([{bad_offset, 'O1', O1}])),
-            _ = (?is_pos_integer(O2) orelse throw([{bad_offset, 'O2', O2}])),
-
-            _ =
-                (E1 =< E2 orelse
-                    throw([{keys_out_of_order, 'E1', [E1, E2]}])),
-
-            Smallest = check_left_child_constraints(C1, O1, O1 - 1, E1),
-            check_mid_child_constraints('C2', C2, O2, O2 - O1 - 1, E1, E2),
-            [Largest | Size3] = check_right_child_constraints('C3', C3, E2),
-
-            Size = O2 + Size3,
-            [Smallest, Largest | Size];
-        %
-        %
-        %
-        ?INTERNAL1(
-            E1,
-            %
-            O1,
-            %
-            C1,
-            C2
-        ) ->
-            _ = (DepthType =:= top orelse throw(['INTERNAL1 at non-root depth'])),
-
-            _ = (?is_pos_integer(O1) orelse throw([{bad_offset, 'O1', O1}])),
-
-            Smallest = check_left_child_constraints(C1, O1, O1 - 1, E1),
-            [Largest | Size2] = check_right_child_constraints('C2', C2, E1),
-
-            Size = O1 + Size2,
-            [Smallest, Largest | Size];
-        %
-        %
-        %
-        ?LEAF4(E1, E2, E3, E4) ->
-            _ =
-                (E1 =< E2 orelse
-                    throw([{keys_out_of_order, 'E1', [E1, E2]}])),
-            _ =
-                (E2 =< E3 orelse
-                    throw([{keys_out_of_order, 'E2', [E2, E3]}])),
-            _ =
-                (E3 =< E4 orelse
-                    throw([{keys_out_of_order, 'E3', [E3, E4]}])),
-
-            [E1, E4 | 4];
-        %
-        %
-        %
-        ?LEAF3(E1, E2, E3) ->
-            _ =
-                (E1 =< E2 orelse
-                    throw([{keys_out_of_order, 'E1', [E1, E2]}])),
-            _ =
-                (E2 =< E3 orelse
-                    throw([{keys_out_of_order, 'E2', [E2, E3]}])),
-
-            [E1, E3 | 3];
-        %
-        %
-        %
-        ?LEAF2(E1, E2) ->
-            _ =
-                (E1 =< E2 orelse
-                    throw([{keys_out_of_order, 'E1', [E1, E2]}])),
-
-            [E1, E2 | 2];
-        %
-        %
-        %
-        ?LEAF1(E1) ->
-            _ = (DepthType =:= top orelse throw(['LEAF1 at non-root depth'])),
-
-            [E1, E1 | 1];
-        %
-        %
-        %
-        ?LEAF0 ->
-            _ = (DepthType =:= top orelse throw(['LEAF0 at non-root depth'])),
-            [nil, nil | 0];
-        %
-        %
-        %
-        _UnknownNode ->
-            throw(unknown_node_layout)
+        _ ->
+            recur_node_type(Node)
     end.
 
-check_left_child_constraints(Child, Offset, ExpectedSize, Max) ->
-    try check_node_recur(Child, recur) of
-        [Smallest, Largest | Size] ->
-            _ =
-                (Size =/= ExpectedSize andalso
-                    throw([{bad_offset, 'C1', Offset, {expected_size, ExpectedSize}}])),
-
-            _ =
-                (Largest =< Max orelse
-                    throw([
-                        {'C1', keys_out_of_order, {largest_in_child, Largest}, {max_in_parent, Max}}
-                    ])),
-
-            Smallest
-    catch
-        throw:Reason ->
-            throw([{child, 'C1'} | Reason])
+recur_node_type(Node) ->
+    case Node of
+        ?INTERNAL2(_, _, _, _, _, _, _) ->
+            'INTERNAL2';
+        %
+        ?INTERNAL3(_, _, _, _, _, _, _, _, _, _) ->
+            'INTERNAL3';
+        %
+        ?INTERNAL4(_, _, _, _, _, _, _, _, _, _, _, _, _) ->
+            'INTERNAL4';
+        %
+        ?LEAF2(_, _) ->
+            'LEAF2';
+        %
+        ?LEAF3(_, _, _) ->
+            'LEAF3';
+        %
+        ?LEAF4(_, _, _, _) ->
+            'LEAF4'
     end.
 
-check_mid_child_constraints(ChildId, Child, Offset, ExpectedSize, Min, Max) ->
-    try check_node_recur(Child, recur) of
-        [Smallest, Largest | Size] ->
-            _ =
-                (Size =/= ExpectedSize andalso
-                    throw([
-                        {bad_offset, ChildId, Offset, {expected_size, ExpectedSize},
-                            {but_counted, Size}}
-                    ])),
-
-            _ =
-                (Smallest >= Min orelse
-                    throw([
-                        {ChildId, keys_out_of_order, {smallest, Smallest}, {min_in_parent, Min}}
-                    ])),
-
-            _ =
-                (Largest =< Max orelse
-                    throw([
-                        {ChildId, keys_out_of_order, {largest, Largest}, {max_in_parent, Max}}
-                    ])),
-
-            Smallest
-    catch
-        throw:Reason ->
-            throw([{child, 'C1'} | Reason])
-    end.
-
-check_right_child_constraints(ChildId, Child, Min) ->
-    try check_node_recur(Child, recur) of
-        [Smallest, Largest | Size] ->
-            _ =
-                (Smallest >= Min orelse
-                    throw([
-                        {ChildId, keys_out_of_order, {smallest, Smallest}, {min_in_parent, Min}}
-                    ])),
-
-            [Largest | Size]
-    catch
-        throw:Reason ->
-            throw([{child, ChildId} | Reason])
-    end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: Unit Tests
-%% ------------------------------------------------------------------
-
--ifdef(TEST).
-
-bad_leaf2_test() ->
-    Size = 2,
-    Node = ?LEAF2(20, 10),
-
-    ?assertEqual(
-       {error, [{node, Node}, {keys_out_of_order, 'E1', [20, 10]}]},
-       check_root(Node, Size)
+fail_node_check(LineNumber, Type, Node, Reason) ->
+    error(
+        {bad_node, [
+            {line, LineNumber},
+            {type, Type},
+            {reason, Reason},
+            {node, Node}
+        ]}
     ).
 
-bad_leaf3_test() ->
-    Size = 3,
+check_node_elements([H | T]) ->
+    check_node_elements(H, T);
+check_node_elements([]) ->
+    [].
 
-    Node1 = ?LEAF3(20, 10, 15),
+check_node_elements(E1, [E2 | Next]) ->
+    case E1 > E2 of
+        false ->
+            check_node_elements(E2, Next);
+        %
+        true ->
+            [{E1, E2} | check_node_elements(E2, Next)]
+    end;
+check_node_elements(_, []) ->
+    [].
+check_node_offsets(LineNumber, Type, Node) ->
+    try check_node_offsets_recur(Node) of
+        _ ->
+            Node
+    catch
+        error:{assertEqual, Details} ->
+            fail_node_check(LineNumber, Type, Node, {bad_offsets, Details})
+    end.
 
-    ?assertEqual(
-       {error, [{node, Node1}, {keys_out_of_order, 'E1', [20, 10]}]},
-       check_root(Node1, Size)
-    ),
+check_node_offsets_recur(Node) ->
+    case Node of
+        ?INTERNAL1(_, O1, C1, C2) ->
+            S1 = check_node_offsets_recur(C1),
+            ?assertEqual(S1 + 1, O1),
 
-    %%%%%%
+            S2 = check_node_offsets_recur(C2),
+            S1 + S2 + 1;
+        %
+        ?INTERNAL2(_, _, O1, O2, C1, C2, C3) ->
+            S1 = check_node_offsets_recur(C1),
+            ?assertEqual(S1 + 1, O1),
 
-    Node2 = ?LEAF3(10, 25, 15),
+            S2 = check_node_offsets_recur(C2),
+            ?assertEqual(S1 + S2 + 2, O2),
 
-    ?assertEqual(
-       {error, [{node, Node2}, {keys_out_of_order, 'E2', [25, 15]}]},
-       check_root(Node2, Size)
-    ).
+            S3 = check_node_offsets_recur(C3),
+            S1 + S2 + S3 + 2;
+        %
+        ?INTERNAL3(_, _, _, O1, O2, O3, C1, C2, C3, C4) ->
+            S1 = check_node_offsets_recur(C1),
+            ?assertEqual(S1 + 1, O1),
 
-bad_leaf4_test() ->
-    Size = 4,
+            S2 = check_node_offsets_recur(C2),
+            ?assertEqual(S1 + S2 + 2, O2),
 
-    Node1 = ?LEAF4(21, 10, 15, 17),
+            S3 = check_node_offsets_recur(C3),
+            ?assertEqual(S1 + S2 + S3 + 3, O3),
 
-    ?assertEqual(
-       {error, [{node, Node1}, {keys_out_of_order, 'E1', [21, 10]}]},
-       check_root(Node1, Size)
-    ),
+            S4 = check_node_offsets_recur(C4),
+            S1 + S2 + S3 + S4 + 3;
+        %
+        ?INTERNAL4(_, _, _, _, O1, O2, O3, O4, C1, C2, C3, C4, C5) ->
+            S1 = check_node_offsets_recur(C1),
+            ?assertEqual(S1 + 1, O1),
 
-    %%%%%%
+            S2 = check_node_offsets_recur(C2),
+            ?assertEqual(S1 + S2 + 2, O2),
 
-    Node2 = ?LEAF4(10, 25, 20, 30),
+            S3 = check_node_offsets_recur(C3),
+            ?assertEqual(S1 + S2 + S3 + 3, O3),
 
-    ?assertEqual(
-       {error, [{node, Node2}, {keys_out_of_order, 'E2', [25, 20]}]},
-       check_root(Node2, Size)
-    ),
+            S4 = check_node_offsets_recur(C4),
+            ?assertEqual(S1 + S2 + S3 + S4 + 4, O4),
 
-    %%%%%%
+            S5 = check_node_offsets_recur(C5),
+            S1 + S2 + S3 + S4 + S5 + 4;
+        %
+        ?LEAF1(_) ->
+            1;
+        %
+        ?LEAF2(_, _) ->
+            2;
+        %
+        ?LEAF3(_, _, _) ->
+            3;
+        %
+        ?LEAF4(_, _, _, _) ->
+            4
+    end.
 
-    Node3 = ?LEAF4(10, 25, 31, 30),
-
-    ?assertEqual(
-       {error, [{node, Node3}, {keys_out_of_order, 'E3', [31, 30]}]},
-       check_root(Node3, Size)
-    ).
-
-%%%%%%%%%
-
-bad_internal1_test() ->
-
-
-
+% -if(?NODE_CHECK_ENABLED).
 -endif.
