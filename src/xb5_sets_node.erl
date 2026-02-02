@@ -264,7 +264,7 @@
 
 %%
 
--define(TAKEN(Pair, UpdatedNode), [Pair | UpdatedNode]).
+-define(TAKEN(Elem, UpdatedNode), [Elem | UpdatedNode]).
 
 %%
 

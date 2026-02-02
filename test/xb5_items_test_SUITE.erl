@@ -59,7 +59,8 @@
     test_filtermap/1,
     test_fold/1,
     test_map/1,
-    test_merge/1
+    test_merge/1,
+    test_rewrap/1
 ]).
 
 %% Test exports - structure
@@ -195,7 +196,8 @@ groups() ->
             test_filtermap,
             test_fold,
             test_map,
-            test_merge
+            test_merge,
+            test_rewrap
         ]},
         {structure, [parallel], [
             test_structure_sequentially_built,
@@ -232,7 +234,7 @@ test_construction(_Config) ->
     ).
 
 test_lookup(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             foreach_existing_element(
                 fun(Element) ->
@@ -255,7 +257,7 @@ test_lookup(_Config) ->
     ).
 
 test_add(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             foreach_existing_element(
                 fun(Element) ->
@@ -288,7 +290,7 @@ test_add(_Config) ->
     ).
 
 test_insert(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             foreach_existing_element(
                 fun(Element) ->
@@ -316,7 +318,7 @@ test_insert(_Config) ->
     ).
 
 test_delete_sequential(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             DeleteKeys = lists:map(fun randomly_switch_number_type/1, RefElements),
 
@@ -348,7 +350,7 @@ test_delete_sequential(_Config) ->
     ).
 
 test_delete_shuffled(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             DeleteKeys = lists:map(fun randomly_switch_number_type/1, list_shuffle(RefElements)),
 
@@ -384,7 +386,7 @@ test_delete_shuffled(_Config) ->
 %% ------------------------------------------------------------------
 
 test_smallest(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun
             (0, _RefElements, Col) ->
                 ?assertError(empty_items, xb5_items:smallest(Col));
@@ -395,7 +397,7 @@ test_smallest(_Config) ->
     ).
 
 test_largest(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun
             (0, _RefElements, Col) ->
                 ?assertError(empty_items, xb5_items:largest(Col));
@@ -406,28 +408,28 @@ test_largest(_Config) ->
     ).
 
 test_smaller(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_smaller(RefElements, Col)
         end
     ).
 
 test_larger(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_larger(RefElements, Col)
         end
     ).
 
 test_take_smallest(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_take_smallest(RefElements, Col)
         end
     ).
 
 test_take_largest(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_take_largest(lists:reverse(RefElements), Col)
         end
@@ -438,7 +440,7 @@ test_take_largest(_Config) ->
 %% ------------------------------------------------------------------
 
 test_iterator(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             Iter = new_iterator(Col),
             ?assertListsCanonEqual(RefElements, iterate(Iter))
@@ -446,7 +448,7 @@ test_iterator(_Config) ->
     ).
 
 test_iterator_reversed(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             Iter = xb5_items:iterator(Col, reversed),
             ?assertListsCanonEqual(lists:reverse(RefElements), iterate(Iter))
@@ -454,14 +456,14 @@ test_iterator_reversed(_Config) ->
     ).
 
 test_iterator_from(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_iterator_from(RefElements, Col)
         end
     ).
 
 test_iterator_from_reversed(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_iterator_from_reversed(RefElements, Col)
         end
@@ -472,7 +474,7 @@ test_iterator_from_reversed(_Config) ->
 %% ------------------------------------------------------------------
 
 test_nth(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             test_invalid_nth(Size, Col),
 
@@ -481,14 +483,14 @@ test_nth(_Config) ->
     ).
 
 test_rank_smaller(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_rank_smaller(RefElements, Col)
         end
     ).
 
 test_rank_larger(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             run_rank_larger(Size, RefElements, Col)
         end
@@ -497,7 +499,7 @@ test_rank_larger(_Config) ->
 %%%%%%%%
 
 test_percentile_inclusive(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             test_invalid_percentile_inclusive(Col),
             test_valid_percentile_inclusive(Size, RefElements, Col)
@@ -506,7 +508,7 @@ test_percentile_inclusive(_Config) ->
 
     %%%%%%%%%%
 
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             test_invalid_percentile_inclusive(Col),
             test_valid_percentile_inclusive(Size, RefElements, Col)
@@ -517,7 +519,7 @@ test_percentile_inclusive(_Config) ->
 %%%%%%%%
 
 test_percentile_exclusive(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             test_invalid_percentile_exclusive(Col),
             test_valid_percentile_exclusive(Size, RefElements, Col)
@@ -526,7 +528,7 @@ test_percentile_exclusive(_Config) ->
 
     %%%%%%%%%
 
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             test_invalid_percentile_exclusive(Col),
             test_valid_percentile_exclusive(Size, RefElements, Col)
@@ -537,7 +539,7 @@ test_percentile_exclusive(_Config) ->
 %%%%%%%%%%%%
 
 test_percentile_nearest_rank(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             test_invalid_percentile_nearest_rank(Col),
             test_valid_percentile_nearest_rank(Size, RefElements, Col)
@@ -546,7 +548,7 @@ test_percentile_nearest_rank(_Config) ->
 
     %%%%%%%%%%%%
 
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             test_invalid_percentile_nearest_rank(Col),
 
@@ -900,7 +902,7 @@ test_percentile_hardcoded4(_Config) ->
 %%%%%%%%%%%%%%%%
 
 test_percentile_rank(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_percentile_rank(RefElements, Col)
         end
@@ -984,37 +986,51 @@ test_percentile_rank_hardcoded(_Config) ->
 %% ------------------------------------------------------------------
 
 test_filter(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             run_filter(Size, RefElements, Col)
         end
     ).
 
 test_filtermap(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             run_filtermap(Size, RefElements, Col)
         end
     ).
 
 test_fold(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_fold(RefElements, Col)
         end
     ).
 
 test_map(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(_Size, RefElements, Col) ->
             run_map(RefElements, Col)
         end
     ).
 
 test_merge(_Config) ->
-    foreach_test_set(
+    foreach_test_collection(
         fun(Size, RefElements, Col) ->
             run_merge(Size, RefElements, Col)
+        end
+    ).
+
+test_rewrap(_Config) ->
+    ?assertMatch({error, _}, xb5_items:unwrap(xb5_sets:new())),
+    ?assertMatch({error, _}, xb5_items:unwrap(xb5_trees:new())),
+    ?assertMatch({error, _}, xb5_items:unwrap({xb5_items, -1, xb5_items_node:new()})),
+    ?assertMatch({error, _}, xb5_items:unwrap({xb5_items, 2, xb5_items_node:new()})),
+    ?assertMatch({error, _}, xb5_items:unwrap({xb5_items, 2, make_ref()})),
+
+    foreach_test_collection(
+        fun(_Size, _RefElements, Col) ->
+            {ok, Unwrapped} = xb5_items:unwrap(Col),
+            ?assertEqual(Col, xb5_items:wrap(Unwrapped))
         end
     ).
 
@@ -1214,10 +1230,10 @@ test_structure_build_adversarial_deletion(_Config) ->
 %% Helper Functions: shared
 %% ------------------------------------------------------------------
 
-foreach_test_set(Fun) ->
-    foreach_test_set(Fun, []).
+foreach_test_collection(Fun) ->
+    foreach_test_collection(Fun, []).
 
-foreach_test_set(Fun, Opts) ->
+foreach_test_collection(Fun, Opts) ->
     foreach_tested_size(
         fun(Size, RefElements) ->
             Col = xb5_items:from_list(maybe_shuffle_elements_for_new_collection(RefElements)),

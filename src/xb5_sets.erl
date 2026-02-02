@@ -517,37 +517,34 @@ union(#xb5_set{root = Root1, size = Size1}, #xb5_set{root = Root2, size = Size2}
 
 %%
 
--spec unwrap(Set) -> Unwrapped when
-    Set :: set(Element),
-    Unwrapped :: unwrapped_set(Element).
+-spec unwrap(Term) -> {ok, Unwrapped} | {error, Reason} when
+    Term :: set(Element) | term(),
+    Unwrapped :: unwrapped_set(Element),
+    Reason :: term().
 
-unwrap(#xb5_set{size = Size, root = Root}) ->
-    #{size => Size, root => Root}.
+unwrap(#xb5_set{size = Size, root = Root} = Term) when is_integer(Size), Size >= 0 ->
+    try xb5_sets_node:structural_stats(Root) of
+        Stats ->
+            case lists:keyfind(total_keys, 1, Stats) of
+                {_, TotalKeys} when TotalKeys =:= Size ->
+                    {ok, #{size => Size, root => Root}};
+                %
+                {_, _} ->
+                    {error, xb5_utils:dialyzer_opaque_term({not_an_xb5_set, Term})}
+            end
+    catch
+        Class:Reason when Class =/= error; Reason =/= undef ->
+            {error, xb5_utils:dialyzer_opaque_term({not_an_xb5_set, Term})}
+    end;
+unwrap(Term) ->
+    {error, xb5_utils:dialyzer_opaque_term({not_an_xb5_set, Term})}.
 
 %%
 
--spec wrap
-    (unwrapped_set(Element)) -> set(Element) | error;
-    (_) -> error.
+-spec wrap(unwrapped_set(Element)) -> set(Element).
 
-wrap(#{root := Root, size := Size}) when is_integer(Size) andalso Size >= 0 ->
-    try xb5_sets_node:structural_stats(Root) of
-        Stats ->
-            {_, TotalKeys} = lists:keyfind(total_keys, 1, Stats),
-
-            case TotalKeys =:= Size of
-                true ->
-                    {ok, #xb5_set{root = Root, size = Size}};
-                %
-                false ->
-                    error
-            end
-    catch
-        _Class:_Reason ->
-            error
-    end;
-wrap(_) ->
-    ok.
+wrap(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
+    #xb5_set{root = Root, size = Size}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions

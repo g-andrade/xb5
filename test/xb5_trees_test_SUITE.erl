@@ -50,7 +50,8 @@
 -export([
     test_foldl/1,
     test_foldr/1,
-    test_map/1
+    test_map/1,
+    test_rewrap/1
 ]).
 
 %% Test exports - structure
@@ -154,7 +155,8 @@ groups() ->
         {additional_functions, [parallel], [
             test_foldl,
             test_foldr,
-            test_map
+            test_map,
+            test_rewrap
         ]},
         {structure, [parallel], [
             test_structure_sequentially_built,
@@ -704,6 +706,20 @@ test_map(_Config) ->
     foreach_test_tree(
         fun(_Size, RefKvs, Tree) ->
             run_map(RefKvs, Tree)
+        end
+    ).
+
+test_rewrap(_Config) ->
+    ?assertMatch({error, _}, xb5_trees:unwrap(xb5_sets:new())),
+    ?assertMatch({error, _}, xb5_trees:unwrap(xb5_items:new())),
+    ?assertMatch({error, _}, xb5_trees:unwrap({xb5_tree, -1, xb5_trees_node:new()})),
+    ?assertMatch({error, _}, xb5_trees:unwrap({xb5_tree, 2, xb5_trees_node:new()})),
+    ?assertMatch({error, _}, xb5_trees:unwrap({xb5_tree, 2, make_ref()})),
+
+    foreach_test_tree(
+        fun(_Size, _RefElements, Col) ->
+            {ok, Unwrapped} = xb5_trees:unwrap(Col),
+            ?assertEqual(Col, xb5_trees:wrap(Unwrapped))
         end
     ).
 

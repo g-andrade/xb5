@@ -56,7 +56,8 @@
     test_filtermap/1,
     test_fold/1,
     test_is_set/1,
-    test_map/1
+    test_map/1,
+    test_rewrap/1
 ]).
 
 %% Test exports - structure
@@ -164,7 +165,8 @@ groups() ->
             test_filtermap,
             test_fold,
             test_is_set,
-            test_map
+            test_map,
+            test_rewrap
         ]},
         {structure, [parallel], [
             test_structure_sequentially_built,
@@ -540,6 +542,20 @@ test_map(_Config) ->
     foreach_test_set(
         fun(_Size, RefElements, Set) ->
             run_map(RefElements, Set)
+        end
+    ).
+
+test_rewrap(_Config) ->
+    ?assertMatch({error, _}, xb5_sets:unwrap(xb5_items:new())),
+    ?assertMatch({error, _}, xb5_sets:unwrap(xb5_trees:new())),
+    ?assertMatch({error, _}, xb5_sets:unwrap({xb5_set, -1, xb5_sets_node:new()})),
+    ?assertMatch({error, _}, xb5_sets:unwrap({xb5_set, 2, xb5_sets_node:new()})),
+    ?assertMatch({error, _}, xb5_sets:unwrap({xb5_set, 2, make_ref()})),
+
+    foreach_test_set(
+        fun(_Size, _RefElements, Col) ->
+            {ok, Unwrapped} = xb5_sets:unwrap(Col),
+            ?assertEqual(Col, xb5_sets:wrap(Unwrapped))
         end
     ).
 
