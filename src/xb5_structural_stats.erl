@@ -57,6 +57,8 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-dialyzer({no_underspecs, new/0}).
+
 -spec new() -> acc().
 new() ->
     #{

@@ -530,6 +530,8 @@ get(Key, ?LEAF0) ->
 get(Key, Root) ->
     get_recur(Key, Root).
 
+-dialyzer({no_underspecs, insert_att/4}).
+
 -spec insert_att
     (Key, eager, Value, t(Key, Value)) -> none | t(Key, Value);
     (Key, lazy, fun(() -> Value), t(Key, Value)) -> none | t(Key, Value).
@@ -632,6 +634,7 @@ map(Fun, Root) ->
 new() ->
     ?LEAF0.
 
+-spec next(iter(Key, Value)) -> {Key, Value, iter(Key, Value)} | none.
 next([Head | Tail]) ->
     next(Head, Tail);
 next([]) ->
@@ -719,6 +722,8 @@ to_list(?LEAF0) ->
     [];
 to_list(Root) ->
     to_list_recur(Root, []).
+
+-dialyzer({no_underspecs, update_att/4}).
 
 -spec update_att
     (Key, eager, Value, t(Key, _)) -> none | t(Key, Value);
