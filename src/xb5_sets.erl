@@ -597,21 +597,3 @@ union_recur(Root1, Size1, [#xb5_set{root = Root2, size = Size2} | Next]) ->
     union_recur(NewRoot, NewSize, Next);
 union_recur(Root, Size, []) ->
     #xb5_set{size = Size, root = Root}.
-
-%%
-
--spec from_constituent_parts(#{
-    root := xb5_sets_node:t(Element), size := non_neg_integer()
-}) -> set(Element).
-from_constituent_parts(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
-    #xb5_set{root = Root, size = Size}.
-
-%%
-
--spec to_constituent_parts
-    (set(Element)) -> {ok, #{root := xb5_sets_node:t(Element), size := non_neg_integer()}};
-    (term()) -> error.
-to_constituent_parts(#xb5_set{root = Root, size = Size}) when is_integer(Size), Size >= 0 ->
-    {ok, #{root => Root, size => Size}};
-to_constituent_parts(_) ->
-    error.
