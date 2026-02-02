@@ -544,28 +544,18 @@ unwrap(#xb5_items{size = Size, root = Root}) ->
 
 %%
 
--spec wrap
-    (unwrapped_items(Element)) -> items(Element) | error;
-    (_) -> error.
+-spec wrap(_) -> {ok, items()} | {error, {validation_failed, term()}}.
 
 wrap(#{root := Root, size := Size}) when is_integer(Size) andalso Size >= 0 ->
-    try xb5_items_node:structural_stats(Root) of
-        Stats ->
-            {_, TotalKeys} = lists:keyfind(total_keys, 1, Stats),
-
-            case TotalKeys =:= Size of
-                true ->
-                    {ok, #xb5_items{root = Root, size = Size}};
-                %
-                false ->
-                    error
-            end
-    catch
-        _Class:_Reason ->
-            error
+    case xb5_items_node:check_root(Root, Size) of
+        ok ->
+            {ok, #xb5_items{root = Root, size = Size}};
+        %
+        {error, Reason} ->
+            {error, {validation_failed, Reason}}
     end;
 wrap(_) ->
-    ok.
+    {error, unknown_format}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
