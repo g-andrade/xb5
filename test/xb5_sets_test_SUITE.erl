@@ -518,7 +518,7 @@ test_fold(_Config) ->
 test_is_set(_Config) ->
     ?assertEqual(false, xb5_sets:is_set(foobar)),
     ?assertEqual(false, xb5_sets:is_set(xb5_trees:new())),
-    ?assertEqual(false, xb5_sets:is_set(xb5_items:new())),
+    ?assertEqual(false, xb5_sets:is_set(xb5_bag:new())),
 
     foreach_test_set(
         fun(_Size, _RefElements, Set) ->
@@ -546,7 +546,7 @@ test_map(_Config) ->
     ).
 
 test_rewrap(_Config) ->
-    ?assertMatch({error, _}, xb5_sets:unwrap(xb5_items:new())),
+    ?assertMatch({error, _}, xb5_sets:unwrap(xb5_bag:new())),
     ?assertMatch({error, _}, xb5_sets:unwrap(xb5_trees:new())),
     ?assertMatch({error, _}, xb5_sets:unwrap({xb5_set, -1, xb5_sets_node:new()})),
     ?assertMatch({error, _}, xb5_sets:unwrap({xb5_set, 2, xb5_sets_node:new()})),

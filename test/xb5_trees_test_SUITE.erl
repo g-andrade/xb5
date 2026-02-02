@@ -711,7 +711,7 @@ test_map(_Config) ->
 
 test_rewrap(_Config) ->
     ?assertMatch({error, _}, xb5_trees:unwrap(xb5_sets:new())),
-    ?assertMatch({error, _}, xb5_trees:unwrap(xb5_items:new())),
+    ?assertMatch({error, _}, xb5_trees:unwrap(xb5_bag:new())),
     ?assertMatch({error, _}, xb5_trees:unwrap({xb5_tree, -1, xb5_trees_node:new()})),
     ?assertMatch({error, _}, xb5_trees:unwrap({xb5_tree, 2, xb5_trees_node:new()})),
     ?assertMatch({error, _}, xb5_trees:unwrap({xb5_tree, 2, make_ref()})),

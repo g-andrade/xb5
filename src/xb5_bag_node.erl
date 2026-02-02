@@ -1,5 +1,5 @@
 % TODO document
--module(xb5_items_node).
+-module(xb5_bag_node).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
