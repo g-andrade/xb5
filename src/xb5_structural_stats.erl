@@ -1,4 +1,3 @@
-%% @private
 -module(xb5_structural_stats).
 
 %% ------------------------------------------------------------------
@@ -60,6 +59,7 @@
 -dialyzer({no_underspecs, new/0}).
 
 -spec new() -> acc().
+%% @private
 new() ->
     #{
         node_counters => #{
@@ -76,6 +76,7 @@ new() ->
     }.
 
 -spec set_height(pos_integer(), acc()) -> acc().
+%% @private
 set_height(Height, #{height := RecordHeight} = Acc) ->
     case RecordHeight of
         _ when RecordHeight < Height ->
@@ -86,11 +87,13 @@ set_height(Height, #{height := RecordHeight} = Acc) ->
     end.
 
 -spec inc_count(node_type(), acc()) -> acc().
+%% @private
 inc_count(NodeType, #{node_counters := NodeCounters} = Acc) ->
     Count = map_get(NodeType, NodeCounters),
     Acc#{node_counters := NodeCounters#{NodeType := Count + 1}}.
 
 -spec return(acc()) -> t().
+%% @private
 return(#{node_counters := NodeCounters, height := Height}) ->
     NodeCounts = node_counts(NodeCounters),
     NodePercentages = node_percentages(NodeCounts),
