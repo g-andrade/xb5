@@ -530,8 +530,6 @@ get(Key, ?LEAF0) ->
 get(Key, Root) ->
     get_recur(Key, Root).
 
--dialyzer({no_underspecs, insert_att/4}).
-
 -spec insert_att
     (Key, eager, Value, t(Key, Value)) -> none | t(Key, Value);
     (Key, lazy, fun(() -> Value), t(Key, Value)) -> none | t(Key, Value).
@@ -541,7 +539,7 @@ insert_att(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
     insert_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
 insert_att(Key, ValueEval, ValueWrap, ?LEAF0) ->
     Value = eval_insert_value(ValueEval, ValueWrap),
-    ?new_LEAF1(Key, Value);
+    xb5_utils:dialyzer_opaque_term(?new_LEAF1(Key, Value));
 insert_att(Key, ValueEval, ValueWrap, Root) ->
     case insert_att_recur(Key, ValueEval, ValueWrap, Root) of
         ?SPLIT_MATCH(Pos, Args) ->
@@ -723,8 +721,6 @@ to_list(?LEAF0) ->
 to_list(Root) ->
     to_list_recur(Root, []).
 
--dialyzer({no_underspecs, update_att/4}).
-
 -spec update_att
     (Key, eager, Value, t(Key, _)) -> none | t(Key, Value);
     (Key, lazy, fun((PrevValue) -> Value), t(Key, PrevValue)) -> none | t(Key, Value).
@@ -733,7 +729,7 @@ update_att(Key, ValueEval, ValueWrap, ?INTERNAL1_MATCH_ALL) ->
 update_att(Key, ValueEval, ValueWrap, ?LEAF1_MATCH_ALL) ->
     update_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
 update_att(_Key, _ValueEval, _ValueWrap, ?LEAF0) ->
-    none;
+    xb5_utils:dialyzer_opaque_term(none);
 update_att(Key, ValueEval, ValueWrap, Root) ->
     update_att_recur(Key, ValueEval, ValueWrap, Root).
 
