@@ -8,6 +8,7 @@
     add/2,
     delete/2,
     delete_any/2,
+    enter/2,
     filter/2,
     filtermap/2,
     fold/3,
@@ -50,6 +51,7 @@
     add/2,
     delete/2,
     delete_any/2,
+    enter/2,
     filter/2,
     filtermap/2,
     fold/3,
@@ -204,6 +206,22 @@ delete_any(Element, #xb5_bag{size = Size, root = Root} = Items) ->
         %
         UpdatedRoot ->
             Items#xb5_bag{size = Size - 1, root = UpdatedRoot}
+    end.
+
+%%
+
+-spec enter(Element, Items1) -> Items2 when
+    Element :: term(),
+    Items1 :: items(Element),
+    Items2 :: items(Element).
+
+enter(Element, #xb5_bag{size = Size, root = Root} = Items) ->
+    case xb5_bag_node:insert_att(Element, Root) of
+        none ->
+            Items;
+        %
+        UpdatedRoot ->
+            Items#xb5_bag{size = Size + 1, root = UpdatedRoot}
     end.
 
 %%

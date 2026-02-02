@@ -14,6 +14,7 @@
     test_construction/1,
     test_lookup/1,
     test_add/1,
+    test_enter/1,
     test_insert/1,
     test_delete_sequential/1,
     test_delete_shuffled/1
@@ -160,6 +161,7 @@ groups() ->
             test_construction,
             test_lookup,
             test_add,
+            test_enter,
             test_insert,
             test_delete_sequential,
             test_delete_shuffled
@@ -279,6 +281,36 @@ test_add(_Config) ->
             foreach_non_existent_element(
                 fun(Element) ->
                     Col2 = xb5_bag:add(Element, Col),
+                    ?assertEqual(Size + 1, xb5_bag:size(Col2)),
+                    ?assertListsCanonEqual(
+                        add_to_sorted_list(Element, RefElements),
+                        xb5_bag:to_list(Col2)
+                    )
+                end,
+                RefElements,
+                50
+            )
+        end
+    ).
+
+test_enter(_Config) ->
+    foreach_test_collection(
+        fun(Size, RefElements, Col) ->
+            foreach_existing_element(
+                fun(Element) ->
+                    Col2 = xb5_bag:enter(Element, Col),
+                    ?assertEqual(Size, xb5_bag:size(Col2)),
+                    ?assertEqual(Col2, Col)
+                end,
+                RefElements,
+                min(50, Size)
+            ),
+
+            %%%%%%%%%%%%%%%%%%
+
+            foreach_non_existent_element(
+                fun(Element) ->
+                    Col2 = xb5_bag:enter(Element, Col),
                     ?assertEqual(Size + 1, xb5_bag:size(Col2)),
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
