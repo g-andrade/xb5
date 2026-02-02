@@ -74,6 +74,7 @@
     size/1,
     smaller/2,
     smallest/1,
+    structural_stats/1,
     take/2,
     take_any/2,
     take_largest/1,

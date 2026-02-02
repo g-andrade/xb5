@@ -56,6 +56,54 @@
     wrap/1
 ]).
 
+-ignore_xref([
+    add/2,
+    add_element/2,
+    % balance/1,
+    del_element/2,
+    delete/2,
+    delete_any/2,
+    difference/2,
+    empty/0,
+    filter/2,
+    filtermap/2,
+    fold/3,
+    from_list/1,
+    from_ordset/1,
+    insert/2,
+    intersection/1,
+    intersection/2,
+    is_disjoint/2,
+    is_element/2,
+    is_empty/1,
+    is_equal/2,
+    is_member/2,
+    is_set/1,
+    is_subset/2,
+    iterator/1,
+    iterator/2,
+    iterator_from/2,
+    iterator_from/3,
+    larger/2,
+    largest/1,
+    map/2,
+    new/0,
+    next/1,
+    singleton/1,
+    size/1,
+    smaller/2,
+    smallest/1,
+    structural_stats/1,
+    subtract/2,
+    take_largest/1,
+    take_smallest/1,
+    to_list/1,
+    union/1,
+    union/2,
+    unwrap/1,
+    wrap/1
+]).
+
 %% ------------------------------------------------------------------
 %% Type Definitions
 %% ------------------------------------------------------------------

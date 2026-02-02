@@ -9,8 +9,7 @@
     new/0,
     set_height/2,
     inc_count/2,
-    return/1,
-    total_keys_in_node_type/1
+    return/1
 ]).
 
 %% ------------------------------------------------------------------
@@ -107,16 +106,6 @@ return(#{node_counters := NodeCounters, height := Height}) ->
         {avg_keys_per_internal_node, AvgKeysPerInternalNode},
         {avg_keys_per_leaf_node, AvgKeysPerLeafNode}
     ].
-
--spec total_keys_in_node_type(node_type()) -> 1..4.
-total_keys_in_node_type(internal4) -> 4;
-total_keys_in_node_type(internal3) -> 3;
-total_keys_in_node_type(internal2) -> 2;
-total_keys_in_node_type(internal1) -> 1;
-total_keys_in_node_type(leaf4) -> 4;
-total_keys_in_node_type(leaf3) -> 3;
-total_keys_in_node_type(leaf2) -> 2;
-total_keys_in_node_type(leaf1) -> 1.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
@@ -254,3 +243,13 @@ is_node_type_internal(NodeType) ->
         <<"leaf", _>> ->
             false
     end.
+
+-spec total_keys_in_node_type(node_type()) -> 1..4.
+total_keys_in_node_type(internal4) -> 4;
+total_keys_in_node_type(internal3) -> 3;
+total_keys_in_node_type(internal2) -> 2;
+total_keys_in_node_type(internal1) -> 1;
+total_keys_in_node_type(leaf4) -> 4;
+total_keys_in_node_type(leaf3) -> 3;
+total_keys_in_node_type(leaf2) -> 2;
+total_keys_in_node_type(leaf1) -> 1.
