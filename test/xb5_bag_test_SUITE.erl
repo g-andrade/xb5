@@ -40,6 +40,7 @@
 %% Test exports - order statistics
 -export([
     test_nth/1,
+    test_rank/1,
     test_rank_smaller/1,
     test_rank_larger/1,
     test_percentile_inclusive/1,
@@ -179,6 +180,7 @@ groups() ->
         ]},
         {order_statistics, [parallel], [
             test_nth,
+            test_rank,
             test_rank_smaller,
             test_rank_larger,
             test_percentile_inclusive,
@@ -479,6 +481,32 @@ test_nth(_Config) ->
             test_invalid_nth(Size, Col),
 
             _ = (Size =/= 0 andalso test_valid_nth(RefElements, Col))
+        end
+    ).
+
+test_rank(_Config) ->
+    foreach_test_collection(
+        fun(Size, RefElements, Col) ->
+            foreach_non_existent_element(
+                fun(Element) ->
+                    ?assertEqual(none, xb5_bag:rank(Element, Col))
+                end,
+                RefElements,
+                50
+            ),
+
+            %%%%
+
+            foreach_existing_element(
+                fun(Element) ->
+                    ?assertEqual(
+                        {rank, rank_in_sorted_list(Element, RefElements)},
+                        xb5_bag:rank(Element, Col)
+                    )
+                end,
+                RefElements,
+                Size
+            )
         end
     ).
 
@@ -1424,6 +1452,15 @@ remove_from_sorted_list(Elem, [H | T]) ->
         %
         Elem == H ->
             T
+    end.
+
+rank_in_sorted_list(Elem, [H | T]) ->
+    if
+        Elem > H ->
+            1 + rank_in_sorted_list(Elem, T);
+        %
+        Elem == H ->
+            1
     end.
 
 -dialyzer({nowarn_function, fun1_error_not_to_be_called/0}).

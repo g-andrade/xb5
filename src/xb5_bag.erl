@@ -32,6 +32,7 @@
     percentile_bracket/2,
     percentile_bracket/3,
     percentile_rank/2,
+    rank/2,
     rank_larger/2,
     rank_smaller/2,
     size/1,
@@ -73,6 +74,7 @@
     percentile_bracket/2,
     percentile_bracket/3,
     percentile_rank/2,
+    rank/2,
     rank_larger/2,
     rank_smaller/2,
     size/1,
@@ -469,6 +471,21 @@ percentile_rank(Elem, #xb5_bag{size = Size, root = Root}) when Size > 0 ->
     (CF - 0.5 * F) / Size;
 percentile_rank(_, #xb5_bag{}) ->
     error_empty_items().
+
+%%
+
+-spec rank(Element, Items) -> {rank, Rank} | none when
+    Items :: items(Element),
+    Rank :: pos_integer().
+
+rank(Elem, #xb5_bag{root = Root}) ->
+    case xb5_bag_node:rank(Elem, Root) of
+        none ->
+            none;
+        %
+        Rank ->
+            {rank, Rank}
+    end.
 
 %%
 
