@@ -61,6 +61,11 @@
     test_rewrap/1
 ]).
 
+%% Test exports - doctests
+-export([
+    doctest_test/1
+]).
+
 %% Test exports - structure
 -export([
     test_structure_sequentially_built/1,
@@ -179,6 +184,9 @@ groups() ->
             test_structure_build_randomlyIns2x_randomlyDelHalf,
             test_structure_build_randomlyIns2x_seqDelSmallerHalf,
             test_structure_build_adversarial_deletion
+        ]},
+        {doctests, [], [
+            doctest_test
         ]}
     ].
 
@@ -568,6 +576,13 @@ test_rewrap(_Config) ->
             ?assertEqual(Col, xb5_sets:wrap(Unwrapped))
         end
     ).
+
+%% ------------------------------------------------------------------
+%% Tests - Doctests
+%% ------------------------------------------------------------------
+
+doctest_test(_Config) ->
+    doctest:module(xb5_sets).
 
 %% ------------------------------------------------------------------
 %% Tests - Structure
