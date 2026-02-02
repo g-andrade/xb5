@@ -5,6 +5,7 @@
 %% ------------------------------------------------------------------
 
 -export([
+    balance/1,
     delete/2,
     delete_any/2,
     empty/0,
@@ -47,6 +48,7 @@
 ]).
 
 -ignore_xref([
+    balance/1,
     delete/2,
     delete_any/2,
     empty/0,
@@ -120,6 +122,17 @@
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
+
+-spec balance(Tree1) -> Tree2 when
+    Tree1 :: tree(Key, Value),
+    Tree2 :: tree(Key, Value).
+
+balance(#xb5_tree{} = Tree) ->
+    % There's no need to balance, this function is only here to ease migration
+    % from `gb_trees'.
+    Tree.
+
+%%
 
 -spec delete(Key, Tree1) -> Tree2 when
     Tree1 :: tree(Key, Value),
@@ -356,7 +369,7 @@ largest(#xb5_tree{}) ->
 
 %%
 
--spec lookup(Key, Tree) -> 'none' | {'value', Value} when
+-spec lookup(Key, Tree) -> none | {value, Value} when
     Tree :: tree(Key, Value).
 
 lookup(Key, #xb5_tree{root = Root}) ->

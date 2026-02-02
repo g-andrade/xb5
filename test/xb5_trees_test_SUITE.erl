@@ -48,6 +48,7 @@
 
 %% Test exports - additional functions
 -export([
+    test_balance/1,
     test_foldl/1,
     test_foldr/1,
     test_map/1,
@@ -153,6 +154,7 @@ groups() ->
             test_iterator_from_reversed
         ]},
         {additional_functions, [parallel], [
+            test_balance,
             test_foldl,
             test_foldr,
             test_map,
@@ -687,6 +689,14 @@ test_iterator_from_reversed(_Config) ->
 %% ------------------------------------------------------------------
 %% Tests - Additional Functions
 %% ------------------------------------------------------------------
+
+test_balance(_Config) ->
+    foreach_test_tree(
+        fun(_Size, _RefKvs, Tree) ->
+            % Balancing does nothing
+            ?assertEqual(Tree, xb5_trees:balance(Tree))
+        end
+    ).
 
 test_foldl(_Config) ->
     foreach_test_tree(

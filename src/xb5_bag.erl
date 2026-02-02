@@ -401,7 +401,7 @@ new() ->
 
 %%
 
--spec next(Iter1) -> {Element, Iter2} | 'none' when
+-spec next(Iter1) -> {Element, Iter2} | none when
     Iter1 :: iter(Element),
     Iter2 :: iter(Element).
 

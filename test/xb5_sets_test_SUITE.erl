@@ -52,6 +52,7 @@
 
 %% Test exports - additional functions
 -export([
+    test_balance/1,
     test_filter/1,
     test_filtermap/1,
     test_fold/1,
@@ -161,6 +162,7 @@ groups() ->
             test_iterator_from_reversed
         ]},
         {additional_functions, [parallel], [
+            test_balance,
             test_filter,
             test_filtermap,
             test_fold,
@@ -493,6 +495,14 @@ test_iterator_from_reversed(_Config) ->
 %% ------------------------------------------------------------------
 %% Tests - Additional Functions
 %% ------------------------------------------------------------------
+
+test_balance(_Config) ->
+    foreach_test_set(
+        fun(_Size, _RefElements, Set) ->
+            % Balancing does nothing
+            ?assertEqual(Set, xb5_sets:balance(Set))
+        end
+    ).
 
 test_filter(_Config) ->
     foreach_test_set(

@@ -8,7 +8,7 @@
     add/2,
     % `sets' compatibility alias
     add_element/2,
-    % balance/1,
+    balance/1,
     % `sets' compatibility alias
     del_element/2,
     delete/2,
@@ -59,7 +59,7 @@
 -ignore_xref([
     add/2,
     add_element/2,
-    % balance/1,
+    balance/1,
     del_element/2,
     delete/2,
     delete_any/2,
@@ -155,6 +155,17 @@ add(Element, #xb5_set{size = Size, root = Root} = Set) ->
 
 add_element(Element, Set) ->
     add(Element, Set).
+
+%%
+
+-spec balance(Set1) -> Set2 when
+    Set1 :: set(Element),
+    Set2 :: set(Element).
+
+balance(#xb5_set{} = Set) ->
+    % There's no need to balance, this function is only here to ease migration
+    % from `gb_sets'.
+    Set.
 
 %%
 
@@ -447,7 +458,7 @@ new() ->
 
 %%
 
--spec next(Iter1) -> {Element, Iter2} | 'none' when
+-spec next(Iter1) -> {Element, Iter2} | none when
     Iter1 :: iter(Element),
     Iter2 :: iter(Element).
 
