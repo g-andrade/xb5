@@ -1634,7 +1634,12 @@ run_structure_test(InitFun, Opts) ->
 
     %%%%%
 
-    maps:map(fun condense_stats/2, StatsAcc).
+    maps:map(
+        fun(_Id, Samples) ->
+            condense_stats(Samples)
+        end,
+        StatsAcc
+    ).
 
 structure_test_stats_acc(Id, Sample, Acc) ->
     try maps:get(Id, Acc) of
@@ -1645,7 +1650,7 @@ structure_test_stats_acc(Id, Sample, Acc) ->
             maps:put(Id, [Sample], Acc)
     end.
 
-condense_stats(_Id, Samples) ->
+condense_stats(Samples) ->
     Sorted = lists:sort(Samples),
     Len = length(Sorted),
 
