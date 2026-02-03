@@ -1141,20 +1141,19 @@ fun1_error_not_to_be_called() ->
 %% ------------------------------------------------------------------
 
 run_construction_repeated_test(Size, RefKvs) ->
-    run_construction_repeated_test_recur(Size, RefKvs, []).
+    Amount = min(length(RefKvs), 50),
 
-run_construction_repeated_test_recur(Size, [{KeyToRepeat, Value} | Next], Prev) ->
-    List = lists:reverse(Prev, [
-        {KeyToRepeat, Value},
-        {randomly_switch_number_type(KeyToRepeat), repeated}
-        | Next
-    ]),
+    KeysToRepeat = lists:sublist(list_shuffle(list_keys(RefKvs)), Amount),
+
+    run_construction_repeated_test(Size, KeysToRepeat, RefKvs).
+
+run_construction_repeated_test(Size, [KeyToRepeat | Next], RefKvs) ->
+    List = add_to_sorted_list(randomly_switch_number_type(KeyToRepeat), repeated, RefKvs),
 
     Tree = xb5_trees:from_list(List),
 
     ?assertEqual(Size, xb5_trees:size(Tree)),
 
-    % Last repeated key is the one that's kept
     ?assertKvListsCanonEqual(
         sort_kv_list_keep_last_repeated(List),
         xb5_trees:to_list(Tree)
@@ -1167,16 +1166,13 @@ run_construction_repeated_test_recur(Size, [{KeyToRepeat, Value} | Next], Prev) 
 
     ?assertEqual(Size, xb5_trees:size(TreeShuffled)),
 
-    % Last repeated key is the one that's kept
     ?assertKvListsCanonEqual(
         sort_kv_list_keep_last_repeated(ShuffledList),
         xb5_trees:to_list(TreeShuffled)
     ),
 
-    %%%
-
-    run_construction_repeated_test_recur(Size, Next, [{KeyToRepeat, Value} | Prev]);
-run_construction_repeated_test_recur(_, [], _) ->
+    run_construction_repeated_test(Size, Next, RefKvs);
+run_construction_repeated_test(_, [], _) ->
     ok.
 
 %% ------------------------------------------------------------------

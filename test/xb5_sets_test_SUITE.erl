@@ -942,19 +942,21 @@ fun1_error_not_to_be_called() ->
 %% ------------------------------------------------------------------
 
 run_construction_repeated_test(Size, RefElements) ->
-    run_construction_repeated_test_recur(Size, RefElements, []).
+    Amount = min(length(RefElements), 50),
 
-run_construction_repeated_test_recur(Size, [ElementToRepeat | Next], Prev) ->
-    List = lists:reverse(Prev, [
-        ElementToRepeat, randomly_switch_number_type(ElementToRepeat) | Next
-    ]),
+    ElementsToRepeat = lists:sublist(list_shuffle(RefElements), Amount),
+
+    run_construction_repeated_test(Size, ElementsToRepeat, RefElements).
+
+run_construction_repeated_test(Size, [ElementToRepeat | Next], RefElements) ->
+    List = add_to_sorted_list(randomly_switch_number_type(ElementToRepeat), RefElements),
 
     Set = xb5_sets:from_list(List),
 
     ?assertEqual(Size, xb5_sets:size(Set)),
 
     ?assertListsCanonEqual(
-        lists:usort(List),
+        RefElements,
         xb5_sets:to_list(Set)
     ),
 
@@ -965,14 +967,12 @@ run_construction_repeated_test_recur(Size, [ElementToRepeat | Next], Prev) ->
     ?assertEqual(Size, xb5_sets:size(SetShuffled)),
 
     ?assertListsCanonEqual(
-        lists:usort(List),
+        RefElements,
         xb5_sets:to_list(SetShuffled)
     ),
 
-    %%%
-
-    run_construction_repeated_test_recur(Size, Next, [ElementToRepeat | Prev]);
-run_construction_repeated_test_recur(_, [], _) ->
+    run_construction_repeated_test(Size, Next, RefElements);
+run_construction_repeated_test(_, [], _) ->
     ok.
 
 %% ------------------------------------------------------------------
