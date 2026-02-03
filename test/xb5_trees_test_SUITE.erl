@@ -55,6 +55,11 @@
     test_rewrap/1
 ]).
 
+%% Test exports - doctests
+-export([
+    doctest_test/1
+]).
+
 %% Test exports - structure
 -export([
     test_structure_sequentially_built/1,
@@ -159,6 +164,9 @@ groups() ->
             test_foldr,
             test_map,
             test_rewrap
+        ]},
+        {doctests, [], [
+            doctest_test
         ]},
         {structure, [parallel], [
             test_structure_sequentially_built,
@@ -732,6 +740,13 @@ test_rewrap(_Config) ->
             ?assertEqual(Col, xb5_trees:wrap(Unwrapped))
         end
     ).
+
+%% ------------------------------------------------------------------
+%% Tests - Doctests
+%% ------------------------------------------------------------------
+
+doctest_test(_Config) ->
+    doctest:module(xb5_trees).
 
 %% ------------------------------------------------------------------
 %% Tests - Structure
