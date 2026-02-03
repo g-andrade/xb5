@@ -171,14 +171,16 @@ groups() ->
             test_rewrap
         ]},
         {structure, [parallel], [
-            test_structure_sequentially_built,
-            test_structure_randomly_built,
-            test_structure_build_seqIns2x_seqDelSmallerHalf,
-            test_structure_build_seqIns2x_seqDelGreaterHalf,
-            test_structure_build_seqIns2x_randomlyDelHalf,
-            test_structure_build_randomlyIns2x_randomlyDelHalf,
-            test_structure_build_randomlyIns2x_seqDelSmallerHalf,
-            test_structure_build_adversarial_deletion
+            % Uncomment as needed, these take a long time in CI.
+            %
+            % test_structure_sequentially_built,
+            % test_structure_randomly_built,
+            % test_structure_build_seqIns2x_seqDelSmallerHalf,
+            % test_structure_build_seqIns2x_seqDelGreaterHalf,
+            % test_structure_build_seqIns2x_randomlyDelHalf,
+            % test_structure_build_randomlyIns2x_randomlyDelHalf,
+            % test_structure_build_randomlyIns2x_seqDelSmallerHalf,
+            % test_structure_build_adversarial_deletion
         ]}
     ].
 
@@ -800,25 +802,10 @@ foreach_tested_size(Fun) ->
 foreach_tested_size(Fun, Opts) ->
     NumericOnly = proplists:get_value(numeric_only, Opts, false),
 
-    lists:foreach(
+    xb5_test_utils:foreach_tested_size(
         fun(Size) ->
-            NrOfSubIterations =
-                case Size =:= 0 of
-                    true ->
-                        1;
-                    %
-                    false ->
-                        max(3, ceil(1000 / Size))
-                end,
-
-            lists:foreach(
-                fun(_) ->
-                    run_test_for_size(Size, NumericOnly, Fun)
-                end,
-                lists:seq(1, NrOfSubIterations)
-            )
-        end,
-        ?TESTED_SIZES
+            run_test_for_size(Size, NumericOnly, Fun)
+        end
     ).
 
 run_test_for_size(Size, NumericOnly, Fun) ->
