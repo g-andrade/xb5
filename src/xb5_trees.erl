@@ -238,7 +238,7 @@ delete_any(Key, #xb5_tree{root = Root, size = Size} = Tree) ->
 
 %%
 
--doc(#{equiv => new/0}).
+-doc #{equiv => new / 0}.
 -spec empty() -> tree().
 
 empty() -> new().

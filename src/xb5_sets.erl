@@ -193,7 +193,7 @@ add(Element, #xb5_set{size = Size, root = Root} = Set) ->
 
 %%
 
--doc(#{equiv => add/2}).
+-doc #{equiv => add / 2}.
 -spec add_element(Element, Set1) -> Set2 when
     Set1 :: set(Element),
     Set2 :: set(Element).
@@ -228,7 +228,7 @@ balance(#xb5_set{} = Set) ->
 
 %%
 
--doc(#{equiv => delete_any/2}).
+-doc #{equiv => delete_any / 2}.
 -spec del_element(Element, Set1) -> Set2 when
     Element :: term(),
     Set1 :: set(Element),
@@ -321,7 +321,7 @@ difference(#xb5_set{size = Size1, root = Root1} = Set1, #xb5_set{root = Root2}) 
 
 %%
 
--doc(#{equiv => new/0}).
+-doc #{equiv => new / 0}.
 -spec empty() -> set(_).
 
 empty() ->
@@ -545,7 +545,7 @@ is_disjoint(#xb5_set{root = Root1, size = Size1}, #xb5_set{root = Root2, size = 
 
 %%
 
--doc(#{equiv => is_member/2}).
+-doc #{equiv => is_member / 2}.
 -spec is_element(Element, Set) -> boolean() when
     Set :: set(Element).
 
@@ -997,7 +997,7 @@ structural_stats(#xb5_set{root = Root}) ->
 
 %%
 
--doc(#{equiv => difference/2}).
+-doc #{equiv => difference / 2}.
 -spec subtract(Set1, Set2) -> Set3 when
     Set1 :: set(Element),
     Set2 :: set(Element),
