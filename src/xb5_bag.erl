@@ -1,26 +1,29 @@
 -module(xb5_bag).
 
 -moduledoc """
-An ordered multiset (bag) implementation using a B-tree of order 5.
+An ordered [multiset](https://en.wikipedia.org/wiki/Multiset) (bag)
+implementation using a [B-tree](https://en.wikipedia.org/wiki/B-tree) of order
+5.
 
-The representation of a bag is not defined and is opaque to the user.
 Elements are ordered using the Erlang term order, comparing with `==`
 rather than `=:=`. This means that `1` and `1.0` are considered the same
 element.
 
-Unlike `m:xb5_sets`, duplicate elements are preserved: adding an element
+**Unlike `m:xb5_sets`, duplicate elements are preserved**: adding an element
 that is already present increases its count rather than being a no-op.
 
 The tree is always balanced after every insertion and deletion.
 
-In addition to the standard set-like operations, `xb5_bag` supports
+In addition to the standard container operations, **`xb5_bag` supports
 [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
-queries: `nth/2`, `rank/2`, and percentile functions
+queries: `nth/2`, `rank/2`, and percentile functions**
 (`percentile/2`, `percentile/3`, `percentile_bracket/2`,
 `percentile_bracket/3`, `percentile_rank/2`). These all run in
 logarithmic time.
 
-See `m:xb5_sets` for the unique-element counterpart.
+See also:
+- `m:xb5_sets` for the unique-element counterpart, supporting set operations (union, intersection, difference)
+- `m:xb5_trees` for the key-value counterpart
 """.
 
 %% ------------------------------------------------------------------
@@ -139,7 +142,7 @@ See `m:xb5_sets` for the unique-element counterpart.
 -export_type([items/0]).
 
 -doc "An iterator over elements of type `Element`. See `iterator/1` and `next/1`.".
--type iter(Element) :: xb5_bag_node:iter(Element).
+-opaque iter(Element) :: xb5_bag_node:iter(Element).
 -export_type([iter/1]).
 
 -doc "Shorthand for `iter(_)`.".
@@ -800,6 +803,9 @@ interpolation of the `inclusive` percentile bracket. Returns
 `{value, Result}` or `none`. Equivalent to
 `percentile(Percentile, Items, [])`.
 
+Raises a `{bracket_value_not_a_number, Bound}` error if linear
+interpolation is required but the bracketing elements are not numbers.
+
 ## Examples
 
 ```erlang
@@ -918,6 +924,8 @@ percentile_bracket(Percentile, #xb5_bag{}, _Opts) ->
 -doc """
 Returns the [percentile rank](https://en.wikipedia.org/wiki/Percentile_rank)
 of `Element` in `Items` as a float in `[0.0, 1.0]`, in O(log n) time.
+
+`Element` does not have to be in the bag.
 
 Raises an `empty_items` error if the bag is empty.
 

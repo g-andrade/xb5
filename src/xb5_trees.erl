@@ -1,19 +1,23 @@
 -module(xb5_trees).
 
 -moduledoc """
-An ordered key-value store (dictionary) using a B-tree of order 5.
+An ordered key-value store (dictionary) using a
+[B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5.
 
-The representation of a tree is not defined and is opaque to the user.
 Keys are ordered using the Erlang term order, comparing with `==`
 rather than `=:=`. This means that `1` and `1.0` are considered the same
 key.
 
-Unlike `m:gb_trees`, the tree is always balanced after every insertion and
-deletion; there is no need to call `balance/1` explicitly. That function
-exists only to ease migration from `m:gb_trees`.
+The tree is always balanced after every insertion and deletion.
 
-See also `m:gb_trees` for a similar API, and `m:xb5_sets` for the
-ordered-set counterpart.
+API is the same as `m:gb_trees`.
+
+See also:
+- `m:xb5_sets` for the unique-element counterpart, supporting set operations
+(union, intersection, difference)
+- `m:xb5_bag` for a multiset supporting [order
+statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations (get nth,
+rank, percentiles).
 """.
 
 %% ------------------------------------------------------------------
@@ -124,7 +128,7 @@ ordered-set counterpart.
 -export_type([tree/0]).
 
 -doc "An iterator over entries of type `{Key, Value}`. See `iterator/1` and `next/1`.".
--type iter(Key, Value) :: xb5_trees_node:iter(Key, Value).
+-opaque iter(Key, Value) :: xb5_trees_node:iter(Key, Value).
 -export_type([iter/2]).
 
 -doc "Shorthand for `iter(_, _)`.".

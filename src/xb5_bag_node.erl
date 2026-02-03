@@ -1,5 +1,40 @@
-% TODO document
 -module(xb5_bag_node).
+
+-moduledoc """
+API for operating over `m:xb5_bag` internal nodes directly.
+
+> ℹ️
+> You're likely looking for `m:xb5_bag`.
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+""".
 
 %% ------------------------------------------------------------------
 %% API Function Exports

@@ -1,5 +1,40 @@
-% TODO document
 -module(xb5_sets_node).
+
+-moduledoc """
+API for operating over `m:xb5_sets` internal nodes directly.
+
+> ℹ️
+> You're likely looking for `m:xb5_sets`.
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+""".
 
 %% ------------------------------------------------------------------
 %% API Function Exports

@@ -1,5 +1,11 @@
 -module(xb5_structural_stats).
 
+-moduledoc """
+Structural statistics about a B-tree.
+
+This is primarily intended for debugging and testing.
+""".
+
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
@@ -46,11 +52,10 @@
     | leaf1).
 -export_type([node_type/0]).
 
--opaque acc() :: #{
+-type acc() :: #{
     node_counters := #{node_type() := non_neg_integer()},
     height := non_neg_integer()
 }.
--export_type([acc/0]).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -58,8 +63,8 @@
 
 -dialyzer({no_underspecs, new/0}).
 
+-doc false.
 -spec new() -> acc().
-%% @private
 new() ->
     #{
         node_counters => #{
@@ -75,8 +80,8 @@ new() ->
         height => 0
     }.
 
+-doc false.
 -spec set_height(pos_integer(), acc()) -> acc().
-%% @private
 set_height(Height, #{height := RecordHeight} = Acc) ->
     case RecordHeight of
         _ when RecordHeight < Height ->
@@ -86,14 +91,14 @@ set_height(Height, #{height := RecordHeight} = Acc) ->
             Acc
     end.
 
+-doc false.
 -spec inc_count(node_type(), acc()) -> acc().
-%% @private
 inc_count(NodeType, #{node_counters := NodeCounters} = Acc) ->
     Count = map_get(NodeType, NodeCounters),
     Acc#{node_counters := NodeCounters#{NodeType := Count + 1}}.
 
+-doc false.
 -spec return(acc()) -> t().
-%% @private
 return(#{node_counters := NodeCounters, height := Height}) ->
     NodeCounts = node_counts(NodeCounters),
     NodePercentages = node_percentages(NodeCounts),

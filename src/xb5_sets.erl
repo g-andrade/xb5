@@ -1,19 +1,22 @@
 -module(xb5_sets).
 
 -moduledoc """
-An ordered set implementation using a B-tree of order 5.
+An ordered set implementation using a
+[B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5.
 
-The representation of a set is not defined and is opaque to the user.
 Elements are ordered using the Erlang term order, comparing with `==`
 rather than `=:=`. This means that `1` and `1.0` are considered the same
 element.
 
-Unlike `m:gb_sets`, the tree is always balanced after every insertion and
-deletion; there is no need to call `balance/1` explicitly. That function
-exists only to ease migration from `m:gb_sets`.
+The tree is always balanced after every insertion and deletion. 
 
-See also `m:gb_sets` for a similar API, and `m:xb5_trees` for the
-key-value counterpart.
+API is the same as `m:gb_sets`.
+
+See also:
+- `m:xb5_sets` for an element set supporting set operations (union, intersection, difference)
+- `m:xb5_bag` for a multiset supporting [order
+statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations (get nth,
+rank, percentiles).
 """.
 
 %% ------------------------------------------------------------------
@@ -144,7 +147,7 @@ key-value counterpart.
 -export_type([set/0]).
 
 -doc "An iterator over elements of type `Element`. See `iterator/1` and `next/1`.".
--type iter(Element) :: xb5_sets_node:iter(Element).
+-opaque iter(Element) :: xb5_sets_node:iter(Element).
 -export_type([iter/1]).
 
 -doc "Shorthand for `iter(_)`.".

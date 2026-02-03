@@ -1,5 +1,40 @@
-% TODO document
 -module(xb5_trees_node).
+
+-moduledoc """
+API for operating over `m:xb5_trees` internal nodes directly.
+
+> ℹ️
+> You're likely looking for `m:xb5_trees`.
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+""".
 
 %% ------------------------------------------------------------------
 %% API Function Exports
