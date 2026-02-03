@@ -1,10 +1,14 @@
 -module(xb5_structural_stats).
 
+-compile({parse_transform, xb5_docs_transform}).
+
+-if(OTP_RELEASE >= 27).
 -moduledoc """
 Structural statistics about a B-tree.
 
 This is primarily intended for debugging and testing.
 """.
+-endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports

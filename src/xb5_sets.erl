@@ -1,5 +1,8 @@
 -module(xb5_sets).
 
+-compile({parse_transform, xb5_docs_transform}).
+
+-if(OTP_RELEASE >= 27).
 -moduledoc """
 An ordered set implementation using a
 [B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5.
@@ -18,6 +21,7 @@ See also:
 statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations (get nth,
 rank, percentiles).
 """.
+-endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports

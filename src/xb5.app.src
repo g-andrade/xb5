@@ -4,6 +4,7 @@
     {registered, []},
     {applications, [
         % stdlib deps
+        compiler,
         kernel,
         stdlib
         % external deps
