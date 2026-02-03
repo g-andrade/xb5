@@ -160,7 +160,7 @@ B-trees are always balanced, calling this function is never necessary.
 
 ```erlang
 > T = xb5_trees:from_list([{3, c}, {1, a}, {2, b}]).
-> xb5_trees:to_list(xb5_trees:balance(T)).
+> [{1, a}, {2, b}, {3, c}] = xb5_trees:to_list(xb5_trees:balance(T)).
 [{1, a}, {2, b}, {3, c}]
 ```
 """.
@@ -184,7 +184,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
-> xb5_trees:to_list(xb5_trees:delete(2, T)).
+> [{1, a}, {3, c}] = xb5_trees:to_list(xb5_trees:delete(2, T)).
 [{1, a}, {3, c}]
 ```
 """.
@@ -214,9 +214,8 @@ If `Key` is not present, `Tree1` is returned unchanged.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
-> xb5_trees:to_list(xb5_trees:delete_any(2, T)).
-[{1, a}, {3, c}]
-> xb5_trees:to_list(xb5_trees:delete_any(42, T)).
+> [{1, a}, {3, c}] = xb5_trees:to_list(xb5_trees:delete_any(2, T)).
+> [{1, a}, {2, b}, {3, c}] = xb5_trees:to_list(xb5_trees:delete_any(42, T)).
 [{1, a}, {2, b}, {3, c}]
 ```
 """.
@@ -254,13 +253,11 @@ otherwise updates `Key` to value `Value` in `Tree1`.
 ```erlang
 > T0 = xb5_trees:new().
 > T1 = xb5_trees:enter(1, a, T0).
-> xb5_trees:to_list(T1).
-[{1, a}]
+> [{1, a}] = xb5_trees:to_list(T1).
 > T2 = xb5_trees:enter(1, z, T1).
-> xb5_trees:to_list(T2).
-[{1, z}]
+> [{1, z}] = xb5_trees:to_list(T2).
 > T3 = xb5_trees:enter(2, b, T2).
-> xb5_trees:to_list(T3).
+> [{1, z}, {2, b}] = xb5_trees:to_list(T3).
 [{1, z}, {2, b}]
 ```
 """.
@@ -292,7 +289,7 @@ accumulator value.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
-> xb5_trees:foldl(fun(K, V, Acc) -> [{K, V} | Acc] end, [], T).
+> [{3, c}, {2, b}, {1, a}] = xb5_trees:foldl(fun(K, V, Acc) -> [{K, V} | Acc] end, [], T).
 [{3, c}, {2, b}, {1, a}]
 ```
 """.
@@ -318,7 +315,7 @@ accumulator value.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
-> xb5_trees:foldr(fun(K, V, Acc) -> [{K, V} | Acc] end, [], T).
+> [{1, a}, {2, b}, {3, c}] = xb5_trees:foldr(fun(K, V, Acc) -> [{K, V} | Acc] end, [], T).
 [{1, a}, {2, b}, {3, c}]
 ```
 """.
@@ -342,11 +339,9 @@ resolved by keeping the last occurrence.
 ## Examples
 
 ```erlang
-> xb5_trees:to_list(xb5_trees:from_list([{3, c}, {1, a}, {2, b}])).
-[{1, a}, {2, b}, {3, c}]
-> xb5_trees:to_list(xb5_trees:from_list([{1, a}, {1, z}])).
-[{1, z}]
-> xb5_trees:to_list(xb5_trees:from_list([])).
+> [{1, a}, {2, b}, {3, c}] = xb5_trees:to_list(xb5_trees:from_list([{3, c}, {1, a}, {2, b}])).
+> [{1, z}] = xb5_trees:to_list(xb5_trees:from_list([{1, a}, {1, z}])).
+> [] = xb5_trees:to_list(xb5_trees:from_list([])).
 []
 ```
 """.
@@ -367,7 +362,7 @@ Returns a tree built from the ordered dictionary `Orddict`.
 ## Examples
 
 ```erlang
-> xb5_trees:to_list(xb5_trees:from_orddict([{1, a}, {2, b}])).
+> [{1, a}, {2, b}] = xb5_trees:to_list(xb5_trees:from_orddict([{1, a}, {2, b}])).
 [{1, a}, {2, b}]
 ```
 """.
@@ -390,7 +385,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
-> xb5_trees:get(2, T).
+> b = xb5_trees:get(2, T).
 b
 ```
 """.
@@ -413,10 +408,9 @@ Raises a `{key_exists, Key}` error if the key is already present.
 ```erlang
 > T0 = xb5_trees:new().
 > T1 = xb5_trees:insert(1, a, T0).
-> xb5_trees:to_list(T1).
-[{1, a}]
+> [{1, a}] = xb5_trees:to_list(T1).
 > T2 = xb5_trees:insert(2, b, T1).
-> xb5_trees:to_list(T2).
+> [{1, a}, {2, b}] = xb5_trees:to_list(T2).
 [{1, a}, {2, b}]
 ```
 """.
@@ -450,7 +444,7 @@ Raises a `{key_exists, Key}` error if the key already exists.
 ```erlang
 > T0 = xb5_trees:new().
 > T1 = xb5_trees:insert_with(1, fun() -> a end, T0).
-> xb5_trees:to_list(T1).
+> [{1, a}] = xb5_trees:to_list(T1).
 [{1, a}]
 ```
 """.
@@ -480,9 +474,8 @@ Returns `true` if `Key` is present in `Tree`, otherwise `false`.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
-> xb5_trees:is_defined(2, T).
-true
-> xb5_trees:is_defined(42, T).
+> true = xb5_trees:is_defined(2, T).
+> false = xb5_trees:is_defined(42, T).
 false
 ```
 """.
@@ -500,9 +493,8 @@ Returns `true` if `Tree` is empty, otherwise `false`.
 ## Examples
 
 ```erlang
-> xb5_trees:is_empty(xb5_trees:new()).
-true
-> xb5_trees:is_empty(xb5_trees:from_list([{1, a}])).
+> true = xb5_trees:is_empty(xb5_trees:new()).
+> false = xb5_trees:is_empty(xb5_trees:from_list([{1, a}])).
 false
 ```
 """.
@@ -526,7 +518,7 @@ see `next/1`. Equivalent to `iterator(Tree, ordered)`.
 > {1, a, I2} = xb5_trees:next(I).
 > {2, b, I3} = xb5_trees:next(I2).
 > {3, c, I4} = xb5_trees:next(I3).
-> xb5_trees:next(I4).
+> none = xb5_trees:next(I4).
 none
 ```
 """.
@@ -553,7 +545,7 @@ in the given `Order`; see `next/1`.
 > {3, c, I2} = xb5_trees:next(I).
 > {2, b, I3} = xb5_trees:next(I2).
 > {1, a, I4} = xb5_trees:next(I3).
-> xb5_trees:next(I4).
+> none = xb5_trees:next(I4).
 none
 ```
 """.
@@ -580,7 +572,7 @@ Equivalent to `iterator_from(Key, Tree, ordered)`.
 > {3, c, I2} = xb5_trees:next(I).
 > {4, d, I3} = xb5_trees:next(I2).
 > {5, e, I4} = xb5_trees:next(I3).
-> xb5_trees:next(I4).
+> none = xb5_trees:next(I4).
 none
 ```
 """.
@@ -605,7 +597,7 @@ starting from the key nearest to `Key` in the given `Order`; see `next/1`.
 > {3, c, I2} = xb5_trees:next(I).
 > {2, b, I3} = xb5_trees:next(I2).
 > {1, a, I4} = xb5_trees:next(I3).
-> xb5_trees:next(I4).
+> none = xb5_trees:next(I4).
 none
 ```
 """.
@@ -626,7 +618,7 @@ Returns the keys in `Tree` as an ordered list.
 
 ```erlang
 > T = xb5_trees:from_list([{3, c}, {1, a}, {2, b}]).
-> xb5_trees:keys(T).
+> [1, 2, 3] = xb5_trees:keys(T).
 [1, 2, 3]
 ```
 """.
@@ -646,9 +638,8 @@ than `Key1` in `Tree`, or `none` if no such key exists.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {3, c}, {5, e}]).
-> xb5_trees:larger(2, T).
-{3, c}
-> xb5_trees:larger(5, T).
+> {3, c} = xb5_trees:larger(2, T).
+> none = xb5_trees:larger(5, T).
 none
 ```
 """.
@@ -670,7 +661,7 @@ Raises an `empty_tree` error if the tree is empty.
 ## Examples
 
 ```erlang
-> xb5_trees:largest(xb5_trees:from_list([{1, a}, {2, b}, {3, c}])).
+> {3, c} = xb5_trees:largest(xb5_trees:from_list([{1, a}, {2, b}, {3, c}])).
 {3, c}
 ```
 """.
@@ -692,9 +683,8 @@ or `none` if `Key` is not present.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
-> xb5_trees:lookup(2, T).
-{value, b}
-> xb5_trees:lookup(42, T).
+> {value, b} = xb5_trees:lookup(2, T).
+> none = xb5_trees:lookup(42, T).
 none
 ```
 """.
@@ -715,7 +705,7 @@ the new value `Value2`.
 
 ```erlang
 > T = xb5_trees:from_list([{1, 10}, {2, 20}, {3, 30}]).
-> xb5_trees:to_list(xb5_trees:map(fun(_K, V) -> V * 2 end, T)).
+> [{1, 20}, {2, 40}, {3, 60}] = xb5_trees:to_list(xb5_trees:map(fun(_K, V) -> V * 2 end, T)).
 [{1, 20}, {2, 40}, {3, 60}]
 ```
 """.
@@ -735,9 +725,8 @@ Returns a new empty tree.
 ## Examples
 
 ```erlang
-> xb5_trees:is_empty(xb5_trees:new()).
-true
-> xb5_trees:size(xb5_trees:new()).
+> true = xb5_trees:is_empty(xb5_trees:new()).
+> 0 = xb5_trees:size(xb5_trees:new()).
 0
 ```
 """.
@@ -759,7 +748,7 @@ referred to by iterator `Iter1` and `Iter2` is the updated iterator, or
 > I = xb5_trees:iterator(T).
 > {1, a, I2} = xb5_trees:next(I).
 > {2, b, I3} = xb5_trees:next(I2).
-> xb5_trees:next(I3).
+> none = xb5_trees:next(I3).
 none
 ```
 """.
@@ -778,9 +767,8 @@ Returns the number of entries in `Tree`.
 ## Examples
 
 ```erlang
-> xb5_trees:size(xb5_trees:new()).
-0
-> xb5_trees:size(xb5_trees:from_list([{1, a}, {2, b}, {3, c}])).
+> 0 = xb5_trees:size(xb5_trees:new()).
+> 3 = xb5_trees:size(xb5_trees:from_list([{1, a}, {2, b}, {3, c}])).
 3
 ```
 """.
@@ -799,9 +787,8 @@ than `Key1` in `Tree`, or `none` if no such key exists.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {3, c}, {5, e}]).
-> xb5_trees:smaller(4, T).
-{3, c}
-> xb5_trees:smaller(1, T).
+> {3, c} = xb5_trees:smaller(4, T).
+> none = xb5_trees:smaller(1, T).
 none
 ```
 """.
@@ -823,7 +810,7 @@ Raises an `empty_tree` error if the tree is empty.
 ## Examples
 
 ```erlang
-> xb5_trees:smallest(xb5_trees:from_list([{3, c}, {1, a}, {2, b}])).
+> {1, a} = xb5_trees:smallest(xb5_trees:from_list([{3, c}, {1, a}, {2, b}])).
 {1, a}
 ```
 """.
@@ -873,7 +860,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
 > {b, T2} = xb5_trees:take(2, T).
-> xb5_trees:to_list(T2).
+> [{1, a}, {3, c}] = xb5_trees:to_list(T2).
 [{1, a}, {3, c}]
 ```
 """.
@@ -906,9 +893,8 @@ raising an exception.
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
 > {b, T2} = xb5_trees:take_any(2, T).
-> xb5_trees:to_list(T2).
-[{1, a}, {3, c}]
-> xb5_trees:take_any(42, T).
+> [{1, a}, {3, c}] = xb5_trees:to_list(T2).
+> error = xb5_trees:take_any(42, T).
 error
 ```
 """.
@@ -944,7 +930,7 @@ Raises an `empty_tree` error if the tree is empty.
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
 > {3, c, T2} = xb5_trees:take_largest(T).
-> xb5_trees:to_list(T2).
+> [{1, a}, {2, b}] = xb5_trees:to_list(T2).
 [{1, a}, {2, b}]
 ```
 """.
@@ -975,7 +961,7 @@ Raises an `empty_tree` error if the tree is empty.
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
 > {1, a, T2} = xb5_trees:take_smallest(T).
-> xb5_trees:to_list(T2).
+> [{2, b}, {3, c}] = xb5_trees:to_list(T2).
 [{2, b}, {3, c}]
 ```
 """.
@@ -1000,9 +986,8 @@ Converts `Tree` into an ordered list of `{Key, Value}` tuples.
 ## Examples
 
 ```erlang
-> xb5_trees:to_list(xb5_trees:from_list([{3, c}, {1, a}, {2, b}])).
-[{1, a}, {2, b}, {3, c}]
-> xb5_trees:to_list(xb5_trees:new()).
+> [{1, a}, {2, b}, {3, c}] = xb5_trees:to_list(xb5_trees:from_list([{3, c}, {1, a}, {2, b}])).
+> [] = xb5_trees:to_list(xb5_trees:new()).
 []
 ```
 """.
@@ -1025,8 +1010,7 @@ on success or `{error, Reason}` if `Term` is not a valid tree.
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
 > {ok, Unwrapped} = xb5_trees:unwrap(T).
-> maps:get(size, Unwrapped).
-3
+> 3 = maps:get(size, Unwrapped).
 > {error, _} = xb5_trees:unwrap(not_a_tree).
 ```
 """.
@@ -1060,7 +1044,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 
 ```erlang
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
-> xb5_trees:to_list(xb5_trees:update(2, z, T)).
+> [{1, a}, {2, z}, {3, c}] = xb5_trees:to_list(xb5_trees:update(2, z, T)).
 [{1, a}, {2, z}, {3, c}]
 ```
 """.
@@ -1089,7 +1073,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 
 ```erlang
 > T = xb5_trees:from_list([{1, 10}, {2, 20}, {3, 30}]).
-> xb5_trees:to_list(xb5_trees:update_with(2, fun(V) -> V + 1 end, T)).
+> [{1, 10}, {2, 21}, {3, 30}] = xb5_trees:to_list(xb5_trees:update_with(2, fun(V) -> V + 1 end, T)).
 [{1, 10}, {2, 21}, {3, 30}]
 ```
 """.
@@ -1118,10 +1102,9 @@ present in `Tree1`.
 ```erlang
 > T = xb5_trees:from_list([{1, 10}, {2, 20}]).
 > T2 = xb5_trees:update_with(2, fun(V) -> V + 1 end, 0, T).
-> xb5_trees:to_list(T2).
-[{1, 10}, {2, 21}]
+> [{1, 10}, {2, 21}] = xb5_trees:to_list(T2).
 > T3 = xb5_trees:update_with(3, fun(V) -> V + 1 end, 0, T).
-> xb5_trees:to_list(T3).
+> [{1, 10}, {2, 20}, {3, 0}] = xb5_trees:to_list(T3).
 [{1, 10}, {2, 20}, {3, 0}]
 ```
 """.
@@ -1152,7 +1135,7 @@ keys.
 
 ```erlang
 > T = xb5_trees:from_list([{3, c}, {1, a}, {2, b}]).
-> xb5_trees:values(T).
+> [a, b, c] = xb5_trees:values(T).
 [a, b, c]
 ```
 """.
@@ -1177,7 +1160,7 @@ same underlying node module).
 > T = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
 > {ok, U} = xb5_trees:unwrap(T).
 > T2 = xb5_trees:wrap(U).
-> xb5_trees:to_list(T2).
+> [{1, a}, {2, b}, {3, c}] = xb5_trees:to_list(T2).
 [{1, a}, {2, b}, {3, c}]
 ```
 """.
