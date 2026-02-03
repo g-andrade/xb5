@@ -1,8 +1,5 @@
 -module(xb5_sets_node).
 
--compile({parse_transform, xb5_docs_transform}).
-
--if(?OTP_RELEASE >= 27).
 -moduledoc """
 API for operating over `m:xb5_sets` internal nodes directly.
 
@@ -38,7 +35,6 @@ API for operating over `m:xb5_sets` internal nodes directly.
 <br/>
 <br/>
 """.
--endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports

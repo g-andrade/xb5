@@ -1,8 +1,5 @@
 -module(xb5_bag).
 
--compile({parse_transform, xb5_docs_transform}).
-
--if(?OTP_RELEASE >= 27).
 -moduledoc """
 An ordered [multiset](https://en.wikipedia.org/wiki/Multiset) (bag)
 implementation using a [B-tree](https://en.wikipedia.org/wiki/B-tree) of order
@@ -28,7 +25,6 @@ See also:
 - `m:xb5_sets` for the unique-element counterpart, supporting set operations (union, intersection, difference)
 - `m:xb5_trees` for the key-value counterpart
 """.
--endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports

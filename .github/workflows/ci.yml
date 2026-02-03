@@ -18,11 +18,8 @@ jobs:
     strategy:
       matrix:
         otp_vsn: [
-          '24.3',
-          '25.3',
-          '26.2',
           '27.3',
-          '28.1'
+          '28.3'
         ]
         os: ['ubuntu-22.04']
     steps:
