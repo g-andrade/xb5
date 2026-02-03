@@ -15,7 +15,7 @@
 %%%%%
 
 foreach_tested_size(Fun) ->
-    Iterations = 150,
+    Iterations = 200,
 
     RandomSizesAmount = Iterations - length(?MANDATORILY_TESTED_SIZES),
     ?assert(RandomSizesAmount >= 0),
