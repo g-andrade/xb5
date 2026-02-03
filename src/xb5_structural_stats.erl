@@ -2,7 +2,7 @@
 
 -compile({parse_transform, xb5_docs_transform}).
 
--if(OTP_RELEASE >= 27).
+-if(?OTP_RELEASE >= 27).
 -moduledoc """
 Structural statistics about a B-tree.
 

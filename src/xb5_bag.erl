@@ -2,7 +2,7 @@
 
 -compile({parse_transform, xb5_docs_transform}).
 
--if(OTP_RELEASE >= 27).
+-if(?OTP_RELEASE >= 27).
 -moduledoc """
 An ordered [multiset](https://en.wikipedia.org/wiki/Multiset) (bag)
 implementation using a [B-tree](https://en.wikipedia.org/wiki/B-tree) of order

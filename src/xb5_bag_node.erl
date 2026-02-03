@@ -2,7 +2,7 @@
 
 -compile({parse_transform, xb5_docs_transform}).
 
--if(OTP_RELEASE >= 27).
+-if(?OTP_RELEASE >= 27).
 -moduledoc """
 API for operating over `m:xb5_bag` internal nodes directly.
 
