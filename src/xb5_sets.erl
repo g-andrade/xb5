@@ -169,10 +169,12 @@ If `Element` is already a member of `Set1`, `Set1` is returned unchanged.
 
 ```erlang
 > S0 = xb5_sets:new().
-> [1] = xb5_sets:to_list(xb5_sets:add(1, S0)).
+> xb5_sets:to_list(xb5_sets:add(1, S0)).
+[1]
 > S1 = xb5_sets:from_list([1, 2, 3]).
-> [1, 2, 3] = xb5_sets:to_list(xb5_sets:add(2, S1)).
-> [1, 2, 3, 4] = xb5_sets:to_list(xb5_sets:add(4, S1)).
+> xb5_sets:to_list(xb5_sets:add(2, S1)).
+[1, 2, 3]
+> xb5_sets:to_list(xb5_sets:add(4, S1)).
 [1, 2, 3, 4]
 ```
 """.
@@ -211,7 +213,7 @@ B-trees are always balanced, calling this function is never necessary.
 
 ```erlang
 > S = xb5_sets:from_list([3, 1, 2]).
-> [1, 2, 3] = xb5_sets:to_list(xb5_sets:balance(S)).
+> xb5_sets:to_list(xb5_sets:balance(S)).
 [1, 2, 3]
 ```
 """.
@@ -246,7 +248,7 @@ Raises a `{badkey, Element}` error if `Element` is not a member of `Set1`.
 
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3]).
-> [1, 3] = xb5_sets:to_list(xb5_sets:delete(2, S)).
+> xb5_sets:to_list(xb5_sets:delete(2, S)).
 [1, 3]
 ```
 """.
@@ -274,8 +276,9 @@ Removes element `Element` from set `Set1` if present, returning a new set
 
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3]).
-> [1, 3] = xb5_sets:to_list(xb5_sets:delete_any(2, S)).
-> [1, 2, 3] = xb5_sets:to_list(xb5_sets:delete_any(42, S)).
+> xb5_sets:to_list(xb5_sets:delete_any(2, S)).
+[1, 3]
+> xb5_sets:to_list(xb5_sets:delete_any(42, S)).
 [1, 2, 3]
 ```
 """.
@@ -303,7 +306,7 @@ Returns the elements of `Set1` that are not in `Set2`.
 ```erlang
 > S1 = xb5_sets:from_list([1, 2, 3, 4]).
 > S2 = xb5_sets:from_list([2, 4, 5]).
-> [1, 3] = xb5_sets:to_list(xb5_sets:difference(S1, S2)).
+> xb5_sets:to_list(xb5_sets:difference(S1, S2)).
 [1, 3]
 ```
 """.
@@ -334,7 +337,7 @@ new set `Set2` containing only the elements for which `Pred` returns `true`.
 
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3, 4, 5]).
-> [4, 5] = xb5_sets:to_list(xb5_sets:filter(fun(X) -> X > 3 end, S)).
+> xb5_sets:to_list(xb5_sets:filter(fun(X) -> X > 3 end, S)).
 [4, 5]
 ```
 """.
@@ -359,7 +362,7 @@ For each element, `Fun` must return either `true` (keep the element),
 
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3, 4, 5]).
-> [20, 40] = xb5_sets:to_list(xb5_sets:filtermap(fun(X) when X rem 2 =:= 0 -> {true, X * 10}; (_) -> false end, S)).
+> xb5_sets:to_list(xb5_sets:filtermap(fun(X) when X rem 2 =:= 0 -> {true, X * 10}; (_) -> false end, S)).
 [20, 40]
 ```
 """.
@@ -382,7 +385,7 @@ accumulator value. Elements are visited in Erlang term order.
 
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3]).
-> 6 = xb5_sets:fold(fun(X, Acc) -> X + Acc end, 0, S).
+> xb5_sets:fold(fun(X, Acc) -> X + Acc end, 0, S).
 6
 ```
 """.
@@ -405,8 +408,9 @@ Returns a set of the elements in `List`. Duplicate elements are removed.
 ## Examples
 
 ```erlang
-> [1, 2, 3] = xb5_sets:to_list(xb5_sets:from_list([3, 1, 2, 1])).
-> [] = xb5_sets:to_list(xb5_sets:from_list([])).
+> xb5_sets:to_list(xb5_sets:from_list([3, 1, 2, 1])).
+[1, 2, 3]
+> xb5_sets:to_list(xb5_sets:from_list([])).
 []
 ```
 """.
@@ -427,7 +431,7 @@ Returns a set built from the ordered set `Ordset`.
 ## Examples
 
 ```erlang
-> [1, 2, 3] = xb5_sets:to_list(xb5_sets:from_ordset([1, 2, 3])).
+> xb5_sets:to_list(xb5_sets:from_ordset([1, 2, 3])).
 [1, 2, 3]
 ```
 """.
@@ -452,7 +456,7 @@ of `Set1`.
 ```erlang
 > S0 = xb5_sets:new().
 > S1 = xb5_sets:insert(1, S0).
-> [1] = xb5_sets:to_list(S1).
+> xb5_sets:to_list(S1).
 [1]
 ```
 """.
@@ -479,7 +483,7 @@ Returns the intersection of `Set1` and `Set2`.
 ```erlang
 > S1 = xb5_sets:from_list([1, 2, 3, 4]).
 > S2 = xb5_sets:from_list([2, 4, 5, 6]).
-> [2, 4] = xb5_sets:to_list(xb5_sets:intersection(S1, S2)).
+> xb5_sets:to_list(xb5_sets:intersection(S1, S2)).
 [2, 4]
 ```
 """.
@@ -503,7 +507,7 @@ Returns the intersection of the non-empty list of sets.
 > S1 = xb5_sets:from_list([1, 2, 3]).
 > S2 = xb5_sets:from_list([2, 3, 4]).
 > S3 = xb5_sets:from_list([3, 4, 5]).
-> [3] = xb5_sets:to_list(xb5_sets:intersection([S1, S2, S3])).
+> xb5_sets:to_list(xb5_sets:intersection([S1, S2, S3])).
 [3]
 ```
 """.
@@ -525,9 +529,10 @@ common), otherwise `false`.
 ```erlang
 > S1 = xb5_sets:from_list([1, 2, 3]).
 > S2 = xb5_sets:from_list([4, 5, 6]).
-> true = xb5_sets:is_disjoint(S1, S2).
+> xb5_sets:is_disjoint(S1, S2).
+true
 > S3 = xb5_sets:from_list([3, 4, 5]).
-> false = xb5_sets:is_disjoint(S1, S3).
+> xb5_sets:is_disjoint(S1, S3).
 false
 ```
 """.
@@ -555,8 +560,9 @@ Returns `true` if `Set` is empty, otherwise `false`.
 ## Examples
 
 ```erlang
-> true = xb5_sets:is_empty(xb5_sets:new()).
-> false = xb5_sets:is_empty(xb5_sets:from_list([1])).
+> xb5_sets:is_empty(xb5_sets:new()).
+true
+> xb5_sets:is_empty(xb5_sets:from_list([1])).
 false
 ```
 """.
@@ -577,9 +583,10 @@ Returns `true` if `Set1` and `Set2` contain the same elements, otherwise
 ```erlang
 > S1 = xb5_sets:from_list([1, 2, 3]).
 > S2 = xb5_sets:from_list([3, 1, 2]).
-> true = xb5_sets:is_equal(S1, S2).
+> xb5_sets:is_equal(S1, S2).
+true
 > S3 = xb5_sets:from_list([1, 2]).
-> false = xb5_sets:is_equal(S1, S3).
+> xb5_sets:is_equal(S1, S3).
 false
 ```
 """.
@@ -599,8 +606,9 @@ Returns `true` if `Element` is a member of `Set`, otherwise `false`.
 
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3]).
-> true = xb5_sets:is_member(2, S).
-> false = xb5_sets:is_member(4, S).
+> xb5_sets:is_member(2, S).
+true
+> xb5_sets:is_member(4, S).
 false
 ```
 """.
@@ -618,9 +626,11 @@ Returns `true` if `Term` appears to be a set, otherwise `false`.
 ## Examples
 
 ```erlang
-> true = xb5_sets:is_set(xb5_sets:new()).
-> true = xb5_sets:is_set(xb5_sets:from_list([1, 2])).
-> false = xb5_sets:is_set(not_a_set).
+> xb5_sets:is_set(xb5_sets:new()).
+true
+> xb5_sets:is_set(xb5_sets:from_list([1, 2])).
+true
+> xb5_sets:is_set(not_a_set).
 false
 ```
 """.
@@ -643,8 +653,9 @@ otherwise `false`.
 ```erlang
 > S1 = xb5_sets:from_list([1, 2]).
 > S2 = xb5_sets:from_list([1, 2, 3]).
-> true = xb5_sets:is_subset(S1, S2).
-> false = xb5_sets:is_subset(S2, S1).
+> xb5_sets:is_subset(S1, S2).
+true
+> xb5_sets:is_subset(S2, S1).
 false
 ```
 """.
@@ -669,7 +680,7 @@ see `next/1`. Equivalent to `iterator(Set, ordered)`.
 > {1, I2} = xb5_sets:next(I).
 > {2, I3} = xb5_sets:next(I2).
 > {3, I4} = xb5_sets:next(I3).
-> none = xb5_sets:next(I4).
+> xb5_sets:next(I4).
 none
 ```
 """.
@@ -696,7 +707,7 @@ in the given `Order`; see `next/1`.
 > {3, I2} = xb5_sets:next(I).
 > {2, I3} = xb5_sets:next(I2).
 > {1, I4} = xb5_sets:next(I3).
-> none = xb5_sets:next(I4).
+> xb5_sets:next(I4).
 none
 ```
 """.
@@ -723,7 +734,7 @@ starting from element `Element`; see `next/1`. Equivalent to
 > {3, I2} = xb5_sets:next(I).
 > {4, I3} = xb5_sets:next(I2).
 > {5, I4} = xb5_sets:next(I3).
-> none = xb5_sets:next(I4).
+> xb5_sets:next(I4).
 none
 ```
 """.
@@ -748,7 +759,7 @@ starting from element `Element` in the given `Order`; see `next/1`.
 > {3, I2} = xb5_sets:next(I).
 > {2, I3} = xb5_sets:next(I2).
 > {1, I4} = xb5_sets:next(I3).
-> none = xb5_sets:next(I4).
+> xb5_sets:next(I4).
 none
 ```
 """.
@@ -771,8 +782,9 @@ element exists.
 
 ```erlang
 > S = xb5_sets:from_list([1, 3, 5]).
-> {found, 3} = xb5_sets:larger(2, S).
-> none = xb5_sets:larger(5, S).
+> xb5_sets:larger(2, S).
+{found, 3}
+> xb5_sets:larger(5, S).
 none
 ```
 """.
@@ -793,7 +805,7 @@ set is empty.
 ## Examples
 
 ```erlang
-> 3 = xb5_sets:largest(xb5_sets:from_list([1, 2, 3])).
+> xb5_sets:largest(xb5_sets:from_list([1, 2, 3])).
 3
 ```
 """.
@@ -815,7 +827,7 @@ Duplicates arising from the mapping are removed.
 
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3]).
-> [10, 20, 30] = xb5_sets:to_list(xb5_sets:map(fun(X) -> X * 10 end, S)).
+> xb5_sets:to_list(xb5_sets:map(fun(X) -> X * 10 end, S)).
 [10, 20, 30]
 ```
 """.
@@ -836,8 +848,9 @@ Returns a new empty set.
 ## Examples
 
 ```erlang
-> true = xb5_sets:is_empty(xb5_sets:new()).
-> 0 = xb5_sets:size(xb5_sets:new()).
+> xb5_sets:is_empty(xb5_sets:new()).
+true
+> xb5_sets:size(xb5_sets:new()).
 0
 ```
 """.
@@ -861,7 +874,7 @@ if no more elements remain.
 > I = xb5_sets:iterator(S).
 > {1, I2} = xb5_sets:next(I).
 > {2, I3} = xb5_sets:next(I2).
-> none = xb5_sets:next(I3).
+> xb5_sets:next(I3).
 none
 ```
 """.
@@ -880,8 +893,9 @@ Returns a set containing only element `Element`.
 ## Examples
 
 ```erlang
-> [42] = xb5_sets:to_list(xb5_sets:singleton(42)).
-> 1 = xb5_sets:size(xb5_sets:singleton(42)).
+> xb5_sets:to_list(xb5_sets:singleton(42)).
+[42]
+> xb5_sets:size(xb5_sets:singleton(42)).
 1
 ```
 """.
@@ -898,8 +912,9 @@ Returns the number of elements in `Set`.
 ## Examples
 
 ```erlang
-> 0 = xb5_sets:size(xb5_sets:new()).
-> 3 = xb5_sets:size(xb5_sets:from_list([1, 2, 3])).
+> xb5_sets:size(xb5_sets:new()).
+0
+> xb5_sets:size(xb5_sets:from_list([1, 2, 3])).
 3
 ```
 """.
@@ -920,8 +935,9 @@ element exists.
 
 ```erlang
 > S = xb5_sets:from_list([1, 3, 5]).
-> {found, 3} = xb5_sets:smaller(4, S).
-> none = xb5_sets:smaller(1, S).
+> xb5_sets:smaller(4, S).
+{found, 3}
+> xb5_sets:smaller(1, S).
 none
 ```
 """.
@@ -942,7 +958,7 @@ set is empty.
 ## Examples
 
 ```erlang
-> 1 = xb5_sets:smallest(xb5_sets:from_list([3, 1, 2])).
+> xb5_sets:smallest(xb5_sets:from_list([3, 1, 2])).
 1
 ```
 """.
@@ -1002,7 +1018,7 @@ if the set is empty.
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3]).
 > {3, S2} = xb5_sets:take_largest(S).
-> [1, 2] = xb5_sets:to_list(S2).
+> xb5_sets:to_list(S2).
 [1, 2]
 ```
 """.
@@ -1028,7 +1044,7 @@ if the set is empty.
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3]).
 > {1, S2} = xb5_sets:take_smallest(S).
-> [2, 3] = xb5_sets:to_list(S2).
+> xb5_sets:to_list(S2).
 [2, 3]
 ```
 """.
@@ -1050,8 +1066,9 @@ Returns the elements of `Set` as an ordered list.
 ## Examples
 
 ```erlang
-> [1, 2, 3] = xb5_sets:to_list(xb5_sets:from_list([3, 1, 2])).
-> [] = xb5_sets:to_list(xb5_sets:new()).
+> xb5_sets:to_list(xb5_sets:from_list([3, 1, 2])).
+[1, 2, 3]
+> xb5_sets:to_list(xb5_sets:new()).
 []
 ```
 """.
@@ -1073,8 +1090,9 @@ Returns the union of a list of sets.
 > S1 = xb5_sets:from_list([1, 2]).
 > S2 = xb5_sets:from_list([2, 3]).
 > S3 = xb5_sets:from_list([3, 4]).
-> [1, 2, 3, 4] = xb5_sets:to_list(xb5_sets:union([S1, S2, S3])).
-> [] = xb5_sets:to_list(xb5_sets:union([])).
+> xb5_sets:to_list(xb5_sets:union([S1, S2, S3])).
+[1, 2, 3, 4]
+> xb5_sets:to_list(xb5_sets:union([])).
 []
 ```
 """.
@@ -1097,7 +1115,7 @@ Returns the union of `Set1` and `Set2`.
 ```erlang
 > S1 = xb5_sets:from_list([1, 2, 3]).
 > S2 = xb5_sets:from_list([3, 4, 5]).
-> [1, 2, 3, 4, 5] = xb5_sets:to_list(xb5_sets:union(S1, S2)).
+> xb5_sets:to_list(xb5_sets:union(S1, S2)).
 [1, 2, 3, 4, 5]
 ```
 """.
@@ -1123,7 +1141,8 @@ on success or `{error, Reason}` if `Term` is not a valid set.
 ```erlang
 > S = xb5_sets:from_list([1, 2, 3]).
 > {ok, Unwrapped} = xb5_sets:unwrap(S).
-> 3 = maps:get(size, Unwrapped).
+> maps:get(size, Unwrapped).
+3
 > {error, _} = xb5_sets:unwrap(not_a_set).
 ```
 """.
@@ -1164,7 +1183,7 @@ same underlying node module).
 > S = xb5_sets:from_list([1, 2, 3]).
 > {ok, U} = xb5_sets:unwrap(S).
 > S2 = xb5_sets:wrap(U).
-> [1, 2, 3] = xb5_sets:to_list(S2).
+> xb5_sets:to_list(S2).
 [1, 2, 3]
 ```
 """.
