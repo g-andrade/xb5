@@ -18,6 +18,15 @@ This is primarily intended for debugging and testing.
 ]).
 
 %% ------------------------------------------------------------------
+%% Linter Tweaks
+%% ------------------------------------------------------------------
+
+-elvis([
+    % We really don't want to show `acc/0` in the docs.
+    {elvis_style, export_used_types, disable}
+]).
+
+%% ------------------------------------------------------------------
 %% Type Definitions
 %% ------------------------------------------------------------------
 
