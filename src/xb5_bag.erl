@@ -119,7 +119,7 @@ See `m:xb5_sets` for the unique-element counterpart.
 
 -elvis([
     % Large URLs below require this
-    {elvis_text_style, line_length, #{limit => 120}}
+    {elvis_text_style, line_length, #{limit => 131}}
 ]).
 
 %% ------------------------------------------------------------------
