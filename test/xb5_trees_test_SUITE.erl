@@ -67,11 +67,6 @@
     test_structure_build_adversarial_deletion/1
 ]).
 
-%% Test constants
--define(TESTED_SIZES,
-    (lists:seq(0, 50) ++ lists:seq(55, 200, 5) ++ [997])
-).
-
 -define(STRUCTURE_TEST_ITERATIONS, 1000).
 -define(STRUCTURE_TEST_BASE_SIZE, 1000).
 
