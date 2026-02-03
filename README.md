@@ -2,7 +2,7 @@
 
 [![](https://img.shields.io/hexpm/v/b5_trees.svg?style=flat)](https://hex.pm/packages/b5_trees)
 [![](https://github.com/g-andrade/b5_trees/workflows/build/badge.svg)](https://github.com/g-andrade/b5_trees/actions?query=workflow%3Abuild)
-[![Erlang Versions](https://img.shields.io/badge/Supported%20Erlang%2FOTP-22%20to%2026-blue)](https://www.erlang.org)
+[![Erlang Versions](https://img.shields.io/badge/Supported%20Erlang%2FOTP-27%20to%2028-blue)](https://www.erlang.org)
 
 b5_trees allows you to foo and bar, baring the foo and barfooing the foofoo.
 
@@ -14,7 +14,7 @@ FIXME fill with content
 
 MIT License
 
-Copyright (c) 2025 Guilherme Andrade
+Copyright (c) 2025-2026 Guilherme Andrade
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
