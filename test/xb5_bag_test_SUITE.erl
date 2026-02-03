@@ -228,21 +228,21 @@ end_per_suite(_Config) ->
 test_construction(_Config) ->
     foreach_tested_size(
         fun(Size, RefElements) ->
-            Col = xb5_bag:from_list(RefElements),
-            ?assertListsCanonEqual(RefElements, xb5_bag:to_list(Col)),
-            ?assertEqual(Size, xb5_bag:size(Col)),
-            ?assertEqual(Size =:= 0, xb5_bag:is_empty(Col)),
-            ?assertEqual(Col, new_collection_from_each_added(RefElements)),
-            ?assertEqual(Col, xb5_bag:from_ordset(RefElements))
+            Bag = xb5_bag:from_list(RefElements),
+            ?assertListsCanonEqual(RefElements, xb5_bag:to_list(Bag)),
+            ?assertEqual(Size, xb5_bag:size(Bag)),
+            ?assertEqual(Size =:= 0, xb5_bag:is_empty(Bag)),
+            ?assertEqual(Bag, new_bag_from_each_added(RefElements)),
+            ?assertEqual(Bag, xb5_bag:from_ordset(RefElements))
         end
     ).
 
 test_lookup(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
             foreach_existing_element(
                 fun(Element) ->
-                    ?assertEqual(true, xb5_bag:is_member(Element, Col))
+                    ?assertEqual(true, xb5_bag:is_member(Element, Bag))
                 end,
                 RefElements,
                 Size
@@ -252,7 +252,7 @@ test_lookup(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    ?assertEqual(false, xb5_bag:is_member(Element, Col))
+                    ?assertEqual(false, xb5_bag:is_member(Element, Bag))
                 end,
                 RefElements,
                 100
@@ -261,15 +261,15 @@ test_lookup(_Config) ->
     ).
 
 test_add(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
             foreach_existing_element(
                 fun(Element) ->
-                    Col2 = xb5_bag:add(Element, Col),
-                    ?assertEqual(Size + 1, xb5_bag:size(Col2)),
+                    Bag2 = xb5_bag:add(Element, Bag),
+                    ?assertEqual(Size + 1, xb5_bag:size(Bag2)),
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
-                        xb5_bag:to_list(Col2)
+                        xb5_bag:to_list(Bag2)
                     )
                 end,
                 RefElements,
@@ -280,11 +280,11 @@ test_add(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    Col2 = xb5_bag:add(Element, Col),
-                    ?assertEqual(Size + 1, xb5_bag:size(Col2)),
+                    Bag2 = xb5_bag:add(Element, Bag),
+                    ?assertEqual(Size + 1, xb5_bag:size(Bag2)),
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
-                        xb5_bag:to_list(Col2)
+                        xb5_bag:to_list(Bag2)
                     )
                 end,
                 RefElements,
@@ -294,13 +294,13 @@ test_add(_Config) ->
     ).
 
 test_enter(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
             foreach_existing_element(
                 fun(Element) ->
-                    Col2 = xb5_bag:enter(Element, Col),
-                    ?assertEqual(Size, xb5_bag:size(Col2)),
-                    ?assertEqual(Col2, Col)
+                    Bag2 = xb5_bag:enter(Element, Bag),
+                    ?assertEqual(Size, xb5_bag:size(Bag2)),
+                    ?assertEqual(Bag2, Bag)
                 end,
                 RefElements,
                 min(50, Size)
@@ -310,11 +310,11 @@ test_enter(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    Col2 = xb5_bag:enter(Element, Col),
-                    ?assertEqual(Size + 1, xb5_bag:size(Col2)),
+                    Bag2 = xb5_bag:enter(Element, Bag),
+                    ?assertEqual(Size + 1, xb5_bag:size(Bag2)),
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
-                        xb5_bag:to_list(Col2)
+                        xb5_bag:to_list(Bag2)
                     )
                 end,
                 RefElements,
@@ -324,11 +324,11 @@ test_enter(_Config) ->
     ).
 
 test_insert(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
             foreach_existing_element(
                 fun(Element) ->
-                    ?assertError({key_exists, Element}, xb5_bag:insert(Element, Col))
+                    ?assertError({key_exists, Element}, xb5_bag:insert(Element, Bag))
                 end,
                 RefElements,
                 min(50, Size)
@@ -338,11 +338,11 @@ test_insert(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    Col2 = xb5_bag:insert(Element, Col),
-                    ?assertEqual(Size + 1, xb5_bag:size(Col2)),
+                    Bag2 = xb5_bag:insert(Element, Bag),
+                    ?assertEqual(Size + 1, xb5_bag:size(Bag2)),
                     ?assertListsCanonEqual(
                         add_to_sorted_list(Element, RefElements),
-                        xb5_bag:to_list(Col2)
+                        xb5_bag:to_list(Bag2)
                     )
                 end,
                 RefElements,
@@ -352,66 +352,66 @@ test_insert(_Config) ->
     ).
 
 test_delete_sequential(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
             DeleteKeys = lists:map(fun randomly_switch_number_type/1, RefElements),
 
-            {ColN, []} =
+            {BagN, []} =
                 lists:foldl(
-                    fun(Element, {Col1, RemainingElements1}) ->
-                        test_delete_non_existing_keys(Col1, RemainingElements1, 3),
+                    fun(Element, {Bag1, RemainingElements1}) ->
+                        test_delete_non_existing_keys(Bag1, RemainingElements1, 3),
 
-                        Col2 = xb5_bag:delete(Element, Col1),
+                        Bag2 = xb5_bag:delete(Element, Bag1),
                         RemainingElements2 = remove_from_sorted_list(Element, RemainingElements1),
-                        ?assertListsCanonEqual(RemainingElements2, xb5_bag:to_list(Col2)),
-                        ?assertEqual(length(RemainingElements2), xb5_bag:size(Col2)),
-                        ?assertEqual(RemainingElements2 =:= [], xb5_bag:is_empty(Col2)),
+                        ?assertListsCanonEqual(RemainingElements2, xb5_bag:to_list(Bag2)),
+                        ?assertEqual(length(RemainingElements2), xb5_bag:size(Bag2)),
+                        ?assertEqual(RemainingElements2 =:= [], xb5_bag:is_empty(Bag2)),
 
-                        ?assertEqual(Col2, xb5_bag:delete_any(Element, Col1)),
+                        ?assertEqual(Bag2, xb5_bag:delete_any(Element, Bag1)),
 
-                        {Col2, RemainingElements2}
+                        {Bag2, RemainingElements2}
                     end,
-                    {Col, RefElements},
+                    {Bag, RefElements},
                     DeleteKeys
                 ),
 
-            ?assertEqual([], xb5_bag:to_list(ColN)),
-            ?assertEqual(0, xb5_bag:size(ColN)),
-            ?assertEqual(true, xb5_bag:is_empty(ColN)),
+            ?assertEqual([], xb5_bag:to_list(BagN)),
+            ?assertEqual(0, xb5_bag:size(BagN)),
+            ?assertEqual(true, xb5_bag:is_empty(BagN)),
 
-            test_delete_non_existing_keys(ColN, [], 3)
+            test_delete_non_existing_keys(BagN, [], 3)
         end
     ).
 
 test_delete_shuffled(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
             DeleteKeys = lists:map(fun randomly_switch_number_type/1, list_shuffle(RefElements)),
 
-            {ColN, []} =
+            {BagN, []} =
                 lists:foldl(
-                    fun(Element, {Col1, RemainingElements1}) ->
-                        test_delete_non_existing_keys(Col1, RemainingElements1, 3),
+                    fun(Element, {Bag1, RemainingElements1}) ->
+                        test_delete_non_existing_keys(Bag1, RemainingElements1, 3),
 
-                        Col2 = xb5_bag:delete(Element, Col1),
+                        Bag2 = xb5_bag:delete(Element, Bag1),
                         RemainingElements2 = remove_from_sorted_list(Element, RemainingElements1),
-                        ?assertListsCanonEqual(RemainingElements2, xb5_bag:to_list(Col2)),
-                        ?assertEqual(length(RemainingElements2), xb5_bag:size(Col2)),
-                        ?assertEqual(RemainingElements2 =:= [], xb5_bag:is_empty(Col2)),
+                        ?assertListsCanonEqual(RemainingElements2, xb5_bag:to_list(Bag2)),
+                        ?assertEqual(length(RemainingElements2), xb5_bag:size(Bag2)),
+                        ?assertEqual(RemainingElements2 =:= [], xb5_bag:is_empty(Bag2)),
 
-                        ?assertEqual(Col2, xb5_bag:delete_any(Element, Col1)),
+                        ?assertEqual(Bag2, xb5_bag:delete_any(Element, Bag1)),
 
-                        {Col2, RemainingElements2}
+                        {Bag2, RemainingElements2}
                     end,
-                    {Col, RefElements},
+                    {Bag, RefElements},
                     DeleteKeys
                 ),
 
-            ?assertEqual([], xb5_bag:to_list(ColN)),
-            ?assertEqual(0, xb5_bag:size(ColN)),
-            ?assertEqual(true, xb5_bag:is_empty(ColN)),
+            ?assertEqual([], xb5_bag:to_list(BagN)),
+            ?assertEqual(0, xb5_bag:size(BagN)),
+            ?assertEqual(true, xb5_bag:is_empty(BagN)),
 
-            test_delete_non_existing_keys(ColN, [], 3)
+            test_delete_non_existing_keys(BagN, [], 3)
         end
     ).
 
@@ -420,52 +420,52 @@ test_delete_shuffled(_Config) ->
 %% ------------------------------------------------------------------
 
 test_smallest(_Config) ->
-    foreach_test_collection(
+    foreach_test_bag(
         fun
-            (0, _RefElements, Col) ->
-                ?assertError(empty_items, xb5_bag:smallest(Col));
+            (0, _RefElements, Bag) ->
+                ?assertError(empty_bag, xb5_bag:smallest(Bag));
             %
-            (_Size, RefElements, Col) ->
-                ?assert(xb5_bag:smallest(Col) == hd(RefElements))
+            (_Size, RefElements, Bag) ->
+                ?assert(xb5_bag:smallest(Bag) == hd(RefElements))
         end
     ).
 
 test_largest(_Config) ->
-    foreach_test_collection(
+    foreach_test_bag(
         fun
-            (0, _RefElements, Col) ->
-                ?assertError(empty_items, xb5_bag:largest(Col));
+            (0, _RefElements, Bag) ->
+                ?assertError(empty_bag, xb5_bag:largest(Bag));
             %
-            (_Size, RefElements, Col) ->
-                ?assert(xb5_bag:largest(Col) == lists:last(RefElements))
+            (_Size, RefElements, Bag) ->
+                ?assert(xb5_bag:largest(Bag) == lists:last(RefElements))
         end
     ).
 
 test_smaller(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_smaller(RefElements, Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_smaller(RefElements, Bag)
         end
     ).
 
 test_larger(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_larger(RefElements, Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_larger(RefElements, Bag)
         end
     ).
 
 test_take_smallest(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_take_smallest(RefElements, Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_take_smallest(RefElements, Bag)
         end
     ).
 
 test_take_largest(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_take_largest(lists:reverse(RefElements), Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_take_largest(lists:reverse(RefElements), Bag)
         end
     ).
 
@@ -474,32 +474,32 @@ test_take_largest(_Config) ->
 %% ------------------------------------------------------------------
 
 test_iterator(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            Iter = new_iterator(Col),
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            Iter = new_iterator(Bag),
             ?assertListsCanonEqual(RefElements, iterate(Iter))
         end
     ).
 
 test_iterator_reversed(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            Iter = xb5_bag:iterator(Col, reversed),
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            Iter = xb5_bag:iterator(Bag, reversed),
             ?assertListsCanonEqual(lists:reverse(RefElements), iterate(Iter))
         end
     ).
 
 test_iterator_from(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_iterator_from(RefElements, Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_iterator_from(RefElements, Bag)
         end
     ).
 
 test_iterator_from_reversed(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_iterator_from_reversed(RefElements, Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_iterator_from_reversed(RefElements, Bag)
         end
     ).
 
@@ -508,20 +508,20 @@ test_iterator_from_reversed(_Config) ->
 %% ------------------------------------------------------------------
 
 test_nth(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            test_invalid_nth(Size, Col),
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            test_invalid_nth(Size, Bag),
 
-            _ = (Size =/= 0 andalso test_valid_nth(RefElements, Col))
+            _ = (Size =/= 0 andalso test_valid_nth(RefElements, Bag))
         end
     ).
 
 test_rank(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
             foreach_non_existent_element(
                 fun(Element) ->
-                    ?assertEqual(none, xb5_bag:rank(Element, Col))
+                    ?assertEqual(none, xb5_bag:rank(Element, Bag))
                 end,
                 RefElements,
                 50
@@ -533,7 +533,7 @@ test_rank(_Config) ->
                 fun(Element) ->
                     ?assertEqual(
                         {rank, rank_in_sorted_list(Element, RefElements)},
-                        xb5_bag:rank(Element, Col)
+                        xb5_bag:rank(Element, Bag)
                     )
                 end,
                 RefElements,
@@ -543,35 +543,35 @@ test_rank(_Config) ->
     ).
 
 test_rank_smaller(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_rank_smaller(RefElements, Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_rank_smaller(RefElements, Bag)
         end
     ).
 
 test_rank_larger(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            run_rank_larger(Size, RefElements, Col)
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            run_rank_larger(Size, RefElements, Bag)
         end
     ).
 
 %%%%%%%%
 
 test_percentile_inclusive(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            test_invalid_percentile_inclusive(Col),
-            test_valid_percentile_inclusive(Size, RefElements, Col)
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            test_invalid_percentile_inclusive(Bag),
+            test_valid_percentile_inclusive(Size, RefElements, Bag)
         end
     ),
 
     %%%%%%%%%%
 
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            test_invalid_percentile_inclusive(Col),
-            test_valid_percentile_inclusive(Size, RefElements, Col)
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            test_invalid_percentile_inclusive(Bag),
+            test_valid_percentile_inclusive(Size, RefElements, Bag)
         end,
         [numeric_only]
     ).
@@ -579,19 +579,19 @@ test_percentile_inclusive(_Config) ->
 %%%%%%%%
 
 test_percentile_exclusive(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            test_invalid_percentile_exclusive(Col),
-            test_valid_percentile_exclusive(Size, RefElements, Col)
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            test_invalid_percentile_exclusive(Bag),
+            test_valid_percentile_exclusive(Size, RefElements, Bag)
         end
     ),
 
     %%%%%%%%%
 
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            test_invalid_percentile_exclusive(Col),
-            test_valid_percentile_exclusive(Size, RefElements, Col)
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            test_invalid_percentile_exclusive(Bag),
+            test_valid_percentile_exclusive(Size, RefElements, Bag)
         end,
         [numeric_only]
     ).
@@ -599,20 +599,20 @@ test_percentile_exclusive(_Config) ->
 %%%%%%%%%%%%
 
 test_percentile_nearest_rank(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            test_invalid_percentile_nearest_rank(Col),
-            test_valid_percentile_nearest_rank(Size, RefElements, Col)
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            test_invalid_percentile_nearest_rank(Bag),
+            test_valid_percentile_nearest_rank(Size, RefElements, Bag)
         end
     ),
 
     %%%%%%%%%%%%
 
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            test_invalid_percentile_nearest_rank(Col),
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            test_invalid_percentile_nearest_rank(Bag),
 
-            _ = (Size =/= 0 andalso test_valid_percentile_nearest_rank(Size, RefElements, Col))
+            _ = (Size =/= 0 andalso test_valid_percentile_nearest_rank(Size, RefElements, Bag))
         end,
         [numeric_only]
     ).
@@ -620,463 +620,463 @@ test_percentile_nearest_rank(_Config) ->
 %%%%%%%%
 
 test_percentile_hardcoded1(_Config) ->
-    Col = xb5_bag:from_list([1, 2, 3, 4]),
-    Size = xb5_bag:size(Col),
-    RefElements = xb5_bag:to_list(Col),
+    Bag = xb5_bag:from_list([1, 2, 3, 4]),
+    Size = xb5_bag:size(Bag),
+    RefElements = xb5_bag:to_list(Bag),
 
     % Inclusive
 
-    ?assertCanonEqual({value, 1}, inclusive_percentile_rounded(0, Col)),
-    ?assertCanonEqual({value, 1.15}, inclusive_percentile_rounded(0.05, Col)),
-    ?assertCanonEqual({value, 1.3}, inclusive_percentile_rounded(0.1, Col)),
-    ?assertCanonEqual({value, 1.45}, inclusive_percentile_rounded(0.15, Col)),
-    ?assertCanonEqual({value, 1.6}, inclusive_percentile_rounded(0.2, Col)),
-    ?assertCanonEqual({value, 1.75}, inclusive_percentile_rounded(0.25, Col)),
-    ?assertCanonEqual({value, 1.9}, inclusive_percentile_rounded(0.3, Col)),
-    ?assertCanonEqual({value, 2.05}, inclusive_percentile_rounded(0.35, Col)),
-    ?assertCanonEqual({value, 2.2}, inclusive_percentile_rounded(0.4, Col)),
-    ?assertCanonEqual({value, 2.35}, inclusive_percentile_rounded(0.45, Col)),
-    ?assertCanonEqual({value, 2.5}, inclusive_percentile_rounded(0.5, Col)),
-    ?assertCanonEqual({value, 2.65}, inclusive_percentile_rounded(0.55, Col)),
-    ?assertCanonEqual({value, 2.8}, inclusive_percentile_rounded(0.6, Col)),
-    ?assertCanonEqual({value, 2.95}, inclusive_percentile_rounded(0.65, Col)),
-    ?assertCanonEqual({value, 3.1}, inclusive_percentile_rounded(0.7, Col)),
-    ?assertCanonEqual({value, 3.25}, inclusive_percentile_rounded(0.75, Col)),
-    ?assertCanonEqual({value, 3.4}, inclusive_percentile_rounded(0.8, Col)),
-    ?assertCanonEqual({value, 3.55}, inclusive_percentile_rounded(0.85, Col)),
-    ?assertCanonEqual({value, 3.7}, inclusive_percentile_rounded(0.9, Col)),
-    ?assertCanonEqual({value, 3.85}, inclusive_percentile_rounded(0.95, Col)),
-    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(1, Col)),
+    ?assertCanonEqual({value, 1}, inclusive_percentile_rounded(0, Bag)),
+    ?assertCanonEqual({value, 1.15}, inclusive_percentile_rounded(0.05, Bag)),
+    ?assertCanonEqual({value, 1.3}, inclusive_percentile_rounded(0.1, Bag)),
+    ?assertCanonEqual({value, 1.45}, inclusive_percentile_rounded(0.15, Bag)),
+    ?assertCanonEqual({value, 1.6}, inclusive_percentile_rounded(0.2, Bag)),
+    ?assertCanonEqual({value, 1.75}, inclusive_percentile_rounded(0.25, Bag)),
+    ?assertCanonEqual({value, 1.9}, inclusive_percentile_rounded(0.3, Bag)),
+    ?assertCanonEqual({value, 2.05}, inclusive_percentile_rounded(0.35, Bag)),
+    ?assertCanonEqual({value, 2.2}, inclusive_percentile_rounded(0.4, Bag)),
+    ?assertCanonEqual({value, 2.35}, inclusive_percentile_rounded(0.45, Bag)),
+    ?assertCanonEqual({value, 2.5}, inclusive_percentile_rounded(0.5, Bag)),
+    ?assertCanonEqual({value, 2.65}, inclusive_percentile_rounded(0.55, Bag)),
+    ?assertCanonEqual({value, 2.8}, inclusive_percentile_rounded(0.6, Bag)),
+    ?assertCanonEqual({value, 2.95}, inclusive_percentile_rounded(0.65, Bag)),
+    ?assertCanonEqual({value, 3.1}, inclusive_percentile_rounded(0.7, Bag)),
+    ?assertCanonEqual({value, 3.25}, inclusive_percentile_rounded(0.75, Bag)),
+    ?assertCanonEqual({value, 3.4}, inclusive_percentile_rounded(0.8, Bag)),
+    ?assertCanonEqual({value, 3.55}, inclusive_percentile_rounded(0.85, Bag)),
+    ?assertCanonEqual({value, 3.7}, inclusive_percentile_rounded(0.9, Bag)),
+    ?assertCanonEqual({value, 3.85}, inclusive_percentile_rounded(0.95, Bag)),
+    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(1, Bag)),
 
-    test_valid_percentile_inclusive(Size, RefElements, Col),
+    test_valid_percentile_inclusive(Size, RefElements, Bag),
 
     % Exclusive
 
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.00, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.05, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.10, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.15, Col)),
-    ?assertCanonEqual({value, 1}, exclusive_percentile_rounded(0.20, Col)),
-    ?assertCanonEqual({value, 1.25}, exclusive_percentile_rounded(0.25, Col)),
-    ?assertCanonEqual({value, 1.5}, exclusive_percentile_rounded(0.30, Col)),
-    ?assertCanonEqual({value, 1.75}, exclusive_percentile_rounded(0.35, Col)),
-    ?assertCanonEqual({value, 2}, exclusive_percentile_rounded(0.40, Col)),
-    ?assertCanonEqual({value, 2.25}, exclusive_percentile_rounded(0.45, Col)),
-    ?assertCanonEqual({value, 2.5}, exclusive_percentile_rounded(0.50, Col)),
-    ?assertCanonEqual({value, 2.75}, exclusive_percentile_rounded(0.55, Col)),
-    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.60, Col)),
-    ?assertCanonEqual({value, 3.25}, exclusive_percentile_rounded(0.65, Col)),
-    ?assertCanonEqual({value, 3.5}, exclusive_percentile_rounded(0.70, Col)),
-    ?assertCanonEqual({value, 3.75}, exclusive_percentile_rounded(0.75, Col)),
-    ?assertCanonEqual({value, 4}, exclusive_percentile_rounded(0.80, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.85, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.90, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.95, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(1.00, Col)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.00, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.05, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.10, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.15, Bag)),
+    ?assertCanonEqual({value, 1}, exclusive_percentile_rounded(0.20, Bag)),
+    ?assertCanonEqual({value, 1.25}, exclusive_percentile_rounded(0.25, Bag)),
+    ?assertCanonEqual({value, 1.5}, exclusive_percentile_rounded(0.30, Bag)),
+    ?assertCanonEqual({value, 1.75}, exclusive_percentile_rounded(0.35, Bag)),
+    ?assertCanonEqual({value, 2}, exclusive_percentile_rounded(0.40, Bag)),
+    ?assertCanonEqual({value, 2.25}, exclusive_percentile_rounded(0.45, Bag)),
+    ?assertCanonEqual({value, 2.5}, exclusive_percentile_rounded(0.50, Bag)),
+    ?assertCanonEqual({value, 2.75}, exclusive_percentile_rounded(0.55, Bag)),
+    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.60, Bag)),
+    ?assertCanonEqual({value, 3.25}, exclusive_percentile_rounded(0.65, Bag)),
+    ?assertCanonEqual({value, 3.5}, exclusive_percentile_rounded(0.70, Bag)),
+    ?assertCanonEqual({value, 3.75}, exclusive_percentile_rounded(0.75, Bag)),
+    ?assertCanonEqual({value, 4}, exclusive_percentile_rounded(0.80, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.85, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.90, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.95, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(1.00, Bag)),
 
-    test_valid_percentile_exclusive(Size, RefElements, Col),
+    test_valid_percentile_exclusive(Size, RefElements, Bag),
 
     % Nearest rank
 
-    ?assertCanonEqual(none, xb5_bag:percentile(0.00, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.05, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.1, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.15, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.2, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.25, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.3, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.35, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.4, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.45, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.5, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.55, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.6, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.65, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.7, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.75, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.8, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.85, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.9, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.95, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(1, Col, [{method, nearest_rank}])),
+    ?assertCanonEqual(none, xb5_bag:percentile(0.00, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.05, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.1, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.15, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.2, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.25, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.3, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.35, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.4, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.45, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.5, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.55, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.6, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.65, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.7, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.75, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.8, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.85, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.9, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.95, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(1, Bag, [{method, nearest_rank}])),
 
-    test_valid_percentile_nearest_rank(Size, RefElements, Col),
+    test_valid_percentile_nearest_rank(Size, RefElements, Bag),
 
     ok.
 
 %%%%%%%%%%%%%%%
 
 test_percentile_hardcoded2(_Config) ->
-    Col = xb5_bag:from_list([1, 2, 3, 4, 5]),
-    Size = xb5_bag:size(Col),
-    RefElements = xb5_bag:to_list(Col),
+    Bag = xb5_bag:from_list([1, 2, 3, 4, 5]),
+    Size = xb5_bag:size(Bag),
+    RefElements = xb5_bag:to_list(Bag),
 
     % Inclusive
 
-    ?assertCanonEqual({value, 1}, inclusive_percentile_rounded(0.00, Col)),
-    ?assertCanonEqual({value, 1.2}, inclusive_percentile_rounded(0.05, Col)),
-    ?assertCanonEqual({value, 1.4}, inclusive_percentile_rounded(0.10, Col)),
-    ?assertCanonEqual({value, 1.6}, inclusive_percentile_rounded(0.15, Col)),
-    ?assertCanonEqual({value, 1.8}, inclusive_percentile_rounded(0.20, Col)),
-    ?assertCanonEqual({value, 2}, inclusive_percentile_rounded(0.25, Col)),
-    ?assertCanonEqual({value, 2.2}, inclusive_percentile_rounded(0.30, Col)),
-    ?assertCanonEqual({value, 2.4}, inclusive_percentile_rounded(0.35, Col)),
-    ?assertCanonEqual({value, 2.6}, inclusive_percentile_rounded(0.40, Col)),
-    ?assertCanonEqual({value, 2.8}, inclusive_percentile_rounded(0.45, Col)),
-    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.50, Col)),
-    ?assertCanonEqual({value, 3.2}, inclusive_percentile_rounded(0.55, Col)),
-    ?assertCanonEqual({value, 3.4}, inclusive_percentile_rounded(0.60, Col)),
-    ?assertCanonEqual({value, 3.6}, inclusive_percentile_rounded(0.65, Col)),
-    ?assertCanonEqual({value, 3.8}, inclusive_percentile_rounded(0.70, Col)),
-    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(0.75, Col)),
-    ?assertCanonEqual({value, 4.2}, inclusive_percentile_rounded(0.80, Col)),
-    ?assertCanonEqual({value, 4.4}, inclusive_percentile_rounded(0.85, Col)),
-    ?assertCanonEqual({value, 4.6}, inclusive_percentile_rounded(0.90, Col)),
-    ?assertCanonEqual({value, 4.8}, inclusive_percentile_rounded(0.95, Col)),
-    ?assertCanonEqual({value, 5}, inclusive_percentile_rounded(1.00, Col)),
+    ?assertCanonEqual({value, 1}, inclusive_percentile_rounded(0.00, Bag)),
+    ?assertCanonEqual({value, 1.2}, inclusive_percentile_rounded(0.05, Bag)),
+    ?assertCanonEqual({value, 1.4}, inclusive_percentile_rounded(0.10, Bag)),
+    ?assertCanonEqual({value, 1.6}, inclusive_percentile_rounded(0.15, Bag)),
+    ?assertCanonEqual({value, 1.8}, inclusive_percentile_rounded(0.20, Bag)),
+    ?assertCanonEqual({value, 2}, inclusive_percentile_rounded(0.25, Bag)),
+    ?assertCanonEqual({value, 2.2}, inclusive_percentile_rounded(0.30, Bag)),
+    ?assertCanonEqual({value, 2.4}, inclusive_percentile_rounded(0.35, Bag)),
+    ?assertCanonEqual({value, 2.6}, inclusive_percentile_rounded(0.40, Bag)),
+    ?assertCanonEqual({value, 2.8}, inclusive_percentile_rounded(0.45, Bag)),
+    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.50, Bag)),
+    ?assertCanonEqual({value, 3.2}, inclusive_percentile_rounded(0.55, Bag)),
+    ?assertCanonEqual({value, 3.4}, inclusive_percentile_rounded(0.60, Bag)),
+    ?assertCanonEqual({value, 3.6}, inclusive_percentile_rounded(0.65, Bag)),
+    ?assertCanonEqual({value, 3.8}, inclusive_percentile_rounded(0.70, Bag)),
+    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(0.75, Bag)),
+    ?assertCanonEqual({value, 4.2}, inclusive_percentile_rounded(0.80, Bag)),
+    ?assertCanonEqual({value, 4.4}, inclusive_percentile_rounded(0.85, Bag)),
+    ?assertCanonEqual({value, 4.6}, inclusive_percentile_rounded(0.90, Bag)),
+    ?assertCanonEqual({value, 4.8}, inclusive_percentile_rounded(0.95, Bag)),
+    ?assertCanonEqual({value, 5}, inclusive_percentile_rounded(1.00, Bag)),
 
-    test_valid_percentile_inclusive(Size, RefElements, Col),
+    test_valid_percentile_inclusive(Size, RefElements, Bag),
 
     % Exclusive
 
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.00, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.05, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.10, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.15, Col)),
-    ?assertCanonEqual({value, 1.2}, exclusive_percentile_rounded(0.20, Col)),
-    ?assertCanonEqual({value, 1.5}, exclusive_percentile_rounded(0.25, Col)),
-    ?assertCanonEqual({value, 1.8}, exclusive_percentile_rounded(0.30, Col)),
-    ?assertCanonEqual({value, 2.1}, exclusive_percentile_rounded(0.35, Col)),
-    ?assertCanonEqual({value, 2.4}, exclusive_percentile_rounded(0.40, Col)),
-    ?assertCanonEqual({value, 2.7}, exclusive_percentile_rounded(0.45, Col)),
-    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.50, Col)),
-    ?assertCanonEqual({value, 3.3}, exclusive_percentile_rounded(0.55, Col)),
-    ?assertCanonEqual({value, 3.6}, exclusive_percentile_rounded(0.60, Col)),
-    ?assertCanonEqual({value, 3.9}, exclusive_percentile_rounded(0.65, Col)),
-    ?assertCanonEqual({value, 4.2}, exclusive_percentile_rounded(0.70, Col)),
-    ?assertCanonEqual({value, 4.5}, exclusive_percentile_rounded(0.75, Col)),
-    ?assertCanonEqual({value, 4.8}, exclusive_percentile_rounded(0.80, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.85, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.90, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.95, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(1.00, Col)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.00, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.05, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.10, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.15, Bag)),
+    ?assertCanonEqual({value, 1.2}, exclusive_percentile_rounded(0.20, Bag)),
+    ?assertCanonEqual({value, 1.5}, exclusive_percentile_rounded(0.25, Bag)),
+    ?assertCanonEqual({value, 1.8}, exclusive_percentile_rounded(0.30, Bag)),
+    ?assertCanonEqual({value, 2.1}, exclusive_percentile_rounded(0.35, Bag)),
+    ?assertCanonEqual({value, 2.4}, exclusive_percentile_rounded(0.40, Bag)),
+    ?assertCanonEqual({value, 2.7}, exclusive_percentile_rounded(0.45, Bag)),
+    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.50, Bag)),
+    ?assertCanonEqual({value, 3.3}, exclusive_percentile_rounded(0.55, Bag)),
+    ?assertCanonEqual({value, 3.6}, exclusive_percentile_rounded(0.60, Bag)),
+    ?assertCanonEqual({value, 3.9}, exclusive_percentile_rounded(0.65, Bag)),
+    ?assertCanonEqual({value, 4.2}, exclusive_percentile_rounded(0.70, Bag)),
+    ?assertCanonEqual({value, 4.5}, exclusive_percentile_rounded(0.75, Bag)),
+    ?assertCanonEqual({value, 4.8}, exclusive_percentile_rounded(0.80, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.85, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.90, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.95, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(1.00, Bag)),
 
-    test_valid_percentile_exclusive(Size, RefElements, Col),
+    test_valid_percentile_exclusive(Size, RefElements, Bag),
 
     % Nearest rank
 
-    ?assertCanonEqual(none, xb5_bag:percentile(0.00, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.05, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.1, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.15, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.2, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.25, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.3, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.35, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.4, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.45, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.5, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.55, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.6, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.65, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.7, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.75, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.8, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.85, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.9, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.95, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 5}, xb5_bag:percentile(1, Col, [{method, nearest_rank}])),
+    ?assertCanonEqual(none, xb5_bag:percentile(0.00, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.05, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.1, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.15, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.2, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.25, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.3, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.35, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.4, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.45, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.5, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.55, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.6, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.65, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.7, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.75, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.8, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.85, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.9, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.95, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 5}, xb5_bag:percentile(1, Bag, [{method, nearest_rank}])),
 
-    test_valid_percentile_nearest_rank(Size, RefElements, Col).
+    test_valid_percentile_nearest_rank(Size, RefElements, Bag).
 
 %%%%%%%%%%%%%%%
 
 test_percentile_hardcoded3(_Config) ->
-    Col = xb5_bag:from_list([1, 2, 3, 4, 5, 6]),
-    Size = xb5_bag:size(Col),
-    RefElements = xb5_bag:to_list(Col),
+    Bag = xb5_bag:from_list([1, 2, 3, 4, 5, 6]),
+    Size = xb5_bag:size(Bag),
+    RefElements = xb5_bag:to_list(Bag),
 
     % Inclusive
 
-    ?assertCanonEqual({value, 1}, inclusive_percentile_rounded(0.00, Col)),
-    ?assertCanonEqual({value, 1.25}, inclusive_percentile_rounded(0.05, Col)),
-    ?assertCanonEqual({value, 1.5}, inclusive_percentile_rounded(0.10, Col)),
-    ?assertCanonEqual({value, 1.75}, inclusive_percentile_rounded(0.15, Col)),
-    ?assertCanonEqual({value, 2}, inclusive_percentile_rounded(0.20, Col)),
-    ?assertCanonEqual({value, 2.25}, inclusive_percentile_rounded(0.25, Col)),
-    ?assertCanonEqual({value, 2.5}, inclusive_percentile_rounded(0.30, Col)),
-    ?assertCanonEqual({value, 2.75}, inclusive_percentile_rounded(0.35, Col)),
-    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.40, Col)),
-    ?assertCanonEqual({value, 3.25}, inclusive_percentile_rounded(0.45, Col)),
-    ?assertCanonEqual({value, 3.5}, inclusive_percentile_rounded(0.50, Col)),
-    ?assertCanonEqual({value, 3.75}, inclusive_percentile_rounded(0.55, Col)),
-    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(0.60, Col)),
-    ?assertCanonEqual({value, 4.25}, inclusive_percentile_rounded(0.65, Col)),
-    ?assertCanonEqual({value, 4.5}, inclusive_percentile_rounded(0.70, Col)),
-    ?assertCanonEqual({value, 4.75}, inclusive_percentile_rounded(0.75, Col)),
-    ?assertCanonEqual({value, 5}, inclusive_percentile_rounded(0.80, Col)),
-    ?assertCanonEqual({value, 5.25}, inclusive_percentile_rounded(0.85, Col)),
-    ?assertCanonEqual({value, 5.5}, inclusive_percentile_rounded(0.90, Col)),
-    ?assertCanonEqual({value, 5.75}, inclusive_percentile_rounded(0.95, Col)),
-    ?assertCanonEqual({value, 6}, inclusive_percentile_rounded(1.00, Col)),
+    ?assertCanonEqual({value, 1}, inclusive_percentile_rounded(0.00, Bag)),
+    ?assertCanonEqual({value, 1.25}, inclusive_percentile_rounded(0.05, Bag)),
+    ?assertCanonEqual({value, 1.5}, inclusive_percentile_rounded(0.10, Bag)),
+    ?assertCanonEqual({value, 1.75}, inclusive_percentile_rounded(0.15, Bag)),
+    ?assertCanonEqual({value, 2}, inclusive_percentile_rounded(0.20, Bag)),
+    ?assertCanonEqual({value, 2.25}, inclusive_percentile_rounded(0.25, Bag)),
+    ?assertCanonEqual({value, 2.5}, inclusive_percentile_rounded(0.30, Bag)),
+    ?assertCanonEqual({value, 2.75}, inclusive_percentile_rounded(0.35, Bag)),
+    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.40, Bag)),
+    ?assertCanonEqual({value, 3.25}, inclusive_percentile_rounded(0.45, Bag)),
+    ?assertCanonEqual({value, 3.5}, inclusive_percentile_rounded(0.50, Bag)),
+    ?assertCanonEqual({value, 3.75}, inclusive_percentile_rounded(0.55, Bag)),
+    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(0.60, Bag)),
+    ?assertCanonEqual({value, 4.25}, inclusive_percentile_rounded(0.65, Bag)),
+    ?assertCanonEqual({value, 4.5}, inclusive_percentile_rounded(0.70, Bag)),
+    ?assertCanonEqual({value, 4.75}, inclusive_percentile_rounded(0.75, Bag)),
+    ?assertCanonEqual({value, 5}, inclusive_percentile_rounded(0.80, Bag)),
+    ?assertCanonEqual({value, 5.25}, inclusive_percentile_rounded(0.85, Bag)),
+    ?assertCanonEqual({value, 5.5}, inclusive_percentile_rounded(0.90, Bag)),
+    ?assertCanonEqual({value, 5.75}, inclusive_percentile_rounded(0.95, Bag)),
+    ?assertCanonEqual({value, 6}, inclusive_percentile_rounded(1.00, Bag)),
 
-    test_valid_percentile_inclusive(Size, RefElements, Col),
+    test_valid_percentile_inclusive(Size, RefElements, Bag),
 
     % Exclusive
 
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.00, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.05, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.10, Col)),
-    ?assertCanonEqual({value, 1.05}, exclusive_percentile_rounded(0.15, Col)),
-    ?assertCanonEqual({value, 1.4}, exclusive_percentile_rounded(0.20, Col)),
-    ?assertCanonEqual({value, 1.75}, exclusive_percentile_rounded(0.25, Col)),
-    ?assertCanonEqual({value, 2.1}, exclusive_percentile_rounded(0.30, Col)),
-    ?assertCanonEqual({value, 2.45}, exclusive_percentile_rounded(0.35, Col)),
-    ?assertCanonEqual({value, 2.8}, exclusive_percentile_rounded(0.40, Col)),
-    ?assertCanonEqual({value, 3.15}, exclusive_percentile_rounded(0.45, Col)),
-    ?assertCanonEqual({value, 3.5}, exclusive_percentile_rounded(0.50, Col)),
-    ?assertCanonEqual({value, 3.85}, exclusive_percentile_rounded(0.55, Col)),
-    ?assertCanonEqual({value, 4.2}, exclusive_percentile_rounded(0.60, Col)),
-    ?assertCanonEqual({value, 4.55}, exclusive_percentile_rounded(0.65, Col)),
-    ?assertCanonEqual({value, 4.9}, exclusive_percentile_rounded(0.70, Col)),
-    ?assertCanonEqual({value, 5.25}, exclusive_percentile_rounded(0.75, Col)),
-    ?assertCanonEqual({value, 5.6}, exclusive_percentile_rounded(0.80, Col)),
-    ?assertCanonEqual({value, 5.95}, exclusive_percentile_rounded(0.85, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.90, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.95, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(1.00, Col)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.00, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.05, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.10, Bag)),
+    ?assertCanonEqual({value, 1.05}, exclusive_percentile_rounded(0.15, Bag)),
+    ?assertCanonEqual({value, 1.4}, exclusive_percentile_rounded(0.20, Bag)),
+    ?assertCanonEqual({value, 1.75}, exclusive_percentile_rounded(0.25, Bag)),
+    ?assertCanonEqual({value, 2.1}, exclusive_percentile_rounded(0.30, Bag)),
+    ?assertCanonEqual({value, 2.45}, exclusive_percentile_rounded(0.35, Bag)),
+    ?assertCanonEqual({value, 2.8}, exclusive_percentile_rounded(0.40, Bag)),
+    ?assertCanonEqual({value, 3.15}, exclusive_percentile_rounded(0.45, Bag)),
+    ?assertCanonEqual({value, 3.5}, exclusive_percentile_rounded(0.50, Bag)),
+    ?assertCanonEqual({value, 3.85}, exclusive_percentile_rounded(0.55, Bag)),
+    ?assertCanonEqual({value, 4.2}, exclusive_percentile_rounded(0.60, Bag)),
+    ?assertCanonEqual({value, 4.55}, exclusive_percentile_rounded(0.65, Bag)),
+    ?assertCanonEqual({value, 4.9}, exclusive_percentile_rounded(0.70, Bag)),
+    ?assertCanonEqual({value, 5.25}, exclusive_percentile_rounded(0.75, Bag)),
+    ?assertCanonEqual({value, 5.6}, exclusive_percentile_rounded(0.80, Bag)),
+    ?assertCanonEqual({value, 5.95}, exclusive_percentile_rounded(0.85, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.90, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.95, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(1.00, Bag)),
 
-    test_valid_percentile_exclusive(Size, RefElements, Col),
+    test_valid_percentile_exclusive(Size, RefElements, Bag),
 
     % Nearest rank
 
-    ?assertCanonEqual(none, xb5_bag:percentile(0.00, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.05, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.1, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.15, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.2, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.25, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.3, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.35, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.4, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.45, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.5, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.55, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.6, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.65, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.7, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.75, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.8, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 6}, xb5_bag:percentile(0.85, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 6}, xb5_bag:percentile(0.9, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 6}, xb5_bag:percentile(0.95, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 6}, xb5_bag:percentile(1, Col, [{method, nearest_rank}])),
+    ?assertCanonEqual(none, xb5_bag:percentile(0.00, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.05, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.1, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.15, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.2, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.25, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.3, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.35, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.4, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.45, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.5, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.55, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.6, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.65, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.7, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.75, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.8, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 6}, xb5_bag:percentile(0.85, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 6}, xb5_bag:percentile(0.9, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 6}, xb5_bag:percentile(0.95, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 6}, xb5_bag:percentile(1, Bag, [{method, nearest_rank}])),
 
-    test_valid_percentile_nearest_rank(Size, RefElements, Col).
+    test_valid_percentile_nearest_rank(Size, RefElements, Bag).
 
 %%%%%%%%%%%%%%%
 
 test_percentile_hardcoded4(_Config) ->
-    Col = xb5_bag:from_list([1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9]),
-    Size = xb5_bag:size(Col),
-    RefElements = xb5_bag:to_list(Col),
+    Bag = xb5_bag:from_list([1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9]),
+    Size = xb5_bag:size(Bag),
+    RefElements = xb5_bag:to_list(Bag),
 
     % Inclusive
 
-    ?assertCanonEqual({value, 1}, inclusive_percentile_rounded(0.00, Col)),
-    ?assertCanonEqual({value, 1.1}, inclusive_percentile_rounded(0.05, Col)),
-    ?assertCanonEqual({value, 2}, inclusive_percentile_rounded(0.10, Col)),
-    ?assertCanonEqual({value, 2}, inclusive_percentile_rounded(0.15, Col)),
-    ?assertCanonEqual({value, 2.4}, inclusive_percentile_rounded(0.20, Col)),
-    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.25, Col)),
-    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.30, Col)),
-    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.35, Col)),
-    ?assertCanonEqual({value, 3.8}, inclusive_percentile_rounded(0.40, Col)),
-    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(0.45, Col)),
-    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(0.50, Col)),
-    ?assertCanonEqual({value, 5}, inclusive_percentile_rounded(0.55, Col)),
-    ?assertCanonEqual({value, 5.2}, inclusive_percentile_rounded(0.60, Col)),
-    ?assertCanonEqual({value, 6.3}, inclusive_percentile_rounded(0.65, Col)),
-    ?assertCanonEqual({value, 7.4}, inclusive_percentile_rounded(0.70, Col)),
-    ?assertCanonEqual({value, 8.5}, inclusive_percentile_rounded(0.75, Col)),
-    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(0.80, Col)),
-    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(0.85, Col)),
-    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(0.90, Col)),
-    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(0.95, Col)),
-    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(1.00, Col)),
+    ?assertCanonEqual({value, 1}, inclusive_percentile_rounded(0.00, Bag)),
+    ?assertCanonEqual({value, 1.1}, inclusive_percentile_rounded(0.05, Bag)),
+    ?assertCanonEqual({value, 2}, inclusive_percentile_rounded(0.10, Bag)),
+    ?assertCanonEqual({value, 2}, inclusive_percentile_rounded(0.15, Bag)),
+    ?assertCanonEqual({value, 2.4}, inclusive_percentile_rounded(0.20, Bag)),
+    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.25, Bag)),
+    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.30, Bag)),
+    ?assertCanonEqual({value, 3}, inclusive_percentile_rounded(0.35, Bag)),
+    ?assertCanonEqual({value, 3.8}, inclusive_percentile_rounded(0.40, Bag)),
+    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(0.45, Bag)),
+    ?assertCanonEqual({value, 4}, inclusive_percentile_rounded(0.50, Bag)),
+    ?assertCanonEqual({value, 5}, inclusive_percentile_rounded(0.55, Bag)),
+    ?assertCanonEqual({value, 5.2}, inclusive_percentile_rounded(0.60, Bag)),
+    ?assertCanonEqual({value, 6.3}, inclusive_percentile_rounded(0.65, Bag)),
+    ?assertCanonEqual({value, 7.4}, inclusive_percentile_rounded(0.70, Bag)),
+    ?assertCanonEqual({value, 8.5}, inclusive_percentile_rounded(0.75, Bag)),
+    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(0.80, Bag)),
+    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(0.85, Bag)),
+    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(0.90, Bag)),
+    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(0.95, Bag)),
+    ?assertCanonEqual({value, 9}, inclusive_percentile_rounded(1.00, Bag)),
 
-    test_valid_percentile_inclusive(Size, RefElements, Col),
+    test_valid_percentile_inclusive(Size, RefElements, Bag),
 
     % Exclusive
 
-    ?assertCanonEqual(none, exclusive_percentile_rounded(0.00, Col)),
-    ?assertCanonEqual({value, 1}, exclusive_percentile_rounded(0.05, Col)),
-    ?assertCanonEqual({value, 1.4}, exclusive_percentile_rounded(0.10, Col)),
-    ?assertCanonEqual({value, 2}, exclusive_percentile_rounded(0.15, Col)),
-    ?assertCanonEqual({value, 2}, exclusive_percentile_rounded(0.20, Col)),
-    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.25, Col)),
-    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.30, Col)),
-    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.35, Col)),
-    ?assertCanonEqual({value, 3.6}, exclusive_percentile_rounded(0.40, Col)),
-    ?assertCanonEqual({value, 4}, exclusive_percentile_rounded(0.45, Col)),
-    ?assertCanonEqual({value, 4}, exclusive_percentile_rounded(0.50, Col)),
-    ?assertCanonEqual({value, 5}, exclusive_percentile_rounded(0.55, Col)),
-    ?assertCanonEqual({value, 5.4}, exclusive_percentile_rounded(0.60, Col)),
-    ?assertCanonEqual({value, 6.6}, exclusive_percentile_rounded(0.65, Col)),
-    ?assertCanonEqual({value, 7.8}, exclusive_percentile_rounded(0.70, Col)),
-    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.75, Col)),
-    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.80, Col)),
-    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.85, Col)),
-    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.90, Col)),
-    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.95, Col)),
-    ?assertCanonEqual(none, exclusive_percentile_rounded(1.00, Col)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(0.00, Bag)),
+    ?assertCanonEqual({value, 1}, exclusive_percentile_rounded(0.05, Bag)),
+    ?assertCanonEqual({value, 1.4}, exclusive_percentile_rounded(0.10, Bag)),
+    ?assertCanonEqual({value, 2}, exclusive_percentile_rounded(0.15, Bag)),
+    ?assertCanonEqual({value, 2}, exclusive_percentile_rounded(0.20, Bag)),
+    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.25, Bag)),
+    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.30, Bag)),
+    ?assertCanonEqual({value, 3}, exclusive_percentile_rounded(0.35, Bag)),
+    ?assertCanonEqual({value, 3.6}, exclusive_percentile_rounded(0.40, Bag)),
+    ?assertCanonEqual({value, 4}, exclusive_percentile_rounded(0.45, Bag)),
+    ?assertCanonEqual({value, 4}, exclusive_percentile_rounded(0.50, Bag)),
+    ?assertCanonEqual({value, 5}, exclusive_percentile_rounded(0.55, Bag)),
+    ?assertCanonEqual({value, 5.4}, exclusive_percentile_rounded(0.60, Bag)),
+    ?assertCanonEqual({value, 6.6}, exclusive_percentile_rounded(0.65, Bag)),
+    ?assertCanonEqual({value, 7.8}, exclusive_percentile_rounded(0.70, Bag)),
+    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.75, Bag)),
+    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.80, Bag)),
+    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.85, Bag)),
+    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.90, Bag)),
+    ?assertCanonEqual({value, 9}, exclusive_percentile_rounded(0.95, Bag)),
+    ?assertCanonEqual(none, exclusive_percentile_rounded(1.00, Bag)),
 
-    test_valid_percentile_exclusive(Size, RefElements, Col),
+    test_valid_percentile_exclusive(Size, RefElements, Bag),
 
     % Nearest rank
 
-    ?assertCanonEqual(none, xb5_bag:percentile(0.00, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.05, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.1, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.15, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.2, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.25, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.3, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.35, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.4, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.45, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.5, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.55, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.6, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 6}, xb5_bag:percentile(0.65, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 8}, xb5_bag:percentile(0.7, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.75, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.8, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.85, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.9, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.95, Col, [{method, nearest_rank}])),
-    ?assertCanonEqual({value, 9}, xb5_bag:percentile(1, Col, [{method, nearest_rank}])),
+    ?assertCanonEqual(none, xb5_bag:percentile(0.00, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 1}, xb5_bag:percentile(0.05, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.1, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.15, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 2}, xb5_bag:percentile(0.2, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.25, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.3, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 3}, xb5_bag:percentile(0.35, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.4, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.45, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 4}, xb5_bag:percentile(0.5, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.55, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 5}, xb5_bag:percentile(0.6, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 6}, xb5_bag:percentile(0.65, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 8}, xb5_bag:percentile(0.7, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.75, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.8, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.85, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.9, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 9}, xb5_bag:percentile(0.95, Bag, [{method, nearest_rank}])),
+    ?assertCanonEqual({value, 9}, xb5_bag:percentile(1, Bag, [{method, nearest_rank}])),
 
-    test_valid_percentile_nearest_rank(Size, RefElements, Col).
+    test_valid_percentile_nearest_rank(Size, RefElements, Bag).
 
 %%%%%%%%%%%%%%%%
 
 test_percentile_rank(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_percentile_rank(RefElements, Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_percentile_rank(RefElements, Bag)
         end
     ).
 
 %%%%%%%%%%%%%%%%
 
 test_percentile_rank_hardcoded(_Config) ->
-    Col1 = xb5_bag:from_list([1, 2, 3, 4]),
-    List1 = xb5_bag:to_list(Col1),
+    Bag1 = xb5_bag:from_list([1, 2, 3, 4]),
+    List1 = xb5_bag:to_list(Bag1),
 
-    ?assertCanonEqual(0.125, percentile_rank_rounded(1, Col1)),
-    ?assertCanonEqual(0.375, percentile_rank_rounded(2, Col1)),
-    ?assertCanonEqual(0.625, percentile_rank_rounded(3, Col1)),
-    ?assertCanonEqual(0.875, percentile_rank_rounded(4, Col1)),
+    ?assertCanonEqual(0.125, percentile_rank_rounded(1, Bag1)),
+    ?assertCanonEqual(0.375, percentile_rank_rounded(2, Bag1)),
+    ?assertCanonEqual(0.625, percentile_rank_rounded(3, Bag1)),
+    ?assertCanonEqual(0.875, percentile_rank_rounded(4, Bag1)),
 
-    run_percentile_rank(List1, Col1),
+    run_percentile_rank(List1, Bag1),
 
     %%%%%%%
 
-    Col2 = xb5_bag:from_list([1, 2, 3, 4, 5]),
-    List2 = xb5_bag:to_list(Col2),
+    Bag2 = xb5_bag:from_list([1, 2, 3, 4, 5]),
+    List2 = xb5_bag:to_list(Bag2),
 
-    ?assertCanonEqual(0.1, percentile_rank_rounded(1, Col2)),
-    ?assertCanonEqual(0.3, percentile_rank_rounded(2, Col2)),
-    ?assertCanonEqual(0.5, percentile_rank_rounded(3, Col2)),
-    ?assertCanonEqual(0.7, percentile_rank_rounded(4, Col2)),
-    ?assertCanonEqual(0.9, percentile_rank_rounded(5, Col2)),
+    ?assertCanonEqual(0.1, percentile_rank_rounded(1, Bag2)),
+    ?assertCanonEqual(0.3, percentile_rank_rounded(2, Bag2)),
+    ?assertCanonEqual(0.5, percentile_rank_rounded(3, Bag2)),
+    ?assertCanonEqual(0.7, percentile_rank_rounded(4, Bag2)),
+    ?assertCanonEqual(0.9, percentile_rank_rounded(5, Bag2)),
 
-    run_percentile_rank(List2, Col2),
+    run_percentile_rank(List2, Bag2),
 
     %%%%%%
 
-    Col3 = xb5_bag:from_list([1, 2, 3, 4, 5, 6]),
-    List3 = xb5_bag:to_list(Col3),
+    Bag3 = xb5_bag:from_list([1, 2, 3, 4, 5, 6]),
+    List3 = xb5_bag:to_list(Bag3),
 
-    ?assertCanonEqual(0.0833333333, percentile_rank_rounded(1, Col3)),
-    ?assertCanonEqual(0.25, percentile_rank_rounded(2, Col3)),
-    ?assertCanonEqual(0.4166666667, percentile_rank_rounded(3, Col3)),
-    ?assertCanonEqual(0.5833333333, percentile_rank_rounded(4, Col3)),
-    ?assertCanonEqual(0.75, percentile_rank_rounded(5, Col3)),
-    ?assertCanonEqual(0.9166666667, percentile_rank_rounded(6, Col3)),
+    ?assertCanonEqual(0.0833333333, percentile_rank_rounded(1, Bag3)),
+    ?assertCanonEqual(0.25, percentile_rank_rounded(2, Bag3)),
+    ?assertCanonEqual(0.4166666667, percentile_rank_rounded(3, Bag3)),
+    ?assertCanonEqual(0.5833333333, percentile_rank_rounded(4, Bag3)),
+    ?assertCanonEqual(0.75, percentile_rank_rounded(5, Bag3)),
+    ?assertCanonEqual(0.9166666667, percentile_rank_rounded(6, Bag3)),
 
-    run_percentile_rank(List3, Col3),
+    run_percentile_rank(List3, Bag3),
 
     %%%%%%
 
     % From Wikipedia article example
-    Col4 = xb5_bag:from_list([7, 5, 5, 4, 4, 3, 3, 3, 2, 1]),
-    List4 = xb5_bag:to_list(Col4),
+    Bag4 = xb5_bag:from_list([7, 5, 5, 4, 4, 3, 3, 3, 2, 1]),
+    List4 = xb5_bag:to_list(Bag4),
 
-    ?assertCanonEqual(0.05, percentile_rank_rounded(1, Col4)),
-    ?assertCanonEqual(0.15, percentile_rank_rounded(2, Col4)),
-    ?assertCanonEqual(0.35, percentile_rank_rounded(3, Col4)),
-    ?assertCanonEqual(0.60, percentile_rank_rounded(4, Col4)),
-    ?assertCanonEqual(0.80, percentile_rank_rounded(5, Col4)),
-    ?assertCanonEqual(0.90, percentile_rank_rounded(6, Col4)),
-    ?assertCanonEqual(0.95, percentile_rank_rounded(7, Col4)),
+    ?assertCanonEqual(0.05, percentile_rank_rounded(1, Bag4)),
+    ?assertCanonEqual(0.15, percentile_rank_rounded(2, Bag4)),
+    ?assertCanonEqual(0.35, percentile_rank_rounded(3, Bag4)),
+    ?assertCanonEqual(0.60, percentile_rank_rounded(4, Bag4)),
+    ?assertCanonEqual(0.80, percentile_rank_rounded(5, Bag4)),
+    ?assertCanonEqual(0.90, percentile_rank_rounded(6, Bag4)),
+    ?assertCanonEqual(0.95, percentile_rank_rounded(7, Bag4)),
 
-    run_percentile_rank(List4, Col4),
+    run_percentile_rank(List4, Bag4),
 
     %%%%%%
 
-    Col5 = xb5_bag:from_list([1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9]),
-    List5 = xb5_bag:to_list(Col5),
+    Bag5 = xb5_bag:from_list([1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9]),
+    List5 = xb5_bag:to_list(Bag5),
 
-    ?assertCanonEqual(0.0434782609, percentile_rank_rounded(1, Col5)),
-    ?assertCanonEqual(0.152173913, percentile_rank_rounded(2, Col5)),
-    ?assertCanonEqual(0.3043478261, percentile_rank_rounded(3, Col5)),
-    ?assertCanonEqual(0.4565217391, percentile_rank_rounded(4, Col5)),
-    ?assertCanonEqual(0.5652173913, percentile_rank_rounded(5, Col5)),
-    ?assertCanonEqual(0.6304347826, percentile_rank_rounded(6, Col5)),
-    ?assertCanonEqual(0.6739130435, percentile_rank_rounded(7, Col5)),
-    ?assertCanonEqual(0.7173913043, percentile_rank_rounded(8, Col5)),
-    ?assertCanonEqual(0.8695652174, percentile_rank_rounded(9, Col5)),
+    ?assertCanonEqual(0.0434782609, percentile_rank_rounded(1, Bag5)),
+    ?assertCanonEqual(0.152173913, percentile_rank_rounded(2, Bag5)),
+    ?assertCanonEqual(0.3043478261, percentile_rank_rounded(3, Bag5)),
+    ?assertCanonEqual(0.4565217391, percentile_rank_rounded(4, Bag5)),
+    ?assertCanonEqual(0.5652173913, percentile_rank_rounded(5, Bag5)),
+    ?assertCanonEqual(0.6304347826, percentile_rank_rounded(6, Bag5)),
+    ?assertCanonEqual(0.6739130435, percentile_rank_rounded(7, Bag5)),
+    ?assertCanonEqual(0.7173913043, percentile_rank_rounded(8, Bag5)),
+    ?assertCanonEqual(0.8695652174, percentile_rank_rounded(9, Bag5)),
 
-    run_percentile_rank(List5, Col5).
+    run_percentile_rank(List5, Bag5).
 
 %% ------------------------------------------------------------------
 %% Tests - Additional Functions
 %% ------------------------------------------------------------------
 
 test_filter(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            run_filter(Size, RefElements, Col)
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            run_filter(Size, RefElements, Bag)
         end
     ).
 
 test_filtermap(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            run_filtermap(Size, RefElements, Col)
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            run_filtermap(Size, RefElements, Bag)
         end
     ).
 
 test_fold(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_fold(RefElements, Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_fold(RefElements, Bag)
         end
     ).
 
 test_map(_Config) ->
-    foreach_test_collection(
-        fun(_Size, RefElements, Col) ->
-            run_map(RefElements, Col)
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_map(RefElements, Bag)
         end
     ).
 
 test_merge(_Config) ->
-    foreach_test_collection(
-        fun(Size, RefElements, Col) ->
-            run_merge(Size, RefElements, Col)
+    foreach_test_bag(
+        fun(Size, RefElements, Bag) ->
+            run_merge(Size, RefElements, Bag)
         end
     ).
 
@@ -1087,10 +1087,10 @@ test_rewrap(_Config) ->
     ?assertMatch({error, _}, xb5_bag:unwrap({xb5_bag, 2, xb5_bag_node:new()})),
     ?assertMatch({error, _}, xb5_bag:unwrap({xb5_bag, 2, make_ref()})),
 
-    foreach_test_collection(
-        fun(_Size, _RefElements, Col) ->
-            {ok, Unwrapped} = xb5_bag:unwrap(Col),
-            ?assertEqual(Col, xb5_bag:wrap(Unwrapped))
+    foreach_test_bag(
+        fun(_Size, _RefElements, Bag) ->
+            {ok, Unwrapped} = xb5_bag:unwrap(Bag),
+            ?assertEqual(Bag, xb5_bag:wrap(Unwrapped))
         end
     ).
 
@@ -1106,11 +1106,11 @@ test_structure_sequentially_built(_Config) ->
 
                 case rand:uniform(4) of
                     1 ->
-                        new_collection_from_each_added(RefElements);
+                        new_bag_from_each_added(RefElements);
                     2 ->
                         xb5_bag:from_list(RefElements);
                     3 ->
-                        new_collection_from_each_added(lists:reverse(RefElements));
+                        new_bag_from_each_added(lists:reverse(RefElements));
                     4 ->
                         xb5_bag:from_list(lists:reverse(RefElements))
                 end
@@ -1129,7 +1129,7 @@ test_structure_randomly_built(_Config) ->
     CondensedStats =
         run_structure_test(
             fun(RefElements) ->
-                new_collection_from_each_added(list_shuffle(RefElements))
+                new_bag_from_each_added(list_shuffle(RefElements))
             end
         ),
 
@@ -1146,12 +1146,12 @@ test_structure_build_seqIns2x_seqDelSmallerHalf(_Config) ->
         run_structure_test(
             fun(RefElements) ->
                 % 1) build sequentially
-                Col1 = new_collection_from_each_added(RefElements),
+                Bag1 = new_bag_from_each_added(RefElements),
 
                 % 2) delete smaller half sequentially
-                AmountToDelete = xb5_bag:size(Col1) div 2,
+                AmountToDelete = xb5_bag:size(Bag1) div 2,
                 ItemsToDelete = lists:sublist(RefElements, AmountToDelete),
-                lists:foldl(fun xb5_bag:delete/2, Col1, ItemsToDelete)
+                lists:foldl(fun xb5_bag:delete/2, Bag1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -1169,12 +1169,12 @@ test_structure_build_seqIns2x_seqDelGreaterHalf(_Config) ->
         run_structure_test(
             fun(RefElements) ->
                 % 1) build sequentially
-                Col1 = new_collection_from_each_added(RefElements),
+                Bag1 = new_bag_from_each_added(RefElements),
 
                 % 2) delete greater half sequentially
-                AmountToDelete = xb5_bag:size(Col1) div 2,
+                AmountToDelete = xb5_bag:size(Bag1) div 2,
                 ItemsToDelete = lists:sublist(lists:reverse(RefElements), AmountToDelete),
-                lists:foldl(fun xb5_bag:delete/2, Col1, ItemsToDelete)
+                lists:foldl(fun xb5_bag:delete/2, Bag1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -1192,12 +1192,12 @@ test_structure_build_seqIns2x_randomlyDelHalf(_Config) ->
         run_structure_test(
             fun(RefElements) ->
                 % 1) build sequentially
-                Col1 = new_collection_from_each_added(RefElements),
+                Bag1 = new_bag_from_each_added(RefElements),
 
                 % 2) delete half randomly
-                AmountToDelete = xb5_bag:size(Col1) div 2,
+                AmountToDelete = xb5_bag:size(Bag1) div 2,
                 ItemsToDelete = lists:sublist(list_shuffle(RefElements), AmountToDelete),
-                lists:foldl(fun xb5_bag:delete/2, Col1, ItemsToDelete)
+                lists:foldl(fun xb5_bag:delete/2, Bag1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -1215,12 +1215,12 @@ test_structure_build_randomlyIns2x_randomlyDelHalf(_Config) ->
         run_structure_test(
             fun(RefElements) ->
                 % 1) build randomly
-                Col1 = new_collection_from_each_added(list_shuffle(RefElements)),
+                Bag1 = new_bag_from_each_added(list_shuffle(RefElements)),
 
                 % 2) delete half randomly
-                AmountToDelete = xb5_bag:size(Col1) div 2,
+                AmountToDelete = xb5_bag:size(Bag1) div 2,
                 ItemsToDelete = lists:sublist(list_shuffle(RefElements), AmountToDelete),
-                lists:foldl(fun xb5_bag:delete/2, Col1, ItemsToDelete)
+                lists:foldl(fun xb5_bag:delete/2, Bag1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -1238,12 +1238,12 @@ test_structure_build_randomlyIns2x_seqDelSmallerHalf(_Config) ->
         run_structure_test(
             fun(RefElements) ->
                 % 1) build randomly
-                Col1 = new_collection_from_each_added(list_shuffle(RefElements)),
+                Bag1 = new_bag_from_each_added(list_shuffle(RefElements)),
 
                 % 2) delete smaller half sequentially
-                AmountToDelete = xb5_bag:size(Col1) div 2,
+                AmountToDelete = xb5_bag:size(Bag1) div 2,
                 ItemsToDelete = lists:sublist(RefElements, AmountToDelete),
-                lists:foldl(fun xb5_bag:delete/2, Col1, ItemsToDelete)
+                lists:foldl(fun xb5_bag:delete/2, Bag1, ItemsToDelete)
             end,
             [{size_multiplier, 2}]
         ),
@@ -1261,7 +1261,7 @@ test_structure_build_adversarial_deletion(_Config) ->
         run_structure_test(
             fun(RefElements) ->
                 % 1) build sequentially
-                Col1 = new_collection_from_each_added(RefElements),
+                Bag1 = new_bag_from_each_added(RefElements),
 
                 % 2) delete every 5th item sequentially
                 ItemsToDelete =
@@ -1273,7 +1273,7 @@ test_structure_build_adversarial_deletion(_Config) ->
                         lists:enumerate(RefElements)
                     ),
 
-                lists:foldl(fun xb5_bag:delete/2, Col1, ItemsToDelete)
+                lists:foldl(fun xb5_bag:delete/2, Bag1, ItemsToDelete)
             end,
             [{size_multiplier, 1.25}]
         ),
@@ -1290,23 +1290,23 @@ test_structure_build_adversarial_deletion(_Config) ->
 %% Helper Functions: shared
 %% ------------------------------------------------------------------
 
-foreach_test_collection(Fun) ->
-    foreach_test_collection(Fun, []).
+foreach_test_bag(Fun) ->
+    foreach_test_bag(Fun, []).
 
-foreach_test_collection(Fun, Opts) ->
+foreach_test_bag(Fun, Opts) ->
     foreach_tested_size(
         fun(Size, RefElements) ->
-            Col = xb5_bag:from_list(maybe_shuffle_elements_for_new_collection(RefElements)),
+            Bag = xb5_bag:from_list(maybe_shuffle_elements_for_new_bag(RefElements)),
 
-            Stats = xb5_bag:structural_stats(Col),
+            Stats = xb5_bag:structural_stats(Bag),
             ?assertEqual(Size, proplists:get_value(total_keys, Stats)),
 
-            Fun(Size, RefElements, Col)
+            Fun(Size, RefElements, Bag)
         end,
         Opts
     ).
 
-maybe_shuffle_elements_for_new_collection(RefElements) ->
+maybe_shuffle_elements_for_new_bag(RefElements) ->
     % Sequential insertion takes very different paths from random insertion,
     % the occasional shuffle means we get good coverage of both.
 
@@ -1421,19 +1421,19 @@ canon_list([]) ->
 canon_list(ImproperTail) ->
     canon_element(ImproperTail).
 
-new_collection_from_each_added(List) ->
-    Col = xb5_bag:new(),
+new_bag_from_each_added(List) ->
+    Bag = xb5_bag:new(),
 
-    ?assertEqual(0, xb5_bag:size(Col)),
-    ?assertEqual(true, xb5_bag:is_empty(Col)),
+    ?assertEqual(0, xb5_bag:size(Bag)),
+    ?assertEqual(true, xb5_bag:is_empty(Bag)),
 
-    new_collection_from_each_added_recur(List, Col).
+    new_bag_from_each_added_recur(List, Bag).
 
-new_collection_from_each_added_recur([Element | Next], Col) ->
-    UpdatedCol = xb5_bag:add(Element, Col),
-    new_collection_from_each_added_recur(Next, UpdatedCol);
-new_collection_from_each_added_recur([], Col) ->
-    Col.
+new_bag_from_each_added_recur([Element | Next], Bag) ->
+    UpdatedBag = xb5_bag:add(Element, Bag),
+    new_bag_from_each_added_recur(Next, UpdatedBag);
+new_bag_from_each_added_recur([], Bag) ->
+    Bag.
 
 %%%%%%%%%%%%%%%
 
@@ -1505,18 +1505,18 @@ fun1_error_not_to_be_called() ->
 %% Helpers: deletion
 %% ------------------------------------------------------------------
 
-test_delete_non_existing_keys(Col, RemainingElements, Amount) when Amount > 0 ->
+test_delete_non_existing_keys(Bag, RemainingElements, Amount) when Amount > 0 ->
     Element = new_element(),
 
     case lists:any(fun(E) -> E == Element end, RemainingElements) of
         false ->
-            ?assertError({badkey, Element}, xb5_bag:delete(Element, Col)),
-            ?assertEqual(Col, xb5_bag:delete_any(Element, Col)),
+            ?assertError({badkey, Element}, xb5_bag:delete(Element, Bag)),
+            ?assertEqual(Bag, xb5_bag:delete_any(Element, Bag)),
 
-            test_delete_non_existing_keys(Col, RemainingElements, Amount - 1);
+            test_delete_non_existing_keys(Bag, RemainingElements, Amount - 1);
         %
         true ->
-            test_delete_non_existing_keys(Col, RemainingElements, Amount)
+            test_delete_non_existing_keys(Bag, RemainingElements, Amount)
     end;
 test_delete_non_existing_keys(_, _, 0) ->
     ok.
@@ -1525,163 +1525,163 @@ test_delete_non_existing_keys(_, _, 0) ->
 %% Helpers: smaller and larger
 %% ------------------------------------------------------------------
 
-run_smaller(RefElements, Col) ->
+run_smaller(RefElements, Bag) ->
     case lists:usort(RefElements) of
         [] ->
             Element = new_element(),
-            ?assertEqual(none, xb5_bag:smaller(Element, Col));
+            ?assertEqual(none, xb5_bag:smaller(Element, Bag));
         %
         [SingleElement] ->
-            ?assertEqual(none, xb5_bag:smaller(randomly_switch_number_type(SingleElement), Col)),
+            ?assertEqual(none, xb5_bag:smaller(randomly_switch_number_type(SingleElement), Bag)),
 
             LargerElement = element_larger(SingleElement),
-            ?assert(xb5_bag:smaller(LargerElement, Col) == {found, SingleElement}),
+            ?assert(xb5_bag:smaller(LargerElement, Bag) == {found, SingleElement}),
 
             SmallerElement = element_smaller(SingleElement),
-            ?assertEqual(none, xb5_bag:smaller(SmallerElement, Col));
+            ?assertEqual(none, xb5_bag:smaller(SmallerElement, Bag));
         %
         [FirstElement | Next] ->
-            ?assertEqual(none, xb5_bag:smaller(randomly_switch_number_type(FirstElement), Col)),
+            ?assertEqual(none, xb5_bag:smaller(randomly_switch_number_type(FirstElement), Bag)),
 
             SmallerElement = element_smaller(FirstElement),
-            ?assertEqual(none, xb5_bag:smaller(SmallerElement, Col)),
+            ?assertEqual(none, xb5_bag:smaller(SmallerElement, Bag)),
 
-            run_smaller_recur(FirstElement, Next, Col)
+            run_smaller_recur(FirstElement, Next, Bag)
     end.
 
-run_smaller_recur(Expected, [LastElement], Col) ->
+run_smaller_recur(Expected, [LastElement], Bag) ->
     ?assertCanonEqual(
         {found, Expected},
-        xb5_bag:smaller(randomly_switch_number_type(LastElement), Col)
+        xb5_bag:smaller(randomly_switch_number_type(LastElement), Bag)
     ),
 
     LargerElement = element_larger(LastElement),
     ?assert(LargerElement > LastElement),
-    ?assert(xb5_bag:smaller(LargerElement, Col) == {found, LastElement});
-run_smaller_recur(Expected, [Element | Next], Col) ->
-    ?assert(xb5_bag:smaller(randomly_switch_number_type(Element), Col) == {found, Expected}),
+    ?assert(xb5_bag:smaller(LargerElement, Bag) == {found, LastElement});
+run_smaller_recur(Expected, [Element | Next], Bag) ->
+    ?assert(xb5_bag:smaller(randomly_switch_number_type(Element), Bag) == {found, Expected}),
 
     case element_in_between(Expected, Element) of
         {found, InBetween} ->
             ?assert(InBetween > Expected),
             ?assert(InBetween < Element),
-            ?assert(xb5_bag:smaller(InBetween, Col) == {found, Expected});
+            ?assert(xb5_bag:smaller(InBetween, Bag) == {found, Expected});
         %
         none ->
             ok
     end,
 
-    run_smaller_recur(Element, Next, Col).
+    run_smaller_recur(Element, Next, Bag).
 
 %%%%%%%%%%%%%%%%%
 
-run_larger(RefElements, Col) ->
+run_larger(RefElements, Bag) ->
     case lists:reverse(lists:usort(RefElements)) of
         [] ->
             Element = new_element(),
-            ?assertEqual(none, xb5_bag:larger(Element, Col));
+            ?assertEqual(none, xb5_bag:larger(Element, Bag));
         %
         [SingleElement] ->
-            ?assertEqual(none, xb5_bag:larger(SingleElement, Col)),
+            ?assertEqual(none, xb5_bag:larger(SingleElement, Bag)),
 
             LargerElement = element_larger(SingleElement),
-            ?assertEqual(none, xb5_bag:larger(LargerElement, Col)),
+            ?assertEqual(none, xb5_bag:larger(LargerElement, Bag)),
 
             SmallerElement = element_smaller(SingleElement),
-            ?assert(xb5_bag:larger(SmallerElement, Col) == {found, SingleElement});
+            ?assert(xb5_bag:larger(SmallerElement, Bag) == {found, SingleElement});
         %
         [LastElement | Next] ->
-            ?assertEqual(none, xb5_bag:larger(randomly_switch_number_type(LastElement), Col)),
+            ?assertEqual(none, xb5_bag:larger(randomly_switch_number_type(LastElement), Bag)),
 
             LargerElement = element_larger(LastElement),
-            ?assertEqual(none, xb5_bag:larger(LargerElement, Col)),
+            ?assertEqual(none, xb5_bag:larger(LargerElement, Bag)),
 
-            run_larger_recur(LastElement, Next, Col)
+            run_larger_recur(LastElement, Next, Bag)
     end.
 
-run_larger_recur(Expected, [FirstElement], Col) ->
+run_larger_recur(Expected, [FirstElement], Bag) ->
     ?assertCanonEqual(
         {found, Expected},
-        xb5_bag:larger(randomly_switch_number_type(FirstElement), Col)
+        xb5_bag:larger(randomly_switch_number_type(FirstElement), Bag)
     ),
 
     SmallerElement = element_smaller(FirstElement),
     ?assert(SmallerElement < FirstElement),
-    ?assert(xb5_bag:larger(SmallerElement, Col) == {found, FirstElement});
-run_larger_recur(Expected, [Element | Next], Col) ->
-    ?assert(xb5_bag:larger(randomly_switch_number_type(Element), Col) == {found, Expected}),
+    ?assert(xb5_bag:larger(SmallerElement, Bag) == {found, FirstElement});
+run_larger_recur(Expected, [Element | Next], Bag) ->
+    ?assert(xb5_bag:larger(randomly_switch_number_type(Element), Bag) == {found, Expected}),
 
     case element_in_between(Element, Expected) of
         {found, InBetween} ->
             ?assert(InBetween < Expected),
             ?assert(InBetween > Element),
-            ?assert(xb5_bag:larger(InBetween, Col) == {found, Expected});
+            ?assert(xb5_bag:larger(InBetween, Bag) == {found, Expected});
         %
         none ->
             ok
     end,
 
-    run_larger_recur(Element, Next, Col).
+    run_larger_recur(Element, Next, Bag).
 
 %%%%%%%%%%%%%%%%%
 
-run_take_smallest([Expected | Next], Col) ->
-    {Taken, Col2} = xb5_bag:take_smallest(Col),
+run_take_smallest([Expected | Next], Bag) ->
+    {Taken, Bag2} = xb5_bag:take_smallest(Bag),
     ?assert(Taken == Expected),
-    ?assertEqual(length(Next), xb5_bag:size(Col2)),
-    run_take_smallest(Next, Col2);
-run_take_smallest([], Col) ->
-    ?assertError(empty_items, xb5_bag:take_smallest(Col)).
+    ?assertEqual(length(Next), xb5_bag:size(Bag2)),
+    run_take_smallest(Next, Bag2);
+run_take_smallest([], Bag) ->
+    ?assertError(empty_bag, xb5_bag:take_smallest(Bag)).
 
-run_take_largest([Expected | Next], Col) ->
-    {Taken, Col2} = xb5_bag:take_largest(Col),
+run_take_largest([Expected | Next], Bag) ->
+    {Taken, Bag2} = xb5_bag:take_largest(Bag),
     ?assert(Taken == Expected),
-    ?assertEqual(length(Next), xb5_bag:size(Col2)),
-    run_take_largest(Next, Col2);
-run_take_largest([], Col) ->
-    ?assertError(empty_items, xb5_bag:take_largest(Col)).
+    ?assertEqual(length(Next), xb5_bag:size(Bag2)),
+    run_take_largest(Next, Bag2);
+run_take_largest([], Bag) ->
+    ?assertError(empty_bag, xb5_bag:take_largest(Bag)).
 
 %% ------------------------------------------------------------------
 %% Helpers: iterators
 %% ------------------------------------------------------------------
 
-run_iterator_from(RefElements, Col) ->
+run_iterator_from(RefElements, Bag) ->
     case RefElements of
         [] ->
-            Iter = new_iterator_from(new_element(), Col),
+            Iter = new_iterator_from(new_element(), Bag),
             ?assertEqual([], iterate(Iter));
         %
         [SingleElement] ->
-            Iter = new_iterator_from(randomly_switch_number_type(SingleElement), Col),
+            Iter = new_iterator_from(randomly_switch_number_type(SingleElement), Bag),
             ?assertListsCanonEqual(RefElements, iterate(Iter)),
 
             SmallerElement = element_smaller(SingleElement),
-            Iter2 = new_iterator_from(SmallerElement, Col),
+            Iter2 = new_iterator_from(SmallerElement, Bag),
             ?assertListsCanonEqual(RefElements, iterate(Iter2)),
 
             LargerElement = element_larger(SingleElement),
-            Iter3 = new_iterator_from(LargerElement, Col),
+            Iter3 = new_iterator_from(LargerElement, Bag),
             ?assertEqual([], iterate(Iter3));
         %
         [FirstElement | _] ->
             SmallerElement = element_smaller(FirstElement),
-            Iter = new_iterator_from(SmallerElement, Col),
+            Iter = new_iterator_from(SmallerElement, Bag),
             ?assertListsCanonEqual(RefElements, iterate(Iter)),
 
-            run_iterator_from_recur(RefElements, Col)
+            run_iterator_from_recur(RefElements, Bag)
     end.
 
-run_iterator_from_recur([LastElement], Col) ->
-    run_iterator_from_last_elements([LastElement], Col);
-run_iterator_from_recur([Elem1 | [Elem2 | _] = Tail] = List, Col) ->
-    Iter = new_iterator_from(Elem1, Col),
+run_iterator_from_recur([LastElement], Bag) ->
+    run_iterator_from_last_elements([LastElement], Bag);
+run_iterator_from_recur([Elem1 | [Elem2 | _] = Tail] = List, Bag) ->
+    Iter = new_iterator_from(Elem1, Bag),
     ?assertListsCanonEqual(List, iterate(Iter)),
 
     case element_in_between(Elem1, Elem2) of
         {found, InBetween} ->
             ?assert(InBetween > Elem1),
             ?assert(InBetween < Elem2),
-            Iter2 = new_iterator_from(InBetween, Col),
+            Iter2 = new_iterator_from(InBetween, Bag),
             ?assertListsCanonEqual(Tail, iterate(Iter2));
         %
         none ->
@@ -1691,66 +1691,66 @@ run_iterator_from_recur([Elem1 | [Elem2 | _] = Tail] = List, Col) ->
     case lists:dropwhile(fun(E) -> E == Elem1 end, Tail) of
         [] ->
             % Last element case
-            run_iterator_from_last_elements(List, Col);
+            run_iterator_from_last_elements(List, Bag);
         %
         Next ->
-            run_iterator_from_recur(Next, Col)
+            run_iterator_from_recur(Next, Bag)
     end.
 
-run_iterator_from_last_elements([Elem | _] = LastElements, Col) ->
-    Iter = new_iterator_from(randomly_switch_number_type(Elem), Col),
+run_iterator_from_last_elements([Elem | _] = LastElements, Bag) ->
+    Iter = new_iterator_from(randomly_switch_number_type(Elem), Bag),
     ?assertListsCanonEqual(LastElements, iterate(Iter)),
 
     LargerElement = element_larger(Elem),
-    Iter2 = new_iterator_from(LargerElement, Col),
+    Iter2 = new_iterator_from(LargerElement, Bag),
     ?assertEqual([], iterate(Iter2)).
 
-new_iterator_from(Elem, Col) ->
-    Iter = xb5_bag:iterator_from(Elem, Col),
-    ?assertEqual(Iter, xb5_bag:iterator_from(Elem, Col, ordered)),
+new_iterator_from(Elem, Bag) ->
+    Iter = xb5_bag:iterator_from(Elem, Bag),
+    ?assertEqual(Iter, xb5_bag:iterator_from(Elem, Bag, ordered)),
     Iter.
 
 %%%%%%%%%%%%%%%%%
 
-run_iterator_from_reversed(RefElements, Col) ->
+run_iterator_from_reversed(RefElements, Bag) ->
     case lists:reverse(RefElements) of
         [] ->
-            Iter = xb5_bag:iterator_from(new_element(), Col, reversed),
+            Iter = xb5_bag:iterator_from(new_element(), Bag, reversed),
             ?assertEqual([], iterate(Iter));
         %
         [SingleElement] ->
             Iter = xb5_bag:iterator_from(
-                randomly_switch_number_type(SingleElement), Col, reversed
+                randomly_switch_number_type(SingleElement), Bag, reversed
             ),
             ?assertListsCanonEqual([SingleElement], iterate(Iter)),
 
             SmallerElement = element_smaller(SingleElement),
-            Iter2 = xb5_bag:iterator_from(SmallerElement, Col, reversed),
+            Iter2 = xb5_bag:iterator_from(SmallerElement, Bag, reversed),
             ?assertEqual([], iterate(Iter2)),
 
             LargerElement = element_larger(SingleElement),
-            Iter3 = xb5_bag:iterator_from(LargerElement, Col, reversed),
+            Iter3 = xb5_bag:iterator_from(LargerElement, Bag, reversed),
             ?assertListsCanonEqual([SingleElement], iterate(Iter3));
         %
         [LastElement | _] = ReverseRefElements ->
             LargerElement = element_larger(LastElement),
-            Iter = xb5_bag:iterator_from(LargerElement, Col, reversed),
+            Iter = xb5_bag:iterator_from(LargerElement, Bag, reversed),
             ?assertListsCanonEqual(ReverseRefElements, iterate(Iter)),
 
-            run_iterator_from_reversed_recur(ReverseRefElements, Col)
+            run_iterator_from_reversed_recur(ReverseRefElements, Bag)
     end.
 
-run_iterator_from_reversed_recur([FirstElement], Col) ->
-    run_iterator_from_reversed_first_elements([FirstElement], Col);
-run_iterator_from_reversed_recur([Elem2 | [Elem1 | _] = Tail] = List, Col) ->
-    Iter = xb5_bag:iterator_from(Elem2, Col, reversed),
+run_iterator_from_reversed_recur([FirstElement], Bag) ->
+    run_iterator_from_reversed_first_elements([FirstElement], Bag);
+run_iterator_from_reversed_recur([Elem2 | [Elem1 | _] = Tail] = List, Bag) ->
+    Iter = xb5_bag:iterator_from(Elem2, Bag, reversed),
     ?assertListsCanonEqual(List, iterate(Iter)),
 
     case element_in_between(Elem1, Elem2) of
         {found, InBetween} ->
             ?assert(InBetween > Elem1),
             ?assert(InBetween < Elem2),
-            Iter2 = xb5_bag:iterator_from(InBetween, Col, reversed),
+            Iter2 = xb5_bag:iterator_from(InBetween, Bag, reversed),
             ?assertListsCanonEqual(Tail, iterate(Iter2));
         %
         none ->
@@ -1760,25 +1760,25 @@ run_iterator_from_reversed_recur([Elem2 | [Elem1 | _] = Tail] = List, Col) ->
     case lists:dropwhile(fun(E) -> E == Elem2 end, Tail) of
         [] ->
             % Last element case
-            run_iterator_from_reversed_first_elements(List, Col);
+            run_iterator_from_reversed_first_elements(List, Bag);
         %
         Next ->
-            run_iterator_from_reversed_recur(Next, Col)
+            run_iterator_from_reversed_recur(Next, Bag)
     end.
 
-run_iterator_from_reversed_first_elements([Elem | _] = FirstElements, Col) ->
-    Iter = xb5_bag:iterator_from(randomly_switch_number_type(Elem), Col, reversed),
+run_iterator_from_reversed_first_elements([Elem | _] = FirstElements, Bag) ->
+    Iter = xb5_bag:iterator_from(randomly_switch_number_type(Elem), Bag, reversed),
     ?assertListsCanonEqual(FirstElements, iterate(Iter)),
 
     SmallerElement = element_smaller(Elem),
-    Iter2 = xb5_bag:iterator_from(SmallerElement, Col, reversed),
+    Iter2 = xb5_bag:iterator_from(SmallerElement, Bag, reversed),
     ?assertEqual([], iterate(Iter2)).
 
 %%%%%%%%%%%%%%%%%
 
-new_iterator(Col) ->
-    Iter = xb5_bag:iterator(Col),
-    ?assertEqual(Iter, xb5_bag:iterator(Col, ordered)),
+new_iterator(Bag) ->
+    Iter = xb5_bag:iterator(Bag),
+    ?assertEqual(Iter, xb5_bag:iterator(Bag, ordered)),
     Iter.
 
 iterate(Iter) ->
@@ -1794,44 +1794,44 @@ iterate(Iter) ->
 %% Helpers: nth
 %% ------------------------------------------------------------------
 
-test_invalid_nth(Size, Col) ->
+test_invalid_nth(Size, Bag) ->
     lists:foreach(
         fun(_) ->
-            ?assertError({badarg, not_numerical}, xb5_bag:nth(?OPAQUE_TERM(not_numerical), Col)),
+            ?assertError({badarg, not_numerical}, xb5_bag:nth(?OPAQUE_TERM(not_numerical), Bag)),
 
             BelowN = -(rand:uniform(100) - 1),
             BelowFloat = float(BelowN),
-            ?assertError({badarg, BelowN}, xb5_bag:nth(BelowN, Col)),
-            ?assertError({badarg, BelowFloat}, xb5_bag:nth(?OPAQUE_TERM(BelowFloat), Col)),
+            ?assertError({badarg, BelowN}, xb5_bag:nth(BelowN, Bag)),
+            ?assertError({badarg, BelowFloat}, xb5_bag:nth(?OPAQUE_TERM(BelowFloat), Bag)),
 
             BeyondN = Size + rand:uniform(100),
             BeyondFloat = float(BeyondN),
-            ?assertError({badarg, BeyondN}, xb5_bag:nth(BeyondN, Col)),
-            ?assertError({badarg, BeyondFloat}, xb5_bag:nth(?OPAQUE_TERM(BeyondFloat), Col)),
+            ?assertError({badarg, BeyondN}, xb5_bag:nth(BeyondN, Bag)),
+            ?assertError({badarg, BeyondFloat}, xb5_bag:nth(?OPAQUE_TERM(BeyondFloat), Bag)),
 
             (Size > 1 andalso
                 begin
                     InBetween = rand:uniform(Size - 1) + 0.5,
-                    ?assertError({badarg, InBetween}, xb5_bag:nth(?OPAQUE_TERM(InBetween), Col))
+                    ?assertError({badarg, InBetween}, xb5_bag:nth(?OPAQUE_TERM(InBetween), Bag))
                 end),
 
             (Size =/= 0 andalso
                 begin
                     ValidButFloat = float(rand:uniform(Size)),
                     ?assertError(
-                        {badarg, ValidButFloat}, xb5_bag:nth(?OPAQUE_TERM(ValidButFloat), Col)
+                        {badarg, ValidButFloat}, xb5_bag:nth(?OPAQUE_TERM(ValidButFloat), Bag)
                     )
                 end)
         end,
         lists:seq(1, 20)
     ).
 
-test_valid_nth(RefElements, Col) ->
-    test_valid_nth_recur(1, RefElements, Col).
+test_valid_nth(RefElements, Bag) ->
+    test_valid_nth_recur(1, RefElements, Bag).
 
-test_valid_nth_recur(N, [RefElement | Next], Col) ->
-    ?assert(xb5_bag:nth(N, Col) == RefElement),
-    test_valid_nth_recur(N + 1, Next, Col);
+test_valid_nth_recur(N, [RefElement | Next], Bag) ->
+    ?assert(xb5_bag:nth(N, Bag) == RefElement),
+    test_valid_nth_recur(N + 1, Next, Bag);
 test_valid_nth_recur(_, [], _) ->
     ok.
 
@@ -1839,46 +1839,46 @@ test_valid_nth_recur(_, [], _) ->
 %% Helpers: rank smaller
 %% ------------------------------------------------------------------
 
-run_rank_smaller(RefElements, Col) ->
+run_rank_smaller(RefElements, Bag) ->
     case RefElements of
         [] ->
             Element = new_element(),
-            ?assertEqual(none, xb5_bag:rank_smaller(Element, Col));
+            ?assertEqual(none, xb5_bag:rank_smaller(Element, Bag));
         %
         [FirstElement | Next] ->
             ?assertEqual(
-                none, xb5_bag:rank_smaller(randomly_switch_number_type(FirstElement), Col)
+                none, xb5_bag:rank_smaller(randomly_switch_number_type(FirstElement), Bag)
             ),
 
-            run_rank_smaller_recur(1, FirstElement, Next, Col)
+            run_rank_smaller_recur(1, FirstElement, Next, Bag)
     end.
 
-run_rank_smaller_recur(Pos1, Elem1, Tail, Col) ->
+run_rank_smaller_recur(Pos1, Elem1, Tail, Bag) ->
     case lists:dropwhile(fun(E) -> E == Elem1 end, Tail) of
         [Elem2 | Next] ->
             RepeatedCount = length(Tail) - (length(Next) + 1),
             Pos2 = Pos1 + RepeatedCount + 1,
 
             {SmallerPos, SmallerElem} =
-                Smaller = xb5_bag:rank_smaller(randomly_switch_number_type(Elem2), Col),
+                Smaller = xb5_bag:rank_smaller(randomly_switch_number_type(Elem2), Bag),
             ?assertEqual(Pos1 + RepeatedCount, SmallerPos),
             ?assertCanonEqual(Elem1, SmallerElem),
 
             case element_in_between(Elem1, Elem2) of
                 {found, InBetween} ->
-                    ?assertEqual(Smaller, xb5_bag:rank_smaller(InBetween, Col));
+                    ?assertEqual(Smaller, xb5_bag:rank_smaller(InBetween, Bag));
                 %
                 none ->
                     ok
             end,
 
-            run_rank_smaller_recur(Pos2, Elem2, Next, Col);
+            run_rank_smaller_recur(Pos2, Elem2, Next, Bag);
         %
         [] ->
-            LastPos = xb5_bag:size(Col),
+            LastPos = xb5_bag:size(Bag),
 
             LargerElem = element_larger(Elem1),
-            {SmallerPos, SmallerElem} = xb5_bag:rank_smaller(LargerElem, Col),
+            {SmallerPos, SmallerElem} = xb5_bag:rank_smaller(LargerElem, Bag),
             ?assertEqual(LastPos, SmallerPos),
             ?assertCanonEqual(Elem1, SmallerElem)
     end.
@@ -1887,44 +1887,44 @@ run_rank_smaller_recur(Pos1, Elem1, Tail, Col) ->
 %% Helpers: rank larger
 %% ------------------------------------------------------------------
 
-run_rank_larger(Size, RefElements, Col) ->
+run_rank_larger(Size, RefElements, Bag) ->
     case lists:reverse(RefElements) of
         [] ->
             Element = new_element(),
-            ?assertEqual(none, xb5_bag:rank_larger(Element, Col));
+            ?assertEqual(none, xb5_bag:rank_larger(Element, Bag));
         %
         [LastElement | Next] ->
             ?assertEqual(
-                none, xb5_bag:rank_larger(randomly_switch_number_type(LastElement), Col)
+                none, xb5_bag:rank_larger(randomly_switch_number_type(LastElement), Bag)
             ),
 
-            run_rank_larger_recur(Size, LastElement, Next, Col)
+            run_rank_larger_recur(Size, LastElement, Next, Bag)
     end.
 
-run_rank_larger_recur(Pos2, Elem2, Tail, Col) ->
+run_rank_larger_recur(Pos2, Elem2, Tail, Bag) ->
     case lists:dropwhile(fun(E) -> E == Elem2 end, Tail) of
         [Elem1 | Next] ->
             RepeatedCount = length(Tail) - (length(Next) + 1),
             Pos1 = Pos2 - RepeatedCount - 1,
 
             {LargerPos, LargerElem} =
-                Larger = xb5_bag:rank_larger(randomly_switch_number_type(Elem1), Col),
+                Larger = xb5_bag:rank_larger(randomly_switch_number_type(Elem1), Bag),
             ?assertEqual(Pos1 + 1, LargerPos),
             ?assertCanonEqual(Elem2, LargerElem),
 
             case element_in_between(Elem1, Elem2) of
                 {found, InBetween} ->
-                    ?assertEqual(Larger, xb5_bag:rank_larger(InBetween, Col));
+                    ?assertEqual(Larger, xb5_bag:rank_larger(InBetween, Bag));
                 %
                 none ->
                     ok
             end,
 
-            run_rank_larger_recur(Pos1, Elem1, Next, Col);
+            run_rank_larger_recur(Pos1, Elem1, Next, Bag);
         %
         [] ->
             SmallerElem = element_smaller(Elem2),
-            {LargerPos, LargerElem} = xb5_bag:rank_larger(SmallerElem, Col),
+            {LargerPos, LargerElem} = xb5_bag:rank_larger(SmallerElem, Bag),
             ?assertEqual(1, LargerPos),
             ?assertCanonEqual(Elem2, LargerElem)
     end.
@@ -1933,50 +1933,50 @@ run_rank_larger_recur(Pos2, Elem2, Tail, Col) ->
 %% Helpers: Percentile Bracket - Inclusive
 %% ------------------------------------------------------------------
 
-test_invalid_percentile_inclusive(Col) ->
-    ?assertError({badarg, -1}, new_percentile_bracket_inclusive(-1, Col)),
-    ?assertError({badarg, 2}, new_percentile_bracket_inclusive(2, Col)),
-    ?assertError({badarg, 100}, new_percentile_bracket_inclusive(100, Col)),
-    ?assertError({badarg, 50}, new_percentile_bracket_inclusive(50, Col)),
+test_invalid_percentile_inclusive(Bag) ->
+    ?assertError({badarg, -1}, new_percentile_bracket_inclusive(-1, Bag)),
+    ?assertError({badarg, 2}, new_percentile_bracket_inclusive(2, Bag)),
+    ?assertError({badarg, 100}, new_percentile_bracket_inclusive(100, Bag)),
+    ?assertError({badarg, 50}, new_percentile_bracket_inclusive(50, Bag)),
     ?assertError(
-        {badarg, not_numerical}, new_percentile_bracket_inclusive(?OPAQUE_TERM(not_numerical), Col)
+        {badarg, not_numerical}, new_percentile_bracket_inclusive(?OPAQUE_TERM(not_numerical), Bag)
     ),
 
-    ?assertError({badarg, -1}, new_percentile_inclusive(-1, Col)),
-    ?assertError({badarg, 2}, new_percentile_inclusive(2, Col)),
-    ?assertError({badarg, 100}, new_percentile_inclusive(100, Col)),
-    ?assertError({badarg, 50}, new_percentile_inclusive(50, Col)),
+    ?assertError({badarg, -1}, new_percentile_inclusive(-1, Bag)),
+    ?assertError({badarg, 2}, new_percentile_inclusive(2, Bag)),
+    ?assertError({badarg, 100}, new_percentile_inclusive(100, Bag)),
+    ?assertError({badarg, 50}, new_percentile_inclusive(50, Bag)),
     ?assertError(
-        {badarg, not_numerical}, new_percentile_inclusive(?OPAQUE_TERM(not_numerical), Col)
+        {badarg, not_numerical}, new_percentile_inclusive(?OPAQUE_TERM(not_numerical), Bag)
     ).
 
-test_valid_percentile_inclusive(0 = Size, _, Col) ->
+test_valid_percentile_inclusive(0 = Size, _, Bag) ->
     foreach_percentile(
         fun(Percentile, _, _) ->
-            ?assertEqual(none, new_percentile_bracket_inclusive(Percentile, Col)),
-            ?assertEqual(none, new_percentile_inclusive(Percentile, Col))
+            ?assertEqual(none, new_percentile_bracket_inclusive(Percentile, Bag)),
+            ?assertEqual(none, new_percentile_inclusive(Percentile, Bag))
         end,
         Size,
         inclusive
     );
-test_valid_percentile_inclusive(Size, RefElements, Col) ->
+test_valid_percentile_inclusive(Size, RefElements, Bag) ->
     foreach_percentile(
         fun
             (Percentile, LowRank, HighRank) when LowRank == HighRank ->
                 ExactElem = lists:nth(LowRank, RefElements),
                 ?assertCanonEqual(
-                    {exact, ExactElem}, new_percentile_bracket_inclusive(Percentile, Col)
+                    {exact, ExactElem}, new_percentile_bracket_inclusive(Percentile, Bag)
                 ),
-                ?assertCanonEqual({value, ExactElem}, new_percentile_inclusive(Percentile, Col));
+                ?assertCanonEqual({value, ExactElem}, new_percentile_inclusive(Percentile, Bag));
             %
             (Percentile, LowRank, HighRank) ->
                 case lists:sublist(RefElements, LowRank, 2) of
                     [LowElem, HighElem] when LowElem == HighElem ->
                         ?assertCanonEqual(
-                            {exact, LowElem}, new_percentile_bracket_inclusive(Percentile, Col)
+                            {exact, LowElem}, new_percentile_bracket_inclusive(Percentile, Bag)
                         ),
                         ?assertCanonEqual(
-                            {value, LowElem}, new_percentile_inclusive(Percentile, Col)
+                            {value, LowElem}, new_percentile_inclusive(Percentile, Bag)
                         );
                     %
                     [LowElem, HighElem] ->
@@ -2001,7 +2001,7 @@ test_valid_percentile_inclusive(Size, RefElements, Col) ->
 
                         ?assertCanonEqual(
                             {between, LowBound, HighBound},
-                            new_percentile_bracket_inclusive(Percentile, Col)
+                            new_percentile_bracket_inclusive(Percentile, Bag)
                         ),
 
                         %%
@@ -2010,19 +2010,19 @@ test_valid_percentile_inclusive(Size, RefElements, Col) ->
                             not is_number(LowElem) ->
                                 ?assertCanonError(
                                     {bracket_value_not_a_number, LowBound},
-                                    new_percentile_inclusive(Percentile, Col)
+                                    new_percentile_inclusive(Percentile, Bag)
                                 );
                             %
                             not is_number(HighElem) ->
                                 ?assertCanonError(
                                     {bracket_value_not_a_number, HighBound},
-                                    new_percentile_inclusive(Percentile, Col)
+                                    new_percentile_inclusive(Percentile, Bag)
                                 );
                             %
                             true ->
                                 ?assertCanonEqual(
                                     {value, (LowWeight * LowElem) + (HighWeight * HighElem)},
-                                    new_percentile_inclusive(Percentile, Col)
+                                    new_percentile_inclusive(Percentile, Bag)
                                 )
                         end
                 end
@@ -2034,31 +2034,31 @@ test_valid_percentile_inclusive(Size, RefElements, Col) ->
 inclusive_percentile_bracket_perc(Rank, Size) ->
     (Rank - 1) / (Size - 1).
 
-new_percentile_bracket_inclusive(Percentile, Col) ->
-    Bracket = new_percentile_bracket_inclusive_do(Percentile, Col),
+new_percentile_bracket_inclusive(Percentile, Bag) ->
+    Bracket = new_percentile_bracket_inclusive_do(Percentile, Bag),
 
     if
         Percentile =:= +0.0 orelse Percentile =:= 1.0 ->
-            ?assertEqual(Bracket, new_percentile_bracket_inclusive_do(trunc(Percentile), Col)),
+            ?assertEqual(Bracket, new_percentile_bracket_inclusive_do(trunc(Percentile), Bag)),
             Bracket;
         %
         is_integer(Percentile) ->
-            ?assertEqual(Bracket, new_percentile_bracket_inclusive_do(float(Percentile), Col)),
+            ?assertEqual(Bracket, new_percentile_bracket_inclusive_do(float(Percentile), Bag)),
             Bracket;
         %
         true ->
             Bracket
     end.
 
-new_percentile_bracket_inclusive_do(Percentile, Col) ->
-    try xb5_bag:percentile_bracket(Percentile, Col) of
+new_percentile_bracket_inclusive_do(Percentile, Bag) ->
+    try xb5_bag:percentile_bracket(Percentile, Bag) of
         Bracket ->
             ?assertEqual(
-                Bracket, xb5_bag:percentile_bracket(Percentile, Col, [{method, inclusive}])
+                Bracket, xb5_bag:percentile_bracket(Percentile, Bag, [{method, inclusive}])
             ),
             ?assertEqual(
                 Bracket,
-                xb5_bag:percentile_bracket(Percentile, Col, [
+                xb5_bag:percentile_bracket(Percentile, Bag, [
                     {method, inclusive}, {method, exclusive}
                 ])
             ),
@@ -2066,52 +2066,52 @@ new_percentile_bracket_inclusive_do(Percentile, Col) ->
     catch
         Class:Reason:Stacktrace ->
             ?assertException(
-                Class, Reason, xb5_bag:percentile_bracket(Percentile, Col, [{method, inclusive}])
+                Class, Reason, xb5_bag:percentile_bracket(Percentile, Bag, [{method, inclusive}])
             ),
             ?assertException(
                 Class,
                 Reason,
-                xb5_bag:percentile_bracket(Percentile, Col, [
+                xb5_bag:percentile_bracket(Percentile, Bag, [
                     {method, inclusive}, {method, exclusive}
                 ])
             ),
             erlang:raise(Class, Reason, Stacktrace)
     end.
 
-new_percentile_inclusive(Percentile, Col) ->
-    Result = new_percentile_inclusive_do(Percentile, Col),
+new_percentile_inclusive(Percentile, Bag) ->
+    Result = new_percentile_inclusive_do(Percentile, Bag),
 
     if
         Percentile =:= +0.0 orelse Percentile =:= 1.0 ->
-            ?assertEqual(Result, new_percentile_inclusive_do(trunc(Percentile), Col)),
+            ?assertEqual(Result, new_percentile_inclusive_do(trunc(Percentile), Bag)),
             Result;
         %
         is_integer(Percentile) ->
-            ?assertEqual(Result, new_percentile_inclusive_do(float(Percentile), Col)),
+            ?assertEqual(Result, new_percentile_inclusive_do(float(Percentile), Bag)),
             Result;
         %
         true ->
             Result
     end.
 
-new_percentile_inclusive_do(Percentile, Col) ->
-    try xb5_bag:percentile(Percentile, Col) of
+new_percentile_inclusive_do(Percentile, Bag) ->
+    try xb5_bag:percentile(Percentile, Bag) of
         Result ->
-            ?assertEqual(Result, xb5_bag:percentile(Percentile, Col, [{method, inclusive}])),
+            ?assertEqual(Result, xb5_bag:percentile(Percentile, Bag, [{method, inclusive}])),
             ?assertEqual(
                 Result,
-                xb5_bag:percentile(Percentile, Col, [{method, inclusive}, {method, exclusive}])
+                xb5_bag:percentile(Percentile, Bag, [{method, inclusive}, {method, exclusive}])
             ),
             Result
     catch
         Class:Reason:Stacktrace ->
             ?assertException(
-                Class, Reason, xb5_bag:percentile(Percentile, Col, [{method, inclusive}])
+                Class, Reason, xb5_bag:percentile(Percentile, Bag, [{method, inclusive}])
             ),
             ?assertException(
                 Class,
                 Reason,
-                xb5_bag:percentile(Percentile, Col, [{method, inclusive}, {method, exclusive}])
+                xb5_bag:percentile(Percentile, Bag, [{method, inclusive}, {method, exclusive}])
             ),
             erlang:raise(Class, Reason, Stacktrace)
     end.
@@ -2120,54 +2120,54 @@ new_percentile_inclusive_do(Percentile, Col) ->
 %% Helpers: Percentile - Exclusive
 %% ------------------------------------------------------------------
 
-test_invalid_percentile_exclusive(Col) ->
-    ?assertError({badarg, -1}, new_percentile_bracket_exclusive(-1, Col)),
-    ?assertError({badarg, 2}, new_percentile_bracket_exclusive(2, Col)),
-    ?assertError({badarg, 100}, new_percentile_bracket_exclusive(100, Col)),
-    ?assertError({badarg, 50}, new_percentile_bracket_exclusive(50, Col)),
+test_invalid_percentile_exclusive(Bag) ->
+    ?assertError({badarg, -1}, new_percentile_bracket_exclusive(-1, Bag)),
+    ?assertError({badarg, 2}, new_percentile_bracket_exclusive(2, Bag)),
+    ?assertError({badarg, 100}, new_percentile_bracket_exclusive(100, Bag)),
+    ?assertError({badarg, 50}, new_percentile_bracket_exclusive(50, Bag)),
     ?assertError(
-        {badarg, not_numerical}, new_percentile_bracket_exclusive(?OPAQUE_TERM(not_numerical), Col)
+        {badarg, not_numerical}, new_percentile_bracket_exclusive(?OPAQUE_TERM(not_numerical), Bag)
     ),
 
-    ?assertError({badarg, -1}, new_percentile_exclusive(-1, Col)),
-    ?assertError({badarg, 2}, new_percentile_exclusive(2, Col)),
-    ?assertError({badarg, 100}, new_percentile_exclusive(100, Col)),
-    ?assertError({badarg, 50}, new_percentile_exclusive(50, Col)),
+    ?assertError({badarg, -1}, new_percentile_exclusive(-1, Bag)),
+    ?assertError({badarg, 2}, new_percentile_exclusive(2, Bag)),
+    ?assertError({badarg, 100}, new_percentile_exclusive(100, Bag)),
+    ?assertError({badarg, 50}, new_percentile_exclusive(50, Bag)),
     ?assertError(
-        {badarg, not_numerical}, new_percentile_exclusive(?OPAQUE_TERM(not_numerical), Col)
+        {badarg, not_numerical}, new_percentile_exclusive(?OPAQUE_TERM(not_numerical), Bag)
     ).
 
-test_valid_percentile_exclusive(0 = Size, _, Col) ->
+test_valid_percentile_exclusive(0 = Size, _, Bag) ->
     foreach_percentile(
         fun(Percentile, _, _) ->
-            ?assertCanonEqual(none, new_percentile_bracket_exclusive(Percentile, Col)),
-            ?assertEqual(none, new_percentile_exclusive(Percentile, Col))
+            ?assertCanonEqual(none, new_percentile_bracket_exclusive(Percentile, Bag)),
+            ?assertEqual(none, new_percentile_exclusive(Percentile, Bag))
         end,
         Size,
         exclusive
     );
-test_valid_percentile_exclusive(Size, RefElements, Col) ->
+test_valid_percentile_exclusive(Size, RefElements, Bag) ->
     foreach_percentile(
         fun
             (Percentile, LowRank, HighRank) when LowRank < 1 orelse HighRank > Size ->
-                ?assertCanonEqual(none, new_percentile_bracket_exclusive(Percentile, Col)),
-                ?assertCanonEqual(none, new_percentile_exclusive(Percentile, Col));
+                ?assertCanonEqual(none, new_percentile_bracket_exclusive(Percentile, Bag)),
+                ?assertCanonEqual(none, new_percentile_exclusive(Percentile, Bag));
             %
             (Percentile, LowRank, HighRank) when LowRank == HighRank ->
                 ExactElem = lists:nth(LowRank, RefElements),
                 ?assertCanonEqual(
-                    {exact, ExactElem}, new_percentile_bracket_exclusive(Percentile, Col)
+                    {exact, ExactElem}, new_percentile_bracket_exclusive(Percentile, Bag)
                 ),
-                ?assertCanonEqual({value, ExactElem}, new_percentile_exclusive(Percentile, Col));
+                ?assertCanonEqual({value, ExactElem}, new_percentile_exclusive(Percentile, Bag));
             %
             (Percentile, LowRank, HighRank) ->
                 case lists:sublist(RefElements, LowRank, 2) of
                     [LowElem, HighElem] when LowElem == HighElem ->
                         ?assertCanonEqual(
-                            {exact, LowElem}, new_percentile_bracket_exclusive(Percentile, Col)
+                            {exact, LowElem}, new_percentile_bracket_exclusive(Percentile, Bag)
                         ),
                         ?assertCanonEqual(
-                            {value, LowElem}, new_percentile_exclusive(Percentile, Col)
+                            {value, LowElem}, new_percentile_exclusive(Percentile, Bag)
                         );
                     %
                     [LowElem, HighElem] ->
@@ -2192,7 +2192,7 @@ test_valid_percentile_exclusive(Size, RefElements, Col) ->
 
                         ?assertCanonEqual(
                             {between, LowBound, HighBound},
-                            new_percentile_bracket_exclusive(Percentile, Col)
+                            new_percentile_bracket_exclusive(Percentile, Bag)
                         ),
 
                         %%
@@ -2201,19 +2201,19 @@ test_valid_percentile_exclusive(Size, RefElements, Col) ->
                             not is_number(LowElem) ->
                                 ?assertCanonError(
                                     {bracket_value_not_a_number, LowBound},
-                                    new_percentile_exclusive(Percentile, Col)
+                                    new_percentile_exclusive(Percentile, Bag)
                                 );
                             %
                             not is_number(HighElem) ->
                                 ?assertCanonError(
                                     {bracket_value_not_a_number, HighBound},
-                                    new_percentile_exclusive(Percentile, Col)
+                                    new_percentile_exclusive(Percentile, Bag)
                                 );
                             %
                             true ->
                                 ?assertCanonEqual(
                                     {value, (LowWeight * LowElem) + (HighWeight * HighElem)},
-                                    new_percentile_exclusive(Percentile, Col)
+                                    new_percentile_exclusive(Percentile, Bag)
                                 )
                         end
                 end
@@ -2225,28 +2225,28 @@ test_valid_percentile_exclusive(Size, RefElements, Col) ->
 exclusive_percentile_bracket_perc(Rank, Size) ->
     Rank / (Size + 1).
 
-new_percentile_bracket_exclusive(Percentile, Col) ->
-    Bracket = new_percentile_bracket_exclusive_do(Percentile, Col),
+new_percentile_bracket_exclusive(Percentile, Bag) ->
+    Bracket = new_percentile_bracket_exclusive_do(Percentile, Bag),
 
     if
         Percentile =:= +0.0 orelse Percentile =:= 1.0 ->
-            ?assertEqual(Bracket, new_percentile_bracket_exclusive_do(trunc(Percentile), Col)),
+            ?assertEqual(Bracket, new_percentile_bracket_exclusive_do(trunc(Percentile), Bag)),
             Bracket;
         %
         is_integer(Percentile) ->
-            ?assertEqual(Bracket, new_percentile_bracket_exclusive_do(float(Percentile), Col)),
+            ?assertEqual(Bracket, new_percentile_bracket_exclusive_do(float(Percentile), Bag)),
             Bracket;
         %
         true ->
             Bracket
     end.
 
-new_percentile_bracket_exclusive_do(Percentile, Col) ->
-    try xb5_bag:percentile_bracket(Percentile, Col, [{method, exclusive}]) of
+new_percentile_bracket_exclusive_do(Percentile, Bag) ->
+    try xb5_bag:percentile_bracket(Percentile, Bag, [{method, exclusive}]) of
         Bracket ->
             ?assertEqual(
                 Bracket,
-                xb5_bag:percentile_bracket(Percentile, Col, [
+                xb5_bag:percentile_bracket(Percentile, Bag, [
                     {method, exclusive}, {method, inclusive}
                 ])
             ),
@@ -2256,35 +2256,35 @@ new_percentile_bracket_exclusive_do(Percentile, Col) ->
             ?assertException(
                 Class,
                 Reason,
-                xb5_bag:percentile_bracket(Percentile, Col, [
+                xb5_bag:percentile_bracket(Percentile, Bag, [
                     {method, exclusive}, {method, inclusive}
                 ])
             ),
             erlang:raise(Class, Reason, Stacktrace)
     end.
 
-new_percentile_exclusive(Percentile, Col) ->
-    Result = new_percentile_exclusive_do(Percentile, Col),
+new_percentile_exclusive(Percentile, Bag) ->
+    Result = new_percentile_exclusive_do(Percentile, Bag),
 
     if
         Percentile =:= +0.0 orelse Percentile =:= 1.0 ->
-            ?assertEqual(Result, new_percentile_exclusive_do(trunc(Percentile), Col)),
+            ?assertEqual(Result, new_percentile_exclusive_do(trunc(Percentile), Bag)),
             Result;
         %
         is_integer(Percentile) ->
-            ?assertEqual(Result, new_percentile_exclusive_do(float(Percentile), Col)),
+            ?assertEqual(Result, new_percentile_exclusive_do(float(Percentile), Bag)),
             Result;
         %
         true ->
             Result
     end.
 
-new_percentile_exclusive_do(Percentile, Col) ->
-    try xb5_bag:percentile(Percentile, Col, [{method, exclusive}]) of
+new_percentile_exclusive_do(Percentile, Bag) ->
+    try xb5_bag:percentile(Percentile, Bag, [{method, exclusive}]) of
         Result ->
             ?assertEqual(
                 Result,
-                xb5_bag:percentile(Percentile, Col, [{method, exclusive}, {method, inclusive}])
+                xb5_bag:percentile(Percentile, Bag, [{method, exclusive}, {method, inclusive}])
             ),
             Result
     catch
@@ -2292,7 +2292,7 @@ new_percentile_exclusive_do(Percentile, Col) ->
             ?assertException(
                 Class,
                 Reason,
-                xb5_bag:percentile(Percentile, Col, [{method, exclusive}, {method, inclusive}])
+                xb5_bag:percentile(Percentile, Bag, [{method, exclusive}, {method, inclusive}])
             ),
             erlang:raise(Class, Reason, Stacktrace)
     end.
@@ -2301,74 +2301,74 @@ new_percentile_exclusive_do(Percentile, Col) ->
 %% Helpers: Percentile - Nearest Rank
 %% ------------------------------------------------------------------
 
-test_invalid_percentile_nearest_rank(Col) ->
-    ?assertError({badarg, -1}, new_percentile_bracket_nearest_rank(-1, Col)),
-    ?assertError({badarg, 2}, new_percentile_bracket_nearest_rank(2, Col)),
-    ?assertError({badarg, 100}, new_percentile_bracket_nearest_rank(100, Col)),
-    ?assertError({badarg, 50}, new_percentile_bracket_nearest_rank(50, Col)),
+test_invalid_percentile_nearest_rank(Bag) ->
+    ?assertError({badarg, -1}, new_percentile_bracket_nearest_rank(-1, Bag)),
+    ?assertError({badarg, 2}, new_percentile_bracket_nearest_rank(2, Bag)),
+    ?assertError({badarg, 100}, new_percentile_bracket_nearest_rank(100, Bag)),
+    ?assertError({badarg, 50}, new_percentile_bracket_nearest_rank(50, Bag)),
     ?assertError(
         {badarg, not_numerical},
-        new_percentile_bracket_nearest_rank(?OPAQUE_TERM(not_numerical), Col)
+        new_percentile_bracket_nearest_rank(?OPAQUE_TERM(not_numerical), Bag)
     ),
 
-    ?assertError({badarg, -1}, new_percentile_nearest_rank(-1, Col)),
-    ?assertError({badarg, 2}, new_percentile_nearest_rank(2, Col)),
-    ?assertError({badarg, 100}, new_percentile_nearest_rank(100, Col)),
-    ?assertError({badarg, 50}, new_percentile_nearest_rank(50, Col)),
+    ?assertError({badarg, -1}, new_percentile_nearest_rank(-1, Bag)),
+    ?assertError({badarg, 2}, new_percentile_nearest_rank(2, Bag)),
+    ?assertError({badarg, 100}, new_percentile_nearest_rank(100, Bag)),
+    ?assertError({badarg, 50}, new_percentile_nearest_rank(50, Bag)),
     ?assertError(
-        {badarg, not_numerical}, new_percentile_nearest_rank(?OPAQUE_TERM(not_numerical), Col)
+        {badarg, not_numerical}, new_percentile_nearest_rank(?OPAQUE_TERM(not_numerical), Bag)
     ).
 
-test_valid_percentile_nearest_rank(0 = Size, _, Col) ->
+test_valid_percentile_nearest_rank(0 = Size, _, Bag) ->
     foreach_percentile(
         fun(Percentile, _, _) ->
-            ?assertEqual(none, new_percentile_bracket_nearest_rank(Percentile, Col)),
-            ?assertEqual(none, new_percentile_nearest_rank(Percentile, Col))
+            ?assertEqual(none, new_percentile_bracket_nearest_rank(Percentile, Bag)),
+            ?assertEqual(none, new_percentile_nearest_rank(Percentile, Bag))
         end,
         Size,
         nearest_rank
     );
-test_valid_percentile_nearest_rank(Size, RefElements, Col) ->
+test_valid_percentile_nearest_rank(Size, RefElements, Bag) ->
     foreach_percentile(
         fun
             (Percentile, _, 0) ->
                 ?assertCanonEqual(0, Percentile),
-                ?assertEqual(none, new_percentile_bracket_nearest_rank(Percentile, Col)),
-                ?assertEqual(none, new_percentile_nearest_rank(Percentile, Col));
+                ?assertEqual(none, new_percentile_bracket_nearest_rank(Percentile, Bag)),
+                ?assertEqual(none, new_percentile_nearest_rank(Percentile, Bag));
             %
             (Percentile, _, ExactRank) ->
                 ExactElem = lists:nth(ExactRank, RefElements),
                 ?assertCanonEqual(
-                    {exact, ExactElem}, new_percentile_bracket_nearest_rank(Percentile, Col)
+                    {exact, ExactElem}, new_percentile_bracket_nearest_rank(Percentile, Bag)
                 ),
-                ?assertCanonEqual({value, ExactElem}, new_percentile_nearest_rank(Percentile, Col))
+                ?assertCanonEqual({value, ExactElem}, new_percentile_nearest_rank(Percentile, Bag))
         end,
         Size,
         nearest_rank
     ).
 
-new_percentile_bracket_nearest_rank(Percentile, Col) ->
-    Bracket = new_percentile_bracket_nearest_rank_do(Percentile, Col),
+new_percentile_bracket_nearest_rank(Percentile, Bag) ->
+    Bracket = new_percentile_bracket_nearest_rank_do(Percentile, Bag),
 
     if
         Percentile =:= +0.0 orelse Percentile =:= 1.0 ->
-            ?assertEqual(Bracket, new_percentile_bracket_nearest_rank_do(trunc(Percentile), Col)),
+            ?assertEqual(Bracket, new_percentile_bracket_nearest_rank_do(trunc(Percentile), Bag)),
             Bracket;
         %
         is_integer(Percentile) ->
-            ?assertEqual(Bracket, new_percentile_bracket_nearest_rank_do(float(Percentile), Col)),
+            ?assertEqual(Bracket, new_percentile_bracket_nearest_rank_do(float(Percentile), Bag)),
             Bracket;
         %
         true ->
             Bracket
     end.
 
-new_percentile_bracket_nearest_rank_do(Percentile, Col) ->
-    try xb5_bag:percentile_bracket(Percentile, Col, [{method, nearest_rank}]) of
+new_percentile_bracket_nearest_rank_do(Percentile, Bag) ->
+    try xb5_bag:percentile_bracket(Percentile, Bag, [{method, nearest_rank}]) of
         Bracket ->
             ?assertEqual(
                 Bracket,
-                xb5_bag:percentile_bracket(Percentile, Col, [
+                xb5_bag:percentile_bracket(Percentile, Bag, [
                     {method, nearest_rank}, {method, inclusive}
                 ])
             ),
@@ -2378,35 +2378,35 @@ new_percentile_bracket_nearest_rank_do(Percentile, Col) ->
             ?assertException(
                 Class,
                 Reason,
-                xb5_bag:percentile_bracket(Percentile, Col, [
+                xb5_bag:percentile_bracket(Percentile, Bag, [
                     {method, nearest_rank}, {method, inclusive}
                 ])
             ),
             erlang:raise(Class, Reason, Stacktrace)
     end.
 
-new_percentile_nearest_rank(Percentile, Col) ->
-    Result = new_percentile_nearest_rank_do(Percentile, Col),
+new_percentile_nearest_rank(Percentile, Bag) ->
+    Result = new_percentile_nearest_rank_do(Percentile, Bag),
 
     if
         Percentile =:= +0.0 orelse Percentile =:= 1.0 ->
-            ?assertEqual(Result, new_percentile_nearest_rank_do(trunc(Percentile), Col)),
+            ?assertEqual(Result, new_percentile_nearest_rank_do(trunc(Percentile), Bag)),
             Result;
         %
         is_integer(Percentile) ->
-            ?assertEqual(Result, new_percentile_nearest_rank_do(float(Percentile), Col)),
+            ?assertEqual(Result, new_percentile_nearest_rank_do(float(Percentile), Bag)),
             Result;
         %
         true ->
             Result
     end.
 
-new_percentile_nearest_rank_do(Percentile, Col) ->
-    try xb5_bag:percentile(Percentile, Col, [{method, nearest_rank}]) of
+new_percentile_nearest_rank_do(Percentile, Bag) ->
+    try xb5_bag:percentile(Percentile, Bag, [{method, nearest_rank}]) of
         Result ->
             ?assertEqual(
                 Result,
-                xb5_bag:percentile(Percentile, Col, [{method, nearest_rank}, {method, inclusive}])
+                xb5_bag:percentile(Percentile, Bag, [{method, nearest_rank}, {method, inclusive}])
             ),
             Result
     catch
@@ -2414,7 +2414,7 @@ new_percentile_nearest_rank_do(Percentile, Col) ->
             ?assertException(
                 Class,
                 Reason,
-                xb5_bag:percentile(Percentile, Col, [{method, nearest_rank}, {method, inclusive}])
+                xb5_bag:percentile(Percentile, Bag, [{method, nearest_rank}, {method, inclusive}])
             ),
             erlang:raise(Class, Reason, Stacktrace)
     end.
@@ -2462,14 +2462,14 @@ percentile_bracket_pos(Percentile, Size, nearest_rank) ->
 
 %%%%
 
-inclusive_percentile_rounded(Percentile, Col) ->
-    percentile_rounded(Percentile, Col, []).
+inclusive_percentile_rounded(Percentile, Bag) ->
+    percentile_rounded(Percentile, Bag, []).
 
-exclusive_percentile_rounded(Percentile, Col) ->
-    percentile_rounded(Percentile, Col, [{method, exclusive}]).
+exclusive_percentile_rounded(Percentile, Bag) ->
+    percentile_rounded(Percentile, Bag, [{method, exclusive}]).
 
-percentile_rounded(Percentile, Col, Opts) ->
-    case xb5_bag:percentile(Percentile, Col, Opts) of
+percentile_rounded(Percentile, Bag, Opts) ->
+    case xb5_bag:percentile(Percentile, Bag, Opts) of
         {value, Value} = Res when is_integer(Value) ->
             Res;
         %
@@ -2487,61 +2487,61 @@ round_float_precision(Value) ->
 
 %%%%
 
-percentile_rank_rounded(Elem, Col) ->
-    round_float_precision(xb5_bag:percentile_rank(Elem, Col)).
+percentile_rank_rounded(Elem, Bag) ->
+    round_float_precision(xb5_bag:percentile_rank(Elem, Bag)).
 
 %% ------------------------------------------------------------------
 %% Helpers: Percentile Rank
 %% ------------------------------------------------------------------
 
-run_percentile_rank(RefElements, Col) ->
+run_percentile_rank(RefElements, Bag) ->
     case RefElements of
         [] ->
-            ?assertError(empty_items, xb5_bag:percentile_rank(foobar, Col));
+            ?assertError(empty_bag, xb5_bag:percentile_rank(foobar, Bag));
         %
         [SingleElement] ->
-            ?assertEqual(0.5, xb5_bag:percentile_rank(SingleElement, Col)),
+            ?assertEqual(0.5, xb5_bag:percentile_rank(SingleElement, Bag)),
             ?assertEqual(
-                0.5, xb5_bag:percentile_rank(randomly_switch_number_type(SingleElement), Col)
+                0.5, xb5_bag:percentile_rank(randomly_switch_number_type(SingleElement), Bag)
             ),
 
             LargerElement = element_larger(SingleElement),
-            ?assertEqual(1.0, xb5_bag:percentile_rank(LargerElement, Col)),
+            ?assertEqual(1.0, xb5_bag:percentile_rank(LargerElement, Bag)),
 
             SmallerElement = element_smaller(SingleElement),
-            ?assertEqual(0.0, xb5_bag:percentile_rank(SmallerElement, Col));
+            ?assertEqual(0.0, xb5_bag:percentile_rank(SmallerElement, Bag));
         %
         [FirstElement | Next] ->
             SmallerElement = element_smaller(FirstElement),
-            ?assertEqual(0.0, xb5_bag:percentile_rank(SmallerElement, Col)),
+            ?assertEqual(0.0, xb5_bag:percentile_rank(SmallerElement, Bag)),
 
-            run_percentile_rank_recur(FirstElement, Next, 0, length(RefElements), Col)
+            run_percentile_rank_recur(FirstElement, Next, 0, length(RefElements), Bag)
     end.
 
-run_percentile_rank_recur(Elem, Next, CF, Size, Col) ->
+run_percentile_rank_recur(Elem, Next, CF, Size, Bag) ->
     CountRepeated = lists_count_while(fun(E) -> E == Elem end, Next),
     F = 1 + CountRepeated,
     UpdatedCF = CF + F,
 
     ElemRank = (UpdatedCF - (0.5 * F)) / Size,
-    ?assertEqual(ElemRank, xb5_bag:percentile_rank(Elem, Col)),
+    ?assertEqual(ElemRank, xb5_bag:percentile_rank(Elem, Bag)),
 
     case lists:sublist(Next, CountRepeated + 1, length(Next) - CountRepeated) of
         [NextElem | NextNext] ->
             case element_in_between(Elem, NextElem) of
                 {found, InBetween} ->
                     InBetweenRank = UpdatedCF / Size,
-                    ?assertEqual(InBetweenRank, xb5_bag:percentile_rank(InBetween, Col));
+                    ?assertEqual(InBetweenRank, xb5_bag:percentile_rank(InBetween, Bag));
                 none ->
                     ok
             end,
 
-            run_percentile_rank_recur(NextElem, NextNext, UpdatedCF, Size, Col);
+            run_percentile_rank_recur(NextElem, NextNext, UpdatedCF, Size, Bag);
         %
         [] ->
             LargerElem = element_larger(Elem),
             LargerRank = 1.0,
-            ?assertEqual(LargerRank, xb5_bag:percentile_rank(LargerElem, Col))
+            ?assertEqual(LargerRank, xb5_bag:percentile_rank(LargerElem, Bag))
     end.
 
 lists_count_while(Fun, [H | T]) ->
@@ -2559,7 +2559,7 @@ lists_count_while(_, []) ->
 %% Helper Functions: filter
 %% ------------------------------------------------------------------
 
-run_filter(Size, RefElements, Col) ->
+run_filter(Size, RefElements, Bag) ->
     RoughAmountsToRemove =
         case Size of
             0 ->
@@ -2586,12 +2586,12 @@ run_filter(Size, RefElements, Col) ->
                         fun(E) -> not gb_sets:is_element(E, AuxSet) end
                 end,
 
-            FilteredCol = xb5_bag:filter(FilterFun, Col),
+            FilteredBag = xb5_bag:filter(FilterFun, Bag),
 
             ExpectedElementsRemaining = lists:filter(FilterFun, RefElements),
-            ?assertListsCanonEqual(ExpectedElementsRemaining, xb5_bag:to_list(FilteredCol)),
+            ?assertListsCanonEqual(ExpectedElementsRemaining, xb5_bag:to_list(FilteredBag)),
 
-            ?assertEqual(length(ExpectedElementsRemaining), xb5_bag:size(FilteredCol))
+            ?assertEqual(length(ExpectedElementsRemaining), xb5_bag:size(FilteredBag))
         end,
         RoughAmountsToRemove
     ).
@@ -2600,7 +2600,7 @@ run_filter(Size, RefElements, Col) ->
 %% Helper Functions: filtermap
 %% ------------------------------------------------------------------
 
-run_filtermap(Size, RefElements, Col) ->
+run_filtermap(Size, RefElements, Bag) ->
     RoughAmountsToKeep =
         case Size of
             0 ->
@@ -2660,12 +2660,12 @@ run_filtermap(Size, RefElements, Col) ->
                         end
                 end,
 
-            FiltermappedCol = xb5_bag:filtermap(FiltermapFun, Col),
+            FiltermappedBag = xb5_bag:filtermap(FiltermapFun, Bag),
 
             ExpectedElementsRemaining = lists:sort(lists:filtermap(FiltermapFun, RefElements)),
-            ?assertListsCanonEqual(ExpectedElementsRemaining, xb5_bag:to_list(FiltermappedCol)),
+            ?assertListsCanonEqual(ExpectedElementsRemaining, xb5_bag:to_list(FiltermappedBag)),
 
-            ?assertEqual(length(ExpectedElementsRemaining), xb5_bag:size(FiltermappedCol))
+            ?assertEqual(length(ExpectedElementsRemaining), xb5_bag:size(FiltermappedBag))
         end,
         ParamCombos
     ).
@@ -2674,7 +2674,7 @@ run_filtermap(Size, RefElements, Col) ->
 %% Helper Functions: fold
 %% ------------------------------------------------------------------
 
-run_fold(RefElements, Col) ->
+run_fold(RefElements, Bag) ->
     Tag = make_ref(),
 
     Fun =
@@ -2691,14 +2691,14 @@ run_fold(RefElements, Col) ->
 
     ?assertListsCanonEqual(
         lists:foldl(Fun, [], RefElements),
-        xb5_bag:fold(Fun, [], Col)
+        xb5_bag:fold(Fun, [], Bag)
     ).
 
 %% ------------------------------------------------------------------
 %% Helper Functions: map
 %% ------------------------------------------------------------------
 
-run_map(RefElements, Col) ->
+run_map(RefElements, Bag) ->
     PercentagesMapped = [
         0.0,
         0.2,
@@ -2726,18 +2726,18 @@ run_map(RefElements, Col) ->
                     end
                 end,
 
-            MappedCol = xb5_bag:map(MapFun, Col),
+            MappedBag = xb5_bag:map(MapFun, Bag),
 
             ExpectedMappedRef = lists:sort(lists:map(MapFun, RefElements)),
 
             ?assertEqual(
                 length(ExpectedMappedRef),
-                xb5_bag:size(MappedCol)
+                xb5_bag:size(MappedBag)
             ),
 
             ?assertListsCanonEqual(
                 ExpectedMappedRef,
-                xb5_bag:to_list(MappedCol)
+                xb5_bag:to_list(MappedBag)
             )
         end,
         PercentagesMapped
@@ -2747,7 +2747,7 @@ run_map(RefElements, Col) ->
 %% Helper Functions: merge
 %% ------------------------------------------------------------------
 
-run_merge(Size, RefElements, Col) ->
+run_merge(Size, RefElements, Bag) ->
     Amounts2 = lists:usort([
         0,
         1,
@@ -2776,9 +2776,9 @@ run_merge(Size, RefElements, Col) ->
 
             RefElements2 = lists:sort(RepeatedElements ++ NewElements),
 
-            Col2 = xb5_bag:from_list(maybe_shuffle_elements_for_new_collection(RefElements2)),
+            Bag2 = xb5_bag:from_list(maybe_shuffle_elements_for_new_bag(RefElements2)),
 
-            MergedCol = xb5_bag:merge(Col, Col2),
+            MergedBag = xb5_bag:merge(Bag, Bag2),
 
             %%%
 
@@ -2786,12 +2786,12 @@ run_merge(Size, RefElements, Col) ->
 
             ?assertEqual(
                 length(ExpectedMergedRef),
-                xb5_bag:size(MergedCol)
+                xb5_bag:size(MergedBag)
             ),
 
             ?assertListsCanonEqual(
                 ExpectedMergedRef,
-                xb5_bag:to_list(MergedCol)
+                xb5_bag:to_list(MergedBag)
             )
         end,
         ParamCombos
@@ -2818,10 +2818,10 @@ run_structure_test(InitFun, Opts) ->
                 NumericOnly = true,
                 RefElements = new_ref_elements(Size, NumericOnly, RepetitionChance),
 
-                Col = InitFun(RefElements),
-                ?assertEqual(?STRUCTURE_TEST_BASE_SIZE, xb5_bag:size(Col)),
+                Bag = InitFun(RefElements),
+                ?assertEqual(?STRUCTURE_TEST_BASE_SIZE, xb5_bag:size(Bag)),
 
-                Stats = xb5_bag:structural_stats(Col),
+                Stats = xb5_bag:structural_stats(Bag),
 
                 %%%%%%%%%%
 

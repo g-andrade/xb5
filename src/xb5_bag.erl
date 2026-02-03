@@ -132,14 +132,14 @@ See also:
 -record(xb5_bag, {size, root}).
 
 -doc "An ordered multiset (bag) containing elements of type `Element`.".
--opaque items(E) :: #xb5_bag{
+-opaque bag(E) :: #xb5_bag{
     size :: non_neg_integer(), root :: xb5_bag_node:t(E)
 }.
--export_type([items/1]).
+-export_type([bag/1]).
 
--doc "Shorthand for `items(_)`.".
--type items() :: items(_).
--export_type([items/0]).
+-doc "Shorthand for `bag(_)`.".
+-type bag() :: bag(_).
+-export_type([bag/0]).
 
 -doc "An iterator over elements of type `Element`. See `iterator/1` and `next/1`.".
 -opaque iter(Element) :: xb5_bag_node:iter(Element).
@@ -213,18 +213,18 @@ uses the same underlying node structures).
 
 See `unwrap/1` and `wrap/1`.
 """.
--type unwrapped_items(Element) :: #{
+-type unwrapped_bag(Element) :: #{
     size := non_neg_integer(),
     root := xb5_bag_node:t(Element)
 }.
--export_type([unwrapped_items/1]).
+-export_type([unwrapped_bag/1]).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
 -doc """
-Adds element `Element` to `Items1`, returning a new bag `Items2`.
+Adds element `Element` to `Bag1`, returning a new bag `Bag2`.
 If `Element` is already present, a duplicate is added.
 
 ## Examples
@@ -237,19 +237,19 @@ If `Element` is already present, a duplicate is added.
 4
 ```
 """.
--spec add(Element, Items1) -> Items2 when
-    Items1 :: items(Element),
-    Items2 :: items(Element).
+-spec add(Element, Bag1) -> Bag2 when
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
 
-add(Element, #xb5_bag{size = Size, root = Root} = Items) ->
+add(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     UpdatedRoot = xb5_bag_node:add(Element, Root),
-    Items#xb5_bag{size = Size + 1, root = UpdatedRoot}.
+    Bag#xb5_bag{size = Size + 1, root = UpdatedRoot}.
 
 %%
 
 -doc """
-Removes one occurrence of `Element` from `Items1`, returning a new bag
-`Items2`.
+Removes one occurrence of `Element` from `Bag1`, returning a new bag
+`Bag2`.
 
 Raises a `{badkey, Element}` error if `Element` is not present.
 
@@ -261,25 +261,25 @@ Raises a `{badkey, Element}` error if `Element` is not present.
 [1, 2, 3]
 ```
 """.
--spec delete(Element, Items1) -> Items2 | no_return() when
+-spec delete(Element, Bag1) -> Bag2 | no_return() when
     Element :: term(),
-    Items1 :: items(Element),
-    Items2 :: items(Element).
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
 
-delete(Element, #xb5_bag{size = Size, root = Root} = Items) ->
+delete(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     case xb5_bag_node:delete_att(Element, Root) of
         none ->
             error_badkey(Element);
         %
         UpdatedRoot ->
-            Items#xb5_bag{size = Size - 1, root = UpdatedRoot}
+            Bag#xb5_bag{size = Size - 1, root = UpdatedRoot}
     end.
 
 %%
 
 -doc """
-Removes one occurrence of `Element` from `Items1` if present, otherwise
-returns `Items1` unchanged.
+Removes one occurrence of `Element` from `Bag1` if present, otherwise
+returns `Bag1` unchanged.
 
 ## Examples
 
@@ -291,25 +291,25 @@ returns `Items1` unchanged.
 [1, 2, 2, 3]
 ```
 """.
--spec delete_any(Element, Items1) -> Items2 when
+-spec delete_any(Element, Bag1) -> Bag2 when
     Element :: term(),
-    Items1 :: items(Element),
-    Items2 :: items(Element).
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
 
-delete_any(Element, #xb5_bag{size = Size, root = Root} = Items) ->
+delete_any(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     case xb5_bag_node:delete_att(Element, Root) of
         none ->
-            Items;
+            Bag;
         %
         UpdatedRoot ->
-            Items#xb5_bag{size = Size - 1, root = UpdatedRoot}
+            Bag#xb5_bag{size = Size - 1, root = UpdatedRoot}
     end.
 
 %%
 
 -doc """
-Adds element `Element` to `Items1` only if it is not already present.
-If `Element` is already a member, `Items1` is returned unchanged.
+Adds element `Element` to `Bag1` only if it is not already present.
+If `Element` is already a member, `Bag1` is returned unchanged.
 
 ## Examples
 
@@ -321,25 +321,25 @@ If `Element` is already a member, `Items1` is returned unchanged.
 [1, 2, 3]
 ```
 """.
--spec enter(Element, Items1) -> Items2 when
+-spec enter(Element, Bag1) -> Bag2 when
     Element :: term(),
-    Items1 :: items(Element),
-    Items2 :: items(Element).
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
 
-enter(Element, #xb5_bag{size = Size, root = Root} = Items) ->
+enter(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     case xb5_bag_node:insert_att(Element, Root) of
         none ->
-            Items;
+            Bag;
         %
         UpdatedRoot ->
-            Items#xb5_bag{size = Size + 1, root = UpdatedRoot}
+            Bag#xb5_bag{size = Size + 1, root = UpdatedRoot}
     end.
 
 %%
 
 -doc """
-Filters elements of `Items1` using predicate function `Pred`, returning a
-new bag `Items2` containing only the elements for which `Pred` returns `true`.
+Filters elements of `Bag1` using predicate function `Pred`, returning a
+new bag `Bag2` containing only the elements for which `Pred` returns `true`.
 
 ## Examples
 
@@ -349,20 +349,20 @@ new bag `Items2` containing only the elements for which `Pred` returns `true`.
 [4, 5]
 ```
 """.
--spec filter(Pred, Items1) -> Items2 when
+-spec filter(Pred, Bag1) -> Bag2 when
     Pred :: fun((Element) -> boolean()),
-    Items1 :: items(Element),
-    Items2 :: items(Element).
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
 
-filter(Fun, #xb5_bag{root = Root} = Items) ->
+filter(Fun, #xb5_bag{root = Root} = Bag) ->
     [FilteredSize | FilteredRoot] = xb5_bag_node:filter(Fun, Root),
-    Items#xb5_bag{size = FilteredSize, root = FilteredRoot}.
+    Bag#xb5_bag{size = FilteredSize, root = FilteredRoot}.
 
 %%
 
 -doc """
-Filters and maps elements of `Items1` using `Fun`, returning a new bag
-`Items2`.
+Filters and maps elements of `Bag1` using `Fun`, returning a new bag
+`Bag2`.
 
 For each element, `Fun` must return either `true` (keep the element),
 `false` (discard it), or `{true, NewElement}` (replace it with `NewElement`).
@@ -375,19 +375,19 @@ For each element, `Fun` must return either `true` (keep the element),
 [20, 40]
 ```
 """.
--spec filtermap(Fun, Items1) -> Items2 when
+-spec filtermap(Fun, Bag1) -> Bag2 when
     Fun :: fun((Element1) -> boolean() | {true, Element2}),
-    Items1 :: items(Element1),
-    Items2 :: items(Element1 | Element2).
+    Bag1 :: bag(Element1),
+    Bag2 :: bag(Element1 | Element2).
 
-filtermap(Fun, #xb5_bag{root = Root} = Items) ->
+filtermap(Fun, #xb5_bag{root = Root} = Bag) ->
     [FilteredSize | FilteredRoot] = xb5_bag_node:filtermap(Fun, Root),
-    Items#xb5_bag{size = FilteredSize, root = FilteredRoot}.
+    Bag#xb5_bag{size = FilteredSize, root = FilteredRoot}.
 
 %%
 
 -doc """
-Folds `Function` over every element in `Items`, returning the final
+Folds `Function` over every element in `Bag`, returning the final
 accumulator value. Elements are visited in Erlang term order.
 
 ## Examples
@@ -398,13 +398,13 @@ accumulator value. Elements are visited in Erlang term order.
 6
 ```
 """.
--spec fold(Function, Acc0, Items) -> Acc1 when
+-spec fold(Function, Acc0, Bag) -> Acc1 when
     Function :: fun((Element, AccIn) -> AccOut),
     Acc0 :: Acc,
     Acc1 :: Acc,
     AccIn :: Acc,
     AccOut :: Acc,
-    Items :: items(Element).
+    Bag :: bag(Element).
 
 fold(Fun, Acc, #xb5_bag{root = Root}) ->
     xb5_bag_node:fold(Fun, Acc, Root).
@@ -424,9 +424,9 @@ duplicate elements are preserved.
 []
 ```
 """.
--spec from_list(List) -> Items when
+-spec from_list(List) -> Bag when
     List :: [Element],
-    Items :: items(Element).
+    Bag :: bag(Element).
 
 from_list(List) ->
     Root = xb5_bag_node:new(),
@@ -445,9 +445,9 @@ Returns a bag built from the ordered set `Ordset`.
 [1, 2, 3]
 ```
 """.
--spec from_ordset(List) -> Items when
+-spec from_ordset(List) -> Bag when
     List :: ordsets:ordset(Element),
-    Items :: items(Element).
+    Bag :: bag(Element).
 
 from_ordset(Ordset) ->
     List = ordsets:to_list(Ordset),
@@ -456,7 +456,7 @@ from_ordset(Ordset) ->
 %%
 
 -doc """
-Inserts element `Element` into `Items1`, returning a new bag `Items2`.
+Inserts element `Element` into `Bag1`, returning a new bag `Bag2`.
 
 Raises a `{key_exists, Element}` error if `Element` is already present.
 
@@ -469,23 +469,23 @@ Raises a `{key_exists, Element}` error if `Element` is already present.
 [1]
 ```
 """.
--spec insert(Element, Items1) -> Items2 when
-    Items1 :: items(Element),
-    Items2 :: items(Element).
+-spec insert(Element, Bag1) -> Bag2 when
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
 
-insert(Element, #xb5_bag{size = Size, root = Root} = Items) ->
+insert(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     case xb5_bag_node:insert_att(Element, Root) of
         none ->
             error_key_exists(Element);
         %
         UpdatedRoot ->
-            Items#xb5_bag{size = Size + 1, root = UpdatedRoot}
+            Bag#xb5_bag{size = Size + 1, root = UpdatedRoot}
     end.
 
 %%
 
 -doc """
-Returns `true` if `Items` is empty, otherwise `false`.
+Returns `true` if `Bag` is empty, otherwise `false`.
 
 ## Examples
 
@@ -496,8 +496,8 @@ true
 false
 ```
 """.
--spec is_empty(Items) -> boolean() when
-    Items :: items().
+-spec is_empty(Bag) -> boolean() when
+    Bag :: bag().
 
 is_empty(#xb5_bag{size = Size}) ->
     Size =:= 0.
@@ -505,7 +505,7 @@ is_empty(#xb5_bag{size = Size}) ->
 %%
 
 -doc """
-Returns `true` if `Element` is a member of `Items`, otherwise `false`.
+Returns `true` if `Element` is a member of `Bag`, otherwise `false`.
 
 ## Examples
 
@@ -517,8 +517,8 @@ true
 false
 ```
 """.
--spec is_member(Element, Items) -> boolean() when
-    Items :: items(Element).
+-spec is_member(Element, Bag) -> boolean() when
+    Bag :: bag(Element).
 
 is_member(Element, #xb5_bag{root = Root}) ->
     xb5_bag_node:is_member(Element, Root).
@@ -527,7 +527,7 @@ is_member(Element, #xb5_bag{root = Root}) ->
 
 -doc """
 Returns an iterator that can be used for traversing the elements of
-`Items`; see `next/1`. Equivalent to `iterator(Items, ordered)`.
+`Bag`; see `next/1`. Equivalent to `iterator(Bag, ordered)`.
 
 ## Examples
 
@@ -541,18 +541,18 @@ Returns an iterator that can be used for traversing the elements of
 none
 ```
 """.
--spec iterator(Items) -> Iter when
-    Items :: items(Element),
+-spec iterator(Bag) -> Iter when
+    Bag :: bag(Element),
     Iter :: iter(Element).
 
-iterator(Items) ->
-    iterator(Items, ordered).
+iterator(Bag) ->
+    iterator(Bag, ordered).
 
 %%
 
 -doc """
 Returns an iterator that can be used for traversing the elements of
-`Items` in the given `Order`; see `next/1`.
+`Bag` in the given `Order`; see `next/1`.
 
 `Order` must be `ordered` (ascending) or `reversed` (descending).
 
@@ -568,8 +568,8 @@ Returns an iterator that can be used for traversing the elements of
 none
 ```
 """.
--spec iterator(Items, Order) -> Iter when
-    Items :: items(Element),
+-spec iterator(Bag, Order) -> Iter when
+    Bag :: bag(Element),
     Iter :: iter(Element),
     Order :: ordered | reversed.
 
@@ -580,8 +580,8 @@ iterator(#xb5_bag{root = Root}, Order) ->
 
 -doc """
 Returns an iterator that can be used for traversing the elements of
-`Items` starting from element `Element`; see `next/1`. Equivalent to
-`iterator_from(Element, Items, ordered)`.
+`Bag` starting from element `Element`; see `next/1`. Equivalent to
+`iterator_from(Element, Bag, ordered)`.
 
 ## Examples
 
@@ -595,18 +595,18 @@ Returns an iterator that can be used for traversing the elements of
 none
 ```
 """.
--spec iterator_from(Element, Items) -> Iter when
-    Items :: items(Element),
+-spec iterator_from(Element, Bag) -> Iter when
+    Bag :: bag(Element),
     Iter :: iter(Element).
 
-iterator_from(Element, Items) ->
-    iterator_from(Element, Items, ordered).
+iterator_from(Element, Bag) ->
+    iterator_from(Element, Bag, ordered).
 
 %%
 
 -doc """
 Returns an iterator that can be used for traversing the elements of
-`Items` starting from element `Element` in the given `Order`; see `next/1`.
+`Bag` starting from element `Element` in the given `Order`; see `next/1`.
 
 ## Examples
 
@@ -620,8 +620,8 @@ Returns an iterator that can be used for traversing the elements of
 none
 ```
 """.
--spec iterator_from(Element, Items, Order) -> Iter when
-    Items :: items(Element),
+-spec iterator_from(Element, Bag, Order) -> Iter when
+    Bag :: bag(Element),
     Iter :: iter(Element),
     Order :: ordered | reversed.
 
@@ -632,7 +632,7 @@ iterator_from(Element, #xb5_bag{root = Root}, Order) ->
 
 -doc """
 Returns `{found, Element2}` where `Element2` is the least element
-strictly greater than `Element1` in `Items`, or `none` if no such
+strictly greater than `Element1` in `Bag`, or `none` if no such
 element exists.
 
 ## Examples
@@ -645,10 +645,10 @@ element exists.
 none
 ```
 """.
--spec larger(Element1, Items) -> none | {found, Element2} when
+-spec larger(Element1, Bag) -> none | {found, Element2} when
     Element1 :: Element,
     Element2 :: Element,
-    Items :: items(Element).
+    Bag :: bag(Element).
 
 larger(Element, #xb5_bag{root = Root}) ->
     xb5_bag_node:larger(Element, Root).
@@ -656,9 +656,9 @@ larger(Element, #xb5_bag{root = Root}) ->
 %%
 
 -doc """
-Returns the largest element in `Items`.
+Returns the largest element in `Bag`.
 
-Raises an `empty_items` error if the bag is empty.
+Raises an `empty_bag` error if the bag is empty.
 
 ## Examples
 
@@ -667,18 +667,18 @@ Raises an `empty_items` error if the bag is empty.
 3
 ```
 """.
--spec largest(Items) -> Element when
-    Items :: items(Element).
+-spec largest(Bag) -> Element when
+    Bag :: bag(Element).
 
 largest(#xb5_bag{size = Size, root = Root}) when Size =/= 0 ->
     xb5_bag_node:largest(Root);
 largest(#xb5_bag{}) ->
-    error_empty_items().
+    error_empty_bag().
 
 %%
 
 -doc """
-Maps `Fun` over all elements of `Items1`, returning a new bag `Items2`.
+Maps `Fun` over all elements of `Bag1`, returning a new bag `Bag2`.
 
 ## Examples
 
@@ -688,14 +688,14 @@ Maps `Fun` over all elements of `Items1`, returning a new bag `Items2`.
 [10, 20, 30]
 ```
 """.
--spec map(Fun, Items1) -> Items2 when
+-spec map(Fun, Bag1) -> Bag2 when
     Fun :: fun((Element1) -> Element2),
-    Items1 :: items(Element1),
-    Items2 :: items(Element2).
+    Bag1 :: bag(Element1),
+    Bag2 :: bag(Element2).
 
-map(Fun, #xb5_bag{root = Root} = Items) ->
+map(Fun, #xb5_bag{root = Root} = Bag) ->
     MappedRoot = xb5_bag_node:map(Fun, Root),
-    Items#xb5_bag{root = MappedRoot}.
+    Bag#xb5_bag{root = MappedRoot}.
 
 %%
 
@@ -712,17 +712,17 @@ counts are combined.
 [1, 2, 2, 3, 3, 4]
 ```
 """.
--spec merge(Items1, Items2) -> Items3 when
-    Items1 :: items(Element),
-    Items2 :: items(Element),
-    Items3 :: items(Element).
+-spec merge(Bag1, Bag2) -> Bag3 when
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element),
+    Bag3 :: bag(Element).
 
 merge(
-    #xb5_bag{size = Size1, root = Root1} = Items1,
+    #xb5_bag{size = Size1, root = Root1} = Bag1,
     #xb5_bag{size = Size2, root = Root2}
 ) ->
     MergedRoot = xb5_bag_node:merge(Size1, Root1, Size2, Root2),
-    Items1#xb5_bag{size = Size1 + Size2, root = MergedRoot}.
+    Bag1#xb5_bag{size = Size1 + Size2, root = MergedRoot}.
 
 %%
 
@@ -738,8 +738,8 @@ true
 0
 ```
 """.
--spec new() -> Items when
-    Items :: items(_).
+-spec new() -> Bag when
+    Bag :: bag(_).
 
 new() ->
     #xb5_bag{size = 0, root = xb5_bag_node:new()}.
@@ -772,7 +772,7 @@ next(Iter) ->
 %%
 
 -doc """
-Returns the element at 1-based rank `Rank` in `Items` in O(log n)
+Returns the element at 1-based rank `Rank` in `Bag` in O(log n)
 time.
 
 Raises a `{badarg, Rank}` error if `Rank` is not a valid position
@@ -788,7 +788,7 @@ Raises a `{badarg, Rank}` error if `Rank` is not a valid position
 30
 ```
 """.
--spec nth(Rank, Items) -> Element when Rank :: pos_integer(), Items :: items(Element).
+-spec nth(Rank, Bag) -> Element when Rank :: pos_integer(), Bag :: bag(Element).
 
 nth(Rank, #xb5_bag{size = Size, root = Root}) when is_integer(Rank), Rank >= 1, Rank =< Size ->
     xb5_bag_node:nth(Rank, Root);
@@ -801,7 +801,7 @@ nth(Rank, #xb5_bag{}) ->
 Calculates a percentile value in O(log n) time, using linear
 interpolation of the `inclusive` percentile bracket. Returns
 `{value, Result}` or `none`. Equivalent to
-`percentile(Percentile, Items, [])`.
+`percentile(Percentile, Bag, [])`.
 
 Raises a `{bracket_value_not_a_number, Bound}` error if linear
 interpolation is required but the bracketing elements are not numbers.
@@ -818,13 +818,13 @@ interpolation is required but the bracketing elements are not numbers.
 {value, 4}
 ```
 """.
--spec percentile(Percentile, Items) -> {value, Element | InterpolationResult} | none when
+-spec percentile(Percentile, Bag) -> {value, Element | InterpolationResult} | none when
     Percentile :: float() | 0 | 1,
-    Items :: items(Element),
+    Bag :: bag(Element),
     InterpolationResult :: number().
 
-percentile(Percentile, Items) ->
-    percentile(Percentile, Items, []).
+percentile(Percentile, Bag) ->
+    percentile(Percentile, Bag, []).
 
 %%
 
@@ -844,20 +844,20 @@ interpolation is required but the bracketing elements are not numbers.
 {value, 2}
 ```
 """.
--spec percentile(Percentile, Items, Opts) -> {value, Element | InterpolationResult} | none when
+-spec percentile(Percentile, Bag, Opts) -> {value, Element | InterpolationResult} | none when
     Percentile :: float() | 0 | 1,
-    Items :: items(Element),
+    Bag :: bag(Element),
     InterpolationResult :: number(),
     Opts :: [percentile_bracket_opt()].
 
-percentile(Percentile, Items, Opts) ->
-    Bracket = percentile_bracket(Percentile, Items, Opts),
+percentile(Percentile, Bag, Opts) ->
+    Bracket = percentile_bracket(Percentile, Bag, Opts),
     linear_interpolated_percentile(Bracket).
 
 %%
 
 -doc """
-Returns the percentile bracket for `Percentile` in `Items` in O(log n)
+Returns the percentile bracket for `Percentile` in `Bag` in O(log n)
 time, using the `inclusive` method. Returns `{exact, Element}` when the
 percentile falls exactly on an element, `{between, Low, High}` when it
 falls between two elements, or `none` if the bag is empty.
@@ -875,13 +875,13 @@ in `[0.0, 1.0]`. See `percentile_bracket/3` for other methods.
 {exact, 4}
 ```
 """.
--spec percentile_bracket(Percentile, Items) -> Bracket when
+-spec percentile_bracket(Percentile, Bag) -> Bracket when
     Percentile :: float() | 0 | 1,
-    Items :: items(Element),
+    Bag :: bag(Element),
     Bracket :: percentile_bracket(Element).
 
-percentile_bracket(Percentile, Items) ->
-    percentile_bracket(Percentile, Items, []).
+percentile_bracket(Percentile, Bag) ->
+    percentile_bracket(Percentile, Bag, []).
 
 %%
 
@@ -898,9 +898,9 @@ O(log n) time. The only supported option is `{method, Method}`; see
 {exact, 2}
 ```
 """.
--spec percentile_bracket(Percentile, Items, Opts) -> Bracket when
+-spec percentile_bracket(Percentile, Bag, Opts) -> Bracket when
     Percentile :: float() | 0 | 1,
-    Items :: items(Element),
+    Bag :: bag(Element),
     Opts :: [percentile_bracket_opt()],
     Bracket :: percentile_bracket(Element).
 
@@ -923,11 +923,11 @@ percentile_bracket(Percentile, #xb5_bag{}, _Opts) ->
 
 -doc """
 Returns the [percentile rank](https://en.wikipedia.org/wiki/Percentile_rank)
-of `Element` in `Items` as a float in `[0.0, 1.0]`, in O(log n) time.
+of `Element` in `Bag` as a float in `[0.0, 1.0]`, in O(log n) time.
 
 `Element` does not have to be in the bag.
 
-Raises an `empty_items` error if the bag is empty.
+Raises an `empty_bag` error if the bag is empty.
 
 ## Examples
 
@@ -937,8 +937,8 @@ Raises an `empty_items` error if the bag is empty.
 0.375
 ```
 """.
--spec percentile_rank(Element, Items) -> Rank when
-    Items :: items(Element),
+-spec percentile_rank(Element, Bag) -> Rank when
+    Bag :: bag(Element),
     Rank :: float().
 
 percentile_rank(Elem, #xb5_bag{size = Size, root = Root}) when Size > 0 ->
@@ -951,13 +951,13 @@ percentile_rank(Elem, #xb5_bag{size = Size, root = Root}) when Size > 0 ->
 
     (CF - 0.5 * F) / Size;
 percentile_rank(_, #xb5_bag{}) ->
-    error_empty_items().
+    error_empty_bag().
 
 %%
 
 -doc """
 Returns `{rank, Rank}` where `Rank` is the 1-based position of `Element`
-in `Items`, or `none` if `Element` is not present. When duplicates exist,
+in `Bag`, or `none` if `Element` is not present. When duplicates exist,
 the lowest rank is returned. Runs in O(log n) time.
 
 ## Examples
@@ -978,8 +978,8 @@ With duplicates, the lowest rank is returned:
 {rank, 2}
 ```
 """.
--spec rank(Element, Items) -> {rank, Rank} | none when
-    Items :: items(Element),
+-spec rank(Element, Bag) -> {rank, Rank} | none when
+    Bag :: bag(Element),
     Rank :: pos_integer().
 
 rank(Elem, #xb5_bag{root = Root}) ->
@@ -1017,10 +1017,10 @@ With duplicates, the lowest rank (first occurrence) is returned:
 {2, g}
 ```
 """.
--spec rank_larger(Element1, Items) -> {Rank, Element2} | none when
+-spec rank_larger(Element1, Bag) -> {Rank, Element2} | none when
     Element1 :: Element,
     Element2 :: Element,
-    Items :: items(Element),
+    Bag :: bag(Element),
     Rank :: pos_integer().
 
 rank_larger(Elem, #xb5_bag{root = Root}) ->
@@ -1058,10 +1058,10 @@ With duplicates, the highest rank (last occurrence) is returned:
 {4, g}
 ```
 """.
--spec rank_smaller(Element1, Items) -> {Rank, Element2} | none when
+-spec rank_smaller(Element1, Bag) -> {Rank, Element2} | none when
     Element1 :: Element,
     Element2 :: Element,
-    Items :: items(Element),
+    Bag :: bag(Element),
     Rank :: pos_integer().
 
 rank_smaller(Elem, #xb5_bag{root = Root}) ->
@@ -1076,7 +1076,7 @@ rank_smaller(Elem, #xb5_bag{root = Root}) ->
 %%
 
 -doc """
-Returns the number of elements in `Items`, including duplicates.
+Returns the number of elements in `Bag`, including duplicates.
 
 ## Examples
 
@@ -1087,8 +1087,8 @@ Returns the number of elements in `Items`, including duplicates.
 4
 ```
 """.
--spec size(Items) -> non_neg_integer() when
-    Items :: items().
+-spec size(Bag) -> non_neg_integer() when
+    Bag :: bag().
 
 size(#xb5_bag{size = Size}) ->
     Size.
@@ -1097,7 +1097,7 @@ size(#xb5_bag{size = Size}) ->
 
 -doc """
 Returns `{found, Element2}` where `Element2` is the greatest element
-in `Items` that is strictly less than `Element1`, or `none` if no such
+in `Bag` that is strictly less than `Element1`, or `none` if no such
 element exists.
 
 ## Examples
@@ -1110,10 +1110,10 @@ element exists.
 none
 ```
 """.
--spec smaller(Element1, Items) -> none | {found, Element2} when
+-spec smaller(Element1, Bag) -> none | {found, Element2} when
     Element1 :: Element,
     Element2 :: Element,
-    Items :: items(Element).
+    Bag :: bag(Element).
 
 smaller(Element, #xb5_bag{root = Root}) ->
     xb5_bag_node:smaller(Element, Root).
@@ -1121,9 +1121,9 @@ smaller(Element, #xb5_bag{root = Root}) ->
 %%
 
 -doc """
-Returns the smallest element in `Items`.
+Returns the smallest element in `Bag`.
 
-Raises an `empty_items` error if the bag is empty.
+Raises an `empty_bag` error if the bag is empty.
 
 ## Examples
 
@@ -1132,18 +1132,18 @@ Raises an `empty_items` error if the bag is empty.
 1
 ```
 """.
--spec smallest(Items) -> Element when
-    Items :: items(Element).
+-spec smallest(Bag) -> Element when
+    Bag :: bag(Element).
 
 smallest(#xb5_bag{size = Size, root = Root}) when Size =/= 0 ->
     xb5_bag_node:smallest(Root);
 smallest(#xb5_bag{}) ->
-    error_empty_items().
+    error_empty_bag().
 
 %%
 
 -doc """
-Returns structural statistics about the B-tree backing `Items`.
+Returns structural statistics about the B-tree backing `Bag`.
 
 This is primarily intended for debugging and testing. The result
 is a proplist with keys such as `height`, `total_keys`,
@@ -1158,8 +1158,8 @@ is a proplist with keys such as `height`, `total_keys`,
 > {total_keys, 3} = lists:keyfind(total_keys, 1, Stats).
 ```
 """.
--spec structural_stats(Items) -> Stats when
-    Items :: items(),
+-spec structural_stats(Bag) -> Stats when
+    Bag :: bag(),
     Stats :: xb5_structural_stats:t().
 
 structural_stats(#xb5_bag{root = Root}) ->
@@ -1168,10 +1168,10 @@ structural_stats(#xb5_bag{root = Root}) ->
 %%
 
 -doc """
-Returns `{Element, Items2}`, where `Element` is the largest element in
-`Items1` and `Items2` is the remaining bag.
+Returns `{Element, Bag2}`, where `Element` is the largest element in
+`Bag1` and `Bag2` is the remaining bag.
 
-Raises an `empty_items` error if the bag is empty.
+Raises an `empty_bag` error if the bag is empty.
 
 ## Examples
 
@@ -1182,23 +1182,23 @@ Raises an `empty_items` error if the bag is empty.
 [1, 2]
 ```
 """.
--spec take_largest(Items1) -> {Element, Items2} when
-    Items1 :: items(Element),
-    Items2 :: items(Element).
+-spec take_largest(Bag1) -> {Element, Bag2} when
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
 
-take_largest(#xb5_bag{root = Root, size = Size} = Items) when Size =/= 0 ->
+take_largest(#xb5_bag{root = Root, size = Size} = Bag) when Size =/= 0 ->
     [Largest | UpdatedRoot] = xb5_bag_node:take_largest(Root),
-    {Largest, Items#xb5_bag{root = UpdatedRoot, size = Size - 1}};
+    {Largest, Bag#xb5_bag{root = UpdatedRoot, size = Size - 1}};
 take_largest(#xb5_bag{}) ->
-    error_empty_items().
+    error_empty_bag().
 
 %%
 
 -doc """
-Returns `{Element, Items2}`, where `Element` is the smallest element in
-`Items1` and `Items2` is the remaining bag.
+Returns `{Element, Bag2}`, where `Element` is the smallest element in
+`Bag1` and `Bag2` is the remaining bag.
 
-Raises an `empty_items` error if the bag is empty.
+Raises an `empty_bag` error if the bag is empty.
 
 ## Examples
 
@@ -1209,20 +1209,20 @@ Raises an `empty_items` error if the bag is empty.
 [2, 3]
 ```
 """.
--spec take_smallest(Items1) -> {Element, Items2} when
-    Items1 :: items(Element),
-    Items2 :: items(Element).
+-spec take_smallest(Bag1) -> {Element, Bag2} when
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
 
-take_smallest(#xb5_bag{root = Root, size = Size} = Items) when Size =/= 0 ->
+take_smallest(#xb5_bag{root = Root, size = Size} = Bag) when Size =/= 0 ->
     [Smallest | UpdatedRoot] = xb5_bag_node:take_smallest(Root),
-    {Smallest, Items#xb5_bag{root = UpdatedRoot, size = Size - 1}};
+    {Smallest, Bag#xb5_bag{root = UpdatedRoot, size = Size - 1}};
 take_smallest(#xb5_bag{}) ->
-    error_empty_items().
+    error_empty_bag().
 
 %%
 
 -doc """
-Returns the elements of `Items` as an ordered list, including duplicates.
+Returns the elements of `Bag` as an ordered list, including duplicates.
 
 ## Examples
 
@@ -1233,8 +1233,8 @@ Returns the elements of `Items` as an ordered list, including duplicates.
 []
 ```
 """.
--spec to_list(Items) -> List when
-    Items :: items(Element),
+-spec to_list(Bag) -> List when
+    Bag :: bag(Element),
     List :: [Element].
 
 to_list(#xb5_bag{root = Root}) ->
@@ -1259,8 +1259,8 @@ on success or `{error, Reason}` if `Term` is not a valid bag.
 ```
 """.
 -spec unwrap(Term) -> {ok, Unwrapped} | {error, Reason} when
-    Term :: items(Element) | term(),
-    Unwrapped :: unwrapped_items(Element),
+    Term :: bag(Element) | term(),
+    Unwrapped :: unwrapped_bag(Element),
     Reason :: term().
 
 unwrap(#xb5_bag{size = Size, root = Root} = Term) when is_integer(Size), Size >= 0 ->
@@ -1299,7 +1299,7 @@ same underlying node module).
 [1, 2, 3]
 ```
 """.
--spec wrap(unwrapped_items(Element)) -> items(Element).
+-spec wrap(unwrapped_bag(Element)) -> bag(Element).
 
 wrap(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
     #xb5_bag{root = Root, size = Size}.
@@ -1313,10 +1313,10 @@ wrap(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->
 error_badkey(Elem) ->
     error({badkey, Elem}).
 
--compile({inline, error_empty_items/0}).
--spec error_empty_items() -> no_return().
-error_empty_items() ->
-    error(empty_items).
+-compile({inline, error_empty_bag/0}).
+-spec error_empty_bag() -> no_return().
+error_empty_bag() ->
+    error(empty_bag).
 
 -compile({inline, error_key_exists/1}).
 -spec error_key_exists(_) -> no_return().
