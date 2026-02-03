@@ -228,9 +228,8 @@ If `Element` is already present, a duplicate is added.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3]).
-> xb5_bag:to_list(xb5_bag:add(2, B)).
-[1, 2, 2, 3]
-> xb5_bag:size(xb5_bag:add(2, B)).
+> [1, 2, 2, 3] = xb5_bag:to_list(xb5_bag:add(2, B)).
+> 4 = xb5_bag:size(xb5_bag:add(2, B)).
 4
 ```
 """.
@@ -254,7 +253,7 @@ Raises a `{badkey, Element}` error if `Element` is not present.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 2, 3]).
-> xb5_bag:to_list(xb5_bag:delete(2, B)).
+> [1, 2, 3] = xb5_bag:to_list(xb5_bag:delete(2, B)).
 [1, 2, 3]
 ```
 """.
@@ -282,9 +281,8 @@ returns `Items1` unchanged.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 2, 3]).
-> xb5_bag:to_list(xb5_bag:delete_any(2, B)).
-[1, 2, 3]
-> xb5_bag:to_list(xb5_bag:delete_any(42, B)).
+> [1, 2, 3] = xb5_bag:to_list(xb5_bag:delete_any(2, B)).
+> [1, 2, 2, 3] = xb5_bag:to_list(xb5_bag:delete_any(42, B)).
 [1, 2, 2, 3]
 ```
 """.
@@ -312,9 +310,8 @@ If `Element` is already a member, `Items1` is returned unchanged.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3]).
-> xb5_bag:to_list(xb5_bag:enter(4, B)).
-[1, 2, 3, 4]
-> xb5_bag:to_list(xb5_bag:enter(2, B)).
+> [1, 2, 3, 4] = xb5_bag:to_list(xb5_bag:enter(4, B)).
+> [1, 2, 3] = xb5_bag:to_list(xb5_bag:enter(2, B)).
 [1, 2, 3]
 ```
 """.
@@ -342,7 +339,7 @@ new bag `Items2` containing only the elements for which `Pred` returns `true`.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3, 4, 5]).
-> xb5_bag:to_list(xb5_bag:filter(fun(X) -> X > 3 end, B)).
+> [4, 5] = xb5_bag:to_list(xb5_bag:filter(fun(X) -> X > 3 end, B)).
 [4, 5]
 ```
 """.
@@ -368,7 +365,7 @@ For each element, `Fun` must return either `true` (keep the element),
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3, 4, 5]).
-> xb5_bag:to_list(xb5_bag:filtermap(fun(X) when X rem 2 =:= 0 -> {true, X * 10}; (_) -> false end, B)).
+> [20, 40] = xb5_bag:to_list(xb5_bag:filtermap(fun(X) when X rem 2 =:= 0 -> {true, X * 10}; (_) -> false end, B)).
 [20, 40]
 ```
 """.
@@ -391,7 +388,7 @@ accumulator value. Elements are visited in Erlang term order.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3]).
-> xb5_bag:fold(fun(X, Acc) -> X + Acc end, 0, B).
+> 6 = xb5_bag:fold(fun(X, Acc) -> X + Acc end, 0, B).
 6
 ```
 """.
@@ -415,9 +412,8 @@ duplicate elements are preserved.
 ## Examples
 
 ```erlang
-> xb5_bag:to_list(xb5_bag:from_list([3, 1, 2, 1])).
-[1, 1, 2, 3]
-> xb5_bag:to_list(xb5_bag:from_list([])).
+> [1, 1, 2, 3] = xb5_bag:to_list(xb5_bag:from_list([3, 1, 2, 1])).
+> [] = xb5_bag:to_list(xb5_bag:from_list([])).
 []
 ```
 """.
@@ -438,7 +434,7 @@ Returns a bag built from the ordered set `Ordset`.
 ## Examples
 
 ```erlang
-> xb5_bag:to_list(xb5_bag:from_ordset([1, 2, 3])).
+> [1, 2, 3] = xb5_bag:to_list(xb5_bag:from_ordset([1, 2, 3])).
 [1, 2, 3]
 ```
 """.
@@ -462,7 +458,7 @@ Raises a `{key_exists, Element}` error if `Element` is already present.
 ```erlang
 > B0 = xb5_bag:new().
 > B1 = xb5_bag:insert(1, B0).
-> xb5_bag:to_list(B1).
+> [1] = xb5_bag:to_list(B1).
 [1]
 ```
 """.
@@ -487,9 +483,8 @@ Returns `true` if `Items` is empty, otherwise `false`.
 ## Examples
 
 ```erlang
-> xb5_bag:is_empty(xb5_bag:new()).
-true
-> xb5_bag:is_empty(xb5_bag:from_list([1])).
+> true = xb5_bag:is_empty(xb5_bag:new()).
+> false = xb5_bag:is_empty(xb5_bag:from_list([1])).
 false
 ```
 """.
@@ -508,9 +503,8 @@ Returns `true` if `Element` is a member of `Items`, otherwise `false`.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3]).
-> xb5_bag:is_member(2, B).
-true
-> xb5_bag:is_member(4, B).
+> true = xb5_bag:is_member(2, B).
+> false = xb5_bag:is_member(4, B).
 false
 ```
 """.
@@ -534,7 +528,7 @@ Returns an iterator that can be used for traversing the elements of
 > {1, I2} = xb5_bag:next(I).
 > {2, I3} = xb5_bag:next(I2).
 > {3, I4} = xb5_bag:next(I3).
-> xb5_bag:next(I4).
+> none = xb5_bag:next(I4).
 none
 ```
 """.
@@ -561,7 +555,7 @@ Returns an iterator that can be used for traversing the elements of
 > {3, I2} = xb5_bag:next(I).
 > {2, I3} = xb5_bag:next(I2).
 > {1, I4} = xb5_bag:next(I3).
-> xb5_bag:next(I4).
+> none = xb5_bag:next(I4).
 none
 ```
 """.
@@ -588,7 +582,7 @@ Returns an iterator that can be used for traversing the elements of
 > {3, I2} = xb5_bag:next(I).
 > {4, I3} = xb5_bag:next(I2).
 > {5, I4} = xb5_bag:next(I3).
-> xb5_bag:next(I4).
+> none = xb5_bag:next(I4).
 none
 ```
 """.
@@ -613,7 +607,7 @@ Returns an iterator that can be used for traversing the elements of
 > {3, I2} = xb5_bag:next(I).
 > {2, I3} = xb5_bag:next(I2).
 > {1, I4} = xb5_bag:next(I3).
-> xb5_bag:next(I4).
+> none = xb5_bag:next(I4).
 none
 ```
 """.
@@ -636,9 +630,8 @@ element exists.
 
 ```erlang
 > B = xb5_bag:from_list([1, 3, 5]).
-> xb5_bag:larger(2, B).
-{found, 3}
-> xb5_bag:larger(5, B).
+> {found, 3} = xb5_bag:larger(2, B).
+> none = xb5_bag:larger(5, B).
 none
 ```
 """.
@@ -660,7 +653,7 @@ Raises an `empty_items` error if the bag is empty.
 ## Examples
 
 ```erlang
-> xb5_bag:largest(xb5_bag:from_list([3, 1, 2])).
+> 3 = xb5_bag:largest(xb5_bag:from_list([3, 1, 2])).
 3
 ```
 """.
@@ -681,7 +674,7 @@ Maps `Fun` over all elements of `Items1`, returning a new bag `Items2`.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3]).
-> xb5_bag:to_list(xb5_bag:map(fun(X) -> X * 10 end, B)).
+> [10, 20, 30] = xb5_bag:to_list(xb5_bag:map(fun(X) -> X * 10 end, B)).
 [10, 20, 30]
 ```
 """.
@@ -705,7 +698,7 @@ counts are combined.
 ```erlang
 > B1 = xb5_bag:from_list([1, 2, 3]).
 > B2 = xb5_bag:from_list([2, 3, 4]).
-> xb5_bag:to_list(xb5_bag:merge(B1, B2)).
+> [1, 2, 2, 3, 3, 4] = xb5_bag:to_list(xb5_bag:merge(B1, B2)).
 [1, 2, 2, 3, 3, 4]
 ```
 """.
@@ -729,9 +722,8 @@ Returns a new empty bag.
 ## Examples
 
 ```erlang
-> xb5_bag:is_empty(xb5_bag:new()).
-true
-> xb5_bag:size(xb5_bag:new()).
+> true = xb5_bag:is_empty(xb5_bag:new()).
+> 0 = xb5_bag:size(xb5_bag:new()).
 0
 ```
 """.
@@ -755,7 +747,7 @@ if no more elements remain.
 > I = xb5_bag:iterator(B).
 > {1, I2} = xb5_bag:next(I).
 > {2, I3} = xb5_bag:next(I2).
-> xb5_bag:next(I3).
+> none = xb5_bag:next(I3).
 none
 ```
 """.
@@ -779,9 +771,8 @@ Raises a `{badarg, Rank}` error if `Rank` is not a valid position
 
 ```erlang
 > B = xb5_bag:from_list([10, 20, 30]).
-> xb5_bag:nth(1, B).
-10
-> xb5_bag:nth(3, B).
+> 10 = xb5_bag:nth(1, B).
+> 30 = xb5_bag:nth(3, B).
 30
 ```
 """.
@@ -804,11 +795,9 @@ interpolation of the `inclusive` percentile bracket. Returns
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3, 4]).
-> xb5_bag:percentile(0, B).
-{value, 1}
-> xb5_bag:percentile(0.5, B).
-{value, 2.5}
-> xb5_bag:percentile(1, B).
+> {value, 1} = xb5_bag:percentile(0, B).
+> {value, 2.5} = xb5_bag:percentile(0.5, B).
+> {value, 4} = xb5_bag:percentile(1, B).
 {value, 4}
 ```
 """.
@@ -834,7 +823,7 @@ interpolation is required but the bracketing elements are not numbers.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3, 4]).
-> xb5_bag:percentile(0.5, B, [{method, nearest_rank}]).
+> {value, 2} = xb5_bag:percentile(0.5, B, [{method, nearest_rank}]).
 {value, 2}
 ```
 """.
@@ -863,9 +852,8 @@ in `[0.0, 1.0]`. See `percentile_bracket/3` for other methods.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3, 4]).
-> xb5_bag:percentile_bracket(0, B).
-{exact, 1}
-> xb5_bag:percentile_bracket(1, B).
+> {exact, 1} = xb5_bag:percentile_bracket(0, B).
+> {exact, 4} = xb5_bag:percentile_bracket(1, B).
 {exact, 4}
 ```
 """.
@@ -888,7 +876,7 @@ O(log n) time. The only supported option is `{method, Method}`; see
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3, 4]).
-> xb5_bag:percentile_bracket(0.5, B, [{method, nearest_rank}]).
+> {exact, 2} = xb5_bag:percentile_bracket(0.5, B, [{method, nearest_rank}]).
 {exact, 2}
 ```
 """.
@@ -925,7 +913,7 @@ Raises an `empty_items` error if the bag is empty.
 
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3, 4]).
-> xb5_bag:percentile_rank(2, B).
+> 0.375 = xb5_bag:percentile_rank(2, B).
 0.375
 ```
 """.
@@ -956,9 +944,8 @@ the lowest rank is returned. Runs in O(log n) time.
 
 ```erlang
 > B = xb5_bag:from_list([10, 20, 30]).
-> xb5_bag:rank(20, B).
-{rank, 2}
-> xb5_bag:rank(42, B).
+> {rank, 2} = xb5_bag:rank(20, B).
+> none = xb5_bag:rank(42, B).
 none
 ```
 
@@ -966,7 +953,7 @@ With duplicates, the lowest rank is returned:
 
 ```erlang
 > B = xb5_bag:from_list([f, g, g, h, i]).
-> xb5_bag:rank(g, B).
+> {rank, 2} = xb5_bag:rank(g, B).
 {rank, 2}
 ```
 """.
@@ -995,9 +982,8 @@ lowest rank (first occurrence) is returned. Runs in O(log n) time.
 
 ```erlang
 > B = xb5_bag:from_list([10, 20, 30]).
-> xb5_bag:rank_larger(15, B).
-{2, 20}
-> xb5_bag:rank_larger(30, B).
+> {2, 20} = xb5_bag:rank_larger(15, B).
+> none = xb5_bag:rank_larger(30, B).
 none
 ```
 
@@ -1005,7 +991,7 @@ With duplicates, the lowest rank (first occurrence) is returned:
 
 ```erlang
 > B = xb5_bag:from_list([f, g, g, h, i]).
-> xb5_bag:rank_larger(f, B).
+> {2, g} = xb5_bag:rank_larger(f, B).
 {2, g}
 ```
 """.
@@ -1036,9 +1022,8 @@ highest rank (last occurrence) is returned. Runs in O(log n) time.
 
 ```erlang
 > B = xb5_bag:from_list([10, 20, 30]).
-> xb5_bag:rank_smaller(25, B).
-{2, 20}
-> xb5_bag:rank_smaller(10, B).
+> {2, 20} = xb5_bag:rank_smaller(25, B).
+> none = xb5_bag:rank_smaller(10, B).
 none
 ```
 
@@ -1046,7 +1031,7 @@ With duplicates, the highest rank (last occurrence) is returned:
 
 ```erlang
 > B = xb5_bag:from_list([f, g, g, g, h]).
-> xb5_bag:rank_smaller(h, B).
+> {4, g} = xb5_bag:rank_smaller(h, B).
 {4, g}
 ```
 """.
@@ -1073,9 +1058,8 @@ Returns the number of elements in `Items`, including duplicates.
 ## Examples
 
 ```erlang
-> xb5_bag:size(xb5_bag:new()).
-0
-> xb5_bag:size(xb5_bag:from_list([1, 2, 2, 3])).
+> 0 = xb5_bag:size(xb5_bag:new()).
+> 4 = xb5_bag:size(xb5_bag:from_list([1, 2, 2, 3])).
 4
 ```
 """.
@@ -1096,9 +1080,8 @@ element exists.
 
 ```erlang
 > B = xb5_bag:from_list([1, 3, 5]).
-> xb5_bag:smaller(4, B).
-{found, 3}
-> xb5_bag:smaller(1, B).
+> {found, 3} = xb5_bag:smaller(4, B).
+> none = xb5_bag:smaller(1, B).
 none
 ```
 """.
@@ -1120,7 +1103,7 @@ Raises an `empty_items` error if the bag is empty.
 ## Examples
 
 ```erlang
-> xb5_bag:smallest(xb5_bag:from_list([3, 1, 2])).
+> 1 = xb5_bag:smallest(xb5_bag:from_list([3, 1, 2])).
 1
 ```
 """.
@@ -1148,6 +1131,7 @@ is a proplist with keys such as `height`, `total_keys`,
 > Stats = xb5_bag:structural_stats(B).
 > {height, 1} = lists:keyfind(height, 1, Stats).
 > {total_keys, 3} = lists:keyfind(total_keys, 1, Stats).
+{total_keys, 3}
 ```
 """.
 -spec structural_stats(Items) -> Stats when
@@ -1170,7 +1154,7 @@ Raises an `empty_items` error if the bag is empty.
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3]).
 > {3, B2} = xb5_bag:take_largest(B).
-> xb5_bag:to_list(B2).
+> [1, 2] = xb5_bag:to_list(B2).
 [1, 2]
 ```
 """.
@@ -1197,7 +1181,7 @@ Raises an `empty_items` error if the bag is empty.
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3]).
 > {1, B2} = xb5_bag:take_smallest(B).
-> xb5_bag:to_list(B2).
+> [2, 3] = xb5_bag:to_list(B2).
 [2, 3]
 ```
 """.
@@ -1219,9 +1203,8 @@ Returns the elements of `Items` as an ordered list, including duplicates.
 ## Examples
 
 ```erlang
-> xb5_bag:to_list(xb5_bag:from_list([3, 1, 2, 1])).
-[1, 1, 2, 3]
-> xb5_bag:to_list(xb5_bag:new()).
+> [1, 1, 2, 3] = xb5_bag:to_list(xb5_bag:from_list([3, 1, 2, 1])).
+> [] = xb5_bag:to_list(xb5_bag:new()).
 []
 ```
 """.
@@ -1245,8 +1228,7 @@ on success or `{error, Reason}` if `Term` is not a valid bag.
 ```erlang
 > B = xb5_bag:from_list([1, 2, 3]).
 > {ok, Unwrapped} = xb5_bag:unwrap(B).
-> maps:get(size, Unwrapped).
-3
+> 3 = maps:get(size, Unwrapped).
 > {error, _} = xb5_bag:unwrap(not_a_bag).
 ```
 """.
@@ -1287,7 +1269,7 @@ same underlying node module).
 > B = xb5_bag:from_list([1, 2, 3]).
 > {ok, U} = xb5_bag:unwrap(B).
 > B2 = xb5_bag:wrap(U).
-> xb5_bag:to_list(B2).
+> [1, 2, 3] = xb5_bag:to_list(B2).
 [1, 2, 3]
 ```
 """.
