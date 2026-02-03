@@ -8,7 +8,7 @@ Elements are ordered using the Erlang term order, comparing with `==`
 rather than `=:=`. This means that `1` and `1.0` are considered the same
 element.
 
-The tree is always balanced after every insertion and deletion. 
+The tree is always balanced after every insertion and deletion.
 
 API is the same as `m:gb_sets`.
 
