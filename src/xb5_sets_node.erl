@@ -41,6 +41,7 @@ API for operating over `m:xb5_sets` internal nodes directly.
 %% ------------------------------------------------------------------
 
 -export([
+    append/2,
     delete_att/2,
     difference/2,
     does_root_look_legit/2,
@@ -342,6 +343,8 @@ API for operating over `m:xb5_sets` internal nodes directly.
 
 -define(new_LEAF1(E1), ?CHECK_NODE(?LEAF1(E1))).
 
+%%%
+
 %% ------------------------------------------------------------------
 %% Type Definitions
 %% ------------------------------------------------------------------
@@ -473,6 +476,24 @@ API for operating over `m:xb5_sets` internal nodes directly.
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
+
+-spec append(NewElem, t(PrevElem)) -> t(NewElem | PrevElem).
+append(Elem, ?INTERNAL1_MATCH_ALL) ->
+    Result = append_recur(Elem, C2),
+    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS);
+append(Elem, ?LEAF1_MATCH_ALL) ->
+    true = Elem > E1,
+    ?new_LEAF2(E1, Elem);
+append(Elem, ?LEAF0) ->
+    ?new_LEAF1(Elem);
+append(Elem, Root) ->
+    case append_recur(Elem, Root) of
+        ?SPLIT_MATCH(Pos, Args) ->
+            insert_split_root(Elem, Pos, Args, Root);
+        %
+        UpdatedRoot ->
+            UpdatedRoot
+    end.
 
 -spec delete_att(_, t(Elem)) -> none | t(Elem).
 delete_att(Elem, ?INTERNAL1_MATCH_ALL) ->
@@ -768,12 +789,120 @@ when
     Size2 :: non_neg_integer(),
     NewSize :: non_neg_integer().
 union(Root1, Size1, Root2, Size2) ->
-    case Size1 > Size2 of
-        true ->
-            union_root(Root1, Size1, Root2);
+    if
+        Size1 =:= 0 ->
+            [Size2 | Root2];
         %
-        _ ->
-            union_root(Root2, Size2, Root1)
+        Size2 =:= 0 ->
+            [Size1 | Root1];
+        %
+        true ->
+            union_non_empty(Root1, Size1, Root2, Size2)
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: append/2
+%% ------------------------------------------------------------------
+
+append_recur(Elem, Node) ->
+    case Node of
+        ?INTERNAL2_MATCH_ALL ->
+            Result = append_recur(Elem, C3),
+            ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Result = append_recur(Elem, C4),
+            ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Result = append_recur(Elem, C5),
+            ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            true = Elem > E2,
+            ?new_LEAF3(E1, E2, Elem);
+        %
+        ?LEAF3_MATCH_ALL ->
+            true = Elem > E3,
+            ?new_LEAF4(E1, E2, E3, Elem);
+        %
+        ?LEAF4_MATCH(_, _, _, E4) ->
+            true = Elem > E4,
+            ?SPLIT(5, [])
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: append_all/2
+%% ------------------------------------------------------------------
+
+append_all(?INTERNAL1_MATCH_ALL, Acc) ->
+    append_all_recur(C2, append(E1, append_all_recur(C1, Acc)));
+append_all(?LEAF1_MATCH_ALL, Acc) ->
+    append(E1, Acc);
+append_all(Root, Acc) ->
+    append_all_recur(Root, Acc).
+
+append_all_recur(Node, Acc) ->
+    case Node of
+        ?INTERNAL2_MATCH_ALL ->
+            Acc2 = append(E1, append_all_recur(C1, Acc)),
+            Acc3 = append(E2, append_all_recur(C2, Acc2)),
+            _Acc4 = append_all_recur(C3, Acc3);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Acc2 = append(E1, append_all_recur(C1, Acc)),
+            Acc3 = append(E2, append_all_recur(C2, Acc2)),
+            Acc4 = append(E3, append_all_recur(C3, Acc3)),
+            _Acc5 = append_all_recur(C4, Acc4);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Acc2 = append(E1, append_all_recur(C1, Acc)),
+            Acc3 = append(E2, append_all_recur(C2, Acc2)),
+            Acc4 = append(E3, append_all_recur(C3, Acc3)),
+            Acc5 = append(E4, append_all_recur(C4, Acc4)),
+            _Acc6 = append_all_recur(C5, Acc5);
+        %
+        ?LEAF2_MATCH_ALL ->
+            append(E2, append(E1, Acc));
+        %
+        ?LEAF3_MATCH_ALL ->
+            append(E3, append(E2, append(E1, Acc)));
+        %
+        ?LEAF4_MATCH_ALL ->
+            append(E4, append(E3, append(E2, append(E1, Acc))))
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: count/2
+%% ------------------------------------------------------------------
+
+count(?INTERNAL1_MATCH(_, C1, C2)) ->
+    1 + count_recur(C1) + count_recur(C2);
+count(?LEAF1_MATCH(_)) ->
+    1;
+count(Root) ->
+    count_recur(Root).
+
+count_recur(Node) ->
+    case Node of
+        ?LEAF2_MATCH(_, _) ->
+            2;
+        %
+        ?LEAF3_MATCH(_, _, _) ->
+            3;
+        %
+        ?LEAF4_MATCH(_, _, _, _) ->
+            4;
+        %
+        ?INTERNAL2_MATCH(_, _, C1, C2, C3) ->
+            2 + count_recur(C1) + count_recur(C2) + count_recur(C3);
+        %
+        ?INTERNAL3_MATCH(_, _, _, C1, C2, C3, C4) ->
+            3 + count_recur(C1) + count_recur(C2) + count_recur(C3) + count_recur(C4);
+        %
+        ?INTERNAL4_MATCH(_, _, _, _, C1, C2, C3, C4, C5) ->
+            4 + count_recur(C1) + count_recur(C2) + count_recur(C3) + count_recur(C4) +
+                count_recur(C5)
     end.
 
 %% ------------------------------------------------------------------
@@ -1499,7 +1628,7 @@ filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
     case Fun(E1) of
         true ->
             filter_internal_batch3(
-                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, insert_att(E1, Filtered2)
+                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, append(E1, Filtered2)
             );
         %
         false ->
@@ -1514,7 +1643,7 @@ filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
 
     case Fun(E1) of
         true ->
-            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, insert_att(E1, Filtered2));
+            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, append(E1, Filtered2));
         %
         false ->
             filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2)
@@ -1528,7 +1657,7 @@ filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
 
     case Fun(E1) of
         true ->
-            filter_internal_batch1(Fun, E2, C2, C3, Count2 + 1, insert_att(E1, Filtered2));
+            filter_internal_batch1(Fun, E2, C2, C3, Count2 + 1, append(E1, Filtered2));
         %
         false ->
             filter_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2)
@@ -1542,7 +1671,7 @@ filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
 
     case Fun(E1) of
         true ->
-            filter_recur(Fun, C2, Count2 + 1, insert_att(E1, Filtered2));
+            filter_recur(Fun, C2, Count2 + 1, append(E1, Filtered2));
         %
         false ->
             filter_recur(Fun, C2, Count2, Filtered2)
@@ -1554,7 +1683,7 @@ filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
 filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            filter_leaf_batch3(Fun, E2, E3, E4, Count + 1, insert_att(E1, Filtered));
+            filter_leaf_batch3(Fun, E2, E3, E4, Count + 1, append(E1, Filtered));
         %
         false ->
             filter_leaf_batch3(Fun, E2, E3, E4, Count, Filtered)
@@ -1566,7 +1695,7 @@ filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
 filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            filter_leaf_batch2(Fun, E2, E3, Count + 1, insert_att(E1, Filtered));
+            filter_leaf_batch2(Fun, E2, E3, Count + 1, append(E1, Filtered));
         %
         false ->
             filter_leaf_batch2(Fun, E2, E3, Count, Filtered)
@@ -1578,7 +1707,7 @@ filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
 filter_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            filter_single_element(Fun, E2, Count + 1, insert_att(E1, Filtered));
+            filter_single_element(Fun, E2, Count + 1, append(E1, Filtered));
         %
         false ->
             filter_single_element(Fun, E2, Count, Filtered)
@@ -1590,7 +1719,7 @@ filter_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
 filter_single_element(Fun, E1, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            [Count + 1 | insert_att(E1, Filtered)];
+            [Count + 1 | append(E1, Filtered)];
         %
         false ->
             [Count | Filtered]
@@ -2285,7 +2414,7 @@ intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root) ->
             intersection_iterB(ElemA, NextA, NextB, Count, Root);
         %
         true ->
-            UpdatedRoot = insert_att(ElemA, Root),
+            UpdatedRoot = append(ElemA, Root),
             UpdatedCount = Count + 1,
             intersection_recur(NextA, NextB, UpdatedCount, UpdatedRoot)
     end.
@@ -3488,6 +3617,96 @@ rev_next(Head, Tail) ->
     end.
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: prepend/2
+%% ------------------------------------------------------------------
+
+-spec prepend(NewElem, t(PrevElem)) -> none | t(NewElem | PrevElem).
+prepend(Elem, ?INTERNAL1_MATCH_ALL) ->
+    Result = prepend_recur(Elem, C1),
+    ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS);
+prepend(Elem, ?LEAF1_MATCH_ALL) ->
+    true = Elem < E1,
+    ?new_LEAF2(Elem, E1);
+prepend(Elem, Root) ->
+    case prepend_recur(Elem, Root) of
+        ?SPLIT_MATCH(Pos, Args) ->
+            insert_split_root(Elem, Pos, Args, Root);
+        %
+        UpdatedRoot ->
+            UpdatedRoot
+    end.
+
+%%%
+
+prepend_recur(Elem, Node) ->
+    case Node of
+        ?INTERNAL2_MATCH_ALL ->
+            Result = prepend_recur(Elem, C1),
+            ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Result = prepend_recur(Elem, C1),
+            ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Result = prepend_recur(Elem, C1),
+            ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            true = Elem < E1,
+            ?new_LEAF3(Elem, E1, E2);
+        %
+        ?LEAF3_MATCH_ALL ->
+            true = Elem < E1,
+            ?new_LEAF4(Elem, E1, E2, E3);
+        %
+        ?LEAF4_MATCH(E1, _, _, _) ->
+            true = Elem < E1,
+            ?SPLIT(1, [])
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: prepend_all/2
+%% ------------------------------------------------------------------
+
+prepend_all(?INTERNAL1_MATCH_ALL, Acc) ->
+    prepend_all_recur(C1, prepend(E1, prepend_all_recur(C2, Acc)));
+prepend_all(?LEAF1_MATCH_ALL, Acc) ->
+    prepend(E1, Acc);
+prepend_all(Root, Acc) ->
+    prepend_all_recur(Root, Acc).
+
+prepend_all_recur(Node, Acc) ->
+    case Node of
+        ?INTERNAL2_MATCH_ALL ->
+            Acc2 = prepend(E2, prepend_all_recur(C3, Acc)),
+            Acc3 = prepend(E1, prepend_all_recur(C2, Acc2)),
+            _Acc4 = prepend_all_recur(C1, Acc3);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Acc2 = prepend(E3, prepend_all_recur(C4, Acc)),
+            Acc3 = prepend(E2, prepend_all_recur(C3, Acc2)),
+            Acc4 = prepend(E1, prepend_all_recur(C2, Acc3)),
+            _Acc5 = prepend_all_recur(C1, Acc4);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Acc2 = prepend(E4, prepend_all_recur(C5, Acc)),
+            Acc3 = prepend(E3, prepend_all_recur(C4, Acc2)),
+            Acc4 = prepend(E2, prepend_all_recur(C3, Acc3)),
+            Acc5 = prepend(E1, prepend_all_recur(C2, Acc4)),
+            _Acc6 = prepend_all_recur(C1, Acc5);
+        %
+        ?LEAF2_MATCH_ALL ->
+            prepend(E1, prepend(E2, Acc));
+        %
+        ?LEAF3_MATCH_ALL ->
+            prepend(E1, prepend(E2, prepend(E3, Acc)));
+        %
+        ?LEAF4_MATCH_ALL ->
+            prepend(E1, prepend(E2, prepend(E3, prepend(E4, Acc))))
+    end.
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: smaller/2
 %% ------------------------------------------------------------------
 
@@ -3991,146 +4210,88 @@ to_list_recur(Node, Acc) ->
 %% Internal Function Definitions: union/2
 %% ------------------------------------------------------------------
 
-union_root(Root, Size, Target) ->
-    case Target of
-        ?INTERNAL1_MATCH_ALL ->
-            [Size2 | Root2] = union_recur(C1, Size, Root),
-            [Size3 | Root3] = union_recur(C2, Size2, Root2),
-            union_single_element(E1, Size3, Root3);
+union_non_empty(Root1, Size1, Root2, Size2) ->
+    Smallest1 = smallest(Root1),
+    Largest1 = largest(Root1),
+
+    Smallest2 = smallest(Root2),
+    Largest2 = largest(Root2),
+
+    if
+        Largest1 < Smallest2 ->
+            union_sequential(Root1, Size1, Root2, Size2);
         %
-        ?LEAF1_MATCH_ALL ->
-            union_single_element(E1, Size, Root);
+        Largest2 < Smallest1 ->
+            union_sequential(Root2, Size2, Root1, Size1);
         %
-        ?LEAF0 ->
-            [Size | Root];
+        Size1 =< Size2 ->
+            union_overlapping(Root1, Root2);
         %
-        _ ->
-            union_recur(Target, Size, Root)
+        true ->
+            union_overlapping(Root2, Root1)
     end.
 
-union_recur(Node, Size, Root) ->
+union_sequential(LeftRoot, LeftSize, RightRoot, RightSize) when LeftSize > RightSize ->
+    UpdatedRoot = append_all(RightRoot, LeftRoot),
+    UpdatedSize = LeftSize + RightSize,
+    [UpdatedSize | UpdatedRoot];
+union_sequential(LeftRoot, LeftSize, RightRoot, RightSize) ->
+    UpdatedRoot = prepend_all(LeftRoot, RightRoot),
+    UpdatedSize = LeftSize + RightSize,
+    [UpdatedSize | UpdatedRoot].
+
+union_overlapping(FromRoot, IntoRoot) ->
+    % TODO optimize
+    UnionRoot = add_all(FromRoot, IntoRoot),
+    UnionSize = count(UnionRoot),
+    [UnionSize | UnionRoot].
+
+%%%%%%
+
+add_all(?INTERNAL1_MATCH_ALL, Acc) ->
+    add_all_recur(C2, add(E1, add_all_recur(C1, Acc)));
+add_all(?LEAF1_MATCH_ALL, Acc) ->
+    add(E1, Acc);
+add_all(Root, Acc) ->
+    add_all_recur(Root, Acc).
+
+add_all_recur(Node, Acc) ->
     case Node of
-        ?LEAF2_MATCH_ALL ->
-            union_leaf_batch2(E1, E2, Size, Root);
-        %
-        ?LEAF3_MATCH_ALL ->
-            union_leaf_batch3(E1, E2, E3, Size, Root);
-        %
-        ?LEAF4_MATCH_ALL ->
-            union_leaf_batch4(E1, E2, E3, E4, Size, Root);
-        %
         ?INTERNAL2_MATCH_ALL ->
-            union_internal_batch2(E1, E2, C1, C2, C3, Size, Root);
+            Acc2 = add(E1, add_all_recur(C1, Acc)),
+            Acc3 = add(E2, add_all_recur(C2, Acc2)),
+            _Acc4 = add_all_recur(C3, Acc3);
         %
         ?INTERNAL3_MATCH_ALL ->
-            union_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Size, Root);
+            Acc2 = add(E1, add_all_recur(C1, Acc)),
+            Acc3 = add(E2, add_all_recur(C2, Acc2)),
+            Acc4 = add(E3, add_all_recur(C3, Acc3)),
+            _Acc5 = add_all_recur(C4, Acc4);
         %
         ?INTERNAL4_MATCH_ALL ->
-            union_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Size, Root)
-    end.
-
-%% INTERNAL4
-
--compile({inline, union_internal_batch4/11}).
-union_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Size, Root) ->
-    [Size2 | Root2] = union_recur(C1, Size, Root),
-
-    case insert_att(E1, Root2) of
-        none ->
-            union_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Size2, Root2);
+            Acc2 = add(E1, add_all_recur(C1, Acc)),
+            Acc3 = add(E2, add_all_recur(C2, Acc2)),
+            Acc4 = add(E3, add_all_recur(C3, Acc3)),
+            Acc5 = add(E4, add_all_recur(C4, Acc4)),
+            _Acc6 = add_all_recur(C5, Acc5);
         %
-        Root3 ->
-            union_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Size2 + 1, Root3)
-    end.
-
-%% INTERNAL3
-
--compile({inline, union_internal_batch3/9}).
-union_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Size, Root) ->
-    [Size2 | Root2] = union_recur(C1, Size, Root),
-
-    case insert_att(E1, Root2) of
-        none ->
-            union_internal_batch2(E2, E3, C2, C3, C4, Size2, Root2);
+        ?LEAF2_MATCH_ALL ->
+            add(E2, add(E1, Acc));
         %
-        Root3 ->
-            union_internal_batch2(E2, E3, C2, C3, C4, Size2 + 1, Root3)
-    end.
-
-%% INTERNAL2
-
--compile({inline, union_internal_batch2/7}).
-union_internal_batch2(E1, E2, C1, C2, C3, Size, Root) ->
-    [Size2 | Root2] = union_recur(C1, Size, Root),
-
-    case insert_att(E1, Root2) of
-        none ->
-            union_internal_batch1(E2, C2, C3, Size2, Root2);
+        ?LEAF3_MATCH_ALL ->
+            add(E3, add(E2, add(E1, Acc)));
         %
-        Root3 ->
-            union_internal_batch1(E2, C2, C3, Size2 + 1, Root3)
+        ?LEAF4_MATCH_ALL ->
+            add(E4, add(E3, add(E2, add(E1, Acc))))
     end.
 
-%% INTERNAL1
-
--compile({inline, union_internal_batch1/5}).
-union_internal_batch1(E1, C1, C2, Size, Root) ->
-    [Size2 | Root2] = union_recur(C1, Size, Root),
-
-    case insert_att(E1, Root2) of
+add(Elem, Root) ->
+    case insert_att(Elem, Root) of
         none ->
-            union_recur(C2, Size2, Root2);
-        %
-        Root3 ->
-            union_recur(C2, Size2 + 1, Root3)
-    end.
-
-%% LEAF4
-
--compile({inline, union_leaf_batch4/6}).
-union_leaf_batch4(E1, E2, E3, E4, Size, Root) ->
-    case insert_att(E1, Root) of
-        none ->
-            union_leaf_batch3(E2, E3, E4, Size, Root);
+            Root;
         %
         UpdatedRoot ->
-            union_leaf_batch3(E2, E3, E4, Size + 1, UpdatedRoot)
-    end.
-
-%% LEAF3
-
--compile({inline, union_leaf_batch3/5}).
-union_leaf_batch3(E1, E2, E3, Size, Root) ->
-    case insert_att(E1, Root) of
-        none ->
-            union_leaf_batch2(E2, E3, Size, Root);
-        %
-        UpdatedRoot ->
-            union_leaf_batch2(E2, E3, Size + 1, UpdatedRoot)
-    end.
-
-%% LEAF2
-
--compile({inline, union_leaf_batch2/4}).
-union_leaf_batch2(E1, E2, Size, Root) ->
-    case insert_att(E1, Root) of
-        none ->
-            union_single_element(E2, Size, Root);
-        %
-        UpdatedRoot ->
-            union_single_element(E2, Size + 1, UpdatedRoot)
-    end.
-
-%% LEAF1
-
--compile({inline, union_single_element/3}).
-union_single_element(E1, Size, Root) ->
-    case insert_att(E1, Root) of
-        none ->
-            [Size | Root];
-        %
-        UpdatedRoot ->
-            [Size + 1 | UpdatedRoot]
+            UpdatedRoot
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -42,6 +42,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
 
 -export([
     add/2,
+    append/2,
     delete_att/2,
     filter/2,
     filtermap/2,
@@ -498,6 +499,24 @@ add(Elem, ?LEAF0) ->
     ?new_LEAF1(Elem);
 add(Elem, Root) ->
     case add_recur(Elem, Root) of
+        ?SPLIT_MATCH(Pos, Args) ->
+            insert_split_root(Elem, Pos, Args, Root);
+        %
+        UpdatedRoot ->
+            UpdatedRoot
+    end.
+
+-spec append(NewElem, t(PrevElem)) -> t(NewElem | PrevElem).
+append(Elem, ?INTERNAL1_MATCH_ALL) ->
+    Result = append_recur(Elem, C2),
+    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS);
+append(Elem, ?LEAF1_MATCH_ALL) ->
+    true = Elem >= E1,
+    ?new_LEAF2(E1, Elem);
+append(Elem, ?LEAF0) ->
+    ?new_LEAF1(Elem);
+append(Elem, Root) ->
+    case append_recur(Elem, Root) of
         ?SPLIT_MATCH(Pos, Args) ->
             insert_split_root(Elem, Pos, Args, Root);
         %
@@ -1057,6 +1076,37 @@ put_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
     ?new_LEAF2(E1, Elem).
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: append/2
+%% ------------------------------------------------------------------
+
+append_recur(Elem, Node) ->
+    case Node of
+        ?INTERNAL2_MATCH_ALL ->
+            Result = append_recur(Elem, C3),
+            ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Result = append_recur(Elem, C4),
+            ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Result = append_recur(Elem, C5),
+            ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            true = Elem >= E2,
+            ?new_LEAF3(E1, E2, Elem);
+        %
+        ?LEAF3_MATCH_ALL ->
+            true = Elem >= E3,
+            ?new_LEAF4(E1, E2, E3, Elem);
+        %
+        ?LEAF4_MATCH(_, _, _, E4) ->
+            true = Elem >= E4,
+            ?SPLIT(5, [])
+    end.
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: delete_att/2
 %% ------------------------------------------------------------------
 
@@ -1603,7 +1653,7 @@ filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
     case Fun(E1) of
         true ->
             filter_internal_batch3(
-                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, add(E1, Filtered2)
+                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, append(E1, Filtered2)
             );
         %
         false ->
@@ -1618,7 +1668,7 @@ filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
 
     case Fun(E1) of
         true ->
-            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, add(E1, Filtered2));
+            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, append(E1, Filtered2));
         %
         false ->
             filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2)
@@ -1632,7 +1682,7 @@ filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
 
     case Fun(E1) of
         true ->
-            filter_internal_batch1(Fun, E2, C2, C3, Count2 + 1, add(E1, Filtered2));
+            filter_internal_batch1(Fun, E2, C2, C3, Count2 + 1, append(E1, Filtered2));
         %
         false ->
             filter_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2)
@@ -1646,7 +1696,7 @@ filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
 
     case Fun(E1) of
         true ->
-            filter_recur(Fun, C2, Count2 + 1, add(E1, Filtered2));
+            filter_recur(Fun, C2, Count2 + 1, append(E1, Filtered2));
         %
         false ->
             filter_recur(Fun, C2, Count2, Filtered2)
@@ -1658,7 +1708,7 @@ filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
 filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            filter_leaf_batch3(Fun, E2, E3, E4, Count + 1, add(E1, Filtered));
+            filter_leaf_batch3(Fun, E2, E3, E4, Count + 1, append(E1, Filtered));
         %
         false ->
             filter_leaf_batch3(Fun, E2, E3, E4, Count, Filtered)
@@ -1670,7 +1720,7 @@ filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
 filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            filter_leaf_batch2(Fun, E2, E3, Count + 1, add(E1, Filtered));
+            filter_leaf_batch2(Fun, E2, E3, Count + 1, append(E1, Filtered));
         %
         false ->
             filter_leaf_batch2(Fun, E2, E3, Count, Filtered)
@@ -1682,7 +1732,7 @@ filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
 filter_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            filter_single_element(Fun, E2, Count + 1, add(E1, Filtered));
+            filter_single_element(Fun, E2, Count + 1, append(E1, Filtered));
         %
         false ->
             filter_single_element(Fun, E2, Count, Filtered)
@@ -1694,7 +1744,7 @@ filter_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
 filter_single_element(Fun, E1, Count, Filtered) ->
     case Fun(E1) of
         true ->
-            [Count + 1 | add(E1, Filtered)];
+            [Count + 1 | append(E1, Filtered)];
         %
         false ->
             [Count | Filtered]

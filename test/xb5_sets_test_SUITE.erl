@@ -1163,6 +1163,17 @@ foreach_second_set(Fun, Size, RefElements) ->
     foreach_second_set(Fun, Size, RefElements, _Opts = []).
 
 foreach_second_set(Fun, Size, RefElements, Opts) ->
+    foreach_second_set_variants1(Fun, Size, RefElements, Opts),
+
+    _ =
+        proplists:get_value(test_variants2, Opts, false) andalso
+            foreach_second_set_variants2(Fun, Size, RefElements),
+
+    ok.
+
+%%
+
+foreach_second_set_variants1(Fun, Size, RefElements, Opts) ->
     Amounts2 = lists:usort([
         0,
         1,
@@ -1199,6 +1210,48 @@ foreach_second_set(Fun, Size, RefElements, Opts) ->
         end,
         lists:sublist(list_shuffle(ParamCombos), MaxCombos)
     ).
+
+%%
+
+foreach_second_set_variants2(Fun, Size, RefElements) ->
+    % sequential
+
+    Amounts2 = [S || S <- lists:usort([0, 1, Size - 1, Size + 1]), S >= 0],
+
+    List2 = [
+        sequential_ref_elements(Placement, S, RefElements)
+     || Placement <- [before, after_],
+        S <- Amounts2
+    ],
+
+    lists:foreach(
+        fun(RefElements2) ->
+            Set2 = xb5_sets:from_list(RefElements2),
+            Fun(RefElements2, Set2)
+        end,
+        List2
+    ).
+
+sequential_ref_elements(_, Size, RefElements) when Size =:= 0 orelse RefElements =:= [] ->
+    [];
+sequential_ref_elements(before, Size, RefElements) ->
+    sequential_ref_elements_before(Size, hd(RefElements), []);
+sequential_ref_elements(after_, Size, RefElements) ->
+    sequential_ref_elements_after(Size, lists:last(RefElements)).
+
+sequential_ref_elements_before(Size, Next, Acc) when Size > 0 ->
+    SmallerElement = element_smaller(Next),
+    ?assertMatch(_ when SmallerElement < Next, {SmallerElement, Next}),
+    sequential_ref_elements_before(Size - 1, SmallerElement, [SmallerElement | Acc]);
+sequential_ref_elements_before(0, _, Acc) ->
+    Acc.
+
+sequential_ref_elements_after(Size, Prev) when Size > 0 ->
+    LargerElement = element_larger(Prev),
+    ?assertMatch(_ when LargerElement > Prev, {LargerElement, Prev}),
+    [LargerElement | sequential_ref_elements_after(Size - 1, LargerElement)];
+sequential_ref_elements_after(0, _) ->
+    [].
 
 %% ------------------------------------------------------------------
 %% Helpers: Intersection
@@ -1477,7 +1530,8 @@ run_union_test(Size, RefElements, Set) ->
             )
         end,
         Size,
-        RefElements
+        RefElements,
+        [test_variants2]
     ).
 
 %% ------------------------------------------------------------------
@@ -1523,7 +1577,7 @@ run_union3_test(Size, RefElements, Set) ->
         end,
         Size,
         RefElements,
-        [{max_combos, 4}]
+        [{max_combos, 4}, test_variants2]
     ).
 
 %% ------------------------------------------------------------------
@@ -2034,29 +2088,61 @@ element_smaller(Element) ->
         number ->
             Element - 1;
         %
+        tuple ->
+            very_large_reference();
+        %
         _ ->
-            % Ensured to be smaller
-            -100
+            1 bsl 128
     end.
 
 element_larger(Element) ->
     case element_type(Element) of
         binary ->
-            <<Element/bytes, Element/bytes>>;
+            <<Element/bytes, "_">>;
         %
         _ ->
             <<"ensured to be larger">>
     end.
 
+very_large_reference() ->
+    % https://www.erlang.org/doc/apps/erts/erl_ext_dist.html#newer_reference_ext
+    binary_to_term(<<
+        131,
+        90,
+        0,
+        3,
+        %%
+        119,
+        (length(atom_to_list(node()))),
+        (atom_to_binary(node()))/bytes,
+        %%
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+    >>).
+
 element_type(Element) when is_number(Element) ->
     number;
-element_type(Element) when is_binary(Element) ->
-    binary;
+element_type(Element) when is_reference(Element) ->
+    reference;
 element_type(Element) when is_tuple(Element) ->
     tuple;
-element_type(Element) when is_list(Element) ->
-    list;
 element_type(Element) when is_map(Element) ->
     map;
-element_type(Element) when is_reference(Element) ->
-    reference.
+element_type(Element) when is_list(Element) ->
+    list;
+element_type(Element) when is_binary(Element) ->
+    binary.

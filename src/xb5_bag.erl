@@ -450,8 +450,9 @@ Returns a bag built from the ordered set `Ordset`.
     Bag :: bag(Element).
 
 from_ordset(Ordset) ->
-    List = ordsets:to_list(Ordset),
-    from_list(List).
+    Root = xb5_bag_node:new(),
+    Size = 0,
+    from_ordset_recur(Ordset, Root, Size).
 
 %%
 
@@ -1323,10 +1324,20 @@ error_empty_bag() ->
 error_key_exists(Elem) ->
     error({key_exists, Elem}).
 
+%%
+
 from_list_recur([Element | Next], Size, Root) ->
     UpdatedRoot = xb5_bag_node:add(Element, Root),
     from_list_recur(Next, Size + 1, UpdatedRoot);
 from_list_recur([], Size, Root) ->
+    #xb5_bag{size = Size, root = Root}.
+
+%%
+
+from_ordset_recur([Element | Next], Root, Size) ->
+    UpdatedRoot = xb5_bag_node:append(Element, Root),
+    from_ordset_recur(Next, UpdatedRoot, Size + 1);
+from_ordset_recur([], Root, Size) ->
     #xb5_bag{size = Size, root = Root}.
 
 %%%%%%%%

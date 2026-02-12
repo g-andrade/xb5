@@ -232,7 +232,9 @@ test_construction(_Config) ->
             ?assertEqual(Size, xb5_bag:size(Bag)),
             ?assertEqual(Size =:= 0, xb5_bag:is_empty(Bag)),
             ?assertEqual(Bag, new_bag_from_each_added(RefElements)),
-            ?assertEqual(Bag, xb5_bag:from_ordset(RefElements))
+
+            UniqueRefElements = lists:usort(RefElements),
+            ?assertEqual(UniqueRefElements, xb5_bag:to_list(xb5_bag:from_ordset(UniqueRefElements)))
         end
     ).
 
