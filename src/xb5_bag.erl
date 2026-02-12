@@ -712,6 +712,10 @@ counts are combined.
 > xb5_bag:to_list(xb5_bag:merge(B1, B2)).
 [1, 2, 2, 3, 3, 4]
 ```
+
+This function is called `merge` for two reasons:
+* it's not a union: unions of multisets are [something else](https://brilliant.org/wiki/multiset/);
+* it's technically a _sum_, but I found that to be potentially confusing, and less discoverable.
 """.
 -spec merge(Bag1, Bag2) -> Bag3 when
     Bag1 :: bag(Element),
