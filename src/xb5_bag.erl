@@ -268,7 +268,7 @@ Raises a `{badkey, Element}` error if `Element` is not present.
 
 delete(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     case xb5_bag_node:delete_att(Element, Root) of
-        none ->
+        badkey ->
             error_badkey(Element);
         %
         UpdatedRoot ->
@@ -298,7 +298,7 @@ returns `Bag1` unchanged.
 
 delete_any(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     case xb5_bag_node:delete_att(Element, Root) of
-        none ->
+        badkey ->
             Bag;
         %
         UpdatedRoot ->
@@ -328,7 +328,7 @@ If `Element` is already a member, `Bag1` is returned unchanged.
 
 enter(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     case xb5_bag_node:insert_att(Element, Root) of
-        none ->
+        key_exists ->
             Bag;
         %
         UpdatedRoot ->
@@ -476,7 +476,7 @@ Raises a `{key_exists, Element}` error if `Element` is already present.
 
 insert(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     case xb5_bag_node:insert_att(Element, Root) of
-        none ->
+        key_exists ->
             error_key_exists(Element);
         %
         UpdatedRoot ->

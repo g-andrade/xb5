@@ -198,7 +198,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 
 delete(Key, #xb5_tree{root = Root, size = Size} = Tree) ->
     case xb5_trees_node:delete_att(Key, Root) of
-        none ->
+        badkey ->
             error_badkey(Key);
         %
         UpdatedRoot ->
@@ -230,7 +230,7 @@ If `Key` is not present, `Tree1` is returned unchanged.
 
 delete_any(Key, #xb5_tree{root = Root, size = Size} = Tree) ->
     case xb5_trees_node:delete_att(Key, Root) of
-        none ->
+        badkey ->
             Tree;
         %
         UpdatedRoot ->
@@ -274,7 +274,7 @@ otherwise updates `Key` to value `Value` in `Tree1`.
 
 enter(Key, Value, #xb5_tree{size = Size, root = Root} = Tree) ->
     case xb5_trees_node:insert_att(Key, eager, Value, Root) of
-        none ->
+        key_exists ->
             UpdatedRoot = xb5_trees_node:update_att(Key, eager, Value, Root),
             Tree#xb5_tree{root = UpdatedRoot};
         %
@@ -430,7 +430,7 @@ Raises a `{key_exists, Key}` error if the key is already present.
 
 insert(Key, Value, #xb5_tree{size = Size, root = Root} = Tree) ->
     case xb5_trees_node:insert_att(Key, eager, Value, Root) of
-        none ->
+        key_exists ->
             error_key_exists(Key);
         %
         UpdatedRoot ->
@@ -465,7 +465,7 @@ Raises a `{key_exists, Key}` error if the key already exists.
 
 insert_with(Key, Fun, #xb5_tree{size = Size, root = Root} = Tree) ->
     case xb5_trees_node:insert_att(Key, lazy, Fun, Root) of
-        none ->
+        key_exists ->
             error_key_exists(Key);
         %
         UpdatedRoot ->
@@ -889,7 +889,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 
 take(Key, #xb5_tree{size = Size, root = Root} = Tree) ->
     case xb5_trees_node:take_att(Key, Root) of
-        none ->
+        badkey ->
             error_badkey(Key);
         %
         [TakenPair | UpdatedRoot] ->
@@ -924,7 +924,7 @@ error
 
 take_any(Key, #xb5_tree{size = Size, root = Root} = Tree) ->
     case xb5_trees_node:take_att(Key, Root) of
-        none ->
+        badkey ->
             error;
         %
         [TakenPair | UpdatedRoot] ->
@@ -1074,7 +1074,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 
 update(Key, Value, #xb5_tree{root = Root} = Tree) ->
     case xb5_trees_node:update_att(Key, eager, Value, Root) of
-        none ->
+        badkey ->
             error_badkey(Key);
         %
         UpdatedRoot ->
@@ -1104,7 +1104,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 
 update_with(Key, Fun, #xb5_tree{root = Root} = Tree) ->
     case xb5_trees_node:update_att(Key, lazy, Fun, Root) of
-        none ->
+        badkey ->
             error_badkey(Key);
         %
         UpdatedRoot ->
@@ -1136,7 +1136,7 @@ present in `Tree1`.
 
 update_with(Key, Fun, Init, #xb5_tree{root = Root} = Tree) ->
     case xb5_trees_node:update_att(Key, lazy, Fun, Root) of
-        none ->
+        badkey ->
             Tree#xb5_tree{
                 root = xb5_trees_node:insert_att(Key, eager, Init, Root),
                 size = Tree#xb5_tree.size + 1
@@ -1211,7 +1211,7 @@ error_key_exists(Key) ->
 
 from_list_recur([{Key, Value} | Next], Size, Root) ->
     case xb5_trees_node:insert_att(Key, eager, Value, Root) of
-        none ->
+        key_exists ->
             UpdatedRoot = xb5_trees_node:update_att(Key, eager, Value, Root),
             from_list_recur(Next, Size, UpdatedRoot);
         %

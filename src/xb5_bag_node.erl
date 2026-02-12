@@ -524,13 +524,13 @@ append(Elem, Root) ->
             UpdatedRoot
     end.
 
--spec delete_att(_, t(Elem)) -> none | t(Elem).
+-spec delete_att(_, t(Elem)) -> badkey | t(Elem).
 delete_att(Elem, ?INTERNAL1_MATCH_ALL) ->
     delete_att_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 delete_att(Elem, ?LEAF1_MATCH_ALL) ->
     delete_att_LEAF1(Elem, ?LEAF1_ARGS);
 delete_att(_Elem, ?LEAF0) ->
-    none;
+    badkey;
 delete_att(Elem, Root) ->
     delete_att_recur(Elem, Root).
 
@@ -568,7 +568,7 @@ fold(_Fun, Acc, ?LEAF0) ->
 fold(Fun, Acc, Root) ->
     fold_recur(Fun, Acc, Root).
 
--spec insert_att(NewElem, t(PrevElem)) -> none | t(NewElem | PrevElem).
+-spec insert_att(NewElem, t(PrevElem)) -> key_exists | t(NewElem | PrevElem).
 insert_att(Elem, ?INTERNAL1_MATCH_ALL) ->
     insert_att_INTERNAL1(Elem, ?INTERNAL1_ARGS);
 insert_att(Elem, ?LEAF1_MATCH_ALL) ->
@@ -1550,7 +1550,7 @@ delete_att_LEAF4(Elem, ?LEAF4_ARGS) ->
             ?new_LEAF3(E1, E2, E3);
         %
         true ->
-            none
+            badkey
     end.
 
 %%
@@ -1570,7 +1570,7 @@ delete_att_LEAF3(Elem, ?LEAF3_ARGS) ->
             ?new_LEAF2(E1, E2);
         %
         true ->
-            none
+            badkey
     end.
 
 %%
@@ -1587,7 +1587,7 @@ delete_att_LEAF2(Elem, ?LEAF2_ARGS) ->
             ?new_LEAF1(E1);
         %
         true ->
-            none
+            badkey
     end.
 
 %%
@@ -1601,7 +1601,7 @@ delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
             ?LEAF0;
         %
         true ->
-            none
+            badkey
     end.
 
 %% ------------------------------------------------------------------
@@ -2013,14 +2013,14 @@ insert_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
                             insert_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS);
                         %
                         true ->
-                            none
+                            key_exists
                     end;
                 %
                 Elem > E4 ->
                     insert_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         Elem < E2 ->
@@ -2033,11 +2033,11 @@ insert_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
                     insert_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         true ->
-            none
+            key_exists
     end.
 
 -compile({inline, insert_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
@@ -2082,7 +2082,7 @@ insert_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
                     insert_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         Elem > E2 ->
@@ -2095,11 +2095,11 @@ insert_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
                     insert_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         true ->
-            none
+            key_exists
     end.
 
 -compile({inline, insert_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
@@ -2139,14 +2139,14 @@ insert_att_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
                     insert_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         Elem < E1 ->
             insert_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS);
         %
         true ->
-            none
+            key_exists
     end.
 
 -compile({inline, insert_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
@@ -2178,7 +2178,7 @@ insert_att_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
             insert_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS);
         %
         true ->
-            none
+            key_exists
     end.
 
 -compile({inline, insert_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
@@ -2211,14 +2211,14 @@ insert_att_LEAF4(Elem, ?LEAF4_ARGS) ->
                             ?SPLIT(3, []);
                         %
                         true ->
-                            none
+                            key_exists
                     end;
                 %
                 Elem > E4 ->
                     ?SPLIT(5, []);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         Elem < E2 ->
@@ -2231,11 +2231,11 @@ insert_att_LEAF4(Elem, ?LEAF4_ARGS) ->
                     ?SPLIT(2, []);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         true ->
-            none
+            key_exists
     end.
 
 %%
@@ -2255,7 +2255,7 @@ insert_att_LEAF3(Elem, ?LEAF3_ARGS) ->
                     insert_att_LEAF3_POS2(Elem, ?LEAF3_ARGS);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         Elem > E2 ->
@@ -2268,11 +2268,11 @@ insert_att_LEAF3(Elem, ?LEAF3_ARGS) ->
                     insert_att_LEAF3_POS4(Elem, ?LEAF3_ARGS);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         true ->
-            none
+            key_exists
     end.
 
 -compile({inline, insert_att_LEAF3_POS1 / ?LEAF3_ARITY_PLUS1}).
@@ -2308,14 +2308,14 @@ insert_att_LEAF2(Elem, ?LEAF2_ARGS) ->
                     insert_att_LEAF2_POS3(Elem, ?LEAF2_ARGS);
                 %
                 true ->
-                    none
+                    key_exists
             end;
         %
         Elem < E1 ->
             insert_att_LEAF2_POS1(Elem, ?LEAF2_ARGS);
         %
         true ->
-            none
+            key_exists
     end.
 
 -compile({inline, insert_att_LEAF2_POS1 / ?LEAF2_ARITY_PLUS1}).
@@ -2344,7 +2344,7 @@ insert_att_LEAF1(Elem, ?LEAF1_ARGS) ->
             insert_att_LEAF1_POS2(Elem, ?LEAF1_ARGS);
         %
         true ->
-            none
+            key_exists
     end.
 
 -compile({inline, insert_att_LEAF1_POS1 / ?LEAF1_ARITY_PLUS1}).
@@ -5026,8 +5026,8 @@ ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS) ->
                     ?SPLIT(1, Split)
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC1 ->
             ?new_INTERNAL4(
@@ -5077,8 +5077,8 @@ ins_rebalance_INTERNAL4_C2(Result, Elem, ?INTERNAL4_ARGS) ->
                     ?SPLIT(2, Split)
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC2 ->
             ?new_INTERNAL4(
@@ -5128,8 +5128,8 @@ ins_rebalance_INTERNAL4_C3(Result, Elem, ?INTERNAL4_ARGS) ->
                     ?SPLIT(3, Split)
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC3 ->
             ?new_INTERNAL4(
@@ -5179,8 +5179,8 @@ ins_rebalance_INTERNAL4_C4(Result, Elem, ?INTERNAL4_ARGS) ->
                     ?SPLIT(4, Split)
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC4 ->
             ?new_INTERNAL4(
@@ -5230,8 +5230,8 @@ ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS) ->
                     ?SPLIT(5, Split)
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC5 ->
             ?INTERNAL4_UPD_C5(UpdatedC5)
@@ -5282,8 +5282,8 @@ ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC1 ->
             ?new_INTERNAL3(
@@ -5343,8 +5343,8 @@ ins_rebalance_INTERNAL3_C2(Result, Elem, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC2 ->
             ?new_INTERNAL3(
@@ -5404,8 +5404,8 @@ ins_rebalance_INTERNAL3_C3(Result, Elem, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC3 ->
             ?new_INTERNAL3(
@@ -5465,8 +5465,8 @@ ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS) ->
                     )
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC4 ->
             ?INTERNAL3_UPD_C4(UpdatedC4)
@@ -5511,8 +5511,8 @@ ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS) ->
                     )
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC1 ->
             ?new_INTERNAL2(
@@ -5563,8 +5563,8 @@ ins_rebalance_INTERNAL2_C2(Result, Elem, ?INTERNAL2_ARGS) ->
                     )
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC2 ->
             ?new_INTERNAL2(
@@ -5615,8 +5615,8 @@ ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS) ->
                     )
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC3 ->
             ?INTERNAL2_UPD_C3(UpdatedC3)
@@ -5655,8 +5655,8 @@ ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS) ->
                     )
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC1 ->
             ?new_INTERNAL1(
@@ -5698,8 +5698,8 @@ ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS) ->
                     )
             end;
         %
-        none ->
-            none;
+        key_exists ->
+            key_exists;
         %
         UpdatedC2 ->
             ?new_INTERNAL1(
@@ -6733,8 +6733,8 @@ del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
                 C5
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL4(
@@ -6810,8 +6810,8 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
                 C5
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL4(
@@ -6886,8 +6886,8 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
                 C5
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, RebalancedC3, UpdatedC4) ->
             ?new_INTERNAL4(
@@ -6961,8 +6961,8 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
                 C5
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, RebalancedC4, UpdatedC5) ->
             ?new_INTERNAL4(
@@ -7010,8 +7010,8 @@ del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
         balanced ->
             ?INTERNAL4_UPD_C5(C5);
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC4, RebalancedC5) ->
             ?new_INTERNAL4(
@@ -7080,8 +7080,8 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
                 C4
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL3(
@@ -7147,8 +7147,8 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
                 C4
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL3(
@@ -7213,8 +7213,8 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
                 C4
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, RebalancedC3, UpdatedC4) ->
             ?new_INTERNAL3(
@@ -7256,8 +7256,8 @@ del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
         balanced ->
             ?INTERNAL3_UPD_C4(C4);
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL3(
@@ -7316,8 +7316,8 @@ del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
                 C3
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL2(
@@ -7373,8 +7373,8 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
                 C3
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, RebalancedC2, UpdatedC3) ->
             ?new_INTERNAL2(
@@ -7410,8 +7410,8 @@ del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
         balanced ->
             ?INTERNAL2_UPD_C3(C3);
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL2(
@@ -7460,8 +7460,8 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
                 C2
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(
@@ -7488,8 +7488,8 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
         balanced ->
             ?INTERNAL1_UPD_C2(C2);
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         ?ROTATED(UpElem, MovedSize, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(
@@ -7534,8 +7534,8 @@ del_rebalance_maybe_from_right_sibling(Child, ChildOffset, RParentE, Right) ->
                 Right
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         _ ->
             balanced
@@ -7710,8 +7710,8 @@ del_rebalance_maybe_from_left_sibling(Child, LParentE, Left, LeftOffset) ->
                 Left
             );
         %
-        none ->
-            none;
+        badkey ->
+            badkey;
         %
         _ ->
             balanced

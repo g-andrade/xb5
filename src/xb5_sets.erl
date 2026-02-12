@@ -196,7 +196,7 @@ If `Element` is already a member of `Set1`, `Set1` is returned unchanged.
 
 add(Element, #xb5_set{size = Size, root = Root} = Set) ->
     case xb5_sets_node:insert_att(Element, Root) of
-        none ->
+        key_exists ->
             Set;
         %
         UpdatedRoot ->
@@ -271,7 +271,7 @@ Raises a `{badkey, Element}` error if `Element` is not a member of `Set1`.
 
 delete(Element, #xb5_set{size = Size, root = Root} = Set) ->
     case xb5_sets_node:delete_att(Element, Root) of
-        none ->
+        badkey ->
             error_badkey(Element);
         %
         UpdatedRoot ->
@@ -301,7 +301,7 @@ Removes element `Element` from set `Set1` if present, returning a new set
 
 delete_any(Element, #xb5_set{size = Size, root = Root} = Set) ->
     case xb5_sets_node:delete_att(Element, Root) of
-        none ->
+        badkey ->
             Set;
         %
         UpdatedRoot ->
@@ -479,7 +479,7 @@ of `Set1`.
 
 insert(Element, #xb5_set{size = Size, root = Root} = Set) ->
     case xb5_sets_node:insert_att(Element, Root) of
-        none ->
+        key_exists ->
             error_key_exists(Element);
         %
         UpdatedRoot ->
@@ -1228,7 +1228,7 @@ error_key_exists(Elem) ->
 
 from_list_recur([Element | Next], Root, Size) ->
     case xb5_sets_node:insert_att(Element, Root) of
-        none ->
+        key_exists ->
             from_list_recur(Next, Root, Size);
         %
         UpdatedRoot ->
