@@ -41,6 +41,7 @@ API for operating over `m:xb5_trees` internal nodes directly.
 %% ------------------------------------------------------------------
 
 -export([
+    append/3,
     delete_att/2,
     foldl/3,
     foldr/3,
@@ -513,6 +514,24 @@ API for operating over `m:xb5_trees` internal nodes directly.
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-spec append(Key, Value, t(Key, Value)) -> t(Key, Value).
+append(Key, Value, ?INTERNAL1_MATCH_ALL) ->
+    Result = append_recur(Key, Value, C2),
+    ins_rebalance_INTERNAL1_C2(Result, ?INTERNAL1_ARGS);
+append(Key, Value, ?LEAF1_MATCH_ALL) ->
+    true = Key > K1,
+    ?new_LEAF2(K1, Key, V1, Value);
+append(Key, Value, ?LEAF0) ->
+    ?new_LEAF1(Key, Value);
+append(Key, Value, Root) ->
+    case append_recur(Key, Value, Root) of
+        ?SPLIT_MATCH(Pos, Args) ->
+            insert_split_root(Pos, Args, Root);
+        %
+        UpdatedRoot ->
+            UpdatedRoot
+    end.
+
 -spec delete_att(Key, t(Key, Value)) -> badkey | t(Key, Value).
 delete_att(Key, ?INTERNAL1_MATCH_ALL) ->
     delete_att_INTERNAL1(Key, ?INTERNAL1_ARGS);
@@ -777,6 +796,37 @@ values(?LEAF0) ->
     [];
 values(Root) ->
     values_recur(Root, []).
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: append/2
+%% ------------------------------------------------------------------
+
+append_recur(Key, Value, Node) ->
+    case Node of
+        ?INTERNAL2_MATCH_ALL ->
+            Result = append_recur(Key, Value, C3),
+            ins_rebalance_INTERNAL2_C3(Result, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Result = append_recur(Key, Value, C4),
+            ins_rebalance_INTERNAL3_C4(Result, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Result = append_recur(Key, Value, C5),
+            ins_rebalance_INTERNAL4_C5(Result, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            true = Key > K2,
+            ?new_LEAF3(K1, K2, Key, V1, V2, Value);
+        %
+        ?LEAF3_MATCH_ALL ->
+            true = Key > K3,
+            ?new_LEAF4(K1, K2, K3, Key, V1, V2, V3, Value);
+        %
+        ?LEAF4_MATCH(_, _, _, K4, _, _, _, _) ->
+            true = Key > K4,
+            ?SPLIT(5, [Key | Value])
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: delete_att/2
