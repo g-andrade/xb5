@@ -45,7 +45,6 @@ API for operating over `m:xb5_sets` internal nodes directly.
     delete_att/2,
     difference/2,
     does_root_look_legit/2,
-    filter/2,
     filtermap/2,
     fold/3,
     insert_att/2,
@@ -554,15 +553,6 @@ does_root_look_legit(Root, Size) when is_integer(Size) ->
     end;
 does_root_look_legit(_, _) ->
     false.
-
--spec filter(fun((Elem) -> boolean()), t(Elem)) ->
-    nonempty_improper_list(FilteredSize, t(Elem))
-when
-    FilteredSize :: non_neg_integer().
-filter(Fun, Root) ->
-    Count = 0,
-    Filtered = new(),
-    filter_root(Fun, Count, Root, Filtered).
 
 -spec filtermap(fun((Elem) -> {true, MappedElem} | boolean()), t(Elem)) ->
     nonempty_improper_list(FilteredSize, t(Elem | MappedElem))
@@ -1577,152 +1567,6 @@ difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root) ->
         %
         UpdatedRoot ->
             difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
-    end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: filter/2
-%% ------------------------------------------------------------------
-
-filter_root(Fun, Count, Root, Filtered) ->
-    case Root of
-        ?INTERNAL1_MATCH_ALL ->
-            filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered);
-        %
-        ?LEAF1_MATCH_ALL ->
-            filter_single_element(Fun, E1, Count, Filtered);
-        %
-        ?LEAF0 ->
-            [Count | Filtered];
-        %
-        _ ->
-            filter_recur(Fun, Root, Count, Filtered)
-    end.
-
-filter_recur(Fun, Node, Count, Filtered) ->
-    case Node of
-        ?LEAF2_MATCH_ALL ->
-            filter_leaf_batch2(Fun, E1, E2, Count, Filtered);
-        %
-        ?LEAF3_MATCH_ALL ->
-            filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered);
-        %
-        ?LEAF4_MATCH_ALL ->
-            filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
-        %
-        ?INTERNAL2_MATCH_ALL ->
-            filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
-    end.
-
-%% INTERNAL4
-
--compile({inline, filter_internal_batch4/12}).
-filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered) ->
-    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        true ->
-            filter_internal_batch3(
-                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, append(E1, Filtered2)
-            );
-        %
-        false ->
-            filter_internal_batch3(Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2)
-    end.
-
-%% INTERNAL3
-
--compile({inline, filter_internal_batch3/10}).
-filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
-    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        true ->
-            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, append(E1, Filtered2));
-        %
-        false ->
-            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2)
-    end.
-
-%% INTERNAL2
-
--compile({inline, filter_internal_batch2/8}).
-filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
-    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        true ->
-            filter_internal_batch1(Fun, E2, C2, C3, Count2 + 1, append(E1, Filtered2));
-        %
-        false ->
-            filter_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2)
-    end.
-
-%% INTERNAL1
-
--compile({inline, filter_internal_batch1/6}).
-filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
-    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        true ->
-            filter_recur(Fun, C2, Count2 + 1, append(E1, Filtered2));
-        %
-        false ->
-            filter_recur(Fun, C2, Count2, Filtered2)
-    end.
-
-%% LEAF4
-
--compile({inline, filter_leaf_batch4/7}).
-filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
-    case Fun(E1) of
-        true ->
-            filter_leaf_batch3(Fun, E2, E3, E4, Count + 1, append(E1, Filtered));
-        %
-        false ->
-            filter_leaf_batch3(Fun, E2, E3, E4, Count, Filtered)
-    end.
-
-%% LEAF3
-
--compile({inline, filter_leaf_batch3/6}).
-filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
-    case Fun(E1) of
-        true ->
-            filter_leaf_batch2(Fun, E2, E3, Count + 1, append(E1, Filtered));
-        %
-        false ->
-            filter_leaf_batch2(Fun, E2, E3, Count, Filtered)
-    end.
-
-%% LEAF2
-
--compile({inline, filter_leaf_batch2/5}).
-filter_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
-    case Fun(E1) of
-        true ->
-            filter_single_element(Fun, E2, Count + 1, append(E1, Filtered));
-        %
-        false ->
-            filter_single_element(Fun, E2, Count, Filtered)
-    end.
-
-%% LEAF1
-
--compile({inline, filter_single_element/4}).
-filter_single_element(Fun, E1, Count, Filtered) ->
-    case Fun(E1) of
-        true ->
-            [Count + 1 | append(E1, Filtered)];
-        %
-        false ->
-            [Count | Filtered]
     end.
 
 %% ------------------------------------------------------------------
@@ -3513,7 +3357,7 @@ map_root(Fun, Node, Acc) ->
     end.
 
 map_recur(Fun, Node, Acc) ->
-    % TODO optimize like in filter, filtermap, union, etc
+    % TODO optimize like in filtermap, union, etc
     case Node of
         ?LEAF2_MATCH_ALL ->
             Acc2 = map_elem(Fun, E1, Acc),

@@ -358,9 +358,8 @@ new set `Set2` containing only the elements for which `Pred` returns `true`.
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-filter(Fun, #xb5_set{root = Root}) ->
-    [FilteredSize | FilteredRoot] = xb5_sets_node:filter(Fun, Root),
-    #xb5_set{size = FilteredSize, root = FilteredRoot}.
+filter(Fun, Set) ->
+    from_ordset([Elem || Elem <- to_list(Set), Fun(Elem)]).
 
 %%
 
