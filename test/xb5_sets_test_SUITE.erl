@@ -197,7 +197,8 @@ test_construction(_Config) ->
             ?assertEqual(Size, xb5_sets:size(Set)),
             ?assertEqual(Size =:= 0, xb5_sets:is_empty(Set)),
             ?assertEqual(Set, new_set_from_each_inserted(RefElements)),
-            ?assertEqual(Set, xb5_sets:from_ordset(RefElements)),
+
+            ?assertEqual(RefElements, xb5_sets:to_list(xb5_sets:from_ordset(RefElements))),
 
             case RefElements of
                 [] ->

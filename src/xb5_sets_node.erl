@@ -47,6 +47,7 @@ API for operating over `m:xb5_sets` internal nodes directly.
     does_root_look_legit/2,
     filtermap/2,
     fold/3,
+    from_ordset/2,
     insert_att/2,
     intersection/2,
     is_disjoint/4,
@@ -342,8 +343,6 @@ API for operating over `m:xb5_sets` internal nodes directly.
 
 -define(new_LEAF1(E1), ?CHECK_NODE(?LEAF1(E1))).
 
-%%%
-
 %% ------------------------------------------------------------------
 %% Type Definitions
 %% ------------------------------------------------------------------
@@ -578,6 +577,16 @@ fold(_Fun, Acc, ?LEAF0) ->
     Acc;
 fold(Fun, Acc, Root) ->
     fold_recur(Fun, Acc, Root).
+
+-spec from_ordset(ordsets:ordset(Elem), non_neg_integer()) -> t(Elem).
+from_ordset([], 0) ->
+    ?LEAF0;
+from_ordset([E1], 1) ->
+    ?new_LEAF1(E1);
+from_ordset(L, S) ->
+    Depth = 0,
+    [Root | []] = from_ordset_recur(L, S, Depth),
+    Root.
 
 -spec insert_att(NewElem, t(PrevElem)) -> key_exists | t(NewElem | PrevElem).
 insert_att(Elem, ?INTERNAL1_MATCH_ALL) ->
@@ -1568,6 +1577,184 @@ difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root) ->
         UpdatedRoot ->
             difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
     end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: from_ordset/2
+%% ------------------------------------------------------------------
+
+from_ordset_recur(L, S, Depth) when S > 4 ->
+    ChildrenDepth = Depth + 1,
+
+    case magic_pick(S, Depth) of
+        internal4 ->
+            Sm = S - 4,
+
+            S12 = Sm * 2 div 5,
+            S1 = S12 bsr 1,
+            S2 = S12 - S1,
+
+            S345 = Sm - S12,
+            S3 = S345 div 3,
+            S45 = S345 - S3,
+            S4 = S45 bsr 1,
+            S5 = S45 - S4,
+
+            [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenDepth),
+            [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenDepth),
+            [C3 | [E3 | L4]] = from_ordset_recur(L3, S3, ChildrenDepth),
+            [C4 | [E4 | L5]] = from_ordset_recur(L4, S4, ChildrenDepth),
+            [C5 | L6] = from_ordset_recur(L5, S5, ChildrenDepth),
+
+            Node = ?new_INTERNAL4(E1, E2, E3, E4, C1, C2, C3, C4, C5),
+            [Node | L6];
+        %
+        %
+        internal3 ->
+            Sm = S - 3,
+
+            S12 = Sm bsr 1,
+            S1 = S12 bsr 1,
+            S2 = S12 - S1,
+
+            S34 = Sm - S12,
+            S3 = S34 bsr 1,
+            S4 = S34 - S3,
+
+            [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenDepth),
+            [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenDepth),
+            [C3 | [E3 | L4]] = from_ordset_recur(L3, S3, ChildrenDepth),
+            [C4 | L5] = from_ordset_recur(L4, S4, ChildrenDepth),
+
+            Node = ?new_INTERNAL3(E1, E2, E3, C1, C2, C3, C4),
+            [Node | L5];
+        %
+        %
+        internal2 ->
+            Sm = S - 2,
+
+            S1 = Sm div 3,
+            S23 = Sm - S1,
+            S2 = S23 bsr 1,
+            S3 = S23 - S2,
+
+            [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenDepth),
+            [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenDepth),
+            [C3 | L4] = from_ordset_recur(L3, S3, ChildrenDepth),
+
+            Node = ?new_INTERNAL2(E1, E2, C1, C2, C3),
+            [Node | L4];
+        %
+        %
+        internal1 ->
+            Sm = S - 1,
+
+            S1 = Sm div 2,
+            S2 = Sm - S1,
+
+            [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenDepth),
+            [C2 | L3] = from_ordset_recur(L2, S2, ChildrenDepth),
+
+            Node = ?new_INTERNAL1(E1, C1, C2),
+            [Node | L3]
+    end;
+from_ordset_recur(L, 4, _) ->
+    [E1, E2, E3, E4 | Next] = L,
+    [?new_LEAF4(E1, E2, E3, E4) | Next];
+from_ordset_recur(L, 3, _) ->
+    [E1, E2, E3 | Next] = L,
+    [?new_LEAF3(E1, E2, E3) | Next];
+from_ordset_recur(L, 2, _) ->
+    [E1, E2 | Next] = L,
+    [?new_LEAF2(E1, E2) | Next].
+
+magic_pick(S, 0) when S =< 9; S >= 25, S =< 30 ->
+    % Cannot fit 25 to 30 elements in either INTERNAL2 / INTERNAL3 / INTERNAL4
+    internal1;
+magic_pick(S, 0) ->
+    % TODO document
+    Diff1 = magic_pick_diff1(S),
+    Diff2 = magic_pick_diff2(S),
+    Diff3 = magic_pick_diff3(S),
+    Diff4 = magic_pick_diff4(S),
+
+    if
+        Diff1 < Diff2 ->
+            if
+                Diff1 < Diff3 ->
+                    if
+                        Diff1 < Diff4 ->
+                            internal1;
+                        %
+                        true ->
+                            internal4
+                    end;
+                %
+                Diff3 < Diff4 ->
+                    internal3;
+                %
+                true ->
+                    internal4
+            end;
+        %
+        Diff2 < Diff3 ->
+            if
+                Diff2 < Diff4 ->
+                    internal2;
+                %
+                true ->
+                    internal4
+            end;
+        %
+        Diff3 < Diff4 ->
+            internal3;
+        %
+        true ->
+            internal4
+    end;
+magic_pick(S, _Depth) ->
+    Diff2 = magic_pick_diff2(S),
+    Diff3 = magic_pick_diff3(S),
+    Diff4 = magic_pick_diff4(S),
+
+    if
+        Diff2 < Diff3 ->
+            if
+                Diff2 < Diff4 ->
+                    internal2;
+                %
+                true ->
+                    internal4
+            end;
+        %
+        Diff3 < Diff4 ->
+            internal3;
+        %
+        true ->
+            internal4
+    end.
+
+-compile({inline, magic_pick_diff1/1}).
+magic_pick_diff1(S) ->
+    magic_pick_diff(S, 9.0).
+
+-compile({inline, magic_pick_diff2/1}).
+magic_pick_diff2(S) ->
+    magic_pick_diff(S, 11.0).
+
+-compile({inline, magic_pick_diff3/1}).
+magic_pick_diff3(S) ->
+    magic_pick_diff(S, 15.0).
+
+-compile({inline, magic_pick_diff4/1}).
+magic_pick_diff4(S) ->
+    magic_pick_diff(S, 19.0).
+
+-compile({inline, magic_pick_diff/2}).
+magic_pick_diff(S, IdealAmountOfKeys) ->
+    Div = S / IdealAmountOfKeys,
+    Log = math:log2(Div) / 2.0,
+    RoundedLog = round(Log),
+    abs(RoundedLog - Log).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: filtermap/2
