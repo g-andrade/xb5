@@ -380,9 +380,9 @@ Returns a tree built from the ordered dictionary `Orddict`.
     Tree :: tree(Key, Value).
 
 from_orddict(Orddict) ->
-    Size = 0,
-    Root = xb5_trees_node:new(),
-    from_orddict_recur(Orddict, Size, Root).
+    S = length(Orddict),
+    Root = xb5_trees_node:from_orddict(Orddict, S),
+    #xb5_tree{size = S, root = Root}.
 
 %%
 
@@ -1222,12 +1222,4 @@ from_list_recur([{Key, Value} | Next], Size, Root) ->
             from_list_recur(Next, Size + 1, UpdatedRoot)
     end;
 from_list_recur([], Size, Root) ->
-    #xb5_tree{size = Size, root = Root}.
-
-%%
-
-from_orddict_recur([{Key, Value} | Next], Size, Root) ->
-    UpdatedRoot = xb5_trees_node:append(Key, Value, Root),
-    from_orddict_recur(Next, Size + 1, UpdatedRoot);
-from_orddict_recur([], Size, Root) ->
     #xb5_tree{size = Size, root = Root}.

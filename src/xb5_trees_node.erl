@@ -41,10 +41,10 @@ API for operating over `m:xb5_trees` internal nodes directly.
 %% ------------------------------------------------------------------
 
 -export([
-    append/3,
     delete_att/2,
     foldl/3,
     foldr/3,
+    from_orddict/2,
     get/2,
     insert_att/4,
     is_defined/2,
@@ -514,24 +514,6 @@ API for operating over `m:xb5_trees` internal nodes directly.
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
--spec append(Key, Value, t(Key, Value)) -> t(Key, Value).
-append(Key, Value, ?INTERNAL1_MATCH_ALL) ->
-    Result = append_recur(Key, Value, C2),
-    ins_rebalance_INTERNAL1_C2(Result, ?INTERNAL1_ARGS);
-append(Key, Value, ?LEAF1_MATCH_ALL) ->
-    true = Key > K1,
-    ?new_LEAF2(K1, Key, V1, Value);
-append(Key, Value, ?LEAF0) ->
-    ?new_LEAF1(Key, Value);
-append(Key, Value, Root) ->
-    case append_recur(Key, Value, Root) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            insert_split_root(Pos, Args, Root);
-        %
-        UpdatedRoot ->
-            UpdatedRoot
-    end.
-
 -spec delete_att(Key, t(Key, Value)) -> badkey | t(Key, Value).
 delete_att(Key, ?INTERNAL1_MATCH_ALL) ->
     delete_att_INTERNAL1(Key, ?INTERNAL1_ARGS);
@@ -573,6 +555,18 @@ foldr(_Fun, Acc, ?LEAF0) ->
     Acc;
 foldr(Fun, Acc, Root) ->
     foldr_recur(Fun, Acc, Root).
+
+-spec from_orddict(orddict:orddict(Key, Value), non_neg_integer()) -> t(Key, Value).
+from_orddict([], 0) ->
+    ?LEAF0;
+from_orddict([{K1, V1}], 1) ->
+    ?new_LEAF1(K1, V1);
+from_orddict(L, S) ->
+    [BatchOffset | BatchSize] = from_orddict_initial_batch_params(S),
+    AtRoot = true,
+
+    [Root | []] = from_orddict_recur(L, S, BatchOffset, BatchSize, AtRoot),
+    Root.
 
 -spec get(Key, t(Key, Value)) -> Value | no_return().
 get(Key, ?INTERNAL1_MATCH_ALL) ->
@@ -796,37 +790,6 @@ values(?LEAF0) ->
     [];
 values(Root) ->
     values_recur(Root, []).
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: append/2
-%% ------------------------------------------------------------------
-
-append_recur(Key, Value, Node) ->
-    case Node of
-        ?INTERNAL2_MATCH_ALL ->
-            Result = append_recur(Key, Value, C3),
-            ins_rebalance_INTERNAL2_C3(Result, ?INTERNAL2_ARGS);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            Result = append_recur(Key, Value, C4),
-            ins_rebalance_INTERNAL3_C4(Result, ?INTERNAL3_ARGS);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            Result = append_recur(Key, Value, C5),
-            ins_rebalance_INTERNAL4_C5(Result, ?INTERNAL4_ARGS);
-        %
-        ?LEAF2_MATCH_ALL ->
-            true = Key > K2,
-            ?new_LEAF3(K1, K2, Key, V1, V2, Value);
-        %
-        ?LEAF3_MATCH_ALL ->
-            true = Key > K3,
-            ?new_LEAF4(K1, K2, K3, Key, V1, V2, V3, Value);
-        %
-        ?LEAF4_MATCH(_, _, _, K4, _, _, _, _) ->
-            true = Key > K4,
-            ?SPLIT(5, [Key | Value])
-    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: delete_att/2
@@ -1394,6 +1357,179 @@ foldr_recur(Fun, Acc, Node) ->
             Acc5 = foldr_recur(Fun, Fun(K2, V2, Acc4), C2),
             _Acc6 = foldr_recur(Fun, Fun(K1, V1, Acc5), C1)
     end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: from_orddict/2
+%% ------------------------------------------------------------------
+
+from_orddict_initial_batch_params(S) when S >= 1 ->
+    from_orddict_initial_batch_params(S, 1, 1).
+
+from_orddict_initial_batch_params(S, BatchOffset, BatchSize) ->
+    case BatchOffset + (4 * BatchSize) of
+        NextOffset when NextOffset =< S ->
+            from_orddict_initial_batch_params(S, NextOffset, BatchSize * 4);
+        _ ->
+            [BatchOffset | BatchSize]
+    end.
+
+from_orddict_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
+    ChildrenBatchOffset = BatchOffset - BatchSize,
+    ChildrenBatchSize = BatchSize bsr 2,
+
+    % TODO add specific test to cover building trees with `from_orddict/1' from
+    % small sizes all the way up to a very large size
+
+    case (S - BatchOffset) div BatchSize of
+        2 ->
+            S1 = S2 = BatchSize - 1,
+            [S3 | S4] = from_orddict_right_children_sizes(S - (BatchSize bsl 1), BatchSize),
+            from_orddict_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize);
+        %
+        3 ->
+            S1 = S2 = S3 = BatchSize - 1,
+            [S4 | S5] = from_orddict_right_children_sizes(S - (BatchSize * 3), BatchSize),
+            from_orddict_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize);
+        %
+        Splits when Splits =:= 1 orelse (Splits =:= 0 andalso not AtRoot) ->
+            S1 = BatchSize - 1,
+            [S2 | S3] = from_orddict_right_children_sizes(S - BatchSize, BatchSize),
+            from_orddict_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize);
+        %
+        0 ->
+            [S1 | S2] = from_orddict_right_children_sizes(S, BatchSize),
+            from_orddict_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize)
+    end;
+from_orddict_recur(L, 4, _, _, _) ->
+    [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Next] = L,
+    [?new_LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) | Next];
+from_orddict_recur(L, 3, _, _, _) ->
+    [{K1, V1}, {K2, V2}, {K3, V3} | Next] = L,
+    [?new_LEAF3(K1, K2, K3, V1, V2, V3) | Next];
+from_orddict_recur(L, 2, _, _, _) ->
+    [{K1, V1}, {K2, V2} | Next] = L,
+    [?new_LEAF2(K1, K2, V1, V2) | Next].
+
+from_orddict_right_children_sizes(RemainingSize, BatchSize) ->
+    case RemainingSize bsr 1 < BatchSize of
+        true ->
+            SLeft = (BatchSize * 3 div 4) - 1,
+            SRight = RemainingSize - SLeft - 1,
+            [SLeft | SRight];
+        %
+        false ->
+            SLeft = BatchSize - 1,
+            SRight = RemainingSize - SLeft - 1,
+            [SLeft | SRight]
+    end.
+
+-compile({inline, from_orddict_INTERNAL1/5}).
+from_orddict_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [{K1, V1} | L2]] = from_orddict_recur(
+        L,
+        S1,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C2 | []] = from_orddict_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
+
+    Node = ?new_INTERNAL1(K1, V1, C1, C2),
+
+    [Node | []].
+
+-compile({inline, from_orddict_INTERNAL2/6}).
+from_orddict_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [{K1, V1} | L2]] = from_orddict_recur(
+        L,
+        S1,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C2 | [{K2, V2} | L3]] = from_orddict_recur(
+        L2,
+        S2,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C3 | L4] = from_orddict_recur(L3, S3, ChildrenBatchOffset, ChildrenBatchSize, false),
+
+    Node = ?new_INTERNAL2(K1, K2, V1, V2, C1, C2, C3),
+
+    [Node | L4].
+
+-compile({inline, from_orddict_INTERNAL3/7}).
+from_orddict_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [{K1, V1} | L2]] = from_orddict_recur(
+        L,
+        S1,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C2 | [{K2, V2} | L3]] = from_orddict_recur(
+        L2,
+        S2,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C3 | [{K3, V3} | L4]] = from_orddict_recur(
+        L3,
+        S3,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C4 | L5] = from_orddict_recur(L4, S4, ChildrenBatchOffset, ChildrenBatchSize, false),
+
+    Node = ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
+
+    [Node | L5].
+
+-compile({inline, from_orddict_INTERNAL4/8}).
+from_orddict_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [{K1, V1} | L2]] = from_orddict_recur(
+        L,
+        S1,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C2 | [{K2, V2} | L3]] = from_orddict_recur(
+        L2,
+        S2,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C3 | [{K3, V3} | L4]] = from_orddict_recur(
+        L3,
+        S3,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C4 | [{K4, V4} | L5]] = from_orddict_recur(
+        L4,
+        S4,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C5 | L6] = from_orddict_recur(
+        L5,
+        S5,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+
+    Node = ?new_INTERNAL4(K1, K2, K3, K4, V1, V2, V3, V4, C1, C2, C3, C4, C5),
+
+    [Node | L6].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: get/2

@@ -187,7 +187,8 @@ test_construction(_Config) ->
             ?assertEqual(Size, xb5_trees:size(Tree)),
             ?assertEqual(Size =:= 0, xb5_trees:is_empty(Tree)),
             ?assertEqual(Tree, new_tree_from_each_inserted(RefKvs)),
-            ?assertEqual(Tree, xb5_trees:from_orddict(RefKvs)),
+
+            ?assertKvListsCanonEqual(RefKvs, xb5_trees:to_list(xb5_trees:from_orddict(RefKvs))),
 
             _ = (Size =:= 0 andalso ?assertEqual(Tree, xb5_trees:empty()))
         end
