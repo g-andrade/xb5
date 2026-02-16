@@ -233,6 +233,10 @@ test_construction(_Config) ->
             ?assertEqual(Size =:= 0, xb5_bag:is_empty(Bag)),
             ?assertEqual(Bag, new_bag_from_each_added(RefElements)),
 
+            ?assertListsCanonEqual(
+                RefElements, xb5_bag:to_list(xb5_bag:from_ordered_list(RefElements))
+            ),
+
             UniqueRefElements = lists:usort(RefElements),
             ?assertEqual(UniqueRefElements, xb5_bag:to_list(xb5_bag:from_ordset(UniqueRefElements)))
         end

@@ -39,6 +39,7 @@ See also:
     filtermap/2,
     fold/3,
     from_list/1,
+    from_ordered_list/1,
     from_ordset/1,
     insert/2,
     is_empty/1,
@@ -82,6 +83,7 @@ See also:
     filtermap/2,
     fold/3,
     from_list/1,
+    from_ordered_list/1,
     from_ordset/1,
     insert/2,
     is_empty/1,
@@ -354,9 +356,8 @@ new bag `Bag2` containing only the elements for which `Pred` returns `true`.
     Bag1 :: bag(Element),
     Bag2 :: bag(Element).
 
-filter(Fun, #xb5_bag{root = Root} = Bag) ->
-    [FilteredSize | FilteredRoot] = xb5_bag_node:filter(Fun, Root),
-    Bag#xb5_bag{size = FilteredSize, root = FilteredRoot}.
+filter(Fun, Bag) ->
+    from_ordered_list([Elem || Elem <- to_list(Bag), Fun(Elem)]).
 
 %%
 
@@ -436,6 +437,29 @@ from_list(List) ->
 %%
 
 -doc """
+Returns a bag built from the ordered list `OrderedList`.
+
+Repeated elements are kept.
+
+## Examples
+
+```erlang
+> xb5_bag:to_list(xb5_bag:from_ordered_list([1, 2, 3, 3])).
+[1, 2, 3, 3]
+```
+""".
+-spec from_ordered_list(OrderedList) -> Bag when
+    OrderedList :: [Element],
+    Bag :: bag(Element).
+
+from_ordered_list(OrderedList) ->
+    S = length(OrderedList),
+    Root = xb5_bag_node:from_ordered_list(OrderedList, S),
+    #xb5_bag{size = S, root = Root}.
+
+%%
+
+-doc """
 Returns a bag built from the ordered set `Ordset`.
 
 ## Examples
@@ -450,9 +474,8 @@ Returns a bag built from the ordered set `Ordset`.
     Bag :: bag(Element).
 
 from_ordset(Ordset) ->
-    Root = xb5_bag_node:new(),
-    Size = 0,
-    from_ordset_recur(Ordset, Root, Size).
+    List = ordsets:to_list(Ordset),
+    from_ordered_list(List).
 
 %%
 
@@ -1334,14 +1357,6 @@ from_list_recur([Element | Next], Size, Root) ->
     UpdatedRoot = xb5_bag_node:add(Element, Root),
     from_list_recur(Next, Size + 1, UpdatedRoot);
 from_list_recur([], Size, Root) ->
-    #xb5_bag{size = Size, root = Root}.
-
-%%
-
-from_ordset_recur([Element | Next], Root, Size) ->
-    UpdatedRoot = xb5_bag_node:append(Element, Root),
-    from_ordset_recur(Next, UpdatedRoot, Size + 1);
-from_ordset_recur([], Root, Size) ->
     #xb5_bag{size = Size, root = Root}.
 
 %%%%%%%%

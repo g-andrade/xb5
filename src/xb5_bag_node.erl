@@ -42,11 +42,10 @@ API for operating over `m:xb5_bag` internal nodes directly.
 
 -export([
     add/2,
-    append/2,
     delete_att/2,
-    filter/2,
     filtermap/2,
     fold/3,
+    from_ordered_list/2,
     insert_att/2,
     is_member/2,
     iterator/2,
@@ -506,24 +505,6 @@ add(Elem, Root) ->
             UpdatedRoot
     end.
 
--spec append(NewElem, t(PrevElem)) -> t(NewElem | PrevElem).
-append(Elem, ?INTERNAL1_MATCH_ALL) ->
-    Result = append_recur(Elem, C2),
-    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS);
-append(Elem, ?LEAF1_MATCH_ALL) ->
-    true = Elem >= E1,
-    ?new_LEAF2(E1, Elem);
-append(Elem, ?LEAF0) ->
-    ?new_LEAF1(Elem);
-append(Elem, Root) ->
-    case append_recur(Elem, Root) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            insert_split_root(Elem, Pos, Args, Root);
-        %
-        UpdatedRoot ->
-            UpdatedRoot
-    end.
-
 -spec delete_att(_, t(Elem)) -> badkey | t(Elem).
 delete_att(Elem, ?INTERNAL1_MATCH_ALL) ->
     delete_att_INTERNAL1(Elem, ?INTERNAL1_ARGS);
@@ -533,15 +514,6 @@ delete_att(_Elem, ?LEAF0) ->
     badkey;
 delete_att(Elem, Root) ->
     delete_att_recur(Elem, Root).
-
--spec filter(fun((Elem) -> boolean()), t(Elem)) ->
-    nonempty_improper_list(FilteredSize, t(Elem))
-when
-    FilteredSize :: non_neg_integer().
-filter(Fun, Root) ->
-    Count = 0,
-    Filtered = new(),
-    filter_root(Fun, Count, Root, Filtered).
 
 -spec filtermap(fun((Elem) -> {true, MappedElem} | boolean()), t(Elem)) ->
     nonempty_improper_list(FilteredSize, t(Elem | MappedElem))
@@ -567,6 +539,18 @@ fold(_Fun, Acc, ?LEAF0) ->
     Acc;
 fold(Fun, Acc, Root) ->
     fold_recur(Fun, Acc, Root).
+
+-spec from_ordered_list([Elem], non_neg_integer()) -> t(Elem).
+from_ordered_list([], 0) ->
+    ?LEAF0;
+from_ordered_list([E1], 1) ->
+    ?new_LEAF1(E1);
+from_ordered_list(L, S) ->
+    [BatchOffset | BatchSize] = from_ordered_list_initial_batch_params(S),
+    AtRoot = true,
+
+    [Root | []] = from_ordered_list_recur(L, S, BatchOffset, BatchSize, AtRoot),
+    Root.
 
 -spec insert_att(NewElem, t(PrevElem)) -> key_exists | t(NewElem | PrevElem).
 insert_att(Elem, ?INTERNAL1_MATCH_ALL) ->
@@ -1076,37 +1060,6 @@ put_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
     ?new_LEAF2(E1, Elem).
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: append/2
-%% ------------------------------------------------------------------
-
-append_recur(Elem, Node) ->
-    case Node of
-        ?INTERNAL2_MATCH_ALL ->
-            Result = append_recur(Elem, C3),
-            ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            Result = append_recur(Elem, C4),
-            ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            Result = append_recur(Elem, C5),
-            ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS);
-        %
-        ?LEAF2_MATCH_ALL ->
-            true = Elem >= E2,
-            ?new_LEAF3(E1, E2, Elem);
-        %
-        ?LEAF3_MATCH_ALL ->
-            true = Elem >= E3,
-            ?new_LEAF4(E1, E2, E3, Elem);
-        %
-        ?LEAF4_MATCH(_, _, _, E4) ->
-            true = Elem >= E4,
-            ?SPLIT(5, [])
-    end.
-
-%% ------------------------------------------------------------------
 %% Internal Function Definitions: delete_att/2
 %% ------------------------------------------------------------------
 
@@ -1605,152 +1558,6 @@ delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
     end.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: filter/2
-%% ------------------------------------------------------------------
-
-filter_root(Fun, Count, Root, Filtered) ->
-    case Root of
-        ?INTERNAL1_MATCH_NO_SIZES ->
-            filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered);
-        %
-        ?LEAF1_MATCH_ALL ->
-            filter_single_element(Fun, E1, Count, Filtered);
-        %
-        ?LEAF0 ->
-            [Count | Filtered];
-        %
-        _ ->
-            filter_recur(Fun, Root, Count, Filtered)
-    end.
-
-filter_recur(Fun, Node, Count, Filtered) ->
-    case Node of
-        ?LEAF2_MATCH_ALL ->
-            filter_leaf_batch2(Fun, E1, E2, Count, Filtered);
-        %
-        ?LEAF3_MATCH_ALL ->
-            filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered);
-        %
-        ?LEAF4_MATCH_ALL ->
-            filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
-        %
-        ?INTERNAL2_MATCH_NO_SIZES ->
-            filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered);
-        %
-        ?INTERNAL3_MATCH_NO_SIZES ->
-            filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered);
-        %
-        ?INTERNAL4_MATCH_NO_SIZES ->
-            filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
-    end.
-
-%% INTERNAL4
-
--compile({inline, filter_internal_batch4/12}).
-filter_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered) ->
-    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        true ->
-            filter_internal_batch3(
-                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, append(E1, Filtered2)
-            );
-        %
-        false ->
-            filter_internal_batch3(Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2)
-    end.
-
-%% INTERNAL3
-
--compile({inline, filter_internal_batch3/10}).
-filter_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
-    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        true ->
-            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, append(E1, Filtered2));
-        %
-        false ->
-            filter_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2)
-    end.
-
-%% INTERNAL2
-
--compile({inline, filter_internal_batch2/8}).
-filter_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
-    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        true ->
-            filter_internal_batch1(Fun, E2, C2, C3, Count2 + 1, append(E1, Filtered2));
-        %
-        false ->
-            filter_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2)
-    end.
-
-%% INTERNAL1
-
--compile({inline, filter_internal_batch1/6}).
-filter_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
-    [Count2 | Filtered2] = filter_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        true ->
-            filter_recur(Fun, C2, Count2 + 1, append(E1, Filtered2));
-        %
-        false ->
-            filter_recur(Fun, C2, Count2, Filtered2)
-    end.
-
-%% LEAF4
-
--compile({inline, filter_leaf_batch4/7}).
-filter_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
-    case Fun(E1) of
-        true ->
-            filter_leaf_batch3(Fun, E2, E3, E4, Count + 1, append(E1, Filtered));
-        %
-        false ->
-            filter_leaf_batch3(Fun, E2, E3, E4, Count, Filtered)
-    end.
-
-%% LEAF3
-
--compile({inline, filter_leaf_batch3/6}).
-filter_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
-    case Fun(E1) of
-        true ->
-            filter_leaf_batch2(Fun, E2, E3, Count + 1, append(E1, Filtered));
-        %
-        false ->
-            filter_leaf_batch2(Fun, E2, E3, Count, Filtered)
-    end.
-
-%% LEAF2
-
--compile({inline, filter_leaf_batch2/5}).
-filter_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
-    case Fun(E1) of
-        true ->
-            filter_single_element(Fun, E2, Count + 1, append(E1, Filtered));
-        %
-        false ->
-            filter_single_element(Fun, E2, Count, Filtered)
-    end.
-
-%% LEAF1
-
--compile({inline, filter_single_element/4}).
-filter_single_element(Fun, E1, Count, Filtered) ->
-    case Fun(E1) of
-        true ->
-            [Count + 1 | append(E1, Filtered)];
-        %
-        false ->
-            [Count | Filtered]
-    end.
-
-%% ------------------------------------------------------------------
 %% Internal Function Definitions: filtermap/2
 %% ------------------------------------------------------------------
 
@@ -1967,6 +1774,257 @@ fold_recur(Fun, Acc, Node) ->
             Acc5 = fold_recur(Fun, Fun(E3, Acc4), C4),
             _Acc6 = fold_recur(Fun, Fun(E4, Acc5), C5)
     end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: from_ordered_list/2
+%% ------------------------------------------------------------------
+
+from_ordered_list_initial_batch_params(S) when S >= 1 ->
+    from_ordered_list_initial_batch_params(S, 1, 1).
+
+from_ordered_list_initial_batch_params(S, BatchOffset, BatchSize) ->
+    case BatchOffset + (4 * BatchSize) of
+        NextOffset when NextOffset =< S ->
+            from_ordered_list_initial_batch_params(S, NextOffset, BatchSize * 4);
+        _ ->
+            [BatchOffset | BatchSize]
+    end.
+
+from_ordered_list_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
+    ChildrenBatchOffset = BatchOffset - BatchSize,
+    ChildrenBatchSize = BatchSize bsr 2,
+
+    % TODO add specific test to cover building bags with `from_ordered_list/1' from
+    % small sizes all the way up to a very large size
+
+    case (S - BatchOffset) div BatchSize of
+        2 ->
+            S1 = S2 = BatchSize - 1,
+            [S3 | S4] = from_ordered_list_right_children_sizes(S - (BatchSize bsl 1), BatchSize),
+            from_ordered_list_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize);
+        %
+        3 ->
+            S1 = S2 = S3 = BatchSize - 1,
+            [S4 | S5] = from_ordered_list_right_children_sizes(S - (BatchSize * 3), BatchSize),
+            from_ordered_list_INTERNAL4(
+                L,
+                S1,
+                S2,
+                S3,
+                S4,
+                S5,
+                ChildrenBatchOffset,
+                ChildrenBatchSize
+            );
+        %
+        Splits when Splits =:= 1 orelse (Splits =:= 0 andalso not AtRoot) ->
+            S1 = BatchSize - 1,
+            [S2 | S3] = from_ordered_list_right_children_sizes(S - BatchSize, BatchSize),
+            from_ordered_list_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize);
+        %
+        0 ->
+            [S1 | S2] = from_ordered_list_right_children_sizes(S, BatchSize),
+            from_ordered_list_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize)
+    end;
+from_ordered_list_recur(L, 4, _, _, _) ->
+    [E1, E2, E3, E4 | Next] = L,
+    [?new_LEAF4(E1, E2, E3, E4) | Next];
+from_ordered_list_recur(L, 3, _, _, _) ->
+    [E1, E2, E3 | Next] = L,
+    [?new_LEAF3(E1, E2, E3) | Next];
+from_ordered_list_recur(L, 2, _, _, _) ->
+    [E1, E2 | Next] = L,
+    [?new_LEAF2(E1, E2) | Next].
+
+from_ordered_list_right_children_sizes(RemainingSize, BatchSize) ->
+    case RemainingSize bsr 1 < BatchSize of
+        true ->
+            SLeft = (BatchSize * 3 div 4) - 1,
+            SRight = RemainingSize - SLeft - 1,
+            [SLeft | SRight];
+        %
+        false ->
+            SLeft = BatchSize - 1,
+            SRight = RemainingSize - SLeft - 1,
+            [SLeft | SRight]
+    end.
+
+-compile({inline, from_ordered_list_INTERNAL1/5}).
+from_ordered_list_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordered_list_recur(
+        L,
+        S1,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C2 | []] = from_ordered_list_recur(
+        L2,
+        S2,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+
+    Node = ?new_INTERNAL1(
+        E1,
+        %
+        S1 + 1,
+        %
+        C1,
+        C2
+    ),
+
+    [Node | []].
+
+-compile({inline, from_ordered_list_INTERNAL2/6}).
+from_ordered_list_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordered_list_recur(
+        L,
+        S1,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C2 | [E2 | L3]] = from_ordered_list_recur(
+        L2,
+        S2,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C3 | L4] = from_ordered_list_recur(
+        L3,
+        S3,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+
+    Node = ?new_INTERNAL2(
+        E1,
+        E2,
+        %
+        S1 + 1,
+        S1 + S2 + 2,
+        %,
+        C1,
+        C2,
+        C3
+    ),
+
+    [Node | L4].
+
+-compile({inline, from_ordered_list_INTERNAL3/7}).
+from_ordered_list_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordered_list_recur(
+        L,
+        S1,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C2 | [E2 | L3]] = from_ordered_list_recur(
+        L2,
+        S2,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C3 | [E3 | L4]] = from_ordered_list_recur(
+        L3,
+        S3,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C4 | L5] = from_ordered_list_recur(
+        L4,
+        S4,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+
+    S12 = S1 + S2,
+
+    Node = ?new_INTERNAL3(
+        E1,
+        E2,
+        E3,
+        %
+        S1 + 1,
+        S12 + 2,
+        S12 + S3 + 3,
+        %,
+        C1,
+        C2,
+        C3,
+        C4
+    ),
+
+    [Node | L5].
+
+-compile({inline, from_ordered_list_INTERNAL4/8}).
+from_ordered_list_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordered_list_recur(
+        L,
+        S1,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C2 | [E2 | L3]] = from_ordered_list_recur(
+        L2,
+        S2,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C3 | [E3 | L4]] = from_ordered_list_recur(
+        L3,
+        S3,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C4 | [E4 | L5]] = from_ordered_list_recur(
+        L4,
+        S4,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+    [C5 | L6] = from_ordered_list_recur(
+        L5,
+        S5,
+        ChildrenBatchOffset,
+        ChildrenBatchSize,
+        false
+    ),
+
+    S12 = S1 + S2,
+    S123 = S12 + S3,
+
+    Node = ?new_INTERNAL4(
+        E1,
+        E2,
+        E3,
+        E4,
+        %
+        S1 + 1,
+        S12 + 2,
+        S123 + 3,
+        S123 + S4 + 4,
+        %,
+        C1,
+        C2,
+        C3,
+        C4,
+        C5
+    ),
+
+    [Node | L6].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: insert_att/2
@@ -3301,7 +3359,7 @@ map_root(Fun, Node, Acc) ->
     end.
 
 map_recur(Fun, Node, Acc) ->
-    % TODO optimize like in filter, filtermap
+    % TODO optimize like in filtermap
     case Node of
         ?LEAF2_MATCH_ALL ->
             Acc2 = map_elem(Fun, E1, Acc),
