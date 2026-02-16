@@ -15,8 +15,10 @@ It provides three modules:
   [`gb_sets`](https://www.erlang.org/doc/apps/stdlib/gb_sets.html)
 * **`xb5_trees`** — ordered key-value store, drop-in replacement for
   [`gb_trees`](https://www.erlang.org/doc/apps/stdlib/gb_trees.html)
-* **`xb5_bag`** — ordered multiset with order-statistic operations
-  (rank, nth element, percentile)
+* **`xb5_bag`** — ordered
+  [multiset](https://en.wikipedia.org/wiki/Set_(abstract_data_type)#Multiset)
+  with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
+  operations (rank, nth element, percentile)
 
 The APIs of `xb5_sets` and `xb5_trees` mirror their stdlib counterparts;
 refer to the [API documentation](https://hexdocs.pm/xb5/) for details.
