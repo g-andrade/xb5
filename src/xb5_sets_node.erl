@@ -1856,9 +1856,6 @@ from_ordset_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
     ChildrenBatchOffset = BatchOffset - BatchSize,
     ChildrenBatchSize = BatchSize bsr 2,
 
-    % TODO add specific test to cover building sets with `from_ordset/1' from
-    % small sizes all the way up to a very large size
-
     case (S - BatchOffset) div BatchSize of
         2 ->
             S1 = S2 = BatchSize - 1,

@@ -13,6 +13,7 @@
 -export([
     test_construction/1,
     test_construction_repeated/1,
+    test_extensive_construction_from_ordset/1,
     test_lookup/1,
     test_add/1,
     test_insert/1,
@@ -127,6 +128,7 @@ groups() ->
         {basic_api, [parallel], [
             test_construction,
             test_construction_repeated,
+            test_extensive_construction_from_ordset,
             test_lookup,
             test_add,
             test_insert,
@@ -217,6 +219,9 @@ test_construction(_Config) ->
 
 test_construction_repeated(_Config) ->
     foreach_tested_size(fun run_construction_repeated_test/2).
+
+test_extensive_construction_from_ordset(_Config) ->
+    test_extensive_construction_from_ordset_recur(10000, []).
 
 test_lookup(_Config) ->
     foreach_test_set(
@@ -993,6 +998,22 @@ run_construction_repeated_test(Size, [ElementToRepeat | Next], RefElements) ->
 
     run_construction_repeated_test(Size, Next, RefElements);
 run_construction_repeated_test(_, [], _) ->
+    ok.
+
+%% ------------------------------------------------------------------
+%% Helpers: extensive construction from ordset
+%% ------------------------------------------------------------------
+
+test_extensive_construction_from_ordset_recur(FirstKey, Acc) when FirstKey > 0 ->
+    List = [FirstKey | Acc],
+    Set = xb5_sets:from_ordset(List),
+
+    ?assertListsCanonEqual(List, xb5_sets:to_list(Set)),
+
+    _ = xb5_sets:structural_stats(Set),
+
+    test_extensive_construction_from_ordset_recur(FirstKey - 1, List);
+test_extensive_construction_from_ordset_recur(0, _) ->
     ok.
 
 %% ------------------------------------------------------------------

@@ -13,6 +13,7 @@
 -export([
     test_construction/1,
     test_construction_repeated/1,
+    test_extensive_construction_from_orddict/1,
     test_lookup/1,
     test_insert/1,
     test_insert_with/1,
@@ -121,6 +122,7 @@ groups() ->
         {basic_api, [parallel], [
             test_construction,
             test_construction_repeated,
+            test_extensive_construction_from_orddict,
             test_lookup,
             test_insert,
             test_insert_with,
@@ -198,6 +200,9 @@ test_construction(_Config) ->
 
 test_construction_repeated(_Config) ->
     foreach_tested_size(fun run_construction_repeated_test/2).
+
+test_extensive_construction_from_orddict(_Config) ->
+    test_extensive_construction_from_orddict_recur(10000, []).
 
 test_lookup(_Config) ->
     foreach_test_tree(
@@ -1193,6 +1198,22 @@ run_construction_repeated_test(Size, [KeyToRepeat | Next], RefKvs) ->
 
     run_construction_repeated_test(Size, Next, RefKvs);
 run_construction_repeated_test(_, [], _) ->
+    ok.
+
+%% ------------------------------------------------------------------
+%% Helpers: extensive construction from orddict
+%% ------------------------------------------------------------------
+
+test_extensive_construction_from_orddict_recur(FirstKey, Acc) when FirstKey > 0 ->
+    List = [{FirstKey, make_ref()} | Acc],
+    Tree = xb5_trees:from_orddict(List),
+
+    ?assertKvListsCanonEqual(List, xb5_trees:to_list(Tree)),
+
+    _ = xb5_trees:structural_stats(Tree),
+
+    test_extensive_construction_from_orddict_recur(FirstKey - 1, List);
+test_extensive_construction_from_orddict_recur(0, _) ->
     ok.
 
 %% ------------------------------------------------------------------

@@ -12,6 +12,7 @@
 %% Test exports - Basic API
 -export([
     test_construction/1,
+    test_extensive_construction_from_ordset/1,
     test_lookup/1,
     test_add/1,
     test_enter/1,
@@ -157,6 +158,7 @@ groups() ->
     [
         {basic_api, [parallel], [
             test_construction,
+            test_extensive_construction_from_ordset,
             test_lookup,
             test_add,
             test_enter,
@@ -243,6 +245,9 @@ test_construction(_Config) ->
             ?assertEqual(UniqueRefElements, xb5_bag:to_list(xb5_bag:from_ordset(UniqueRefElements)))
         end
     ).
+
+test_extensive_construction_from_ordset(_Config) ->
+    test_extensive_construction_from_ordset_recur(10000, []).
 
 test_lookup(_Config) ->
     foreach_test_bag(
@@ -1509,6 +1514,22 @@ fun1_error_not_to_be_called() ->
     fun(_) ->
         error(not_to_be_called)
     end.
+
+%% ------------------------------------------------------------------
+%% Helpers: extensive construction from ordset
+%% ------------------------------------------------------------------
+
+test_extensive_construction_from_ordset_recur(FirstKey, Acc) when FirstKey > 0 ->
+    List = [FirstKey | Acc],
+    Bag = xb5_bag:from_ordset(List),
+
+    ?assertListsCanonEqual(List, xb5_bag:to_list(Bag)),
+
+    _ = xb5_bag:structural_stats(Bag),
+
+    test_extensive_construction_from_ordset_recur(FirstKey - 1, List);
+test_extensive_construction_from_ordset_recur(0, _) ->
+    ok.
 
 %% ------------------------------------------------------------------
 %% Helpers: deletion
