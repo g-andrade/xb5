@@ -451,10 +451,6 @@ Returns a set built from the ordered set `Ordset`.
     Set :: set(Element).
 
 from_ordset(Ordset) ->
-    %Root = xb5_sets_node:new(),
-    %Size = 0,
-    %from_ordset_recur(Ordset, Root, Size).
-
     S = length(Ordset),
     Root = xb5_sets_node:from_ordset(Ordset, S),
     #xb5_set{size = S, root = Root}.
