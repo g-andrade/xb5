@@ -68,6 +68,7 @@
 %% Test exports - structure
 -export([
     test_structure_sequentially_built/1,
+    test_structure_built_from_ordset/1,
     test_structure_randomly_built/1,
     test_structure_build_seqIns2x_seqDelSmallerHalf/1,
     test_structure_build_seqIns2x_seqDelGreaterHalf/1,
@@ -204,6 +205,7 @@ groups() ->
             % Uncomment as needed, these take a long time in CI.
             %
             % test_structure_sequentially_built,
+            % test_structure_built_from_ordset,
             % test_structure_randomly_built,
             % test_structure_build_seqIns2x_seqDelSmallerHalf,
             % test_structure_build_seqIns2x_seqDelGreaterHalf,
@@ -1119,6 +1121,23 @@ test_structure_sequentially_built(_Config) ->
                     4 ->
                         xb5_bag:from_list(lists:reverse(RefElements))
                 end
+            end
+        ),
+
+    %%%%%%%%%%
+
+    ?assertPreciseStat(height, 5.0, CondensedStats),
+
+    ?assertPreciseStat(avg_keys_per_node, 2.9940119760479043, CondensedStats).
+
+%%%%
+
+test_structure_built_from_ordset(_Config) ->
+    CondensedStats =
+        run_structure_test(
+            fun(RefElements) ->
+                ?assertEqual(RefElements, lists:usort(RefElements)),
+                xb5_bag:from_ordset(RefElements)
             end
         ),
 
