@@ -41,7 +41,6 @@ API for operating over `m:xb5_sets` internal nodes directly.
 %% ------------------------------------------------------------------
 
 -export([
-    append/2,
     delete_att/2,
     difference/2,
     does_root_look_legit/2,
@@ -475,24 +474,6 @@ API for operating over `m:xb5_sets` internal nodes directly.
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
--spec append(NewElem, t(PrevElem)) -> t(NewElem | PrevElem).
-append(Elem, ?INTERNAL1_MATCH_ALL) ->
-    Result = append_recur(Elem, C2),
-    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS);
-append(Elem, ?LEAF1_MATCH_ALL) ->
-    true = Elem > E1,
-    ?new_LEAF2(E1, Elem);
-append(Elem, ?LEAF0) ->
-    ?new_LEAF1(Elem);
-append(Elem, Root) ->
-    case append_recur(Elem, Root) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            insert_split_root(Elem, Pos, Args, Root);
-        %
-        UpdatedRoot ->
-            UpdatedRoot
-    end.
-
 -spec delete_att(_, t(Elem)) -> badkey | t(Elem).
 delete_att(Elem, ?INTERNAL1_MATCH_ALL) ->
     delete_att_INTERNAL1(Elem, ?INTERNAL1_ARGS);
@@ -584,8 +565,10 @@ from_ordset([], 0) ->
 from_ordset([E1], 1) ->
     ?new_LEAF1(E1);
 from_ordset(L, S) ->
-    Depth = 0,
-    [Root | []] = from_ordset_recur(L, S, Depth),
+    [BatchOffset | BatchSize] = from_ordset_initial_batch_params(S),
+    AtRoot = true,
+
+    [Root | []] = from_ordset_recur(L, S, BatchOffset, BatchSize, AtRoot),
     Root.
 
 -spec insert_att(NewElem, t(PrevElem)) -> key_exists | t(NewElem | PrevElem).
@@ -802,6 +785,24 @@ union(Root1, Size1, Root2, Size2) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: append/2
 %% ------------------------------------------------------------------
+
+-spec append(NewElem, t(PrevElem)) -> t(NewElem | PrevElem).
+append(Elem, ?INTERNAL1_MATCH_ALL) ->
+    Result = append_recur(Elem, C2),
+    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS);
+append(Elem, ?LEAF1_MATCH_ALL) ->
+    true = Elem > E1,
+    ?new_LEAF2(E1, Elem);
+append(Elem, ?LEAF0) ->
+    ?new_LEAF1(Elem);
+append(Elem, Root) ->
+    case append_recur(Elem, Root) of
+        ?SPLIT_MATCH(Pos, Args) ->
+            insert_split_root(Elem, Pos, Args, Root);
+        %
+        UpdatedRoot ->
+            UpdatedRoot
+    end.
 
 append_recur(Elem, Node) ->
     case Node of
@@ -1582,179 +1583,108 @@ difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root) ->
 %% Internal Function Definitions: from_ordset/2
 %% ------------------------------------------------------------------
 
-from_ordset_recur(L, S, Depth) when S > 4 ->
-    ChildrenDepth = Depth + 1,
+from_ordset_initial_batch_params(S) when S >= 1 ->
+    from_ordset_initial_batch_params(S, 1, 1).
 
-    case magic_pick(S, Depth) of
-        internal4 ->
-            Sm = S - 4,
+from_ordset_initial_batch_params(S, BatchOffset, BatchSize) ->
+    case BatchOffset + (4 * BatchSize) of
+        NextOffset when NextOffset =< S ->
+            from_ordset_initial_batch_params(S, NextOffset, BatchSize * 4);
+        _ ->
+            [BatchOffset | BatchSize]
+    end.
 
-            S12 = Sm * 2 div 5,
-            S1 = S12 bsr 1,
-            S2 = S12 - S1,
+from_ordset_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
+    ChildrenBatchOffset = BatchOffset - BatchSize,
+    ChildrenBatchSize = BatchSize bsr 2,
 
-            S345 = Sm - S12,
-            S3 = S345 div 3,
-            S45 = S345 - S3,
-            S4 = S45 bsr 1,
-            S5 = S45 - S4,
+    % TODO add specific test to cover building sets with `from_ordset/1' from
+    % small sizes all the way up to a very large size
 
-            [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenDepth),
-            [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenDepth),
-            [C3 | [E3 | L4]] = from_ordset_recur(L3, S3, ChildrenDepth),
-            [C4 | [E4 | L5]] = from_ordset_recur(L4, S4, ChildrenDepth),
-            [C5 | L6] = from_ordset_recur(L5, S5, ChildrenDepth),
-
-            Node = ?new_INTERNAL4(E1, E2, E3, E4, C1, C2, C3, C4, C5),
-            [Node | L6];
+    case (S - BatchOffset) div BatchSize of
+        2 ->
+            S1 = S2 = BatchSize - 1,
+            [S3 | S4] = from_ordset_right_children_sizes(S - (BatchSize bsl 1), BatchSize),
+            from_ordset_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize);
         %
+        3 ->
+            S1 = S2 = S3 = BatchSize - 1,
+            [S4 | S5] = from_ordset_right_children_sizes(S - (BatchSize * 3), BatchSize),
+            from_ordset_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize);
         %
-        internal3 ->
-            Sm = S - 3,
-
-            S12 = Sm bsr 1,
-            S1 = S12 bsr 1,
-            S2 = S12 - S1,
-
-            S34 = Sm - S12,
-            S3 = S34 bsr 1,
-            S4 = S34 - S3,
-
-            [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenDepth),
-            [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenDepth),
-            [C3 | [E3 | L4]] = from_ordset_recur(L3, S3, ChildrenDepth),
-            [C4 | L5] = from_ordset_recur(L4, S4, ChildrenDepth),
-
-            Node = ?new_INTERNAL3(E1, E2, E3, C1, C2, C3, C4),
-            [Node | L5];
+        Splits when Splits =:= 1 orelse (Splits =:= 0 andalso not AtRoot) ->
+            S1 = BatchSize - 1,
+            [S2 | S3] = from_ordset_right_children_sizes(S - BatchSize, BatchSize),
+            from_ordset_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize);
         %
-        %
-        internal2 ->
-            Sm = S - 2,
-
-            S1 = Sm div 3,
-            S23 = Sm - S1,
-            S2 = S23 bsr 1,
-            S3 = S23 - S2,
-
-            [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenDepth),
-            [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenDepth),
-            [C3 | L4] = from_ordset_recur(L3, S3, ChildrenDepth),
-
-            Node = ?new_INTERNAL2(E1, E2, C1, C2, C3),
-            [Node | L4];
-        %
-        %
-        internal1 ->
-            Sm = S - 1,
-
-            S1 = Sm div 2,
-            S2 = Sm - S1,
-
-            [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenDepth),
-            [C2 | L3] = from_ordset_recur(L2, S2, ChildrenDepth),
-
-            Node = ?new_INTERNAL1(E1, C1, C2),
-            [Node | L3]
+        0 ->
+            [S1 | S2] = from_ordset_right_children_sizes(S, BatchSize),
+            from_ordset_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize)
     end;
-from_ordset_recur(L, 4, _) ->
+from_ordset_recur(L, 4, _, _, _) ->
     [E1, E2, E3, E4 | Next] = L,
     [?new_LEAF4(E1, E2, E3, E4) | Next];
-from_ordset_recur(L, 3, _) ->
+from_ordset_recur(L, 3, _, _, _) ->
     [E1, E2, E3 | Next] = L,
     [?new_LEAF3(E1, E2, E3) | Next];
-from_ordset_recur(L, 2, _) ->
+from_ordset_recur(L, 2, _, _, _) ->
     [E1, E2 | Next] = L,
     [?new_LEAF2(E1, E2) | Next].
 
-magic_pick(S, 0) when S =< 9; S >= 25, S =< 30 ->
-    % Cannot fit 25 to 30 elements in either INTERNAL2 / INTERNAL3 / INTERNAL4
-    internal1;
-magic_pick(S, 0) ->
-    % TODO document
-    Diff1 = magic_pick_diff1(S),
-    Diff2 = magic_pick_diff2(S),
-    Diff3 = magic_pick_diff3(S),
-    Diff4 = magic_pick_diff4(S),
-
-    if
-        Diff1 < Diff2 ->
-            if
-                Diff1 < Diff3 ->
-                    if
-                        Diff1 < Diff4 ->
-                            internal1;
-                        %
-                        true ->
-                            internal4
-                    end;
-                %
-                Diff3 < Diff4 ->
-                    internal3;
-                %
-                true ->
-                    internal4
-            end;
-        %
-        Diff2 < Diff3 ->
-            if
-                Diff2 < Diff4 ->
-                    internal2;
-                %
-                true ->
-                    internal4
-            end;
-        %
-        Diff3 < Diff4 ->
-            internal3;
-        %
+from_ordset_right_children_sizes(RemainingSize, BatchSize) ->
+    case RemainingSize bsr 1 < BatchSize of
         true ->
-            internal4
-    end;
-magic_pick(S, _Depth) ->
-    Diff2 = magic_pick_diff2(S),
-    Diff3 = magic_pick_diff3(S),
-    Diff4 = magic_pick_diff4(S),
-
-    if
-        Diff2 < Diff3 ->
-            if
-                Diff2 < Diff4 ->
-                    internal2;
-                %
-                true ->
-                    internal4
-            end;
+            SLeft = (BatchSize * 3 div 4) - 1,
+            SRight = RemainingSize - SLeft - 1,
+            [SLeft | SRight];
         %
-        Diff3 < Diff4 ->
-            internal3;
-        %
-        true ->
-            internal4
+        false ->
+            SLeft = BatchSize - 1,
+            SRight = RemainingSize - SLeft - 1,
+            [SLeft | SRight]
     end.
 
--compile({inline, magic_pick_diff1/1}).
-magic_pick_diff1(S) ->
-    magic_pick_diff(S, 9.0).
+-compile({inline, from_ordset_INTERNAL1/5}).
+from_ordset_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C2 | []] = from_ordset_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
 
--compile({inline, magic_pick_diff2/1}).
-magic_pick_diff2(S) ->
-    magic_pick_diff(S, 11.0).
+    Node = ?new_INTERNAL1(E1, C1, C2),
 
--compile({inline, magic_pick_diff3/1}).
-magic_pick_diff3(S) ->
-    magic_pick_diff(S, 15.0).
+    [Node | []].
 
--compile({inline, magic_pick_diff4/1}).
-magic_pick_diff4(S) ->
-    magic_pick_diff(S, 19.0).
+-compile({inline, from_ordset_INTERNAL2/6}).
+from_ordset_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C3 | L4] = from_ordset_recur(L3, S3, ChildrenBatchOffset, ChildrenBatchSize, false),
 
--compile({inline, magic_pick_diff/2}).
-magic_pick_diff(S, IdealAmountOfKeys) ->
-    Div = S / IdealAmountOfKeys,
-    Log = math:log2(Div) / 2.0,
-    RoundedLog = round(Log),
-    abs(RoundedLog - Log).
+    Node = ?new_INTERNAL2(E1, E2, C1, C2, C3),
+
+    [Node | L4].
+
+-compile({inline, from_ordset_INTERNAL3/7}).
+from_ordset_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C3 | [E3 | L4]] = from_ordset_recur(L3, S3, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C4 | L5] = from_ordset_recur(L4, S4, ChildrenBatchOffset, ChildrenBatchSize, false),
+
+    Node = ?new_INTERNAL3(E1, E2, E3, C1, C2, C3, C4),
+
+    [Node | L5].
+
+-compile({inline, from_ordset_INTERNAL4/8}).
+from_ordset_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C3 | [E3 | L4]] = from_ordset_recur(L3, S3, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C4 | [E4 | L5]] = from_ordset_recur(L4, S4, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C5 | L6] = from_ordset_recur(L5, S5, ChildrenBatchOffset, ChildrenBatchSize, false),
+
+    Node = ?new_INTERNAL4(E1, E2, E3, E4, C1, C2, C3, C4, C5),
+
+    [Node | L6].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: filtermap/2
