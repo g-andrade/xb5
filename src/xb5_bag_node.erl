@@ -520,9 +520,8 @@ delete_att(Elem, Root) ->
 when
     FilteredSize :: non_neg_integer().
 filtermap(Fun, Root) ->
-    Count = 0,
-    Filtered = new(),
-    filtermap_root(Fun, Count, Root, Filtered).
+    List = to_rev_list(Root),
+    filtermap_recur(Fun, List, 0, [], []).
 
 -spec fold(fun((Elem, Acc1) -> Acc2), Acc0, t(Elem)) -> AccN when
     Acc0 :: term(),
@@ -1561,185 +1560,26 @@ delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
 %% Internal Function Definitions: filtermap/2
 %% ------------------------------------------------------------------
 
-filtermap_root(Fun, Count, Root, Filtered) ->
-    case Root of
-        ?INTERNAL1_MATCH_NO_SIZES ->
-            [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
-            [Count3 | Filtered3] = filtermap_single_element(Fun, E1, Count2, Filtered2),
-            filtermap_recur(Fun, C2, Count3, Filtered3);
-        %
-        ?LEAF1_MATCH_ALL ->
-            filtermap_single_element(Fun, E1, Count, Filtered);
-        %
-        ?LEAF0 ->
-            [Count | Filtered];
-        %
-        _ ->
-            filtermap_recur(Fun, Root, Count, Filtered)
-    end.
-
-filtermap_recur(Fun, Node, Count, Filtered) ->
-    case Node of
-        ?LEAF2_MATCH_ALL ->
-            filtermap_leaf_batch2(Fun, E1, E2, Count, Filtered);
-        %
-        ?LEAF3_MATCH_ALL ->
-            filtermap_leaf_batch3(Fun, E1, E2, E3, Count, Filtered);
-        %
-        ?LEAF4_MATCH_ALL ->
-            filtermap_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered);
-        %
-        ?INTERNAL2_MATCH_NO_SIZES ->
-            filtermap_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered);
-        %
-        ?INTERNAL3_MATCH_NO_SIZES ->
-            filtermap_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered);
-        %
-        ?INTERNAL4_MATCH_NO_SIZES ->
-            filtermap_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered)
-    end.
-
-%% INTERNAL4
-
--compile({inline, filtermap_internal_batch4/12}).
-filtermap_internal_batch4(Fun, E1, E2, E3, E4, C1, C2, C3, C4, C5, Count, Filtered) ->
-    [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        false ->
-            filtermap_internal_batch3(Fun, E2, E3, E4, C2, C3, C4, C5, Count2, Filtered2);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            Filtered3 = add(Elem, Filtered2),
-            filtermap_internal_batch3(
-                Fun, E2, E3, E4, C2, C3, C4, C5, Count2 + 1, Filtered3
-            )
-    end.
-
-%% INTERNAL3
-
--compile({inline, filtermap_internal_batch3/10}).
-filtermap_internal_batch3(Fun, E1, E2, E3, C1, C2, C3, C4, Count, Filtered) ->
-    [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        false ->
-            filtermap_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2, Filtered2);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            Filtered3 = add(Elem, Filtered2),
-            filtermap_internal_batch2(Fun, E2, E3, C2, C3, C4, Count2 + 1, Filtered3)
-    end.
-
-%% INTERNAL2
-
--compile({inline, filtermap_internal_batch2/8}).
-filtermap_internal_batch2(Fun, E1, E2, C1, C2, C3, Count, Filtered) ->
-    [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        false ->
-            filtermap_internal_batch1(Fun, E2, C2, C3, Count2, Filtered2);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            Filtered3 = add(Elem, Filtered2),
-            filtermap_internal_batch1(Fun, E2, C2, C3, Count2 + 1, Filtered3)
-    end.
-
-%% INTERNAL1
-
--compile({inline, filtermap_internal_batch1/6}).
-filtermap_internal_batch1(Fun, E1, C1, C2, Count, Filtered) ->
-    [Count2 | Filtered2] = filtermap_recur(Fun, C1, Count, Filtered),
-
-    case Fun(E1) of
-        false ->
-            filtermap_recur(Fun, C2, Count2, Filtered2);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            Filtered3 = add(Elem, Filtered2),
-            filtermap_recur(Fun, C2, Count2 + 1, Filtered3)
-    end.
-
-%% LEAF4
-
--compile({inline, filtermap_leaf_batch4/7}).
-filtermap_leaf_batch4(Fun, E1, E2, E3, E4, Count, Filtered) ->
-    case Fun(E1) of
-        false ->
-            filtermap_leaf_batch3(Fun, E2, E3, E4, Count, Filtered);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            Filtered2 = add(Elem, Filtered),
-            filtermap_leaf_batch3(Fun, E2, E3, E4, Count + 1, Filtered2)
-    end.
-
-%% LEAF3
-
--compile({inline, filtermap_leaf_batch3/6}).
-filtermap_leaf_batch3(Fun, E1, E2, E3, Count, Filtered) ->
-    case Fun(E1) of
-        false ->
-            filtermap_leaf_batch2(Fun, E2, E3, Count, Filtered);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            Filtered2 = add(Elem, Filtered),
-            filtermap_leaf_batch2(Fun, E2, E3, Count + 1, Filtered2)
-    end.
-
-%% LEAF2
-
--compile({inline, filtermap_leaf_batch2/5}).
-filtermap_leaf_batch2(Fun, E1, E2, Count, Filtered) ->
-    case Fun(E1) of
-        false ->
-            filtermap_single_element(Fun, E2, Count, Filtered);
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            Filtered2 = add(Elem, Filtered),
-            filtermap_single_element(Fun, E2, Count + 1, Filtered2)
-    end.
-
-%% LEAF1
-
--compile({inline, filtermap_single_element/4}).
-filtermap_single_element(Fun, E1, Count, Filtered) ->
-    case Fun(E1) of
-        false ->
-            [Count | Filtered];
-        %
-        True ->
-            Elem = filtermap_true(True, E1),
-
-            Filtered2 = add(Elem, Filtered),
-            [Count + 1 | Filtered2]
-    end.
-
-%%
-
--compile({inline, filtermap_true/2}).
-filtermap_true(True, PrevElem) ->
-    case True of
-        {true, NewElem} ->
-            NewElem;
+filtermap_recur(Fun, [Element | Prev], FilteredSize, Filtered, Mapped) ->
+    case Fun(Element) of
+        {true, MappedElement} ->
+            filtermap_recur(Fun, Prev, FilteredSize, Filtered, [MappedElement | Mapped]);
         %
         true ->
-            PrevElem
-    end.
+            filtermap_recur(Fun, Prev, FilteredSize + 1, [Element | Filtered], Mapped);
+        %
+        false ->
+            filtermap_recur(Fun, Prev, FilteredSize, Filtered, Mapped)
+    end;
+filtermap_recur(_Fun, [], FilteredSize, Filtered, Mapped) ->
+    NewRoot = from_ordered_list(Filtered, FilteredSize),
+    filtermap_add_mapped(FilteredSize, NewRoot, Mapped).
+
+filtermap_add_mapped(Size, Root, [Element | Next]) ->
+    UpdatedRoot = add(Element, Root),
+    filtermap_add_mapped(Size + 1, UpdatedRoot, Next);
+filtermap_add_mapped(Size, Root, []) ->
+    [Size | Root].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: fold/3
@@ -5037,6 +4877,52 @@ to_list_recur(Node, Acc) ->
             Acc4 = to_list_recur(C3, [E3 | Acc3]),
             Acc5 = to_list_recur(C2, [E2 | Acc4]),
             _Acc6 = to_list_recur(C1, [E1 | Acc5])
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: to_rev_list/1
+%% ------------------------------------------------------------------
+
+-spec to_rev_list(t(Elem)) -> [Elem].
+to_rev_list(?INTERNAL1_MATCH_NO_SIZES) ->
+    Acc2 = to_rev_list_recur(C1, []),
+    Acc3 = [E1 | Acc2],
+    to_rev_list_recur(C2, Acc3);
+to_rev_list(?LEAF1_MATCH_ALL) ->
+    [E1];
+to_rev_list(?LEAF0) ->
+    [];
+to_rev_list(Root) ->
+    to_rev_list_recur(Root, []).
+
+to_rev_list_recur(Node, Acc) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            [E2, E1 | Acc];
+        %
+        ?LEAF3_MATCH_ALL ->
+            [E3, E2, E1 | Acc];
+        %
+        ?LEAF4_MATCH_ALL ->
+            [E4, E3, E2, E1 | Acc];
+        %
+        ?INTERNAL2_MATCH_NO_SIZES ->
+            Acc2 = to_rev_list_recur(C1, Acc),
+            Acc3 = to_rev_list_recur(C2, [E1 | Acc2]),
+            _Acc4 = to_rev_list_recur(C3, [E2 | Acc3]);
+        %
+        ?INTERNAL3_MATCH_NO_SIZES ->
+            Acc2 = to_rev_list_recur(C1, Acc),
+            Acc3 = to_rev_list_recur(C2, [E1 | Acc2]),
+            Acc4 = to_rev_list_recur(C3, [E2 | Acc3]),
+            _Acc5 = to_rev_list_recur(C4, [E3 | Acc4]);
+        %
+        ?INTERNAL4_MATCH_NO_SIZES ->
+            Acc2 = to_rev_list_recur(C1, Acc),
+            Acc3 = to_rev_list_recur(C2, [E1 | Acc2]),
+            Acc4 = to_rev_list_recur(C3, [E2 | Acc3]),
+            Acc5 = to_rev_list_recur(C4, [E3 | Acc4]),
+            _Acc6 = to_rev_list_recur(C5, [E4 | Acc5])
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
