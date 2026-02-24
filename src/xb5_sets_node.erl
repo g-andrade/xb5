@@ -42,17 +42,17 @@ API for operating over `m:xb5_sets` internal nodes directly.
 
 -export([
     delete_att/2,
-    difference/2,
+    difference/4,
     does_root_look_legit/2,
     filtermap/2,
     fold/3,
     from_ordset/2,
     insert_att/2,
-    intersection/2,
+    intersection/4,
     is_disjoint/4,
     is_equal/2,
     is_member/2,
-    is_subset/2,
+    is_subset/4,
     iterator/2,
     iterator_from/3,
     larger/2,
@@ -484,20 +484,10 @@ delete_att(_Elem, ?LEAF0) ->
 delete_att(Elem, Root) ->
     delete_att_recur(Elem, Root).
 
--spec difference(t(Elem1), t(_)) -> nonempty_improper_list(non_neg_integer(), t(Elem1)).
-difference(Root1, Root2) ->
-    RemovedCount = 0,
-
-    case Root1 of
-        ?LEAF0 ->
-            [RemovedCount | Root1];
-        %
-        _ ->
-            MinElem = smallest(Root1),
-            MaxElem = largest(Root1),
-            Iter = iterator_from(MinElem, Root2, ordered),
-            difference_recur(Iter, MaxElem, RemovedCount, Root1)
-    end.
+-spec difference(non_neg_integer(), t(Elem1), non_neg_integer(), t(_)) ->
+    nonempty_improper_list(NewSize :: non_neg_integer(), NewRoot :: t(Elem1)).
+difference(Size1, Root1, Size2, Root2) ->
+    difference_root(Size1, to_rev_list(Root1), Size2, Root2).
 
 -spec does_root_look_legit(term(), term()) -> boolean().
 does_root_look_legit(Root, 0) ->
@@ -587,21 +577,15 @@ insert_att(Elem, Root) ->
             UpdatedRoot
     end.
 
--spec intersection(t(Elem1), t(Elem2)) ->
-    nonempty_improper_list(non_neg_integer(), t(Elem1 | Elem2)).
-intersection(Root1, Root2) ->
-    NewRoot = new(),
-    Count = 0,
-
-    case Root1 =:= ?LEAF0 orelse Root2 =:= ?LEAF0 of
-        false ->
-            MinElem = max(smallest(Root1), smallest(Root2)),
-            IterA = bound_fwd_iterator(MinElem, Root1),
-            IterB = bound_fwd_iterator(MinElem, Root2),
-            intersection_recur(IterA, IterB, Count, NewRoot);
+-spec intersection(non_neg_integer(), t(Elem1), non_neg_integer(), t(Elem2)) ->
+    nonempty_improper_list(NewSize :: non_neg_integer(), t(Elem1 | Elem2)).
+intersection(Size1, Root1, Size2, Root2) ->
+    if
+        Size2 < Size1 ->
+            intersection_root(Size2, to_rev_list(Root2), Size1, Root1);
         %
-        _ ->
-            [Count | NewRoot]
+        true ->
+            intersection_root(Size1, to_rev_list(Root1), Size2, Root2)
     end.
 
 -spec is_disjoint(t(_), non_neg_integer(), t(_), non_neg_integer()) -> boolean().
@@ -633,10 +617,9 @@ is_member(_Elem, ?LEAF0) ->
 is_member(Elem, Root) ->
     is_member_recur(Elem, Root).
 
--spec is_subset(t(_), t(_)) -> boolean().
-is_subset(Root1, Root2) ->
-    Iter1 = fwd_iterator(Root1),
-    is_subset_recur(Iter1, Root2).
+-spec is_subset(non_neg_integer(), t(_), non_neg_integer(), t(_)) -> boolean().
+is_subset(Size1, Root1, Size2, Root2) ->
+    is_subset_root(Size1, to_rev_list(Root1), Size2, Root2).
 
 -spec iterator(t(Elem), ordered | reversed) -> iter(Elem).
 iterator(Root, ordered) ->
@@ -764,146 +747,16 @@ to_list(?LEAF0) ->
 to_list(Root) ->
     to_list_recur(Root, []).
 
--spec union(t(Elem1), Size1, t(Elem2), Size2) ->
+-spec union(Size1, t(Elem1), Size2, t(Elem2)) ->
     nonempty_improper_list(NewSize, t(Elem1 | Elem2))
 when
     Size1 :: non_neg_integer(),
     Size2 :: non_neg_integer(),
     NewSize :: non_neg_integer().
-union(Root1, Size1, Root2, Size2) ->
-    if
-        Size1 =:= 0 ->
-            [Size2 | Root2];
-        %
-        Size2 =:= 0 ->
-            [Size1 | Root1];
-        %
-        true ->
-            union_non_empty(Root1, Size1, Root2, Size2)
-    end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: append/2
-%% ------------------------------------------------------------------
-
--spec append(NewElem, t(PrevElem)) -> t(NewElem | PrevElem).
-append(Elem, ?INTERNAL1_MATCH_ALL) ->
-    Result = append_recur(Elem, C2),
-    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS);
-append(Elem, ?LEAF1_MATCH_ALL) ->
-    true = Elem > E1,
-    ?new_LEAF2(E1, Elem);
-append(Elem, ?LEAF0) ->
-    ?new_LEAF1(Elem);
-append(Elem, Root) ->
-    case append_recur(Elem, Root) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            insert_split_root(Elem, Pos, Args, Root);
-        %
-        UpdatedRoot ->
-            UpdatedRoot
-    end.
-
-append_recur(Elem, Node) ->
-    case Node of
-        ?INTERNAL2_MATCH_ALL ->
-            Result = append_recur(Elem, C3),
-            ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            Result = append_recur(Elem, C4),
-            ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            Result = append_recur(Elem, C5),
-            ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS);
-        %
-        ?LEAF2_MATCH_ALL ->
-            true = Elem > E2,
-            ?new_LEAF3(E1, E2, Elem);
-        %
-        ?LEAF3_MATCH_ALL ->
-            true = Elem > E3,
-            ?new_LEAF4(E1, E2, E3, Elem);
-        %
-        ?LEAF4_MATCH(_, _, _, E4) ->
-            true = Elem > E4,
-            ?SPLIT(5, [])
-    end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: append_all/2
-%% ------------------------------------------------------------------
-
-append_all(?INTERNAL1_MATCH_ALL, Acc) ->
-    append_all_recur(C2, append(E1, append_all_recur(C1, Acc)));
-append_all(?LEAF1_MATCH_ALL, Acc) ->
-    append(E1, Acc);
-append_all(Root, Acc) ->
-    append_all_recur(Root, Acc).
-
-append_all_recur(Node, Acc) ->
-    case Node of
-        ?INTERNAL2_MATCH_ALL ->
-            Acc2 = append(E1, append_all_recur(C1, Acc)),
-            Acc3 = append(E2, append_all_recur(C2, Acc2)),
-            _Acc4 = append_all_recur(C3, Acc3);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            Acc2 = append(E1, append_all_recur(C1, Acc)),
-            Acc3 = append(E2, append_all_recur(C2, Acc2)),
-            Acc4 = append(E3, append_all_recur(C3, Acc3)),
-            _Acc5 = append_all_recur(C4, Acc4);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            Acc2 = append(E1, append_all_recur(C1, Acc)),
-            Acc3 = append(E2, append_all_recur(C2, Acc2)),
-            Acc4 = append(E3, append_all_recur(C3, Acc3)),
-            Acc5 = append(E4, append_all_recur(C4, Acc4)),
-            _Acc6 = append_all_recur(C5, Acc5);
-        %
-        ?LEAF2_MATCH_ALL ->
-            append(E2, append(E1, Acc));
-        %
-        ?LEAF3_MATCH_ALL ->
-            append(E3, append(E2, append(E1, Acc)));
-        %
-        ?LEAF4_MATCH_ALL ->
-            append(E4, append(E3, append(E2, append(E1, Acc))))
-    end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: count/2
-%% ------------------------------------------------------------------
-
-count(?INTERNAL1_MATCH(_, C1, C2)) ->
-    1 + count_recur(C1) + count_recur(C2);
-count(?LEAF1_MATCH(_)) ->
-    1;
-count(Root) ->
-    count_recur(Root).
-
-count_recur(Node) ->
-    case Node of
-        ?LEAF2_MATCH(_, _) ->
-            2;
-        %
-        ?LEAF3_MATCH(_, _, _) ->
-            3;
-        %
-        ?LEAF4_MATCH(_, _, _, _) ->
-            4;
-        %
-        ?INTERNAL2_MATCH(_, _, C1, C2, C3) ->
-            2 + count_recur(C1) + count_recur(C2) + count_recur(C3);
-        %
-        ?INTERNAL3_MATCH(_, _, _, C1, C2, C3, C4) ->
-            3 + count_recur(C1) + count_recur(C2) + count_recur(C3) + count_recur(C4);
-        %
-        ?INTERNAL4_MATCH(_, _, _, _, C1, C2, C3, C4, C5) ->
-            4 + count_recur(C1) + count_recur(C2) + count_recur(C3) + count_recur(C4) +
-                count_recur(C5)
-    end.
+union(Size1, Root1, Size2, Root2) when Size2 < Size1 ->
+    union_root(Size2, Root2, Size1, Root1);
+union(Size1, Root1, Size2, Root2) ->
+    union_root(Size1, Root1, Size2, Root2).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: delete_att/2
@@ -1369,215 +1222,52 @@ delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
 %% Internal Function Definitions: difference/2
 %% ------------------------------------------------------------------
 
-difference_recur([Head | Next], MaxElem, Count, Root) ->
-    difference_recur(Head, Next, MaxElem, Count, Root);
-difference_recur([], _MaxElem, Count, Root) ->
-    [Count | Root].
+difference_root(Size1, List1, Size2, Root2) when Size2 < 10 ->
+    difference_2(Size1, List1, to_rev_list(Root2));
+difference_root(Size1, List1, Size2, Root2) ->
+    ThresholdSize = Size1 * round(math:log2(Size2)),
 
--compile({inline, difference_recur/5}).
-difference_recur(?ITER_ELEM(Elem), Next, MaxElem, Count, Root) ->
-    %
-    % ITER_ELEM was accumulated when building the iterator. It will almost
-    % always come from internal nodes (25% of total), which makes it a good
-    % periodic check for MaxElem (without doing it for every element).
-    %
-    case delete_att(Elem, Root) of
-        badkey ->
-            case Elem =< MaxElem of
-                true ->
-                    difference_recur(Next, MaxElem, Count, Root);
-                _ ->
-                    % no more elements can be removed
-                    [Count | Root]
-            end;
+    if
+        Size2 < ThresholdSize ->
+            difference_2(Size1, List1, to_rev_list(Root2));
         %
-        UpdatedRoot ->
-            difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
+        true ->
+            difference_1(List1, Root2)
+    end.
+
+difference_1(List1, Root2) ->
+    difference_1(List1, Root2, 0, []).
+
+difference_1([Element | Next], Root2, AccSize, Acc) ->
+    case is_member(Element, Root2) of
+        true ->
+            difference_1(Next, Root2, AccSize, Acc);
+        %
+        _ ->
+            difference_1(Next, Root2, AccSize + 1, [Element | Acc])
     end;
-difference_recur(Node, Next, MaxElem, Count, Root) ->
-    case Node of
-        ?LEAF2_MATCH_ALL ->
-            difference_leaf_batch2(E1, E2, Next, MaxElem, Count, Root);
+difference_1([], _, AccSize, Acc) ->
+    [AccSize | from_ordset(Acc, AccSize)].
+
+difference_2(Size1, List1, List2) ->
+    difference_2(List1, List2, Size1, []).
+
+difference_2([Element1 | Next1] = List1, [Element2 | Next2] = List2, AccSize, Acc) ->
+    if
+        Element1 > Element2 ->
+            difference_2(Next1, List2, AccSize, [Element1 | Acc]);
         %
-        ?LEAF3_MATCH_ALL ->
-            difference_leaf_batch3(E1, E2, E3, Next, MaxElem, Count, Root);
+        Element1 < Element2 ->
+            difference_2(List1, Next2, AccSize, Acc);
         %
-        ?LEAF4_MATCH_ALL ->
-            difference_leaf_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root);
-        %
-        ?INTERNAL2_MATCH_ALL ->
-            difference_internal_batch2(
-                E1,
-                E2,
-                C1,
-                C2,
-                C3,
-                Next,
-                MaxElem,
-                Count,
-                Root
-            );
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            difference_internal_batch3(
-                E1,
-                E2,
-                E3,
-                C1,
-                C2,
-                C3,
-                C4,
-                Next,
-                MaxElem,
-                Count,
-                Root
-            );
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            difference_internal_batch4(
-                E1,
-                E2,
-                E3,
-                E4,
-                C1,
-                C2,
-                C3,
-                C4,
-                C5,
-                Next,
-                MaxElem,
-                Count,
-                Root
-            )
-    end.
-
-%% INTERNAL4
-
--compile({inline, difference_internal_batch4/13}).
-difference_internal_batch4(E1, E2, E3, E4, C1, C2, C3, C4, C5, Next, MaxElem, Count, Root) ->
-    % INTERNAL4 + LEAF4 nodes make up about 20% of internal nodes. When we run
-    % into either, it means a node not previously encountered when building the
-    % `iterator_from'.
-    %
-    % Therefore, they're a good period check for MaxElem.
-
-    [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
-
-    case delete_att(E1, Root2) of
-        badkey ->
-            case E1 =< MaxElem of
-                true ->
-                    difference_internal_batch3(
-                        E2, E3, E4, C2, C3, C4, C5, Next, MaxElem, Count2, Root2
-                    );
-                _ ->
-                    % no point in continuing, no more elements can be removed
-                    [Count2 | Root2]
-            end;
-        %
-        Root3 ->
-            difference_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Next, MaxElem, Count2 + 1, Root3)
-    end.
-
-%% INTERNAL3
-
--compile({inline, difference_internal_batch3/11}).
-difference_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Next, MaxElem, Count, Root) ->
-    [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
-
-    case delete_att(E1, Root2) of
-        badkey ->
-            difference_internal_batch2(E2, E3, C2, C3, C4, Next, MaxElem, Count2, Root2);
-        %
-        Root3 ->
-            difference_internal_batch2(E2, E3, C2, C3, C4, Next, MaxElem, Count2 + 1, Root3)
-    end.
-
-%% INTERNAL2
-
--compile({inline, difference_internal_batch2/9}).
-difference_internal_batch2(E1, E2, C1, C2, C3, Next, MaxElem, Count, Root) ->
-    [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
-
-    case delete_att(E1, Root2) of
-        badkey ->
-            difference_internal_batch1(E2, C2, C3, Next, MaxElem, Count2, Root2);
-        %
-        Root3 ->
-            difference_internal_batch1(E2, C2, C3, Next, MaxElem, Count2 + 1, Root3)
-    end.
-
-%% INTERNAL1
-
--compile({inline, difference_internal_batch1/7}).
-difference_internal_batch1(E1, C1, C2, Next, MaxElem, Count, Root) ->
-    [Count2 | Root2] = difference_recur(C1, [], MaxElem, Count, Root),
-
-    case delete_att(E1, Root2) of
-        badkey ->
-            difference_recur(C2, Next, MaxElem, Count2, Root2);
-        %
-        Root3 ->
-            difference_recur(C2, Next, MaxElem, Count2 + 1, Root3)
-    end.
-
-%% LEAF4
-
--compile({inline, difference_leaf_batch4/8}).
-difference_leaf_batch4(E1, E2, E3, E4, Next, MaxElem, Count, Root) ->
-    % INTERNAL4 + LEAF4 nodes make up about 20% of internal nodes. When we run
-    % into either, it means a node not previously encountered when building the
-    % `iterator_from'.
-    %
-    % Therefore, they're a good period check for MaxElem.
-
-    case delete_att(E1, Root) of
-        badkey ->
-            case E1 =< MaxElem of
-                true ->
-                    difference_leaf_batch3(E2, E3, E4, Next, MaxElem, Count, Root);
-                _ ->
-                    % no point in continuing, no more elements can be removed
-                    [Count | Root]
-            end;
-        %
-        UpdatedRoot ->
-            difference_leaf_batch3(E2, E3, E4, Next, MaxElem, Count + 1, UpdatedRoot)
-    end.
-
-%% LEAF3
-
--compile({inline, difference_leaf_batch3/7}).
-difference_leaf_batch3(E1, E2, E3, Next, MaxElem, Count, Root) ->
-    case delete_att(E1, Root) of
-        badkey ->
-            difference_leaf_batch2(E2, E3, Next, MaxElem, Count, Root);
-        %
-        UpdatedRoot ->
-            difference_leaf_batch2(E2, E3, Next, MaxElem, Count + 1, UpdatedRoot)
-    end.
-
-%% LEAF2
-
--compile({inline, difference_leaf_batch2/6}).
-difference_leaf_batch2(E1, E2, Next, MaxElem, Count, Root) ->
-    case delete_att(E1, Root) of
-        badkey ->
-            difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root);
-        %
-        UpdatedRoot ->
-            difference_leaf_batch2_E2(E2, Next, MaxElem, Count + 1, UpdatedRoot)
-    end.
-
--compile({inline, difference_leaf_batch2_E2/5}).
-difference_leaf_batch2_E2(E2, Next, MaxElem, Count, Root) ->
-    case delete_att(E2, Root) of
-        badkey ->
-            difference_recur(Next, MaxElem, Count, Root);
-        %
-        UpdatedRoot ->
-            difference_recur(Next, MaxElem, Count + 1, UpdatedRoot)
-    end.
+        true ->
+            difference_2(Next1, Next2, AccSize - 1, Acc)
+    end;
+difference_2([], _List2, AccSize, Acc) ->
+    [AccSize | from_ordset(Acc, AccSize)];
+difference_2(List1, [], AccSize, Acc) ->
+    FinalAcc = lists:reverse(List1, Acc),
+    [AccSize | from_ordset(FinalAcc, AccSize)].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: filtermap/2
@@ -2329,56 +2019,57 @@ insert_att_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
     ?new_LEAF2(E1, Elem).
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: intersection/1
+%% Internal Function Definitions: intersection/4
 %% ------------------------------------------------------------------
 
-intersection_recur([HeadA | TailA], IterB, Count, Root) ->
-    intersection_iterA(HeadA, TailA, IterB, Count, Root);
-intersection_recur([], _IterB, Count, Root) ->
-    [Count | Root].
+intersection_root(_Size1, List1, Size2, Root2) when Size2 < 10 ->
+    intersection_2(List1, to_rev_list(Root2));
+intersection_root(Size1, List1, Size2, Root2) ->
+    ThresholdSize = Size1 * round(math:log2(Size2)),
 
--compile({intersection_iterA/5}).
-intersection_iterA(HeadA, TailA, IterB, Count, Root) ->
-    case HeadA of
-        ?ITER_ELEM(ElemA) ->
-            NextA = TailA,
-            intersection_iterB(ElemA, NextA, IterB, Count, Root);
-        %
-        NodeA ->
-            [?ITER_ELEM(ElemA) | NextA] = fwd_iterator_recur(NodeA, TailA),
-            intersection_iterB(ElemA, NextA, IterB, Count, Root)
-    end.
-
-intersection_iterB(ElemA, NextA, [HeadB | TailB], Count, Root) ->
-    case HeadB of
-        ?ITER_ELEM(ElemB) ->
-            NextB = TailB,
-            intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root);
-        %
-        NodeB ->
-            [?ITER_ELEM(ElemB) | NextB] = fwd_iterator_recur(NodeB, TailB),
-            intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root)
-    end;
-intersection_iterB(_ElemA, _NextA, [], Count, Root) ->
-    [Count | Root].
-
--compile({intersection_intersect/6}).
-intersection_intersect(ElemA, NextA, ElemB, NextB, Count, Root) ->
     if
-        ElemA < ElemB ->
-            intersection_iterB(ElemB, NextB, NextA, Count, Root);
-        %
-        ElemA > ElemB ->
-            intersection_iterB(ElemA, NextA, NextB, Count, Root);
+        Size2 < ThresholdSize ->
+            intersection_2(List1, to_rev_list(Root2));
         %
         true ->
-            UpdatedRoot = append(ElemA, Root),
-            UpdatedCount = Count + 1,
-            intersection_recur(NextA, NextB, UpdatedCount, UpdatedRoot)
+            intersection_1(List1, Root2)
     end.
 
+intersection_1(List, Root) ->
+    intersection_1(List, Root, 0, []).
+
+intersection_1([Element | Next], Root, AccSize, Acc) ->
+    case is_member(Element, Root) of
+        true ->
+            intersection_1(Next, Root, AccSize + 1, [Element | Acc]);
+        %
+        _ ->
+            intersection_1(Next, Root, AccSize, Acc)
+    end;
+intersection_1([], _Root, AccSize, Acc) ->
+    [AccSize | from_ordset(Acc, AccSize)].
+
+intersection_2(List1, List2) ->
+    intersection_2(List1, List2, 0, []).
+
+intersection_2([Element1 | Next1] = List1, [Element2 | Next2] = List2, AccSize, Acc) ->
+    if
+        Element1 > Element2 ->
+            intersection_2(Next1, List2, AccSize, Acc);
+        %
+        Element1 < Element2 ->
+            intersection_2(Next2, List1, AccSize, Acc);
+        %
+        true ->
+            intersection_2(Next1, Next2, AccSize + 1, [Element1 | Acc])
+    end;
+intersection_2([], _List2, AccSize, Acc) ->
+    [AccSize | from_ordset(Acc, AccSize)];
+intersection_2(_List1, [], AccSize, Acc) ->
+    [AccSize | from_ordset(Acc, AccSize)].
+
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: is_disjoint/2
+%% Internal Function Definitions: is_disjoint/4
 %% ------------------------------------------------------------------
 
 is_disjoint_root(Root1, Root2) ->
@@ -2644,29 +2335,42 @@ is_member_LEAF1(Elem, ?LEAF1_ARGS) ->
     Elem == E1.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: is_subset/2
+%% Internal Function Definitions: is_subset/4
 %% ------------------------------------------------------------------
 
-is_subset_recur([Head | Tail], Root2) ->
-    is_subset_iter(Head, Tail, Root2);
-is_subset_recur([], _Root2) ->
-    true.
+is_subset_root(_Size1, List1, Size2, Root2) when Size2 < 10 ->
+    is_subset_2(List1, to_rev_list(Root2));
+is_subset_root(Size1, List1, Size2, Root2) ->
+    ThresholdSize = Size1 * round(math:log2(Size2)),
 
--compile({is_subset_iter/3}).
-is_subset_iter(Head, Tail, Root2) ->
-    case Head of
-        ?ITER_ELEM(Elem) ->
-            Next = Tail,
-            is_subset_check(Elem, Next, Root2);
+    if
+        Size2 < ThresholdSize ->
+            is_subset_2(List1, to_rev_list(Root2));
         %
-        Node ->
-            [?ITER_ELEM(Elem) | Next] = fwd_iterator_recur(Node, Tail),
-            is_subset_check(Elem, Next, Root2)
+        true ->
+            is_subset_1(List1, Root2)
     end.
 
--compile({is_subset_check/3}).
-is_subset_check(Elem, Next, Root2) ->
-    is_member(Elem, Root2) andalso is_subset_recur(Next, Root2).
+is_subset_1([Element | Next], Root2) ->
+    is_member(Element, Root2) andalso is_subset_1(Next, Root2);
+is_subset_1([], _) ->
+    true.
+
+is_subset_2([Element1 | Next1] = List1, [Element2 | Next2]) ->
+    if
+        Element1 > Element2 ->
+            false;
+        %
+        Element1 < Element2 ->
+            is_subset_2(List1, Next2);
+        %
+        true ->
+            is_subset_2(Next1, Next2)
+    end;
+is_subset_2([], _) ->
+    true;
+is_subset_2(_, []) ->
+    false.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - forward
@@ -3575,96 +3279,6 @@ rev_next(Head, Tail) ->
     end.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: prepend/2
-%% ------------------------------------------------------------------
-
--spec prepend(NewElem, t(PrevElem)) -> t(NewElem | PrevElem).
-prepend(Elem, ?INTERNAL1_MATCH_ALL) ->
-    Result = prepend_recur(Elem, C1),
-    ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS);
-prepend(Elem, ?LEAF1_MATCH_ALL) ->
-    true = Elem < E1,
-    ?new_LEAF2(Elem, E1);
-prepend(Elem, Root) ->
-    case prepend_recur(Elem, Root) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            insert_split_root(Elem, Pos, Args, Root);
-        %
-        UpdatedRoot ->
-            UpdatedRoot
-    end.
-
-%%%
-
-prepend_recur(Elem, Node) ->
-    case Node of
-        ?INTERNAL2_MATCH_ALL ->
-            Result = prepend_recur(Elem, C1),
-            ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            Result = prepend_recur(Elem, C1),
-            ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            Result = prepend_recur(Elem, C1),
-            ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS);
-        %
-        ?LEAF2_MATCH_ALL ->
-            true = Elem < E1,
-            ?new_LEAF3(Elem, E1, E2);
-        %
-        ?LEAF3_MATCH_ALL ->
-            true = Elem < E1,
-            ?new_LEAF4(Elem, E1, E2, E3);
-        %
-        ?LEAF4_MATCH(E1, _, _, _) ->
-            true = Elem < E1,
-            ?SPLIT(1, [])
-    end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: prepend_all/2
-%% ------------------------------------------------------------------
-
-prepend_all(?INTERNAL1_MATCH_ALL, Acc) ->
-    prepend_all_recur(C1, prepend(E1, prepend_all_recur(C2, Acc)));
-prepend_all(?LEAF1_MATCH_ALL, Acc) ->
-    prepend(E1, Acc);
-prepend_all(Root, Acc) ->
-    prepend_all_recur(Root, Acc).
-
-prepend_all_recur(Node, Acc) ->
-    case Node of
-        ?INTERNAL2_MATCH_ALL ->
-            Acc2 = prepend(E2, prepend_all_recur(C3, Acc)),
-            Acc3 = prepend(E1, prepend_all_recur(C2, Acc2)),
-            _Acc4 = prepend_all_recur(C1, Acc3);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            Acc2 = prepend(E3, prepend_all_recur(C4, Acc)),
-            Acc3 = prepend(E2, prepend_all_recur(C3, Acc2)),
-            Acc4 = prepend(E1, prepend_all_recur(C2, Acc3)),
-            _Acc5 = prepend_all_recur(C1, Acc4);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            Acc2 = prepend(E4, prepend_all_recur(C5, Acc)),
-            Acc3 = prepend(E3, prepend_all_recur(C4, Acc2)),
-            Acc4 = prepend(E2, prepend_all_recur(C3, Acc3)),
-            Acc5 = prepend(E1, prepend_all_recur(C2, Acc4)),
-            _Acc6 = prepend_all_recur(C1, Acc5);
-        %
-        ?LEAF2_MATCH_ALL ->
-            prepend(E1, prepend(E2, Acc));
-        %
-        ?LEAF3_MATCH_ALL ->
-            prepend(E1, prepend(E2, prepend(E3, Acc)));
-        %
-        ?LEAF4_MATCH_ALL ->
-            prepend(E1, prepend(E2, prepend(E3, prepend(E4, Acc))))
-    end.
-
-%% ------------------------------------------------------------------
 %% Internal Function Definitions: smaller/2
 %% ------------------------------------------------------------------
 
@@ -4165,92 +3779,106 @@ to_list_recur(Node, Acc) ->
     end.
 
 %% ------------------------------------------------------------------
+%% Internal Function Definitions: to_rev_list/1
+%% ------------------------------------------------------------------
+
+-spec to_rev_list(t(Elem)) -> [Elem].
+to_rev_list(?INTERNAL1_MATCH_ALL) ->
+    Acc2 = to_rev_list_recur(C1, []),
+    Acc3 = [E1 | Acc2],
+    to_rev_list_recur(C2, Acc3);
+to_rev_list(?LEAF1_MATCH_ALL) ->
+    [E1];
+to_rev_list(?LEAF0) ->
+    [];
+to_rev_list(Root) ->
+    to_rev_list_recur(Root, []).
+
+to_rev_list_recur(Node, Acc) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            [E2, E1 | Acc];
+        %
+        ?LEAF3_MATCH_ALL ->
+            [E3, E2, E1 | Acc];
+        %
+        ?LEAF4_MATCH_ALL ->
+            [E4, E3, E2, E1 | Acc];
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            Acc2 = to_rev_list_recur(C1, Acc),
+            Acc3 = to_rev_list_recur(C2, [E1 | Acc2]),
+            _Acc4 = to_rev_list_recur(C3, [E2 | Acc3]);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Acc2 = to_rev_list_recur(C1, Acc),
+            Acc3 = to_rev_list_recur(C2, [E1 | Acc2]),
+            Acc4 = to_rev_list_recur(C3, [E2 | Acc3]),
+            _Acc5 = to_rev_list_recur(C4, [E3 | Acc4]);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Acc2 = to_rev_list_recur(C1, Acc),
+            Acc3 = to_rev_list_recur(C2, [E1 | Acc2]),
+            Acc4 = to_rev_list_recur(C3, [E2 | Acc3]),
+            Acc5 = to_rev_list_recur(C4, [E3 | Acc4]),
+            _Acc6 = to_rev_list_recur(C5, [E4 | Acc5])
+    end.
+
+%% ------------------------------------------------------------------
 %% Internal Function Definitions: union/2
 %% ------------------------------------------------------------------
 
-union_non_empty(Root1, Size1, Root2, Size2) ->
-    Smallest1 = smallest(Root1),
-    Largest1 = largest(Root1),
-
-    Smallest2 = smallest(Root2),
-    Largest2 = largest(Root2),
+union_root(0, _, Size2, Root2) ->
+    [Size2 | Root2];
+union_root(Size1, Root1, Size2, Root2) when Size2 < 10 ->
+    List1 = to_rev_list(Root1),
+    List2 = to_rev_list(Root2),
+    union_2(List1, List2, Size1 + Size2);
+union_root(Size1, Root1, Size2, Root2) ->
+    ThresholdSize = Size1 * round(math:log2(Size2)),
 
     if
-        Largest1 < Smallest2 ->
-            union_sequential(Root1, Size1, Root2, Size2);
-        %
-        Largest2 < Smallest1 ->
-            union_sequential(Root2, Size2, Root1, Size1);
-        %
-        Size1 =< Size2 ->
-            union_overlapping(Root1, Root2);
+        Size2 < ThresholdSize ->
+            List1 = to_rev_list(Root1),
+            List2 = to_rev_list(Root2),
+            union_2(List1, List2, Size1 + Size2);
         %
         true ->
-            union_overlapping(Root2, Root1)
+            List1 = to_rev_list(Root1),
+            union_1(List1, Size2, Root2)
     end.
 
-union_sequential(LeftRoot, LeftSize, RightRoot, RightSize) when LeftSize > RightSize ->
-    UpdatedRoot = append_all(RightRoot, LeftRoot),
-    UpdatedSize = LeftSize + RightSize,
-    [UpdatedSize | UpdatedRoot];
-union_sequential(LeftRoot, LeftSize, RightRoot, RightSize) ->
-    UpdatedRoot = prepend_all(LeftRoot, RightRoot),
-    UpdatedSize = LeftSize + RightSize,
-    [UpdatedSize | UpdatedRoot].
-
-union_overlapping(FromRoot, IntoRoot) ->
-    % TODO optimize
-    UnionRoot = add_all(FromRoot, IntoRoot),
-    UnionSize = count(UnionRoot),
-    [UnionSize | UnionRoot].
-
-%%%%%%
-
-add_all(?INTERNAL1_MATCH_ALL, Acc) ->
-    add_all_recur(C2, add(E1, add_all_recur(C1, Acc)));
-add_all(?LEAF1_MATCH_ALL, Acc) ->
-    add(E1, Acc);
-add_all(Root, Acc) ->
-    add_all_recur(Root, Acc).
-
-add_all_recur(Node, Acc) ->
-    case Node of
-        ?INTERNAL2_MATCH_ALL ->
-            Acc2 = add(E1, add_all_recur(C1, Acc)),
-            Acc3 = add(E2, add_all_recur(C2, Acc2)),
-            _Acc4 = add_all_recur(C3, Acc3);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            Acc2 = add(E1, add_all_recur(C1, Acc)),
-            Acc3 = add(E2, add_all_recur(C2, Acc2)),
-            Acc4 = add(E3, add_all_recur(C3, Acc3)),
-            _Acc5 = add_all_recur(C4, Acc4);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            Acc2 = add(E1, add_all_recur(C1, Acc)),
-            Acc3 = add(E2, add_all_recur(C2, Acc2)),
-            Acc4 = add(E3, add_all_recur(C3, Acc3)),
-            Acc5 = add(E4, add_all_recur(C4, Acc4)),
-            _Acc6 = add_all_recur(C5, Acc5);
-        %
-        ?LEAF2_MATCH_ALL ->
-            add(E2, add(E1, Acc));
-        %
-        ?LEAF3_MATCH_ALL ->
-            add(E3, add(E2, add(E1, Acc)));
-        %
-        ?LEAF4_MATCH_ALL ->
-            add(E4, add(E3, add(E2, add(E1, Acc))))
-    end.
-
-add(Elem, Root) ->
-    case insert_att(Elem, Root) of
+union_1([Element | Next], Size2, Root2) ->
+    case insert_att(Element, Root2) of
         key_exists ->
-            Root;
+            union_1(Next, Size2, Root2);
         %
-        UpdatedRoot ->
-            UpdatedRoot
-    end.
+        UpdatedRoot2 ->
+            union_1(Next, Size2 + 1, UpdatedRoot2)
+    end;
+union_1([], Size2, Root2) ->
+    [Size2 | Root2].
+
+union_2(List1, List2, AccSize) ->
+    union_2(List1, List2, AccSize, []).
+
+union_2([Element1 | Next1] = List1, [Element2 | Next2] = List2, AccSize, Acc) ->
+    if
+        Element1 > Element2 ->
+            union_2(Next1, List2, AccSize, [Element1 | Acc]);
+        %
+        Element1 < Element2 ->
+            union_2(Next2, List1, AccSize, [Element2 | Acc]);
+        %
+        true ->
+            union_2(Next1, Next2, AccSize - 1, [Element1 | Acc])
+    end;
+union_2([], List2, AccSize, Acc) ->
+    FinalAcc = lists:reverse(List2, Acc),
+    [AccSize | from_ordset(FinalAcc, AccSize)];
+union_2(List1, [], AccSize, Acc) ->
+    FinalAcc = lists:reverse(List1, Acc),
+    [AccSize | from_ordset(FinalAcc, AccSize)].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

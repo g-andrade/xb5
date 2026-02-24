@@ -327,9 +327,9 @@ Returns the elements of `Set1` that are not in `Set2`.
     Set2 :: set(Element),
     Set3 :: set(Element).
 
-difference(#xb5_set{size = Size1, root = Root1} = Set1, #xb5_set{root = Root2}) ->
-    [RemovedCount | UpdatedRoot1] = xb5_sets_node:difference(Root1, Root2),
-    Set1#xb5_set{size = Size1 - RemovedCount, root = UpdatedRoot1}.
+difference(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = Root2}) ->
+    [NewSize | NewRoot] = xb5_sets_node:difference(Size1, Root1, Size2, Root2),
+    #xb5_set{size = NewSize, root = NewRoot}.
 
 %%
 
@@ -504,8 +504,8 @@ Returns the intersection of `Set1` and `Set2`.
     Set2 :: set(Element),
     Set3 :: set(Element).
 
-intersection(#xb5_set{root = Root1}, #xb5_set{root = Root2}) ->
-    [NewSize | NewRoot] = xb5_sets_node:intersection(Root1, Root2),
+intersection(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = Root2}) ->
+    [NewSize | NewRoot] = xb5_sets_node:intersection(Size1, Root1, Size2, Root2),
     #xb5_set{size = NewSize, root = NewRoot}.
 
 %%
@@ -528,7 +528,7 @@ Returns the intersection of the non-empty list of sets.
     Set :: set(Element).
 
 intersection([#xb5_set{size = Size1, root = Root1} | Others]) ->
-    intersection_recur(Root1, Size1, Others).
+    intersection_recur(Size1, Root1, Others).
 
 %%
 
@@ -675,8 +675,8 @@ false
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-is_subset(#xb5_set{root = Root1}, #xb5_set{root = Root2}) ->
-    xb5_sets_node:is_subset(Root1, Root2).
+is_subset(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = Root2}) ->
+    xb5_sets_node:is_subset(Size1, Root1, Size2, Root2).
 
 %%
 
@@ -1113,7 +1113,7 @@ Returns the union of a list of sets.
     Set :: set(Element).
 
 union([#xb5_set{size = Size1, root = Root1} | Others]) ->
-    union_recur(Root1, Size1, Others);
+    union_recur(Size1, Root1, Others);
 union([]) ->
     new().
 
@@ -1136,8 +1136,8 @@ Returns the union of `Set1` and `Set2`.
     Set2 :: set(Element),
     Set3 :: set(Element).
 
-union(#xb5_set{root = Root1, size = Size1}, #xb5_set{root = Root2, size = Size2}) ->
-    [NewSize | NewRoot] = xb5_sets_node:union(Root1, Size1, Root2, Size2),
+union(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = Root2}) ->
+    [NewSize | NewRoot] = xb5_sets_node:union(Size1, Root1, Size2, Root2),
     #xb5_set{size = NewSize, root = NewRoot}.
 
 %%
@@ -1239,16 +1239,16 @@ from_list_recur([], Root, Size) ->
 
 %%
 
-intersection_recur(Root1, _Size1, [#xb5_set{root = Root2} | Next]) ->
-    [NewSize | NewRoot] = xb5_sets_node:intersection(Root1, Root2),
-    intersection_recur(NewRoot, NewSize, Next);
-intersection_recur(Root, Size, []) ->
+intersection_recur(Size1, Root1, [#xb5_set{size = Size2, root = Root2} | Next]) ->
+    [NewSize | NewRoot] = xb5_sets_node:intersection(Size1, Root1, Size2, Root2),
+    intersection_recur(NewSize, NewRoot, Next);
+intersection_recur(Size, Root, []) ->
     #xb5_set{size = Size, root = Root}.
 
 %%
 
-union_recur(Root1, Size1, [#xb5_set{root = Root2, size = Size2} | Next]) ->
-    [NewSize | NewRoot] = xb5_sets_node:union(Root1, Size1, Root2, Size2),
-    union_recur(NewRoot, NewSize, Next);
-union_recur(Root, Size, []) ->
+union_recur(Size1, Root1, [#xb5_set{size = Size2, root = Root2} | Next]) ->
+    [NewSize | NewRoot] = xb5_sets_node:union(Size1, Root1, Size2, Root2),
+    union_recur(NewSize, NewRoot, Next);
+union_recur(Size, Root, []) ->
     #xb5_set{size = Size, root = Root}.
