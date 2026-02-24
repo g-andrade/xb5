@@ -615,10 +615,10 @@ map(Fun, Root) ->
     map_recur(Fun, List, new()).
 
 -spec merge(non_neg_integer(), t(Elem1), non_neg_integer(), t(Elem2)) -> t(Elem1 | Elem2).
-merge(Size1, Root1, Size2, Root2) when Size1 < Size2 ->
-    merge_root(Root1, Root2);
-merge(_Size1, Root1, _Size2, Root2) ->
-    merge_root(Root2, Root1).
+merge(Size1, Root1, Size2, Root2) when Size2 < Size1 ->
+    merge_root(Size2, Root2, Size1, Root1);
+merge(Size1, Root1, Size2, Root2) ->
+    merge_root(Size1, Root1, Size2, Root2).
 
 -spec new() -> t(_).
 new() ->
@@ -3187,54 +3187,48 @@ map_recur(_Fun, [], Acc) ->
 %% Internal Function Definitions: merge/2
 %% ------------------------------------------------------------------
 
-merge_root(Node, Acc) ->
-    case Node of
-        ?INTERNAL1_MATCH_NO_SIZES ->
-            Acc2 = merge_recur(C1, Acc),
-            Acc3 = add(E1, Acc2),
-            _Acc4 = merge_recur(C2, Acc3);
+merge_root(0, _, _Size2, Root2) ->
+    Root2;
+merge_root(Size1, Root1, Size2, Root2) when Size2 < 10 ->
+    List1 = to_rev_list(Root1),
+    List2 = to_rev_list(Root2),
+    FinalAcc = merge_2(List1, List2),
+    NewSize = Size1 + Size2,
+    from_ordered_list(FinalAcc, NewSize);
+merge_root(Size1, Root1, Size2, Root2) ->
+    ThresholdSize = Size1 * round(math:log2(Size2)),
+
+    if
+        Size2 < ThresholdSize ->
+            List1 = to_rev_list(Root1),
+            List2 = to_rev_list(Root2),
+            FinalAcc = merge_2(List1, List2),
+            NewSize = Size1 + Size2,
+            from_ordered_list(FinalAcc, NewSize);
         %
-        ?LEAF1_MATCH_ALL ->
-            _Acc2 = add(E1, Acc);
-        %
-        ?LEAF0 ->
-            Acc;
-        %
-        _ ->
-            merge_recur(Node, Acc)
+        true ->
+            List1 = to_rev_list(Root1),
+            lists:foldl(fun add/2, Root2, List1)
     end.
 
-merge_recur(Node, Acc) ->
-    % TODO optimize like in filter, filtermerge, union, etc
-    case Node of
-        ?LEAF2_MATCH_ALL ->
-            add(E2, add(E1, Acc));
+merge_2(List1, List2) ->
+    merge_2(List1, List2, []).
+
+merge_2([Element1 | Next1] = List1, [Element2 | Next2] = List2, Acc) ->
+    if
+        Element1 > Element2 ->
+            merge_2(Next1, List2, [Element1 | Acc]);
         %
-        ?LEAF3_MATCH_ALL ->
-            add(E3, add(E2, add(E1, Acc)));
+        Element1 < Element2 ->
+            merge_2(Next2, List1, [Element2 | Acc]);
         %
-        ?LEAF4_MATCH_ALL ->
-            add(E4, add(E3, add(E2, add(E1, Acc))));
-        %
-        ?INTERNAL2_MATCH_NO_SIZES ->
-            Acc2 = add(E1, merge_recur(C1, Acc)),
-            Acc3 = add(E2, merge_recur(C2, Acc2)),
-            _Acc3 = merge_recur(C3, Acc3);
-        %
-        ?INTERNAL3_MATCH_NO_SIZES ->
-            Acc2 = add(E1, merge_recur(C1, Acc)),
-            Acc3 = add(E2, merge_recur(C2, Acc2)),
-            Acc4 = add(E3, merge_recur(C3, Acc3)),
-            _Acc5 = merge_recur(C4, Acc4);
-        %
-        %
-        ?INTERNAL4_MATCH_NO_SIZES ->
-            Acc2 = add(E1, merge_recur(C1, Acc)),
-            Acc3 = add(E2, merge_recur(C2, Acc2)),
-            Acc4 = add(E3, merge_recur(C3, Acc3)),
-            Acc5 = add(E4, merge_recur(C4, Acc4)),
-            _Acc6 = merge_recur(C5, Acc5)
-    end.
+        true ->
+            merge_2(Next1, Next2, [Element1, Element2 | Acc])
+    end;
+merge_2([], List2, Acc) ->
+    lists:reverse(List2, Acc);
+merge_2(List1, [], Acc) ->
+    lists:reverse(List1, Acc).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: next/1
