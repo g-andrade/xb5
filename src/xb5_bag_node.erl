@@ -77,7 +77,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL2(E1, E2, O1, O2, C1, C2, C3), {E1, E2, O1, O2, C1, C2, C3}).
 -define(INTERNAL2_MATCH(E1, E2, O1, O2, C1, C2, C3), {E1, E2, O1, O2, C1, C2, C3}).
 -define(INTERNAL2_MATCH_ALL, {E1, E2, O1, O2, C1, C2, C3}).
--define(INTERNAL2_MATCH_NO_SIZES, {E1, E2, _, _, C1, C2, C3}).
+-define(INTERNAL2_MATCH_IGN_OFFSETS, {E1, E2, _, _, C1, C2, C3}).
 
 % 2 elements
 -define(LEAF2(E1, E2), {E1, E2}).
@@ -92,7 +92,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
     {E1, E2, E3, O1, O2, O3, C1, C2, C3, C4}
 ).
 -define(INTERNAL3_MATCH_ALL, {E1, E2, E3, O1, O2, O3, C1, C2, C3, C4}).
--define(INTERNAL3_MATCH_NO_SIZES, {E1, E2, E3, _, _, _, C1, C2, C3, C4}).
+-define(INTERNAL3_MATCH_IGN_OFFSETS, {E1, E2, E3, _, _, _, C1, C2, C3, C4}).
 
 % 3 elements
 -define(LEAF3(E1, E2, E3), {E1, E2, E3}).
@@ -109,7 +109,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL4_MATCH_ALL,
     {E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, C5}
 ).
--define(INTERNAL4_MATCH_NO_SIZES,
+-define(INTERNAL4_MATCH_IGN_OFFSETS,
     {E1, E2, E3, E4, _, _, _, _, C1, C2, C3, C4, C5}
 ).
 
@@ -122,7 +122,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL1(E1, O1, C1, C2), {internal1, E1, O1, C1, C2}).
 -define(INTERNAL1_MATCH(E1, O1, C1, C2), {_, E1, O1, C1, C2}).
 -define(INTERNAL1_MATCH_ALL, {_, E1, O1, C1, C2}).
--define(INTERNAL1_MATCH_NO_SIZES, {_, E1, _, C1, C2}).
+-define(INTERNAL1_MATCH_IGN_OFFSETS, {_, E1, _, C1, C2}).
 
 % 1 element
 -define(LEAF1(E1), {E1}).
@@ -528,7 +528,7 @@ filtermap(Fun, Root) ->
     Acc1 :: term(),
     Acc2 :: term(),
     AccN :: term().
-fold(Fun, Acc, ?INTERNAL1_MATCH_NO_SIZES) ->
+fold(Fun, Acc, ?INTERNAL1_MATCH_IGN_OFFSETS) ->
     Acc2 = fold_recur(Fun, Acc, C1),
     Acc3 = Fun(E1, Acc2),
     fold_recur(Fun, Acc3, C2);
@@ -568,7 +568,7 @@ insert_att(Elem, Root) ->
     end.
 
 -spec is_member(_, t(_)) -> boolean().
-is_member(Elem, ?INTERNAL1_MATCH_NO_SIZES) ->
+is_member(Elem, ?INTERNAL1_MATCH_IGN_OFFSETS) ->
     is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
 is_member(Elem, ?LEAF1_MATCH_ALL) ->
     is_member_LEAF1(Elem, ?LEAF1_ARGS);
@@ -592,7 +592,7 @@ iterator_from(Elem, Root, reversed) ->
     [?REV_ITER_TAG | Acc].
 
 -spec larger(_, t(Elem)) -> {found, Elem} | none.
-larger(Elem, ?INTERNAL1_MATCH_NO_SIZES) ->
+larger(Elem, ?INTERNAL1_MATCH_IGN_OFFSETS) ->
     larger_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
 larger(Elem, ?LEAF1_MATCH_ALL) ->
     larger_LEAF1(Elem, ?LEAF1_ARGS);
@@ -675,7 +675,7 @@ rank_smaller(Elem, Root) ->
     rank_smaller_recur(Elem, Root, 0).
 
 -spec smaller(_, t(Elem)) -> {found, Elem} | none.
-smaller(Elem, ?INTERNAL1_MATCH_NO_SIZES) ->
+smaller(Elem, ?INTERNAL1_MATCH_IGN_OFFSETS) ->
     smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
 smaller(Elem, ?LEAF1_MATCH_ALL) ->
     smaller_LEAF1(Elem, ?LEAF1_ARGS);
@@ -736,7 +736,7 @@ take_smallest(Root) ->
     take_smallest_recur(Root).
 
 -spec to_list(t(Elem)) -> [Elem].
-to_list(?INTERNAL1_MATCH_NO_SIZES) ->
+to_list(?INTERNAL1_MATCH_IGN_OFFSETS) ->
     Acc2 = to_list_recur(C2, []),
     Acc3 = [E1 | Acc2],
     to_list_recur(C1, Acc3);
@@ -1596,18 +1596,18 @@ fold_recur(Fun, Acc, Node) ->
         ?LEAF4_MATCH_ALL ->
             Fun(E4, Fun(E3, Fun(E2, Fun(E1, Acc))));
         %
-        ?INTERNAL2_MATCH_NO_SIZES ->
+        ?INTERNAL2_MATCH_IGN_OFFSETS ->
             Acc2 = fold_recur(Fun, Acc, C1),
             Acc3 = fold_recur(Fun, Fun(E1, Acc2), C2),
             _Acc4 = fold_recur(Fun, Fun(E2, Acc3), C3);
         %
-        ?INTERNAL3_MATCH_NO_SIZES ->
+        ?INTERNAL3_MATCH_IGN_OFFSETS ->
             Acc2 = fold_recur(Fun, Acc, C1),
             Acc3 = fold_recur(Fun, Fun(E1, Acc2), C2),
             Acc4 = fold_recur(Fun, Fun(E2, Acc3), C3),
             _Acc5 = fold_recur(Fun, Fun(E3, Acc4), C4);
         %
-        ?INTERNAL4_MATCH_NO_SIZES ->
+        ?INTERNAL4_MATCH_IGN_OFFSETS ->
             Acc2 = fold_recur(Fun, Acc, C1),
             Acc3 = fold_recur(Fun, Fun(E1, Acc2), C2),
             Acc4 = fold_recur(Fun, Fun(E2, Acc3), C3),
@@ -2257,13 +2257,13 @@ insert_att_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
 is_member_recur(Elem, Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH_NO_SIZES ->
+        ?INTERNAL2_MATCH_IGN_OFFSETS ->
             is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL3_MATCH_NO_SIZES ->
+        ?INTERNAL3_MATCH_IGN_OFFSETS ->
             is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL4_MATCH_NO_SIZES ->
+        ?INTERNAL4_MATCH_IGN_OFFSETS ->
             is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES);
         %
         ?LEAF2_MATCH_ALL ->
@@ -2445,7 +2445,7 @@ is_member_LEAF1(Elem, ?LEAF1_ARGS) ->
 %% Internal Function Definitions: iterator/2 - forward
 %% ------------------------------------------------------------------
 
-fwd_iterator(?INTERNAL1_MATCH_NO_SIZES) ->
+fwd_iterator(?INTERNAL1_MATCH_IGN_OFFSETS) ->
     Acc = [?ITER_ELEM(E1), C2],
     fwd_iterator_recur(C1, Acc);
 fwd_iterator(?LEAF1_MATCH(E1)) ->
@@ -2467,7 +2467,7 @@ fwd_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
 fwd_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
     Acc2;
-fwd_iterator_recur(?INTERNAL2_MATCH_NO_SIZES, Acc) ->
+fwd_iterator_recur(?INTERNAL2_MATCH_IGN_OFFSETS, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E1),
         C2,
@@ -2476,7 +2476,7 @@ fwd_iterator_recur(?INTERNAL2_MATCH_NO_SIZES, Acc) ->
         | Acc
     ],
     fwd_iterator_recur(C1, Acc2);
-fwd_iterator_recur(?INTERNAL3_MATCH_NO_SIZES, Acc) ->
+fwd_iterator_recur(?INTERNAL3_MATCH_IGN_OFFSETS, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E1),
         C2,
@@ -2487,7 +2487,7 @@ fwd_iterator_recur(?INTERNAL3_MATCH_NO_SIZES, Acc) ->
         | Acc
     ],
     fwd_iterator_recur(C1, Acc2);
-fwd_iterator_recur(?INTERNAL4_MATCH_NO_SIZES, Acc) ->
+fwd_iterator_recur(?INTERNAL4_MATCH_IGN_OFFSETS, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E1),
         C2,
@@ -2505,7 +2505,7 @@ fwd_iterator_recur(?INTERNAL4_MATCH_NO_SIZES, Acc) ->
 %% Internal Function Definitions: iterator/2 - reverse
 %% ------------------------------------------------------------------
 
-rev_iterator(?INTERNAL1_MATCH_NO_SIZES) ->
+rev_iterator(?INTERNAL1_MATCH_IGN_OFFSETS) ->
     Acc = [?ITER_ELEM(E1), C1],
     rev_iterator_recur(C2, Acc);
 rev_iterator(?LEAF1_MATCH(E1)) ->
@@ -2527,7 +2527,7 @@ rev_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
 rev_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E4), ?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
     Acc2;
-rev_iterator_recur(?INTERNAL2_MATCH_NO_SIZES, Acc) ->
+rev_iterator_recur(?INTERNAL2_MATCH_IGN_OFFSETS, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E2),
         C2,
@@ -2536,7 +2536,7 @@ rev_iterator_recur(?INTERNAL2_MATCH_NO_SIZES, Acc) ->
         | Acc
     ],
     rev_iterator_recur(C3, Acc2);
-rev_iterator_recur(?INTERNAL3_MATCH_NO_SIZES, Acc) ->
+rev_iterator_recur(?INTERNAL3_MATCH_IGN_OFFSETS, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E3),
         C3,
@@ -2547,7 +2547,7 @@ rev_iterator_recur(?INTERNAL3_MATCH_NO_SIZES, Acc) ->
         | Acc
     ],
     rev_iterator_recur(C4, Acc2);
-rev_iterator_recur(?INTERNAL4_MATCH_NO_SIZES, Acc) ->
+rev_iterator_recur(?INTERNAL4_MATCH_IGN_OFFSETS, Acc) ->
     Acc2 = [
         ?ITER_ELEM(E4),
         C4,
@@ -2567,7 +2567,7 @@ rev_iterator_recur(?INTERNAL4_MATCH_NO_SIZES, Acc) ->
 
 bound_fwd_iterator(Elem, Root) ->
     case Root of
-        ?INTERNAL1_MATCH_NO_SIZES ->
+        ?INTERNAL1_MATCH_IGN_OFFSETS ->
             bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
         %
         ?LEAF1_MATCH_ALL ->
@@ -2593,13 +2593,13 @@ bound_fwd_iterator_recur(Elem, Node, Acc) ->
         ?LEAF4_MATCH_ALL ->
             bound_fwd_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc);
         %
-        ?INTERNAL2_MATCH_NO_SIZES ->
+        ?INTERNAL2_MATCH_IGN_OFFSETS ->
             bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc);
         %
-        ?INTERNAL3_MATCH_NO_SIZES ->
+        ?INTERNAL3_MATCH_IGN_OFFSETS ->
             bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc);
         %
-        ?INTERNAL4_MATCH_NO_SIZES ->
+        ?INTERNAL4_MATCH_IGN_OFFSETS ->
             bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc)
     end.
 
@@ -2754,7 +2754,7 @@ bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 bound_rev_iterator(Elem, Root) ->
     case Root of
-        ?INTERNAL1_MATCH_NO_SIZES ->
+        ?INTERNAL1_MATCH_IGN_OFFSETS ->
             bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
         %
         ?LEAF1_MATCH_ALL ->
@@ -2780,13 +2780,13 @@ bound_rev_iterator_recur(Elem, Node, Acc) ->
         ?LEAF4_MATCH_ALL ->
             bound_rev_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc);
         %
-        ?INTERNAL2_MATCH_NO_SIZES ->
+        ?INTERNAL2_MATCH_IGN_OFFSETS ->
             bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc);
         %
-        ?INTERNAL3_MATCH_NO_SIZES ->
+        ?INTERNAL3_MATCH_IGN_OFFSETS ->
             bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc);
         %
-        ?INTERNAL4_MATCH_NO_SIZES ->
+        ?INTERNAL4_MATCH_IGN_OFFSETS ->
             bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc)
     end.
 
@@ -2942,13 +2942,13 @@ bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
 larger_recur(Elem, Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH_NO_SIZES ->
+        ?INTERNAL2_MATCH_IGN_OFFSETS ->
             larger_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL3_MATCH_NO_SIZES ->
+        ?INTERNAL3_MATCH_IGN_OFFSETS ->
             larger_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL4_MATCH_NO_SIZES ->
+        ?INTERNAL4_MATCH_IGN_OFFSETS ->
             larger_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES);
         %
         ?LEAF2_MATCH_ALL ->
@@ -4306,13 +4306,13 @@ rank_smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
 smaller_recur(Elem, Node) ->
     case Node of
         %
-        ?INTERNAL2_MATCH_NO_SIZES ->
+        ?INTERNAL2_MATCH_IGN_OFFSETS ->
             smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL3_MATCH_NO_SIZES ->
+        ?INTERNAL3_MATCH_IGN_OFFSETS ->
             smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES);
         %
-        ?INTERNAL4_MATCH_NO_SIZES ->
+        ?INTERNAL4_MATCH_IGN_OFFSETS ->
             smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES);
         %
         ?LEAF2_MATCH_ALL ->
@@ -4780,18 +4780,18 @@ to_list_recur(Node, Acc) ->
         ?LEAF4_MATCH_ALL ->
             [E1, E2, E3, E4 | Acc];
         %
-        ?INTERNAL2_MATCH_NO_SIZES ->
+        ?INTERNAL2_MATCH_IGN_OFFSETS ->
             Acc2 = to_list_recur(C3, Acc),
             Acc3 = to_list_recur(C2, [E2 | Acc2]),
             _Acc4 = to_list_recur(C1, [E1 | Acc3]);
         %
-        ?INTERNAL3_MATCH_NO_SIZES ->
+        ?INTERNAL3_MATCH_IGN_OFFSETS ->
             Acc2 = to_list_recur(C4, Acc),
             Acc3 = to_list_recur(C3, [E3 | Acc2]),
             Acc4 = to_list_recur(C2, [E2 | Acc3]),
             _Acc5 = to_list_recur(C1, [E1 | Acc4]);
         %
-        ?INTERNAL4_MATCH_NO_SIZES ->
+        ?INTERNAL4_MATCH_IGN_OFFSETS ->
             Acc2 = to_list_recur(C5, Acc),
             Acc3 = to_list_recur(C4, [E4 | Acc2]),
             Acc4 = to_list_recur(C3, [E3 | Acc3]),
@@ -4804,7 +4804,7 @@ to_list_recur(Node, Acc) ->
 %% ------------------------------------------------------------------
 
 -spec to_rev_list(t(Elem)) -> [Elem].
-to_rev_list(?INTERNAL1_MATCH_NO_SIZES) ->
+to_rev_list(?INTERNAL1_MATCH_IGN_OFFSETS) ->
     Acc2 = to_rev_list_recur(C1, []),
     Acc3 = [E1 | Acc2],
     to_rev_list_recur(C2, Acc3);
@@ -4826,18 +4826,18 @@ to_rev_list_recur(Node, Acc) ->
         ?LEAF4_MATCH_ALL ->
             [E4, E3, E2, E1 | Acc];
         %
-        ?INTERNAL2_MATCH_NO_SIZES ->
+        ?INTERNAL2_MATCH_IGN_OFFSETS ->
             Acc2 = to_rev_list_recur(C1, Acc),
             Acc3 = to_rev_list_recur(C2, [E1 | Acc2]),
             _Acc4 = to_rev_list_recur(C3, [E2 | Acc3]);
         %
-        ?INTERNAL3_MATCH_NO_SIZES ->
+        ?INTERNAL3_MATCH_IGN_OFFSETS ->
             Acc2 = to_rev_list_recur(C1, Acc),
             Acc3 = to_rev_list_recur(C2, [E1 | Acc2]),
             Acc4 = to_rev_list_recur(C3, [E2 | Acc3]),
             _Acc5 = to_rev_list_recur(C4, [E3 | Acc4]);
         %
-        ?INTERNAL4_MATCH_NO_SIZES ->
+        ?INTERNAL4_MATCH_IGN_OFFSETS ->
             Acc2 = to_rev_list_recur(C1, Acc),
             Acc3 = to_rev_list_recur(C2, [E1 | Acc2]),
             Acc4 = to_rev_list_recur(C3, [E2 | Acc3]),
