@@ -654,10 +654,9 @@ largest(Root) ->
 
 -spec map(fun((Elem) -> MappedElem), t(Elem)) -> nonempty_improper_list(NewSize, t(MappedElem)) when
     NewSize :: non_neg_integer().
-map(Fun, Node) ->
-    Count = 0,
-    Acc = [Count | new()],
-    map_root(Fun, Node, Acc).
+map(Fun, Root) ->
+    List = to_list(Root),
+    map_recur(Fun, List, 0, new()).
 
 -spec new() -> t(_).
 new() ->
@@ -2961,89 +2960,16 @@ largest_recur(Node) ->
 %% Internal Function Definitions: map/2
 %% ------------------------------------------------------------------
 
-map_root(Fun, Node, Acc) ->
-    case Node of
-        ?INTERNAL1_MATCH_ALL ->
-            Acc2 = map_recur(Fun, C1, Acc),
-            Acc3 = map_elem(Fun, E1, Acc2),
-
-            _Acc4 = map_recur(Fun, C2, Acc3);
-        %
-        ?LEAF1_MATCH_ALL ->
-            _Acc2 = map_elem(Fun, E1, Acc);
-        %
-        ?LEAF0 ->
-            Acc;
-        %
-        _ ->
-            map_recur(Fun, Node, Acc)
-    end.
-
-map_recur(Fun, Node, Acc) ->
-    % TODO optimize like in filtermap, union, etc
-    case Node of
-        ?LEAF2_MATCH_ALL ->
-            Acc2 = map_elem(Fun, E1, Acc),
-            _Acc3 = map_elem(Fun, E2, Acc2);
-        %
-        ?LEAF3_MATCH_ALL ->
-            Acc2 = map_elem(Fun, E1, Acc),
-            Acc3 = map_elem(Fun, E2, Acc2),
-            _Acc4 = map_elem(Fun, E3, Acc3);
-        %
-        ?LEAF4_MATCH_ALL ->
-            Acc2 = map_elem(Fun, E1, Acc),
-            Acc3 = map_elem(Fun, E2, Acc2),
-            Acc4 = map_elem(Fun, E3, Acc3),
-            _Acc5 = map_elem(Fun, E4, Acc4);
-        %
-        ?INTERNAL2_MATCH_ALL ->
-            Acc2 = map_recur(Fun, C1, Acc),
-            Acc3 = map_elem(Fun, E1, Acc2),
-
-            Acc4 = map_recur(Fun, C2, Acc3),
-            Acc5 = map_elem(Fun, E2, Acc4),
-
-            _Acc6 = map_recur(Fun, C3, Acc5);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            Acc2 = map_recur(Fun, C1, Acc),
-            Acc3 = map_elem(Fun, E1, Acc2),
-
-            Acc4 = map_recur(Fun, C2, Acc3),
-            Acc5 = map_elem(Fun, E2, Acc4),
-
-            Acc6 = map_recur(Fun, C3, Acc5),
-            Acc7 = map_elem(Fun, E3, Acc6),
-
-            _Acc8 = map_recur(Fun, C4, Acc7);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            Acc2 = map_recur(Fun, C1, Acc),
-            Acc3 = map_elem(Fun, E1, Acc2),
-
-            Acc4 = map_recur(Fun, C2, Acc3),
-            Acc5 = map_elem(Fun, E2, Acc4),
-
-            Acc6 = map_recur(Fun, C3, Acc5),
-            Acc7 = map_elem(Fun, E3, Acc6),
-
-            Acc8 = map_recur(Fun, C4, Acc7),
-            Acc9 = map_elem(Fun, E4, Acc8),
-
-            _Acc10 = map_recur(Fun, C5, Acc9)
-    end.
-
-map_elem(Fun, Elem, [Count | Root] = Acc) ->
-    Mapped = Fun(Elem),
-
-    case insert_att(Mapped, Root) of
+map_recur(Fun, [Element | Next], AccSize, Acc) ->
+    case insert_att(Fun(Element), Acc) of
         key_exists ->
-            Acc;
+            map_recur(Fun, Next, AccSize, Acc);
         %
-        UpdatedRoot ->
-            [Count + 1 | UpdatedRoot]
-    end.
+        UpdatedAcc ->
+            map_recur(Fun, Next, AccSize + 1, UpdatedAcc)
+    end;
+map_recur(_Fun, [], AccSize, Acc) ->
+    [AccSize | Acc].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: next/1

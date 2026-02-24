@@ -610,9 +610,9 @@ largest(Root) ->
     largest_recur(Root).
 
 -spec map(fun((Elem) -> MappedElem), t(Elem)) -> t(MappedElem).
-map(Fun, Node) ->
-    Acc = new(),
-    map_root(Fun, Node, Acc).
+map(Fun, Root) ->
+    List = to_list(Root),
+    map_recur(Fun, List, new()).
 
 -spec merge(non_neg_integer(), t(Elem1), non_neg_integer(), t(Elem2)) -> t(Elem1 | Elem2).
 merge(Size1, Root1, Size2, Root2) when Size1 < Size2 ->
@@ -3177,83 +3177,11 @@ largest_recur(Node) ->
 %% Internal Function Definitions: map/2
 %% ------------------------------------------------------------------
 
-map_root(Fun, Node, Acc) ->
-    case Node of
-        ?INTERNAL1_MATCH_NO_SIZES ->
-            Acc2 = map_recur(Fun, C1, Acc),
-            Acc3 = map_elem(Fun, E1, Acc2),
-
-            _Acc4 = map_recur(Fun, C2, Acc3);
-        %
-        ?LEAF1_MATCH_ALL ->
-            _Acc2 = map_elem(Fun, E1, Acc);
-        %
-        ?LEAF0 ->
-            Acc;
-        %
-        _ ->
-            map_recur(Fun, Node, Acc)
-    end.
-
-map_recur(Fun, Node, Acc) ->
-    % TODO optimize like in filtermap
-    case Node of
-        ?LEAF2_MATCH_ALL ->
-            Acc2 = map_elem(Fun, E1, Acc),
-            _Acc3 = map_elem(Fun, E2, Acc2);
-        %
-        ?LEAF3_MATCH_ALL ->
-            Acc2 = map_elem(Fun, E1, Acc),
-            Acc3 = map_elem(Fun, E2, Acc2),
-            _Acc4 = map_elem(Fun, E3, Acc3);
-        %
-        ?LEAF4_MATCH_ALL ->
-            Acc2 = map_elem(Fun, E1, Acc),
-            Acc3 = map_elem(Fun, E2, Acc2),
-            Acc4 = map_elem(Fun, E3, Acc3),
-            _Acc5 = map_elem(Fun, E4, Acc4);
-        %
-        ?INTERNAL2_MATCH_NO_SIZES ->
-            Acc2 = map_recur(Fun, C1, Acc),
-            Acc3 = map_elem(Fun, E1, Acc2),
-
-            Acc4 = map_recur(Fun, C2, Acc3),
-            Acc5 = map_elem(Fun, E2, Acc4),
-
-            _Acc6 = map_recur(Fun, C3, Acc5);
-        %
-        ?INTERNAL3_MATCH_NO_SIZES ->
-            Acc2 = map_recur(Fun, C1, Acc),
-            Acc3 = map_elem(Fun, E1, Acc2),
-
-            Acc4 = map_recur(Fun, C2, Acc3),
-            Acc5 = map_elem(Fun, E2, Acc4),
-
-            Acc6 = map_recur(Fun, C3, Acc5),
-            Acc7 = map_elem(Fun, E3, Acc6),
-
-            _Acc8 = map_recur(Fun, C4, Acc7);
-        %
-        ?INTERNAL4_MATCH_NO_SIZES ->
-            Acc2 = map_recur(Fun, C1, Acc),
-            Acc3 = map_elem(Fun, E1, Acc2),
-
-            Acc4 = map_recur(Fun, C2, Acc3),
-            Acc5 = map_elem(Fun, E2, Acc4),
-
-            Acc6 = map_recur(Fun, C3, Acc5),
-            Acc7 = map_elem(Fun, E3, Acc6),
-
-            Acc8 = map_recur(Fun, C4, Acc7),
-            Acc9 = map_elem(Fun, E4, Acc8),
-
-            _Acc10 = map_recur(Fun, C5, Acc9)
-    end.
-
--compile({inline, map_elem/3}).
-map_elem(Fun, Elem, Root) ->
-    Mapped = Fun(Elem),
-    add(Mapped, Root).
+map_recur(Fun, [Element | Next], Acc) ->
+    MappedElement = Fun(Element),
+    map_recur(Fun, Next, add(MappedElement, Acc));
+map_recur(_Fun, [], Acc) ->
+    Acc.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: merge/2
