@@ -4581,8 +4581,6 @@ structural_stats_recur(Node, Acc, Height) ->
 %% Internal Function Definitions: take_largest/2
 %% ------------------------------------------------------------------
 
-%% TODO continue from here
-
 take_largest_recur(Node) ->
     case Node of
         %
