@@ -36,6 +36,8 @@ API for operating over `m:xb5_trees` internal nodes directly.
 <br/>
 """.
 
+-include("src/xb5_search_helpers.hrl").
+
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
@@ -823,46 +825,24 @@ delete_att_recur(Key, Node) ->
 
 -compile({inline, delete_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
 delete_att_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
-    if
-        Key > K2 ->
-            %
-            if
-                Key < K4 ->
-                    %
-                    if
-                        Key > K3 ->
-                            delete_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS);
-                        %
-                        Key < K3 ->
-                            delete_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS);
-                        %
-                        true ->
-                            delete_att_INTERNAL4_K3(?INTERNAL4_ARGS)
-                    end;
-                %
-                Key > K4 ->
-                    delete_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL4_K4(?INTERNAL4_ARGS)
-            end;
+    ?GAP_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    delete_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS);
-                %
-                Key > K1 ->
-                    delete_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL4_K1(?INTERNAL4_ARGS)
-            end;
+        delete_att_INTERNAL4_K1(?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_K2(?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_K3(?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_K4(?INTERNAL4_ARGS),
         %
-        true ->
-            delete_att_INTERNAL4_K2(?INTERNAL4_ARGS)
-    end.
+        delete_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS)
+    ).
 
 -compile({inline, delete_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
 delete_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS) ->
@@ -990,36 +970,21 @@ delete_att_INTERNAL4_K4(?INTERNAL4_ARGS_IGN_K4_V4) ->
 
 -compile({inline, delete_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
 delete_att_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
-    if
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    delete_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS);
-                %
-                Key > K1 ->
-                    delete_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL3_K1(?INTERNAL3_ARGS)
-            end;
+    ?GAP_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K2 ->
-            %
-            if
-                Key < K3 ->
-                    delete_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS);
-                %
-                Key > K3 ->
-                    delete_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL3_K3(?INTERNAL3_ARGS)
-            end;
+        delete_att_INTERNAL3_K1(?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_K2(?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_K3(?INTERNAL3_ARGS),
         %
-        true ->
-            delete_att_INTERNAL3_K2(?INTERNAL3_ARGS)
-    end.
+        delete_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS)
+    ).
 
 -compile({inline, delete_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
 delete_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS) ->
@@ -1110,26 +1075,18 @@ delete_att_INTERNAL3_K3(?INTERNAL3_ARGS_IGN_K3_V3) ->
 
 -compile({inline, delete_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
 delete_att_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
-    if
-        Key > K1 ->
-            %
-            if
-                Key < K2 ->
-                    delete_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS);
-                %
-                Key > K2 ->
-                    delete_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL2_K2(?INTERNAL2_ARGS)
-            end;
+    ?GAP_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K1 ->
-            delete_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS);
+        delete_att_INTERNAL2_K1(?INTERNAL2_ARGS),
+        delete_att_INTERNAL2_K2(?INTERNAL2_ARGS),
         %
-        true ->
-            delete_att_INTERNAL2_K1(?INTERNAL2_ARGS)
-    end.
+        delete_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS),
+        delete_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS),
+        delete_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS)
+    ).
 
 -compile({inline, delete_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
 delete_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS) ->
@@ -1189,16 +1146,15 @@ delete_att_INTERNAL2_K2(?INTERNAL2_ARGS_IGN_K2_V2) ->
 
 -compile({inline, delete_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 delete_att_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
-    if
-        Key < K1 ->
-            delete_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS);
+    ?GAP_SEARCH1(
+        Key,
+        K1,
         %
-        Key > K1 ->
-            delete_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS);
+        delete_att_INTERNAL1_K1(?INTERNAL1_ARGS),
         %
-        true ->
-            delete_att_INTERNAL1_K1(?INTERNAL1_ARGS)
-    end.
+        delete_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS),
+        delete_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS)
+    ).
 
 -compile({inline, delete_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
 delete_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS) ->
@@ -1217,78 +1173,56 @@ delete_att_INTERNAL1_K1(?INTERNAL1_ARGS_IGN_K1_V1) ->
     ?INTERNAL1_K1_C2_REBALANCE(ReplacementK, ReplacementV, UpdatedC2).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, delete_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 delete_att_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            ?new_LEAF3(K2, K3, K4, V2, V3, V4);
-        %
-        Key == K2 ->
-            ?new_LEAF3(K1, K3, K4, V1, V3, V4);
-        %
-        Key == K3 ->
-            ?new_LEAF3(K1, K2, K4, V1, V2, V4);
-        %
-        Key == K4 ->
-            ?new_LEAF3(K1, K2, K3, V1, V2, V3);
-        %
-        true ->
-            badkey
-    end.
-
-%%
-%% ?LEAF3
-%%
+    ?EXACT_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
+        ?new_LEAF3(K2, K3, K4, V2, V3, V4),
+        ?new_LEAF3(K1, K3, K4, V1, V3, V4),
+        ?new_LEAF3(K1, K2, K4, V1, V2, V4),
+        ?new_LEAF3(K1, K2, K3, V1, V2, V3),
+        badkey
+    ).
 
 -compile({inline, delete_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 delete_att_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            ?new_LEAF2(K2, K3, V2, V3);
-        %
-        Key == K2 ->
-            ?new_LEAF2(K1, K3, V1, V3);
-        %
-        Key == K3 ->
-            ?new_LEAF2(K1, K2, V1, V2);
-        %
-        true ->
-            badkey
-    end.
-
-%%
-%% ?LEAF2
-%%
+    ?EXACT_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
+        ?new_LEAF2(K2, K3, V2, V3),
+        ?new_LEAF2(K1, K3, V1, V3),
+        ?new_LEAF2(K1, K2, V1, V2),
+        badkey
+    ).
 
 -compile({inline, delete_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 delete_att_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            ?new_LEAF1(K2, V2);
-        %
-        Key == K2 ->
-            ?new_LEAF1(K1, V1);
-        %
-        true ->
-            badkey
-    end.
-
-%%
-%% ?LEAF1
-%%
+    ?EXACT_SEARCH2(
+        Key,
+        K1,
+        K2,
+        ?new_LEAF1(K2, V2),
+        ?new_LEAF1(K1, V1),
+        badkey
+    ).
 
 -compile({inline, delete_att_LEAF1/2}).
 delete_att_LEAF1(Key, K1) ->
-    if
-        Key == K1 ->
-            ?LEAF0;
-        %
-        true ->
-            badkey
-    end.
+    ?EXACT_SEARCH1(
+        Key,
+        K1,
+        ?LEAF0,
+        badkey
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: foldl/3
@@ -1560,46 +1494,24 @@ get_recur(Key, Node) ->
 
 -compile({inline, get_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
 get_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
-    if
-        Key > K2 ->
-            %
-            if
-                Key < K4 ->
-                    %
-                    if
-                        Key > K3 ->
-                            get_recur(Key, C4);
-                        %
-                        Key < K3 ->
-                            get_recur(Key, C3);
-                        %
-                        true ->
-                            V3
-                    end;
-                %
-                Key > K4 ->
-                    get_recur(Key, C5);
-                %
-                true ->
-                    V4
-            end;
+    ?GAP_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    get_recur(Key, C1);
-                %
-                Key > K1 ->
-                    get_recur(Key, C2);
-                %
-                true ->
-                    V1
-            end;
+        V1,
+        V2,
+        V3,
+        V4,
         %
-        true ->
-            V2
-    end.
+        get_recur(Key, C1),
+        get_recur(Key, C2),
+        get_recur(Key, C3),
+        get_recur(Key, C4),
+        get_recur(Key, C5)
+    ).
 
 %%
 %% ?INTERNAL3
@@ -1607,36 +1519,21 @@ get_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
 
 -compile({inline, get_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
 get_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
-    if
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    get_recur(Key, C1);
-                %
-                Key > K1 ->
-                    get_recur(Key, C2);
-                %
-                true ->
-                    V1
-            end;
+    ?GAP_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K2 ->
-            %
-            if
-                Key < K3 ->
-                    get_recur(Key, C3);
-                %
-                Key > K3 ->
-                    get_recur(Key, C4);
-                %
-                true ->
-                    V3
-            end;
+        V1,
+        V2,
+        V3,
         %
-        true ->
-            V2
-    end.
+        get_recur(Key, C1),
+        get_recur(Key, C2),
+        get_recur(Key, C3),
+        get_recur(Key, C4)
+    ).
 
 %%
 %% ?INTERNAL2
@@ -1644,26 +1541,18 @@ get_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
 
 -compile({inline, get_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
 get_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
-    if
-        Key > K1 ->
-            %
-            if
-                Key < K2 ->
-                    get_recur(Key, C2);
-                %
-                Key > K2 ->
-                    get_recur(Key, C3);
-                %
-                true ->
-                    V2
-            end;
+    ?GAP_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K1 ->
-            get_recur(Key, C1);
+        V1,
+        V2,
         %
-        true ->
-            V1
-    end.
+        get_recur(Key, C1),
+        get_recur(Key, C2),
+        get_recur(Key, C3)
+    ).
 
 %%
 %% ?INTERNAL1
@@ -1671,76 +1560,61 @@ get_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
 
 -compile({inline, get_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 get_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
-    if
-        Key < K1 ->
-            get_recur(Key, C1);
+    ?GAP_SEARCH1(
+        Key,
+        K1,
         %
-        Key > K1 ->
-            get_recur(Key, C2);
+        V1,
         %
-        true ->
-            V1
-    end.
+        get_recur(Key, C1),
+        get_recur(Key, C2)
+    ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, get_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 get_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            V1;
+    ?EXACT_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key == K2 ->
-            V2;
-        %
-        Key == K3 ->
-            V3;
-        %
-        Key == K4 ->
-            V4;
-        %
-        true ->
-            error_badkey(Key)
-    end.
-
-%%
-%% ?LEAF3
-%%
+        V1,
+        V2,
+        V3,
+        V4,
+        error_badkey(Key)
+    ).
 
 -compile({inline, get_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 get_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            V1;
+    ?EXACT_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key == K2 ->
-            V2;
-        %
-        Key == K3 ->
-            V3;
-        %
-        true ->
-            error_badkey(Key)
-    end.
-
-%%
-%% ?LEAF2
-%%
+        V1,
+        V2,
+        V3,
+        error_badkey(Key)
+    ).
 
 -compile({inline, get_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 get_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            V1;
+    ?EXACT_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key == K2 ->
-            V2;
-        %
-        true ->
-            error_badkey(Key)
-    end.
+        V1,
+        V2,
+        error_badkey(Key)
+    ).
 
 %%
 %% ?LEAF1
@@ -1748,13 +1622,13 @@ get_LEAF2(Key, ?LEAF2_ARGS) ->
 
 -compile({inline, get_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 get_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key == K1 ->
-            V1;
+    ?EXACT_SEARCH1(
+        Key,
+        K1,
         %
-        true ->
-            error_badkey(Key)
-    end.
+        V1,
+        error_badkey(Key)
+    ).
 
 %%
 
@@ -1794,46 +1668,24 @@ insert_att_recur(Key, ValueEval, ValueWrap, Node) ->
 
 -compile({inline, insert_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
 insert_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    if
-        Key > K2 ->
-            %
-            if
-                Key < K4 ->
-                    %
-                    if
-                        Key > K3 ->
-                            insert_att_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                        %
-                        Key < K3 ->
-                            insert_att_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                        %
-                        true ->
-                            key_exists
-                    end;
-                %
-                Key > K4 ->
-                    insert_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    insert_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                %
-                Key > K1 ->
-                    insert_att_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+        key_exists,
+        key_exists,
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
+        insert_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        insert_att_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        insert_att_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        insert_att_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        insert_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
+    ).
 
 -compile({inline, insert_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS3}).
 insert_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
@@ -1866,36 +1718,21 @@ insert_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
 insert_att_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    if
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    insert_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
-                %
-                Key > K1 ->
-                    insert_att_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K2 ->
-            %
-            if
-                Key < K3 ->
-                    insert_att_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
-                %
-                Key > K3 ->
-                    insert_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+        key_exists,
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
+        insert_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS),
+        insert_att_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS),
+        insert_att_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS),
+        insert_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
+    ).
 
 -compile({inline, insert_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS3}).
 insert_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
@@ -1923,26 +1760,18 @@ insert_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
 insert_att_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    if
-        Key > K1 ->
-            %
-            if
-                Key < K2 ->
-                    insert_att_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
-                %
-                Key > K2 ->
-                    insert_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K1 ->
-            insert_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
+        insert_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS),
+        insert_att_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS),
+        insert_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS)
+    ).
 
 -compile({inline, insert_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS3}).
 insert_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
@@ -1965,16 +1794,15 @@ insert_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS3}).
 insert_att_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
-    if
-        Key < K1 ->
-            insert_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+    ?GAP_SEARCH1(
+        Key,
+        K1,
         %
-        Key > K1 ->
-            insert_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
+        insert_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS),
+        insert_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS)
+    ).
 
 -compile({inline, insert_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS3}).
 insert_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
@@ -1987,255 +1815,147 @@ insert_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
     ins_rebalance_INTERNAL1_C2(Result, ?INTERNAL1_ARGS).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, insert_att_LEAF4/7}).
 insert_att_LEAF4(Key, ValueEval, ValueWrap, K1, K2, K3, K4) ->
-    if
-        Key > K2 ->
-            %
-            if
-                Key < K4 ->
-                    %
-                    if
-                        Key > K3 ->
-                            Value = eval_insert_value(ValueEval, ValueWrap),
-                            ?SPLIT(4, [Key | Value]);
-                        %
-                        Key < K3 ->
-                            Value = eval_insert_value(ValueEval, ValueWrap),
-                            ?SPLIT(3, [Key | Value]);
-                        %
-                        true ->
-                            key_exists
-                    end;
-                %
-                Key > K4 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?SPLIT(5, [Key | Value]);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?SPLIT(1, [Key | Value]);
-                %
-                Key > K1 ->
-                    Value = eval_insert_value(ValueEval, ValueWrap),
-                    ?SPLIT(2, [Key | Value]);
-                %
-                true ->
-                    key_exists
-            end;
+        key_exists,
+        key_exists,
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
-
-%%
-%% ?LEAF3
-%%
+        ?SPLIT(1, [Key | eval_insert_value(ValueEval, ValueWrap)]),
+        ?SPLIT(2, [Key | eval_insert_value(ValueEval, ValueWrap)]),
+        ?SPLIT(3, [Key | eval_insert_value(ValueEval, ValueWrap)]),
+        ?SPLIT(4, [Key | eval_insert_value(ValueEval, ValueWrap)]),
+        ?SPLIT(5, [Key | eval_insert_value(ValueEval, ValueWrap)])
+    ).
 
 -compile({inline, insert_att_LEAF3 / ?LEAF3_ARITY_PLUS3}).
 insert_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    if
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    insert_att_LEAF3_POS1(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-                %
-                Key > K1 ->
-                    insert_att_LEAF3_POS2(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
-        %
-        Key > K2 ->
-            %
-            if
-                Key < K3 ->
-                    insert_att_LEAF3_POS3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-                %
-                Key > K3 ->
-                    insert_att_LEAF3_POS4(Key, ValueEval, ValueWrap, ?LEAF3_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
-        %
-        true ->
-            key_exists
-    end.
-
--compile({inline, insert_att_LEAF3_POS1 / ?LEAF3_ARITY_PLUS3}).
-insert_att_LEAF3_POS1(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF4(
+    ?GAP_SEARCH3(
         Key,
         K1,
         K2,
         K3,
         %
-        Value,
-        V1,
-        V2,
-        V3
-    ).
-
--compile({inline, insert_att_LEAF3_POS2 / ?LEAF3_ARITY_PLUS3}).
-insert_att_LEAF3_POS2(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF4(
-        K1,
-        Key,
-        K2,
-        K3,
+        key_exists,
+        key_exists,
+        key_exists,
         %
-        V1,
-        Value,
-        V2,
-        V3
-    ).
-
--compile({inline, insert_att_LEAF3_POS3 / ?LEAF3_ARITY_PLUS3}).
-insert_att_LEAF3_POS3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF4(
-        K1,
-        K2,
-        Key,
-        K3,
+        ?new_LEAF4(
+            Key,
+            K1,
+            K2,
+            K3,
+            eval_insert_value(ValueEval, ValueWrap),
+            V1,
+            V2,
+            V3
+        ),
         %
-        V1,
-        V2,
-        Value,
-        V3
-    ).
-
--compile({inline, insert_att_LEAF3_POS4 / ?LEAF3_ARITY_PLUS3}).
-insert_att_LEAF3_POS4(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF4(
-        K1,
-        K2,
-        K3,
-        Key,
+        ?new_LEAF4(
+            K1,
+            Key,
+            K2,
+            K3,
+            V1,
+            eval_insert_value(ValueEval, ValueWrap),
+            V2,
+            V3
+        ),
         %
-        V1,
-        V2,
-        V3,
-        Value
+        ?new_LEAF4(
+            K1,
+            K2,
+            Key,
+            K3,
+            V1,
+            V2,
+            eval_insert_value(ValueEval, ValueWrap),
+            V3
+        ),
+        %
+        ?new_LEAF4(
+            K1,
+            K2,
+            K3,
+            Key,
+            V1,
+            V2,
+            V3,
+            eval_insert_value(ValueEval, ValueWrap)
+        )
     ).
-
-%%
-%% ?LEAF2
-%%
 
 -compile({inline, insert_att_LEAF2 / ?LEAF2_ARITY_PLUS3}).
 insert_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    if
-        Key > K1 ->
-            %
-            if
-                Key < K2 ->
-                    insert_att_LEAF2_POS2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-                %
-                Key > K2 ->
-                    insert_att_LEAF2_POS3(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
-        %
-        Key < K1 ->
-            insert_att_LEAF2_POS1(Key, ValueEval, ValueWrap, ?LEAF2_ARGS);
-        %
-        true ->
-            key_exists
-    end.
-
--compile({inline, insert_att_LEAF2_POS1 / ?LEAF2_ARITY_PLUS3}).
-insert_att_LEAF2_POS1(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF3(
+    ?GAP_SEARCH2(
         Key,
         K1,
         K2,
         %
-        Value,
-        V1,
-        V2
-    ).
-
--compile({inline, insert_att_LEAF2_POS2 / ?LEAF2_ARITY_PLUS3}).
-insert_att_LEAF2_POS2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF3(
-        K1,
-        Key,
-        K2,
+        key_exists,
+        key_exists,
         %
-        V1,
-        Value,
-        V2
-    ).
-
--compile({inline, insert_att_LEAF2_POS3 / ?LEAF2_ARITY_PLUS3}).
-insert_att_LEAF2_POS3(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF3(
-        K1,
-        K2,
-        Key,
+        ?new_LEAF3(
+            Key,
+            K1,
+            K2,
+            eval_insert_value(ValueEval, ValueWrap),
+            V1,
+            V2
+        ),
         %
-        V1,
-        V2,
-        Value
+        ?new_LEAF3(
+            K1,
+            Key,
+            K2,
+            V1,
+            eval_insert_value(ValueEval, ValueWrap),
+            V2
+        ),
+        %
+        ?new_LEAF3(
+            K1,
+            K2,
+            Key,
+            V1,
+            V2,
+            eval_insert_value(ValueEval, ValueWrap)
+        )
     ).
-
-%%
-%% ?LEAF1
-%%
 
 -compile({inline, insert_att_LEAF1 / ?LEAF1_ARITY_PLUS3}).
 insert_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
-    if
-        Key < K1 ->
-            insert_att_LEAF1_POS1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
+    ?GAP_SEARCH1(
+        Key,
+        K1,
         %
-        Key > K1 ->
-            insert_att_LEAF1_POS2(Key, ValueEval, ValueWrap, ?LEAF1_ARGS);
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
-
--compile({inline, insert_att_LEAF1_POS1 / ?LEAF1_ARITY_PLUS3}).
-insert_att_LEAF1_POS1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF2(Key, K1, Value, V1).
-
--compile({inline, insert_att_LEAF1_POS2 / ?LEAF1_ARITY_PLUS3}).
-insert_att_LEAF1_POS2(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
-    Value = eval_insert_value(ValueEval, ValueWrap),
-
-    ?new_LEAF2(K1, Key, V1, Value).
+        ?new_LEAF2(
+            Key,
+            K1,
+            eval_insert_value(ValueEval, ValueWrap),
+            V1
+        ),
+        %
+        ?new_LEAF2(
+            K1,
+            Key,
+            V1,
+            eval_insert_value(ValueEval, ValueWrap)
+        )
+    ).
 
 %%%
 
@@ -2371,46 +2091,24 @@ is_defined_recur(Key, Node) ->
 
 -compile({inline, is_defined_INTERNAL4/10}).
 is_defined_INTERNAL4(Key, K1, K2, K3, K4, C1, C2, C3, C4, C5) ->
-    if
-        Key > K2 ->
-            %
-            if
-                Key < K4 ->
-                    %
-                    if
-                        Key > K3 ->
-                            is_defined_recur(Key, C4);
-                        %
-                        Key < K3 ->
-                            is_defined_recur(Key, C3);
-                        %
-                        true ->
-                            true
-                    end;
-                %
-                Key > K4 ->
-                    is_defined_recur(Key, C5);
-                %
-                true ->
-                    true
-            end;
+    ?GAP_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    is_defined_recur(Key, C1);
-                %
-                Key > K1 ->
-                    is_defined_recur(Key, C2);
-                %
-                true ->
-                    true
-            end;
+        true,
+        true,
+        true,
+        true,
         %
-        true ->
-            true
-    end.
+        is_defined_recur(Key, C1),
+        is_defined_recur(Key, C2),
+        is_defined_recur(Key, C3),
+        is_defined_recur(Key, C4),
+        is_defined_recur(Key, C5)
+    ).
 
 %%
 %% ?INTERNAL3
@@ -2418,36 +2116,21 @@ is_defined_INTERNAL4(Key, K1, K2, K3, K4, C1, C2, C3, C4, C5) ->
 
 -compile({inline, is_defined_INTERNAL3/8}).
 is_defined_INTERNAL3(Key, K1, K2, K3, C1, C2, C3, C4) ->
-    if
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    is_defined_recur(Key, C1);
-                %
-                Key > K1 ->
-                    is_defined_recur(Key, C2);
-                %
-                true ->
-                    true
-            end;
+    ?GAP_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K2 ->
-            %
-            if
-                Key < K3 ->
-                    is_defined_recur(Key, C3);
-                %
-                Key > K3 ->
-                    is_defined_recur(Key, C4);
-                %
-                true ->
-                    true
-            end;
+        true,
+        true,
+        true,
         %
-        true ->
-            true
-    end.
+        is_defined_recur(Key, C1),
+        is_defined_recur(Key, C2),
+        is_defined_recur(Key, C3),
+        is_defined_recur(Key, C4)
+    ).
 
 %%
 %% ?INTERNAL2
@@ -2455,26 +2138,18 @@ is_defined_INTERNAL3(Key, K1, K2, K3, C1, C2, C3, C4) ->
 
 -compile({inline, is_defined_INTERNAL2/6}).
 is_defined_INTERNAL2(Key, K1, K2, C1, C2, C3) ->
-    if
-        Key > K1 ->
-            %
-            if
-                Key < K2 ->
-                    is_defined_recur(Key, C2);
-                %
-                Key > K2 ->
-                    is_defined_recur(Key, C3);
-                %
-                true ->
-                    true
-            end;
+    ?GAP_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K1 ->
-            is_defined_recur(Key, C1);
+        true,
+        true,
         %
-        true ->
-            true
-    end.
+        is_defined_recur(Key, C1),
+        is_defined_recur(Key, C2),
+        is_defined_recur(Key, C3)
+    ).
 
 %%
 %% ?INTERNAL1
@@ -2482,44 +2157,36 @@ is_defined_INTERNAL2(Key, K1, K2, C1, C2, C3) ->
 
 -compile({inline, is_defined_INTERNAL1/4}).
 is_defined_INTERNAL1(Key, K1, C1, C2) ->
-    if
-        Key < K1 ->
-            is_defined_recur(Key, C1);
+    ?GAP_SEARCH1(
+        Key,
+        K1,
         %
-        Key > K1 ->
-            is_defined_recur(Key, C2);
+        true,
         %
-        true ->
-            true
-    end.
+        is_defined_recur(Key, C1),
+        is_defined_recur(Key, C2)
+    ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, is_defined_LEAF4/5}).
 is_defined_LEAF4(Key, K1, K2, K3, K4) ->
-    Key == K1 orelse Key == K2 orelse Key == K3 orelse Key == K4.
-
-%%
-%% ?LEAF3
-%%
+    (Key == K1 orelse
+        Key == K2 orelse
+        Key == K3 orelse
+        Key == K4).
 
 -compile({inline, is_defined_LEAF3/4}).
 is_defined_LEAF3(Key, K1, K2, K3) ->
-    Key == K1 orelse Key == K2 orelse Key == K3.
-
-%%
-%% ?LEAF2
-%%
+    (Key == K1 orelse
+        Key == K2 orelse
+        Key == K3).
 
 -compile({inline, is_defined_LEAF2/3}).
 is_defined_LEAF2(Key, K1, K2) ->
     Key == K1 orelse Key == K2.
-
-%%
-%% ?LEAF1
-%%
 
 -compile({inline, is_defined_LEAF1/2}).
 is_defined_LEAF1(Key, K1) ->
@@ -2691,30 +2358,15 @@ bound_fwd_iterator_recur(Key, Node, Acc) ->
 
 -compile({inline, bound_fwd_iterator_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
 bound_fwd_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
-    if
-        Key > K4 ->
-            case Acc of
-                [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_fwd_iterator_recur(Key, C5, Acc)
-            end;
+    ?SMALLER_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key > K3 ->
-            Acc2 = [?ITER_PAIR(K4, V4), C5 | Acc],
-            bound_fwd_iterator_recur(Key, C4, Acc2);
         %
-        Key > K2 ->
-            Acc2 = [?ITER_PAIR(K3, V3), C4, ?ITER_PAIR(K4, V4), C5 | Acc],
-            bound_fwd_iterator_recur(Key, C3, Acc2);
-        %
-        Key > K1 ->
-            Acc2 = [?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4, ?ITER_PAIR(K4, V4), C5 | Acc],
-            bound_fwd_iterator_recur(Key, C2, Acc2);
-        %
-        true ->
+        begin
             Acc2 = [
                 ?ITER_PAIR(K1, V1),
                 C2,
@@ -2727,59 +2379,107 @@ bound_fwd_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
                 | Acc
             ],
             bound_fwd_iterator_recur(Key, C1, Acc2)
-    end.
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4, ?ITER_PAIR(K4, V4), C5 | Acc],
+            bound_fwd_iterator_recur(Key, C2, Acc2)
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_PAIR(K3, V3), C4, ?ITER_PAIR(K4, V4), C5 | Acc],
+            bound_fwd_iterator_recur(Key, C3, Acc2)
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_PAIR(K4, V4), C5 | Acc],
+            bound_fwd_iterator_recur(Key, C4, Acc2)
+        end,
+        %
+        %
+        case Acc of
+            [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_fwd_iterator_recur(Key, C5, Acc)
+        end
+    ).
 
 %% INTERNAL3
 
 -compile({inline, bound_fwd_iterator_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
 bound_fwd_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc) ->
-    if
-        Key > K3 ->
-            case Acc of
-                [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_fwd_iterator_recur(Key, C4, Acc)
-            end;
+    ?SMALLER_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K2 ->
-            Acc2 = [?ITER_PAIR(K3, V3), C4 | Acc],
-            bound_fwd_iterator_recur(Key, C3, Acc2);
         %
-        Key > K1 ->
-            Acc2 = [?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4 | Acc],
-            bound_fwd_iterator_recur(Key, C2, Acc2);
-        %
-        true ->
+        begin
             Acc2 = [?ITER_PAIR(K1, V1), C2, ?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4 | Acc],
             bound_fwd_iterator_recur(Key, C1, Acc2)
-    end.
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4 | Acc],
+            bound_fwd_iterator_recur(Key, C2, Acc2)
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_PAIR(K3, V3), C4 | Acc],
+            bound_fwd_iterator_recur(Key, C3, Acc2)
+        end,
+        %
+        %
+        case Acc of
+            [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_fwd_iterator_recur(Key, C4, Acc)
+        end
+    ).
 
 %% INTERNAL2
 
 -compile({inline, bound_fwd_iterator_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
 bound_fwd_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc) ->
-    if
-        Key > K2 ->
-            case Acc of
-                [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_fwd_iterator_recur(Key, C3, Acc)
-            end;
+    ?SMALLER_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key > K1 ->
-            Acc2 = [?ITER_PAIR(K2, V2), C3 | Acc],
-            bound_fwd_iterator_recur(Key, C2, Acc2);
         %
-        true ->
+        begin
             Acc2 = [?ITER_PAIR(K1, V1), C2, ?ITER_PAIR(K2, V2), C3 | Acc],
             bound_fwd_iterator_recur(Key, C1, Acc2)
-    end.
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_PAIR(K2, V2), C3 | Acc],
+            bound_fwd_iterator_recur(Key, C2, Acc2)
+        end,
+        %
+        %
+        case Acc of
+            [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_fwd_iterator_recur(Key, C3, Acc)
+        end
+    ).
 
 %% INTERNAL1
 
@@ -2802,67 +2502,61 @@ bound_fwd_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
 
 -compile({inline, bound_fwd_iterator_LEAF4 / ?LEAF4_ARITY_PLUS2}).
 bound_fwd_iterator_LEAF4(Key, ?LEAF4_ARGS, Acc) ->
-    if
-        Key > K4 ->
-            Acc;
+    ?SMALLER_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key > K3 ->
-            [?ITER_PAIR(K4, V4) | Acc];
-        %
-        Key > K2 ->
-            [?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc];
-        %
-        Key > K1 ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc]
-    end.
+        [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc],
+        [?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc],
+        [?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc],
+        [?ITER_PAIR(K4, V4) | Acc],
+        Acc
+    ).
 
 %% LEAF3
 
 -compile({inline, bound_fwd_iterator_LEAF3 / ?LEAF3_ARITY_PLUS2}).
 bound_fwd_iterator_LEAF3(Key, ?LEAF3_ARGS, Acc) ->
-    if
-        Key > K3 ->
-            Acc;
+    ?SMALLER_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K2 ->
-            [?ITER_PAIR(K3, V3) | Acc];
-        %
-        Key > K1 ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3) | Acc]
-    end.
+        [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3) | Acc],
+        [?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3) | Acc],
+        [?ITER_PAIR(K3, V3) | Acc],
+        Acc
+    ).
 
 %% LEAF2
 
 -compile({inline, bound_fwd_iterator_LEAF2 / ?LEAF2_ARITY_PLUS2}).
 bound_fwd_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc) ->
-    if
-        Key > K2 ->
-            Acc;
+    ?SMALLER_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key > K1 ->
-            [?ITER_PAIR(K2, V2) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2) | Acc]
-    end.
+        [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2) | Acc],
+        [?ITER_PAIR(K2, V2) | Acc],
+        Acc
+    ).
 
 %% LEAF1
 
 -compile({inline, bound_fwd_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key > K1 ->
-            [];
+    ?SMALLER_SEARCH1(
+        Key,
+        K1,
         %
-        true ->
-            [?ITER_PAIR(K1, V1)]
-    end.
+        [?ITER_PAIR(K1, V1)],
+        []
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator_from/3 - forward
@@ -2910,30 +2604,43 @@ bound_rev_iterator_recur(Key, Node, Acc) ->
 
 -compile({inline, bound_rev_iterator_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
 bound_rev_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
-    if
-        Key < K1 ->
-            case Acc of
-                [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_rev_iterator_recur(Key, C1, Acc)
-            end;
+    ?LARGER_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
+        %
+        case Acc of
+            [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_rev_iterator_recur(Key, C1, Acc)
+        end,
+        %
+        %
+        begin
             Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
-            bound_rev_iterator_recur(Key, C2, Acc2);
+            bound_rev_iterator_recur(Key, C2, Acc2)
+        end,
         %
-        Key < K3 ->
+        %
+        begin
             Acc2 = [?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
-            bound_rev_iterator_recur(Key, C3, Acc2);
+            bound_rev_iterator_recur(Key, C3, Acc2)
+        end,
         %
-        Key < K4 ->
+        %
+        begin
             Acc2 = [?ITER_PAIR(K3, V3), C3, ?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
-            bound_rev_iterator_recur(Key, C4, Acc2);
+            bound_rev_iterator_recur(Key, C4, Acc2)
+        end,
         %
-        true ->
+        %
+        begin
             Acc2 = [
                 ?ITER_PAIR(K4, V4),
                 C4,
@@ -2946,59 +2653,79 @@ bound_rev_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
                 | Acc
             ],
             bound_rev_iterator_recur(Key, C5, Acc2)
-    end.
+        end
+    ).
 
 %% INTERNAL3
 
 -compile({inline, bound_rev_iterator_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
 bound_rev_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc) ->
-    if
-        Key < K1 ->
-            case Acc of
-                [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_rev_iterator_recur(Key, C1, Acc)
-            end;
+    ?LARGER_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key < K2 ->
+        %
+        case Acc of
+            [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_rev_iterator_recur(Key, C1, Acc)
+        end,
+        %
+        %
+        begin
             Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
-            bound_rev_iterator_recur(Key, C2, Acc2);
+            bound_rev_iterator_recur(Key, C2, Acc2)
+        end,
         %
-        Key < K3 ->
+        %
+        begin
             Acc2 = [?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
-            bound_rev_iterator_recur(Key, C3, Acc2);
+            bound_rev_iterator_recur(Key, C3, Acc2)
+        end,
         %
-        true ->
+        %
+        begin
             Acc2 = [?ITER_PAIR(K3, V3), C3, ?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C4, Acc2)
-    end.
+        end
+    ).
 
 %% INTERNAL2
 
 -compile({inline, bound_rev_iterator_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
 bound_rev_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc) ->
-    if
-        Key < K1 ->
-            case Acc of
-                [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
-                    % We overshot when recursing from this node's parent, stop here
-                    % since no more elements can possibly be included.
-                    Acc;
-                _ ->
-                    bound_rev_iterator_recur(Key, C1, Acc)
-            end;
+    ?LARGER_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K2 ->
+        %
+        case Acc of
+            [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_rev_iterator_recur(Key, C1, Acc)
+        end,
+        %
+        %
+        begin
             Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
-            bound_rev_iterator_recur(Key, C2, Acc2);
+            bound_rev_iterator_recur(Key, C2, Acc2)
+        end,
         %
-        true ->
+        %
+        begin
             Acc2 = [?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C3, Acc2)
-    end.
+        end
+    ).
 
 %% INTERNAL1
 
@@ -3021,67 +2748,61 @@ bound_rev_iterator_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
 
 -compile({inline, bound_rev_iterator_LEAF4 / ?LEAF4_ARITY_PLUS2}).
 bound_rev_iterator_LEAF4(Key, ?LEAF4_ARGS, Acc) ->
-    if
-        Key < K1 ->
-            Acc;
+    ?LARGER_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
-            [?ITER_PAIR(K1, V1) | Acc];
-        %
-        Key < K3 ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc];
-        %
-        Key < K4 ->
-            [?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K4, V4), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
-    end.
+        Acc,
+        [?ITER_PAIR(K1, V1) | Acc],
+        [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
+        [?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
+        [?ITER_PAIR(K4, V4), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
+    ).
 
 %% LEAF3
 
 -compile({inline, bound_rev_iterator_LEAF3 / ?LEAF3_ARITY_PLUS2}).
 bound_rev_iterator_LEAF3(Key, ?LEAF3_ARGS, Acc) ->
-    if
-        Key < K1 ->
-            Acc;
+    ?LARGER_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key < K2 ->
-            [?ITER_PAIR(K1, V1) | Acc];
-        %
-        Key < K3 ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
-    end.
+        Acc,
+        [?ITER_PAIR(K1, V1) | Acc],
+        [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
+        [?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
+    ).
 
 %% LEAF2
 
 -compile({inline, bound_rev_iterator_LEAF2 / ?LEAF2_ARITY_PLUS2}).
 bound_rev_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc) ->
-    if
-        Key < K1 ->
-            Acc;
+    ?LARGER_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K2 ->
-            [?ITER_PAIR(K1, V1) | Acc];
-        %
-        true ->
-            [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
-    end.
+        Acc,
+        [?ITER_PAIR(K1, V1) | Acc],
+        [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
+    ).
 
 %% LEAF1
 
 -compile({inline, bound_rev_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key < K1 ->
-            [];
+    ?LARGER_SEARCH1(
+        Key,
+        K1,
         %
-        true ->
-            [?ITER_PAIR(K1, V1)]
-    end.
+        [],
+        [?ITER_PAIR(K1, V1)]
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: keys/1
@@ -3149,36 +2870,35 @@ larger_recur(Key, Node) ->
 
 -compile({inline, larger_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
 larger_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
-    if
-        Key < K2 ->
-            case Key < K1 of
-                true ->
-                    case larger_recur(Key, C1) of
-                        none -> {K1, V1};
-                        Found -> Found
-                    end;
-                _ ->
-                    case larger_recur(Key, C2) of
-                        none -> {K2, V2};
-                        Found -> Found
-                    end
-            end;
+    ?LARGER_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K3 ->
-            case larger_recur(Key, C3) of
-                none -> {K3, V3};
-                Found -> Found
-            end;
+        case larger_recur(Key, C1) of
+            none -> {K1, V1};
+            Found -> Found
+        end,
         %
-        Key < K4 ->
-            case larger_recur(Key, C4) of
-                none -> {K4, V4};
-                Found -> Found
-            end;
+        case larger_recur(Key, C2) of
+            none -> {K2, V2};
+            Found -> Found
+        end,
         %
-        true ->
-            larger_recur(Key, C5)
-    end.
+        case larger_recur(Key, C3) of
+            none -> {K3, V3};
+            Found -> Found
+        end,
+        %
+        case larger_recur(Key, C4) of
+            none -> {K4, V4};
+            Found -> Found
+        end,
+        %
+        larger_recur(Key, C5)
+    ).
 
 %%
 %% ?INTERNAL3
@@ -3186,30 +2906,29 @@ larger_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
 
 -compile({inline, larger_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
 larger_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
-    if
-        Key < K2 ->
-            case Key < K1 of
-                true ->
-                    case larger_recur(Key, C1) of
-                        none -> {K1, V1};
-                        Found -> Found
-                    end;
-                _ ->
-                    case larger_recur(Key, C2) of
-                        none -> {K2, V2};
-                        Found -> Found
-                    end
-            end;
+    ?LARGER_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key < K3 ->
-            case larger_recur(Key, C3) of
-                none -> {K3, V3};
-                Found -> Found
-            end;
+        case larger_recur(Key, C1) of
+            none -> {K1, V1};
+            Found -> Found
+        end,
         %
-        true ->
-            larger_recur(Key, C4)
-    end.
+        case larger_recur(Key, C2) of
+            none -> {K2, V2};
+            Found -> Found
+        end,
+        %
+        case larger_recur(Key, C3) of
+            none -> {K3, V3};
+            Found -> Found
+        end,
+        %
+        larger_recur(Key, C4)
+    ).
 
 %%
 %% ?INTERNAL2
@@ -3217,22 +2936,23 @@ larger_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
 
 -compile({inline, larger_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
 larger_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
-    if
-        Key < K1 ->
-            case larger_recur(Key, C1) of
-                none -> {K1, V1};
-                Found -> Found
-            end;
+    ?LARGER_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K2 ->
-            case larger_recur(Key, C2) of
-                none -> {K2, V2};
-                Found -> Found
-            end;
+        case larger_recur(Key, C1) of
+            none -> {K1, V1};
+            Found -> Found
+        end,
         %
-        true ->
-            larger_recur(Key, C3)
-    end.
+        case larger_recur(Key, C2) of
+            none -> {K2, V2};
+            Found -> Found
+        end,
+        %
+        larger_recur(Key, C3)
+    ).
 
 %%
 %% ?INTERNAL1
@@ -3240,94 +2960,73 @@ larger_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
 
 -compile({inline, larger_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 larger_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
-    if
-        Key < K1 ->
-            case larger_recur(Key, C1) of
-                none -> {K1, V1};
-                Found -> Found
-            end;
+    ?LARGER_SEARCH1(
+        Key,
+        K1,
         %
-        true ->
-            larger_recur(Key, C2)
-    end.
+        case larger_recur(Key, C1) of
+            none -> {K1, V1};
+            Found -> Found
+        end,
+        %
+        larger_recur(Key, C2)
+    ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, larger_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 larger_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key < K2 ->
-            case Key < K1 of
-                true ->
-                    {K1, V1};
-                _ ->
-                    {K2, V2}
-            end;
+    ?LARGER_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K3 ->
-            {K3, V3};
-        %
-        Key < K4 ->
-            {K4, V4};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
+        {K1, V1},
+        {K2, V2},
+        {K3, V3},
+        {K4, V4},
+        none
+    ).
 
 -compile({inline, larger_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 larger_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key < K2 ->
-            case Key < K1 of
-                true ->
-                    {K1, V1};
-                _ ->
-                    {K2, V2}
-            end;
+    ?LARGER_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key < K3 ->
-            {K3, V3};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
+        {K1, V1},
+        {K2, V2},
+        {K3, V3},
+        none
+    ).
 
 -compile({inline, larger_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 larger_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key < K1 ->
-            {K1, V1};
+    ?LARGER_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K2 ->
-            {K2, V2};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
+        {K1, V1},
+        {K2, V2},
+        none
+    ).
 
 -compile({inline, larger_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 larger_LEAF1(Key, ?LEAF1_ARGS) ->
-    case Key < K1 of
-        true ->
-            {K1, V1};
+    ?LARGER_SEARCH1(
+        Key,
+        K1,
         %
-        _ ->
-            none
-    end.
+        {K1, V1},
+        none
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: largest/1
@@ -3387,46 +3086,24 @@ lookup_recur(Key, Node) ->
 
 -compile({inline, lookup_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
 lookup_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
-    if
-        Key > K2 ->
-            %
-            if
-                Key < K4 ->
-                    %
-                    if
-                        Key > K3 ->
-                            lookup_recur(Key, C4);
-                        %
-                        Key < K3 ->
-                            lookup_recur(Key, C3);
-                        %
-                        true ->
-                            {value, V3}
-                    end;
-                %
-                Key > K4 ->
-                    lookup_recur(Key, C5);
-                %
-                true ->
-                    {value, V4}
-            end;
+    ?GAP_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    lookup_recur(Key, C1);
-                %
-                Key > K1 ->
-                    lookup_recur(Key, C2);
-                %
-                true ->
-                    {value, V1}
-            end;
+        {value, V1},
+        {value, V2},
+        {value, V3},
+        {value, V4},
         %
-        true ->
-            {value, V2}
-    end.
+        lookup_recur(Key, C1),
+        lookup_recur(Key, C2),
+        lookup_recur(Key, C3),
+        lookup_recur(Key, C4),
+        lookup_recur(Key, C5)
+    ).
 
 %%
 %% ?INTERNAL3
@@ -3434,36 +3111,21 @@ lookup_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
 
 -compile({inline, lookup_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
 lookup_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
-    if
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    lookup_recur(Key, C1);
-                %
-                Key > K1 ->
-                    lookup_recur(Key, C2);
-                %
-                true ->
-                    {value, V1}
-            end;
+    ?GAP_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K2 ->
-            %
-            if
-                Key < K3 ->
-                    lookup_recur(Key, C3);
-                %
-                Key > K3 ->
-                    lookup_recur(Key, C4);
-                %
-                true ->
-                    {value, V3}
-            end;
+        {value, V1},
+        {value, V2},
+        {value, V3},
         %
-        true ->
-            {value, V2}
-    end.
+        lookup_recur(Key, C1),
+        lookup_recur(Key, C2),
+        lookup_recur(Key, C3),
+        lookup_recur(Key, C4)
+    ).
 
 %%
 %% ?INTERNAL2
@@ -3471,26 +3133,18 @@ lookup_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
 
 -compile({inline, lookup_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
 lookup_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
-    if
-        Key > K1 ->
-            %
-            if
-                Key < K2 ->
-                    lookup_recur(Key, C2);
-                %
-                Key > K2 ->
-                    lookup_recur(Key, C3);
-                %
-                true ->
-                    {value, V2}
-            end;
+    ?GAP_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K1 ->
-            lookup_recur(Key, C1);
+        {value, V1},
+        {value, V2},
         %
-        true ->
-            {value, V1}
-    end.
+        lookup_recur(Key, C1),
+        lookup_recur(Key, C2),
+        lookup_recur(Key, C3)
+    ).
 
 %%
 %% ?INTERNAL1
@@ -3498,39 +3152,35 @@ lookup_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
 
 -compile({inline, lookup_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 lookup_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
-    if
-        Key < K1 ->
-            lookup_recur(Key, C1);
+    ?GAP_SEARCH1(
+        Key,
+        K1,
         %
-        Key > K1 ->
-            lookup_recur(Key, C2);
+        {value, V1},
         %
-        true ->
-            {value, V1}
-    end.
+        lookup_recur(Key, C1),
+        lookup_recur(Key, C2)
+    ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, lookup_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 lookup_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            {value, V1};
+    ?EXACT_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key == K2 ->
-            {value, V2};
-        %
-        Key == K3 ->
-            {value, V3};
-        %
-        Key == K4 ->
-            {value, V4};
-        %
-        true ->
-            none
-    end.
+        {value, V1},
+        {value, V2},
+        {value, V3},
+        {value, V4},
+        none
+    ).
 
 %%
 %% ?LEAF3
@@ -3538,19 +3188,17 @@ lookup_LEAF4(Key, ?LEAF4_ARGS) ->
 
 -compile({inline, lookup_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 lookup_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            {value, V1};
+    ?EXACT_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key == K2 ->
-            {value, V2};
-        %
-        Key == K3 ->
-            {value, V3};
-        %
-        true ->
-            none
-    end.
+        {value, V1},
+        {value, V2},
+        {value, V3},
+        none
+    ).
 
 %%
 %% ?LEAF2
@@ -3558,16 +3206,15 @@ lookup_LEAF3(Key, ?LEAF3_ARGS) ->
 
 -compile({inline, lookup_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 lookup_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            {value, V1};
+    ?EXACT_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key == K2 ->
-            {value, V2};
-        %
-        true ->
-            none
-    end.
+        {value, V1},
+        {value, V2},
+        none
+    ).
 
 %%
 %% ?LEAF1
@@ -3575,13 +3222,13 @@ lookup_LEAF2(Key, ?LEAF2_ARGS) ->
 
 -compile({inline, lookup_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 lookup_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key == K1 ->
-            {value, V1};
+    ?EXACT_SEARCH1(
+        Key,
+        K1,
         %
-        true ->
-            none
-    end.
+        {value, V1},
+        none
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: map/2
@@ -3746,36 +3393,35 @@ smaller_recur(Key, Node) ->
 
 -compile({inline, smaller_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
 smaller_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
-    if
-        Key > K3 ->
-            case Key > K4 of
-                true ->
-                    case smaller_recur(Key, C5) of
-                        none -> {K4, V4};
-                        Found -> Found
-                    end;
-                _ ->
-                    case smaller_recur(Key, C4) of
-                        none -> {K3, V3};
-                        Found -> Found
-                    end
-            end;
+    ?SMALLER_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key > K2 ->
-            case smaller_recur(Key, C3) of
-                none -> {K2, V2};
-                Found -> Found
-            end;
+        smaller_recur(Key, C1),
         %
-        Key > K1 ->
-            case smaller_recur(Key, C2) of
-                none -> {K1, V1};
-                Found -> Found
-            end;
+        case smaller_recur(Key, C2) of
+            none -> {K1, V1};
+            Found -> Found
+        end,
         %
-        true ->
-            smaller_recur(Key, C1)
-    end.
+        case smaller_recur(Key, C3) of
+            none -> {K2, V2};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Key, C4) of
+            none -> {K3, V3};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Key, C5) of
+            none -> {K4, V4};
+            Found -> Found
+        end
+    ).
 
 %%
 %% ?INTERNAL3
@@ -3783,30 +3429,29 @@ smaller_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
 
 -compile({inline, smaller_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
 smaller_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
-    if
-        Key > K2 ->
-            case Key > K3 of
-                true ->
-                    case smaller_recur(Key, C4) of
-                        none -> {K3, V3};
-                        Found -> Found
-                    end;
-                _ ->
-                    case smaller_recur(Key, C3) of
-                        none -> {K2, V2};
-                        Found -> Found
-                    end
-            end;
+    ?SMALLER_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K1 ->
-            case smaller_recur(Key, C2) of
-                none -> {K1, V1};
-                Found -> Found
-            end;
+        smaller_recur(Key, C1),
         %
-        true ->
-            smaller_recur(Key, C1)
-    end.
+        case smaller_recur(Key, C2) of
+            none -> {K1, V1};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Key, C3) of
+            none -> {K2, V2};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Key, C4) of
+            none -> {K3, V3};
+            Found -> Found
+        end
+    ).
 
 %%
 %% ?INTERNAL2
@@ -3814,22 +3459,23 @@ smaller_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
 
 -compile({inline, smaller_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
 smaller_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
-    if
-        Key > K2 ->
-            case smaller_recur(Key, C3) of
-                none -> {K2, V2};
-                Found -> Found
-            end;
+    ?SMALLER_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key > K1 ->
-            case smaller_recur(Key, C2) of
-                none -> {K1, V1};
-                Found -> Found
-            end;
+        smaller_recur(Key, C1),
         %
-        true ->
-            smaller_recur(Key, C1)
-    end.
+        case smaller_recur(Key, C2) of
+            none -> {K1, V1};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Key, C3) of
+            none -> {K2, V2};
+            Found -> Found
+        end
+    ).
 
 %%
 %% ?INTERNAL1
@@ -3837,16 +3483,17 @@ smaller_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
 
 -compile({inline, smaller_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 smaller_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
-    case Key > K1 of
-        true ->
-            case smaller_recur(Key, C2) of
-                none -> {K1, V1};
-                Found -> Found
-            end;
+    ?SMALLER_SEARCH1(
+        Key,
+        K1,
         %
-        _ ->
-            smaller_recur(Key, C1)
-    end.
+        smaller_recur(Key, C1),
+        %
+        case smaller_recur(Key, C2) of
+            none -> {K1, V1};
+            Found -> Found
+        end
+    ).
 
 %%
 %% ?LEAF4
@@ -3854,24 +3501,19 @@ smaller_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
 
 -compile({inline, smaller_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 smaller_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key > K3 ->
-            case Key > K4 of
-                true ->
-                    {K4, V4};
-                _ ->
-                    {K3, V3}
-            end;
+    ?SMALLER_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key > K2 ->
-            {K2, V2};
-        %
-        Key > K1 ->
-            {K1, V1};
-        %
-        true ->
-            none
-    end.
+        none,
+        {K1, V1},
+        {K2, V2},
+        {K3, V3},
+        {K4, V4}
+    ).
 
 %%
 %% ?LEAF3
@@ -3879,21 +3521,17 @@ smaller_LEAF4(Key, ?LEAF4_ARGS) ->
 
 -compile({inline, smaller_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 smaller_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key > K2 ->
-            case Key > K3 of
-                true ->
-                    {K3, V3};
-                _ ->
-                    {K2, V2}
-            end;
+    ?SMALLER_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K1 ->
-            {K1, V1};
-        %
-        true ->
-            none
-    end.
+        none,
+        {K1, V1},
+        {K2, V2},
+        {K3, V3}
+    ).
 
 %%
 %% ?LEAF2
@@ -3901,16 +3539,15 @@ smaller_LEAF3(Key, ?LEAF3_ARGS) ->
 
 -compile({inline, smaller_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 smaller_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key > K2 ->
-            {K2, V2};
+    ?SMALLER_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key > K1 ->
-            {K1, V1};
-        %
-        true ->
-            none
-    end.
+        none,
+        {K1, V1},
+        {K2, V2}
+    ).
 
 %%
 %% ?LEAF1
@@ -3918,13 +3555,13 @@ smaller_LEAF2(Key, ?LEAF2_ARGS) ->
 
 -compile({inline, smaller_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 smaller_LEAF1(Key, ?LEAF1_ARGS) ->
-    case Key > K1 of
-        true ->
-            {K1, V1};
+    ?SMALLER_SEARCH1(
+        Key,
+        K1,
         %
-        _ ->
-            none
-    end.
+        none,
+        {K1, V1}
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: smallest/1
@@ -4024,46 +3661,24 @@ take_att_recur(Key, Node) ->
 
 -compile({inline, take_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
 take_att_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
-    if
-        Key > K2 ->
-            %
-            if
-                Key < K4 ->
-                    %
-                    if
-                        Key > K3 ->
-                            take_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS);
-                        %
-                        Key < K3 ->
-                            take_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS);
-                        %
-                        true ->
-                            take_att_INTERNAL4_K3(?INTERNAL4_ARGS)
-                    end;
-                %
-                Key > K4 ->
-                    take_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    take_att_INTERNAL4_K4(?INTERNAL4_ARGS)
-            end;
+    ?GAP_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    take_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS);
-                %
-                Key > K1 ->
-                    take_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    take_att_INTERNAL4_K1(?INTERNAL4_ARGS)
-            end;
+        take_att_INTERNAL4_K1(?INTERNAL4_ARGS),
+        take_att_INTERNAL4_K2(?INTERNAL4_ARGS),
+        take_att_INTERNAL4_K3(?INTERNAL4_ARGS),
+        take_att_INTERNAL4_K4(?INTERNAL4_ARGS),
         %
-        true ->
-            take_att_INTERNAL4_K2(?INTERNAL4_ARGS)
-    end.
+        take_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS),
+        take_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS),
+        take_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS),
+        take_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS),
+        take_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS)
+    ).
 
 -compile({inline, take_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
 take_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS) ->
@@ -4139,36 +3754,21 @@ take_att_INTERNAL4_K4(?INTERNAL4_ARGS) ->
 
 -compile({inline, take_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
 take_att_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
-    if
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    take_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS);
-                %
-                Key > K1 ->
-                    take_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    take_att_INTERNAL3_K1(?INTERNAL3_ARGS)
-            end;
+    ?GAP_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K2 ->
-            %
-            if
-                Key < K3 ->
-                    take_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS);
-                %
-                Key > K3 ->
-                    take_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    take_att_INTERNAL3_K3(?INTERNAL3_ARGS)
-            end;
+        take_att_INTERNAL3_K1(?INTERNAL3_ARGS),
+        take_att_INTERNAL3_K2(?INTERNAL3_ARGS),
+        take_att_INTERNAL3_K3(?INTERNAL3_ARGS),
         %
-        true ->
-            take_att_INTERNAL3_K2(?INTERNAL3_ARGS)
-    end.
+        take_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS),
+        take_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS),
+        take_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS),
+        take_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS)
+    ).
 
 -compile({inline, take_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
 take_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS) ->
@@ -4230,26 +3830,18 @@ take_att_INTERNAL3_K3(?INTERNAL3_ARGS) ->
 
 -compile({inline, take_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
 take_att_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
-    if
-        Key > K1 ->
-            %
-            if
-                Key < K2 ->
-                    take_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS);
-                %
-                Key > K2 ->
-                    take_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS);
-                %
-                true ->
-                    take_att_INTERNAL2_K2(?INTERNAL2_ARGS)
-            end;
+    ?GAP_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K1 ->
-            take_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS);
+        take_att_INTERNAL2_K1(?INTERNAL2_ARGS),
+        take_att_INTERNAL2_K2(?INTERNAL2_ARGS),
         %
-        true ->
-            take_att_INTERNAL2_K1(?INTERNAL2_ARGS)
-    end.
+        take_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS),
+        take_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS),
+        take_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS)
+    ).
 
 -compile({inline, take_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
 take_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS) ->
@@ -4297,16 +3889,15 @@ take_att_INTERNAL2_K2(?INTERNAL2_ARGS) ->
 
 -compile({inline, take_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 take_att_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
-    if
-        Key < K1 ->
-            take_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS);
+    ?GAP_SEARCH1(
+        Key,
+        K1,
         %
-        Key > K1 ->
-            take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS);
+        take_att_INTERNAL1_K1(?INTERNAL1_ARGS),
         %
-        true ->
-            take_att_INTERNAL1_K1(?INTERNAL1_ARGS)
-    end.
+        take_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS),
+        take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS)
+    ).
 
 -compile({inline, take_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
 take_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS) ->
@@ -4333,27 +3924,23 @@ take_att_INTERNAL1_K1(?INTERNAL1_ARGS) ->
     ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL1_K1(?INTERNAL1_ARGS)).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, take_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 take_att_LEAF4(Key, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            ?TAKEN_PAIR(K1, V1, ?new_LEAF3(K2, K3, K4, V2, V3, V4));
-        %
-        Key == K2 ->
-            ?TAKEN_PAIR(K2, V2, ?new_LEAF3(K1, K3, K4, V1, V3, V4));
-        %
-        Key == K3 ->
-            ?TAKEN_PAIR(K3, V3, ?new_LEAF3(K1, K2, K4, V1, V2, V4));
-        %
-        Key == K4 ->
-            ?TAKEN_PAIR(K4, V4, ?new_LEAF3(K1, K2, K3, V1, V2, V3));
-        %
-        true ->
-            badkey
-    end.
+    ?EXACT_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
+        ?TAKEN_PAIR(K1, V1, ?new_LEAF3(K2, K3, K4, V2, V3, V4)),
+        ?TAKEN_PAIR(K2, V2, ?new_LEAF3(K1, K3, K4, V1, V3, V4)),
+        ?TAKEN_PAIR(K3, V3, ?new_LEAF3(K1, K2, K4, V1, V2, V4)),
+        ?TAKEN_PAIR(K4, V4, ?new_LEAF3(K1, K2, K3, V1, V2, V3)),
+        badkey
+    ).
 
 %%
 %% ?LEAF3
@@ -4361,50 +3948,36 @@ take_att_LEAF4(Key, ?LEAF4_ARGS) ->
 
 -compile({inline, take_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 take_att_LEAF3(Key, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            ?TAKEN_PAIR(K1, V1, ?new_LEAF2(K2, K3, V2, V3));
-        %
-        Key == K2 ->
-            ?TAKEN_PAIR(K2, V2, ?new_LEAF2(K1, K3, V1, V3));
-        %
-        Key == K3 ->
-            ?TAKEN_PAIR(K3, V3, ?new_LEAF2(K1, K2, V1, V2));
-        %
-        true ->
-            badkey
-    end.
-
-%%
-%% ?LEAF2
-%%
+    ?EXACT_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
+        ?TAKEN_PAIR(K1, V1, ?new_LEAF2(K2, K3, V2, V3)),
+        ?TAKEN_PAIR(K2, V2, ?new_LEAF2(K1, K3, V1, V3)),
+        ?TAKEN_PAIR(K3, V3, ?new_LEAF2(K1, K2, V1, V2)),
+        badkey
+    ).
 
 -compile({inline, take_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 take_att_LEAF2(Key, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            ?TAKEN_PAIR(K1, V1, ?new_LEAF1(K2, V2));
-        %
-        Key == K2 ->
-            ?TAKEN_PAIR(K2, V2, ?new_LEAF1(K1, V1));
-        %
-        true ->
-            badkey
-    end.
-
-%%
-%% ?LEAF1
-%%
+    ?EXACT_SEARCH2(
+        Key,
+        K1,
+        K2,
+        ?TAKEN_PAIR(K1, V1, ?new_LEAF1(K2, V2)),
+        ?TAKEN_PAIR(K2, V2, ?new_LEAF1(K1, V1)),
+        badkey
+    ).
 
 -compile({inline, take_att_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 take_att_LEAF1(Key, ?LEAF1_ARGS) ->
-    if
-        Key == K1 ->
-            ?TAKEN_PAIR(K1, V1, ?LEAF0);
-        %
-        true ->
-            badkey
-    end.
+    ?EXACT_SEARCH1(
+        Key,
+        K1,
+        ?TAKEN_PAIR(K1, V1, ?LEAF0),
+        badkey
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: take_largest/2
@@ -4659,46 +4232,24 @@ update_att_recur(Key, ValueEval, ValueWrap, Node) ->
 
 -compile({inline, update_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
 update_att_INTERNAL4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
-    if
-        Key > K2 ->
-            %
-            if
-                Key < K4 ->
-                    %
-                    if
-                        Key > K3 ->
-                            update_att_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                        %
-                        Key < K3 ->
-                            update_att_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                        %
-                        true ->
-                            update_att_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
-                    end;
-                %
-                Key > K4 ->
-                    update_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    update_att_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
-            end;
+    ?GAP_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    update_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                %
-                Key > K1 ->
-                    update_att_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    update_att_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
-            end;
+        update_att_INTERNAL4_K1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        update_att_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        update_att_INTERNAL4_K3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        update_att_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
         %
-        true ->
-            update_att_INTERNAL4_K2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
-    end.
+        update_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        update_att_INTERNAL4_C2(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        update_att_INTERNAL4_C3(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        update_att_INTERNAL4_C4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS),
+        update_att_INTERNAL4_C5(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS)
+    ).
 
 -compile({inline, update_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS3}).
 update_att_INTERNAL4_C1(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS) ->
@@ -4846,36 +4397,21 @@ update_att_INTERNAL4_K4(Key, ValueEval, ValueWrap, ?INTERNAL4_ARGS_IGN_K4) ->
 
 -compile({inline, update_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
 update_att_INTERNAL3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
-    if
-        Key < K2 ->
-            %
-            if
-                Key < K1 ->
-                    update_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
-                %
-                Key > K1 ->
-                    update_att_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    update_att_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
-            end;
+    ?GAP_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key > K2 ->
-            %
-            if
-                Key < K3 ->
-                    update_att_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
-                %
-                Key > K3 ->
-                    update_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    update_att_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
-            end;
+        update_att_INTERNAL3_K1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS),
+        update_att_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS),
+        update_att_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS),
         %
-        true ->
-            update_att_INTERNAL3_K2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
-    end.
+        update_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS),
+        update_att_INTERNAL3_C2(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS),
+        update_att_INTERNAL3_C3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS),
+        update_att_INTERNAL3_C4(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS)
+    ).
 
 -compile({inline, update_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS3}).
 update_att_INTERNAL3_C1(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS) ->
@@ -4982,26 +4518,18 @@ update_att_INTERNAL3_K3(Key, ValueEval, ValueWrap, ?INTERNAL3_ARGS_IGN_K3) ->
 
 -compile({inline, update_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
 update_att_INTERNAL2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
-    if
-        Key > K1 ->
-            %
-            if
-                Key < K2 ->
-                    update_att_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
-                %
-                Key > K2 ->
-                    update_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
-                %
-                true ->
-                    update_att_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS)
-            end;
+    ?GAP_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key < K1 ->
-            update_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS);
+        update_att_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS),
+        update_att_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS),
         %
-        true ->
-            update_att_INTERNAL2_K1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS)
-    end.
+        update_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS),
+        update_att_INTERNAL2_C2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS),
+        update_att_INTERNAL2_C3(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS)
+    ).
 
 -compile({inline, update_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS3}).
 update_att_INTERNAL2_C1(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS) ->
@@ -5073,16 +4601,15 @@ update_att_INTERNAL2_K2(Key, ValueEval, ValueWrap, ?INTERNAL2_ARGS_IGN_K2) ->
 
 -compile({inline, update_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS3}).
 update_att_INTERNAL1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
-    if
-        Key < K1 ->
-            update_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+    ?GAP_SEARCH1(
+        Key,
+        K1,
         %
-        Key > K1 ->
-            update_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS);
+        update_att_INTERNAL1_K1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS),
         %
-        true ->
-            update_att_INTERNAL1_K1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS)
-    end.
+        update_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS),
+        update_att_INTERNAL1_C2(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS)
+    ).
 
 -compile({inline, update_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS3}).
 update_att_INTERNAL1_C1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS) ->
@@ -5125,66 +4652,68 @@ update_att_INTERNAL1_K1(Key, ValueEval, ValueWrap, ?INTERNAL1_ARGS_IGN_K1) ->
 
 -compile({inline, update_att_LEAF4 / ?LEAF4_ARITY_PLUS3}).
 update_att_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
-    if
-        Key == K1 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?new_LEAF4(
-                Key,
-                K2,
-                K3,
-                K4,
-                %
-                Value,
-                V2,
-                V3,
-                V4
-            );
+    ?EXACT_SEARCH4(
+        Key,
+        K1,
+        K2,
+        K3,
+        K4,
         %
-        Key == K2 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V2),
-            ?new_LEAF4(
-                K1,
-                Key,
-                K3,
-                K4,
-                %
-                V1,
-                Value,
-                V3,
-                V4
-            );
         %
-        Key == K3 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V3),
-            ?new_LEAF4(
-                K1,
-                K2,
-                Key,
-                K4,
-                %
-                V1,
-                V2,
-                Value,
-                V4
-            );
+        ?new_LEAF4(
+            Key,
+            K2,
+            K3,
+            K4,
+            %
+            eval_update_value(ValueEval, ValueWrap, V1),
+            V2,
+            V3,
+            V4
+        ),
         %
-        Key == K4 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V4),
-            ?new_LEAF4(
-                K1,
-                K2,
-                K3,
-                Key,
-                %
-                V1,
-                V2,
-                V3,
-                Value
-            );
         %
-        true ->
-            badkey
-    end.
+        ?new_LEAF4(
+            K1,
+            Key,
+            K3,
+            K4,
+            %
+            V1,
+            eval_update_value(ValueEval, ValueWrap, V2),
+            V3,
+            V4
+        ),
+        %
+        %
+        ?new_LEAF4(
+            K1,
+            K2,
+            Key,
+            K4,
+            %
+            V1,
+            V2,
+            eval_update_value(ValueEval, ValueWrap, V3),
+            V4
+        ),
+        %
+        %
+        ?new_LEAF4(
+            K1,
+            K2,
+            K3,
+            Key,
+            %
+            V1,
+            V2,
+            V3,
+            eval_update_value(ValueEval, ValueWrap, V4)
+        ),
+        %
+        %
+        badkey
+    ).
 
 %%
 %% ?LEAF3
@@ -5192,46 +4721,48 @@ update_att_LEAF4(Key, ValueEval, ValueWrap, ?LEAF4_ARGS) ->
 
 -compile({inline, update_att_LEAF3 / ?LEAF3_ARITY_PLUS3}).
 update_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
-    if
-        Key == K1 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?new_LEAF3(
-                Key,
-                K2,
-                K3,
-                %
-                Value,
-                V2,
-                V3
-            );
+    ?EXACT_SEARCH3(
+        Key,
+        K1,
+        K2,
+        K3,
         %
-        Key == K2 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V2),
-            ?new_LEAF3(
-                K1,
-                Key,
-                K3,
-                %
-                V1,
-                Value,
-                V3
-            );
         %
-        Key == K3 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V3),
-            ?new_LEAF3(
-                K1,
-                K2,
-                Key,
-                %
-                V1,
-                V2,
-                Value
-            );
+        ?new_LEAF3(
+            Key,
+            K2,
+            K3,
+            %
+            eval_update_value(ValueEval, ValueWrap, V1),
+            V2,
+            V3
+        ),
         %
-        true ->
-            badkey
-    end.
+        %
+        ?new_LEAF3(
+            K1,
+            Key,
+            K3,
+            %
+            V1,
+            eval_update_value(ValueEval, ValueWrap, V2),
+            V3
+        ),
+        %
+        %
+        ?new_LEAF3(
+            K1,
+            K2,
+            Key,
+            %
+            V1,
+            V2,
+            eval_update_value(ValueEval, ValueWrap, V3)
+        ),
+        %
+        %
+        badkey
+    ).
 
 %%
 %% ?LEAF2
@@ -5239,30 +4770,32 @@ update_att_LEAF3(Key, ValueEval, ValueWrap, ?LEAF3_ARGS) ->
 
 -compile({inline, update_att_LEAF2 / ?LEAF2_ARITY_PLUS3}).
 update_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
-    if
-        Key == K1 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?new_LEAF2(
-                Key,
-                K2,
-                %
-                Value,
-                V2
-            );
+    ?EXACT_SEARCH2(
+        Key,
+        K1,
+        K2,
         %
-        Key == K2 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V2),
-            ?new_LEAF2(
-                K1,
-                Key,
-                %
-                V1,
-                Value
-            );
         %
-        true ->
-            badkey
-    end.
+        ?new_LEAF2(
+            Key,
+            K2,
+            %
+            eval_update_value(ValueEval, ValueWrap, V1),
+            V2
+        ),
+        %
+        %
+        ?new_LEAF2(
+            K1,
+            Key,
+            %
+            V1,
+            eval_update_value(ValueEval, ValueWrap, V2)
+        ),
+        %
+        %
+        badkey
+    ).
 
 %%
 %% ?LEAF1
@@ -5270,18 +4803,20 @@ update_att_LEAF2(Key, ValueEval, ValueWrap, ?LEAF2_ARGS) ->
 
 -compile({inline, update_att_LEAF1 / ?LEAF1_ARITY_PLUS3}).
 update_att_LEAF1(Key, ValueEval, ValueWrap, ?LEAF1_ARGS) ->
-    if
-        Key == K1 ->
-            Value = eval_update_value(ValueEval, ValueWrap, V1),
-            ?new_LEAF1(
-                Key,
-                %
-                Value
-            );
+    ?EXACT_SEARCH1(
+        Key,
+        K1,
         %
-        true ->
-            badkey
-    end.
+        %
+        ?new_LEAF1(
+            Key,
+            %
+            eval_update_value(ValueEval, ValueWrap, V1)
+        ),
+        %
+        %
+        badkey
+    ).
 
 %%%
 

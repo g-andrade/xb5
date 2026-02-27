@@ -1,7 +1,5 @@
 -module(xb5_sets_node).
 
--include("src/xb5_search_helpers.hrl").
-
 -moduledoc """
 API for operating over `m:xb5_sets` internal nodes directly.
 
@@ -37,6 +35,8 @@ API for operating over `m:xb5_sets` internal nodes directly.
 <br/>
 <br/>
 """.
+
+-include("src/xb5_search_helpers.hrl").
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -796,10 +796,12 @@ delete_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
         E2,
         E3,
         E4,
+        %
         delete_att_INTERNAL4_E1(?INTERNAL4_ARGS),
         delete_att_INTERNAL4_E2(?INTERNAL4_ARGS),
         delete_att_INTERNAL4_E3(?INTERNAL4_ARGS),
         delete_att_INTERNAL4_E4(?INTERNAL4_ARGS),
+        %
         delete_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS),
         delete_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS),
         delete_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS),
@@ -918,9 +920,11 @@ delete_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
         E1,
         E2,
         E3,
+        %
         delete_att_INTERNAL3_E1(?INTERNAL3_ARGS),
         delete_att_INTERNAL3_E2(?INTERNAL3_ARGS),
         delete_att_INTERNAL3_E3(?INTERNAL3_ARGS),
+        %
         delete_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS),
         delete_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS),
         delete_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS),
@@ -1008,8 +1012,10 @@ delete_att_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
         Elem,
         E1,
         E2,
+        %
         delete_att_INTERNAL2_E1(?INTERNAL2_ARGS),
         delete_att_INTERNAL2_E2(?INTERNAL2_ARGS),
+        %
         delete_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS),
         delete_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS),
         delete_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS)
@@ -1070,6 +1076,7 @@ delete_att_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     ?GAP_SEARCH1(
         Elem,
         E1,
+        %
         delete_att_INTERNAL1_E1(?INTERNAL1_ARGS),
         delete_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS),
         delete_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS)
@@ -1135,13 +1142,12 @@ delete_att_LEAF2(Elem, ?LEAF2_ARGS) ->
 
 -compile({inline, delete_att_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
-    if
-        Elem == E1 ->
-            ?LEAF0;
-        %
-        true ->
-            badkey
-    end.
+    ?EXACT_SEARCH1(
+        Elem,
+        E1,
+        ?LEAF0,
+        badkey
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: difference/2
@@ -1399,10 +1405,12 @@ insert_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
         E2,
         E3,
         E4,
+        %
         key_exists,
         key_exists,
         key_exists,
         key_exists,
+        %
         insert_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS),
         insert_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS),
         insert_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS),
@@ -1446,9 +1454,11 @@ insert_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
         E1,
         E2,
         E3,
+        %
         key_exists,
         key_exists,
         key_exists,
+        %
         insert_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS),
         insert_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS),
         insert_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS),
@@ -1485,8 +1495,10 @@ insert_att_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
         Elem,
         E1,
         E2,
+        %
         key_exists,
         key_exists,
+        %
         insert_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS),
         insert_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS),
         insert_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS)
@@ -1516,7 +1528,9 @@ insert_att_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     ?GAP_SEARCH1(
         Elem,
         E1,
+        %
         key_exists,
+        %
         insert_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS),
         insert_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS)
     ).
@@ -1543,10 +1557,12 @@ insert_att_LEAF4(Elem, ?LEAF4_ARGS) ->
         E2,
         E3,
         E4,
+        %
         key_exists,
         key_exists,
         key_exists,
         key_exists,
+        %
         ?SPLIT(1, []),
         ?SPLIT(2, []),
         ?SPLIT(3, []),
@@ -1561,9 +1577,11 @@ insert_att_LEAF3(Elem, ?LEAF3_ARGS) ->
         E1,
         E2,
         E3,
+        %
         key_exists,
         key_exists,
         key_exists,
+        %
         ?new_LEAF4(Elem, E1, E2, E3),
         ?new_LEAF4(E1, Elem, E2, E3),
         ?new_LEAF4(E1, E2, Elem, E3),
@@ -1576,8 +1594,10 @@ insert_att_LEAF2(Elem, ?LEAF2_ARGS) ->
         Elem,
         E1,
         E2,
+        %
         key_exists,
         key_exists,
+        %
         ?new_LEAF3(Elem, E1, E2),
         ?new_LEAF3(E1, Elem, E2),
         ?new_LEAF3(E1, E2, Elem)
@@ -1588,7 +1608,9 @@ insert_att_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?GAP_SEARCH1(
         Elem,
         E1,
+        %
         key_exists,
+        %
         ?new_LEAF2(Elem, E1),
         ?new_LEAF2(E1, Elem)
     ).
@@ -1756,10 +1778,12 @@ is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
         E2,
         E3,
         E4,
+        %
         true,
         true,
         true,
         true,
+        %
         is_member_recur(Elem, C1),
         is_member_recur(Elem, C2),
         is_member_recur(Elem, C3),
@@ -1778,9 +1802,11 @@ is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
         E1,
         E2,
         E3,
+        %
         true,
         true,
         true,
+        %
         is_member_recur(Elem, C1),
         is_member_recur(Elem, C2),
         is_member_recur(Elem, C3),
@@ -1797,8 +1823,10 @@ is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
         Elem,
         E1,
         E2,
+        %
         true,
         true,
+        %
         is_member_recur(Elem, C1),
         is_member_recur(Elem, C2),
         is_member_recur(Elem, C3)
@@ -1813,13 +1841,15 @@ is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     ?GAP_SEARCH1(
         Elem,
         E1,
+        %
         true,
+        %
         is_member_recur(Elem, C1),
         is_member_recur(Elem, C2)
     ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, is_member_LEAF4 / ?LEAF4_ARITY_PLUS1}).
@@ -1829,27 +1859,15 @@ is_member_LEAF4(Elem, ?LEAF4_ARGS) ->
         Elem == E3 orelse
         Elem == E4).
 
-%%
-%% ?LEAF3
-%%
-
 -compile({inline, is_member_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 is_member_LEAF3(Elem, ?LEAF3_ARGS) ->
     (Elem == E1 orelse
         Elem == E2 orelse
         Elem == E3).
 
-%%
-%% ?LEAF2
-%%
-
 -compile({inline, is_member_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 is_member_LEAF2(Elem, ?LEAF2_ARGS) ->
     Elem == E1 orelse Elem == E2.
-
-%%
-%% ?LEAF1
-%%
 
 -compile({inline, is_member_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 is_member_LEAF1(Elem, ?LEAF1_ARGS) ->
@@ -2624,7 +2642,7 @@ larger_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, larger_LEAF4 / ?LEAF4_ARITY_PLUS1}).
@@ -2643,10 +2661,6 @@ larger_LEAF4(Elem, ?LEAF4_ARGS) ->
         none
     ).
 
-%%
-%% ?LEAF3
-%%
-
 -compile({inline, larger_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 larger_LEAF3(Elem, ?LEAF3_ARGS) ->
     ?LARGER_SEARCH3(
@@ -2661,10 +2675,6 @@ larger_LEAF3(Elem, ?LEAF3_ARGS) ->
         none
     ).
 
-%%
-%% ?LEAF2
-%%
-
 -compile({inline, larger_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 larger_LEAF2(Elem, ?LEAF2_ARGS) ->
     ?LARGER_SEARCH2(
@@ -2676,10 +2686,6 @@ larger_LEAF2(Elem, ?LEAF2_ARGS) ->
         {found, E2},
         none
     ).
-
-%%
-%% ?LEAF1
-%%
 
 -compile({inline, larger_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 larger_LEAF1(Elem, ?LEAF1_ARGS) ->
