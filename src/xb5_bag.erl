@@ -32,6 +32,7 @@ See also:
 
 -export([
     add/2,
+    count/2,
     delete/2,
     delete_any/2,
     enter/2,
@@ -76,6 +77,7 @@ See also:
 
 -ignore_xref([
     add/2,
+    count/2,
     delete/2,
     delete_any/2,
     enter/2,
@@ -246,6 +248,18 @@ If `Element` is already present, a duplicate is added.
 add(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
     UpdatedRoot = xb5_bag_node:add(Element, Root),
     Bag#xb5_bag{size = Size + 1, root = UpdatedRoot}.
+
+%%
+
+-spec count(Element, Bag) -> Count when
+    Bag :: bag(Element),
+    Count :: non_neg_integer().
+
+count(Element, #xb5_bag{root = Root, size = Size}) ->
+    SmallerPair = xb5_bag_node:rank_smaller(Element, Root),
+    LargerPair = xb5_bag_node:rank_larger(Element, Root),
+    [_ | F] = percentile_rank_params(SmallerPair, LargerPair, Size),
+    F.
 
 %%
 
@@ -981,10 +995,10 @@ Raises an `empty_bag` error if the bag is empty.
 percentile_rank(Elem, #xb5_bag{size = Size, root = Root}) when Size > 0 ->
     % As described in Wikipedia:
     % https://en.wikipedia.org/wiki/Percentile_rank
-    Smaller = xb5_bag_node:rank_smaller(Elem, Root),
-    Larger = xb5_bag_node:rank_larger(Elem, Root),
+    SmallerPair = xb5_bag_node:rank_smaller(Elem, Root),
+    LargerPair = xb5_bag_node:rank_larger(Elem, Root),
 
-    [CF | F] = percentile_rank_params(Smaller, Larger, Size),
+    [CF | F] = percentile_rank_params(SmallerPair, LargerPair, Size),
 
     (CF - 0.5 * F) / Size;
 percentile_rank(_, #xb5_bag{}) ->

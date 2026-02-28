@@ -45,6 +45,7 @@
     test_rank/1,
     test_rank_smaller/1,
     test_rank_larger/1,
+    test_count/1,
     test_percentile_inclusive/1,
     test_percentile_exclusive/1,
     test_percentile_nearest_rank/1,
@@ -185,6 +186,7 @@ groups() ->
             test_rank,
             test_rank_smaller,
             test_rank_larger,
+            test_count,
             test_percentile_inclusive,
             test_percentile_exclusive,
             test_percentile_nearest_rank,
@@ -565,6 +567,13 @@ test_rank_larger(_Config) ->
     foreach_test_bag(
         fun(Size, RefElements, Bag) ->
             run_rank_larger(Size, RefElements, Bag)
+        end
+    ).
+
+test_count(_Config) ->
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_count(RefElements, Bag)
         end
     ).
 
@@ -1960,6 +1969,46 @@ run_rank_larger_recur(Pos2, Elem2, Tail, Bag) ->
     end.
 
 %% ------------------------------------------------------------------
+%% Helpers: count
+%% ------------------------------------------------------------------
+
+run_count(RefElements, Bag) ->
+    case RefElements of
+        [] ->
+            Element = new_element(),
+            ?assertEqual(0, xb5_bag:count(Element, Bag));
+        %
+        [FirstElement | Next] ->
+            SmallerElem = element_smaller(FirstElement),
+            ?assertEqual(0, xb5_bag:count(SmallerElem, Bag)),
+
+            run_count_recur(FirstElement, Next, Bag)
+    end.
+
+run_count_recur(Elem, Tail, Bag) ->
+    {RepeatedCount, Next} = lists_count_and_drop_while(fun(E) -> E == Elem end, Tail),
+    ExpectedCount = 1 + RepeatedCount,
+
+    ?assertEqual(ExpectedCount, xb5_bag:count(randomly_switch_number_type(Elem), Bag)),
+
+    case Next of
+        [NextElem | NextTail] ->
+            case element_in_between(Elem, NextElem) of
+                {found, InBetween} ->
+                    ?assertEqual(0, xb5_bag:count(InBetween, Bag));
+                %
+                none ->
+                    ok
+            end,
+
+            run_count_recur(NextElem, NextTail, Bag);
+        %
+        [] ->
+            LargerElem = element_larger(Elem),
+            ?assertEqual(0, xb5_bag:count(LargerElem, Bag))
+    end.
+
+%% ------------------------------------------------------------------
 %% Helpers: Percentile Bracket - Inclusive
 %% ------------------------------------------------------------------
 
@@ -2584,6 +2633,20 @@ lists_count_while(Fun, [H | T]) ->
     end;
 lists_count_while(_, []) ->
     0.
+
+lists_count_and_drop_while(Fun, List) ->
+    lists_count_and_drop_while(Fun, List, 0).
+
+lists_count_and_drop_while(Fun, [H | T] = L, Acc) ->
+    case Fun(H) of
+        true ->
+            lists_count_and_drop_while(Fun, T, Acc + 1);
+        %
+        false ->
+            {Acc, L}
+    end;
+lists_count_and_drop_while(_Fun, [], Acc) ->
+    {Acc, []}.
 
 %% ------------------------------------------------------------------
 %% Helper Functions: filter
