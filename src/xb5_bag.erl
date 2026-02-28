@@ -819,7 +819,16 @@ Raises a `{badarg, Rank}` error if `Rank` is not a valid position
 -spec nth(Rank, Bag) -> Element when Rank :: pos_integer(), Bag :: bag(Element).
 
 nth(Rank, #xb5_bag{size = Size, root = Root}) when is_integer(Rank), Rank >= 1, Rank =< Size ->
-    xb5_bag_node:nth(Rank, Root);
+    if
+        Rank =:= 1 ->
+            xb5_bag_node:smallest(Root);
+        %
+        Rank =:= Size ->
+            xb5_bag_node:largest(Root);
+        %
+        true ->
+            xb5_bag_node:nth(Rank, Root)
+    end;
 nth(Rank, #xb5_bag{}) ->
     error({badarg, Rank}).
 
