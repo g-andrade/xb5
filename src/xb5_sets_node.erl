@@ -764,7 +764,6 @@ union(Size1, Root1, Size2, Root2) ->
 
 delete_att_recur(Elem, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             delete_att_INTERNAL2(Elem, ?INTERNAL2_ARGS);
         %
@@ -1746,7 +1745,6 @@ is_equal_check(ElemA, NextA, ElemB, NextB) ->
 
 is_member_recur(Elem, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS);
         %
@@ -2513,7 +2511,6 @@ bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 larger_recur(Elem, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             larger_INTERNAL2(Elem, ?INTERNAL2_ARGS);
         %
@@ -2703,7 +2700,6 @@ larger_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 largest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH(_, _, _, _, C3) ->
             largest_recur(C3);
         %
@@ -2782,7 +2778,6 @@ rev_next(Head, Tail) ->
 
 smaller_recur(Elem, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS);
         %
@@ -2972,7 +2967,6 @@ smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 smallest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH(_, _, C1, _, _) ->
             smallest_recur(C1);
         %
@@ -3038,7 +3032,6 @@ structural_stats_recur(Node, Acc, Height) ->
 
 take_largest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_largest_INTERNAL2(?INTERNAL2_ARGS);
         %
@@ -3132,7 +3125,6 @@ take_largest_LEAF1(?LEAF1_ARGS) ->
 
 take_smallest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_smallest_INTERNAL2(?INTERNAL2_ARGS);
         %

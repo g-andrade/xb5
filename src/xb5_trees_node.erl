@@ -799,7 +799,6 @@ values(Root) ->
 
 delete_att_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             delete_att_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -1468,7 +1467,6 @@ from_orddict_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatch
 
 get_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             get_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -2065,7 +2063,6 @@ split_leaf(
 
 is_defined_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH(K1, K2, _, _, C1, C2, C3) ->
             is_defined_INTERNAL2(Key, K1, K2, C1, C2, C3);
         %
@@ -2844,7 +2841,6 @@ keys_recur(Node, Acc) ->
 
 larger_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             larger_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -3034,7 +3030,6 @@ larger_LEAF1(Key, ?LEAF1_ARGS) ->
 
 largest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH(_, _, _, _, _, _, C3) ->
             largest_recur(C3);
         %
@@ -3060,7 +3055,6 @@ largest_recur(Node) ->
 
 lookup_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             lookup_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -3367,7 +3361,6 @@ rev_next(Head, Tail) ->
 
 smaller_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             smaller_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -3569,7 +3562,6 @@ smaller_LEAF1(Key, ?LEAF1_ARGS) ->
 
 smallest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH(_, _, _, _, C1, _, _) ->
             smallest_recur(C1);
         %
@@ -3635,7 +3627,6 @@ structural_stats_recur(Node, Acc, Height) ->
 
 take_att_recur(Key, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_att_INTERNAL2(Key, ?INTERNAL2_ARGS);
         %
@@ -3985,7 +3976,6 @@ take_att_LEAF1(Key, ?LEAF1_ARGS) ->
 
 take_largest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_largest_INTERNAL2(?INTERNAL2_ARGS);
         %
@@ -4079,7 +4069,6 @@ take_largest_LEAF1(?LEAF1_ARGS) ->
 
 take_smallest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_smallest_INTERNAL2(?INTERNAL2_ARGS);
         %

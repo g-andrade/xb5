@@ -1064,7 +1064,6 @@ put_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
 
 delete_att_recur(Elem, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             delete_att_INTERNAL2(Elem, ?INTERNAL2_ARGS);
         %
@@ -2256,7 +2255,6 @@ insert_att_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
 
 is_member_recur(Elem, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_IGN_OFFSETS ->
             is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
@@ -2941,7 +2939,6 @@ bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 larger_recur(Elem, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_IGN_OFFSETS ->
             larger_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
@@ -3153,7 +3150,6 @@ larger_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 largest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH(_, _, _, _, _, _, C3) ->
             largest_recur(C3);
         %
@@ -3274,7 +3270,6 @@ rev_next(Head, Tail) ->
 
 nth_recur(Rank, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             nth_INTERNAL2(Rank, ?INTERNAL2_ARGS);
         %
@@ -3466,7 +3461,6 @@ nth_LEAF1(1, ?LEAF1_ARGS) ->
 
 nth_and_nthp1_recur(Rank, Node, Plus1) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             nth_and_nthp1_INTERNAL2(Rank, ?INTERNAL2_ARGS, Plus1);
         %
@@ -3650,7 +3644,6 @@ nth_and_nthp1_LEAF2(Rank, ?LEAF2_ARGS, Plus1) ->
 
 rank_recur(Elem, Node, Acc) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             rank_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc);
         %
@@ -3863,7 +3856,6 @@ rank_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 rank_larger_recur(Elem, Node, Acc) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             rank_larger_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc);
         %
@@ -4080,7 +4072,6 @@ rank_larger_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 rank_smaller_recur(Elem, Node, Acc) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             rank_smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc);
         %
@@ -4305,7 +4296,6 @@ rank_smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 smaller_recur(Elem, Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_IGN_OFFSETS ->
             smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
         %
@@ -4517,7 +4507,6 @@ smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
 
 smallest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH(_, _, _, _, C1, _, _) ->
             smallest_recur(C1);
         %
@@ -4583,7 +4572,6 @@ structural_stats_recur(Node, Acc, Height) ->
 
 take_largest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_largest_INTERNAL2(?INTERNAL2_ARGS);
         %
@@ -4677,7 +4665,6 @@ take_largest_LEAF1(?LEAF1_ARGS) ->
 
 take_smallest_recur(Node) ->
     case Node of
-        %
         ?INTERNAL2_MATCH_ALL ->
             take_smallest_INTERNAL2(?INTERNAL2_ARGS);
         %
