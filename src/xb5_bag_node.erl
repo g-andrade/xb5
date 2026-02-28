@@ -3012,7 +3012,7 @@ merge_root(Size1, Root1, Size2, Root2) ->
         %
         true ->
             List1 = to_rev_list(Root1),
-            lists:foldl(fun add/2, Root2, List1)
+            add_all(List1, Root2)
     end.
 
 merge_2(List1, List2) ->
@@ -3033,6 +3033,13 @@ merge_2([], List2, Acc) ->
     lists:reverse(List2, Acc);
 merge_2(List1, [], Acc) ->
     lists:reverse(List1, Acc).
+
+%%
+
+add_all([Elem | Next], Root) ->
+    add_all(Next, add(Elem, Root));
+add_all([], Root) ->
+    Root.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: next/1
