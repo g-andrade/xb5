@@ -269,10 +269,19 @@ Returns the number of occurrences of `Element` in `Bag`. Runs in O(log n) time.
     Count :: non_neg_integer().
 
 count(Element, #xb5_bag{root = Root, size = Size}) ->
-    SmallerPair = xb5_bag_node:rank_smaller(Element, Root),
-    LargerPair = xb5_bag_node:rank_larger(Element, Root),
-    [_ | F] = percentile_rank_params(SmallerPair, LargerPair, Size),
-    F.
+    case xb5_bag_node:rank(Element, Root) of
+        none ->
+            0;
+        %
+        Rank ->
+            case xb5_bag_node:rank_larger(Element, Root) of
+                [LargerRank | _] ->
+                    LargerRank - Rank;
+                %
+                none ->
+                    Size - Rank + 1
+            end
+    end.
 
 %%
 
