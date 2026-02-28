@@ -292,7 +292,6 @@ API for operating over `m:xb5_trees` internal nodes directly.
 %% ?LEAF4
 
 -define(LEAF4_ARGS, K1, K2, K3, K4, V1, V2, V3, V4).
--define(LEAF4_ARITY, 8).
 -define(LEAF4_ARITY_PLUS1, 9).
 -define(LEAF4_ARITY_PLUS2, 10).
 -define(LEAF4_ARITY_PLUS3, 11).
@@ -300,7 +299,6 @@ API for operating over `m:xb5_trees` internal nodes directly.
 %% ?LEAF3
 
 -define(LEAF3_ARGS, K1, K2, K3, V1, V2, V3).
--define(LEAF3_ARITY, 6).
 -define(LEAF3_ARITY_PLUS1, 7).
 -define(LEAF3_ARITY_PLUS2, 8).
 -define(LEAF3_ARITY_PLUS3, 9).
@@ -308,7 +306,6 @@ API for operating over `m:xb5_trees` internal nodes directly.
 %% ?LEAF2
 
 -define(LEAF2_ARGS, K1, K2, V1, V2).
--define(LEAF2_ARITY, 4).
 -define(LEAF2_ARITY_PLUS1, 5).
 -define(LEAF2_ARITY_PLUS2, 6).
 -define(LEAF2_ARITY_PLUS3, 7).
@@ -316,7 +313,6 @@ API for operating over `m:xb5_trees` internal nodes directly.
 %% ?LEAF1
 
 -define(LEAF1_ARGS, K1, V1).
--define(LEAF1_ARITY, 2).
 -define(LEAF1_ARITY_PLUS1, 3).
 -define(LEAF1_ARITY_PLUS3, 5).
 
@@ -745,17 +741,19 @@ take_att(Key, Root) ->
 
 -spec take_largest(t(Key, Value)) -> take_result(Key, Value).
 take_largest(?INTERNAL1_MATCH_ALL) ->
-    take_largest_INTERNAL1(?INTERNAL1_ARGS);
+    ?TAKEN(Taken, UpdatedC2) = take_largest_recur(C2),
+    ?TAKEN(Taken, ?INTERNAL1_C2_REBALANCE(UpdatedC2));
 take_largest(?LEAF1_MATCH_ALL) ->
-    take_largest_LEAF1(?LEAF1_ARGS);
+    ?TAKEN_PAIR(K1, V1, ?LEAF0);
 take_largest(Root) ->
     take_largest_recur(Root).
 
 -spec take_smallest(t(Key, Value)) -> take_result(Key, Value).
 take_smallest(?INTERNAL1_MATCH_ALL) ->
-    take_smallest_INTERNAL1(?INTERNAL1_ARGS);
+    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
+    ?TAKEN(Taken, ?INTERNAL1_C1_REBALANCE(UpdatedC1));
 take_smallest(?LEAF1_MATCH_ALL) ->
-    take_smallest_LEAF1(?LEAF1_ARGS);
+    ?TAKEN_PAIR(K1, V1, ?LEAF0);
 take_smallest(Root) ->
     take_smallest_recur(Root).
 
@@ -3977,91 +3975,26 @@ take_att_LEAF1(Key, ?LEAF1_ARGS) ->
 take_largest_recur(Node) ->
     case Node of
         ?INTERNAL2_MATCH_ALL ->
-            take_largest_INTERNAL2(?INTERNAL2_ARGS);
+            ?TAKEN(Taken, UpdatedC3) = take_largest_recur(C3),
+            ?TAKEN(Taken, ?INTERNAL2_C3_REBALANCE(UpdatedC3));
         %
         ?INTERNAL3_MATCH_ALL ->
-            take_largest_INTERNAL3(?INTERNAL3_ARGS);
+            ?TAKEN(Taken, UpdatedC4) = take_largest_recur(C4),
+            ?TAKEN(Taken, ?INTERNAL3_C4_REBALANCE(UpdatedC4));
         %
         ?INTERNAL4_MATCH_ALL ->
-            take_largest_INTERNAL4(?INTERNAL4_ARGS);
+            ?TAKEN(Taken, UpdatedC5) = take_largest_recur(C5),
+            ?TAKEN(Taken, ?INTERNAL4_C5_REBALANCE(UpdatedC5));
         %
         ?LEAF2_MATCH_ALL ->
-            take_largest_LEAF2(?LEAF2_ARGS);
+            ?TAKEN_PAIR(K2, V2, ?new_LEAF1(K1, V1));
         %
         ?LEAF3_MATCH_ALL ->
-            take_largest_LEAF3(?LEAF3_ARGS);
+            ?TAKEN_PAIR(K3, V3, ?new_LEAF2(K1, K2, V1, V2));
         %
         ?LEAF4_MATCH_ALL ->
-            take_largest_LEAF4(?LEAF4_ARGS)
+            ?TAKEN_PAIR(K4, V4, ?new_LEAF3(K1, K2, K3, V1, V2, V3))
     end.
-
-%%
-%% ?INTERNAL4
-%%
-
--compile({inline, take_largest_INTERNAL4 / ?INTERNAL4_ARITY}).
-take_largest_INTERNAL4(?INTERNAL4_ARGS) ->
-    ?TAKEN(Taken, UpdatedC5) = take_largest_recur(C5),
-    ?TAKEN(Taken, ?INTERNAL4_C5_REBALANCE(UpdatedC5)).
-
-%%
-%% ?INTERNAL3
-%%
-
--compile({inline, take_largest_INTERNAL3 / ?INTERNAL3_ARITY}).
-take_largest_INTERNAL3(?INTERNAL3_ARGS) ->
-    ?TAKEN(Taken, UpdatedC4) = take_largest_recur(C4),
-    ?TAKEN(Taken, ?INTERNAL3_C4_REBALANCE(UpdatedC4)).
-
-%%
-%% ?INTERNAL2
-%%
-
--compile({inline, take_largest_INTERNAL2 / ?INTERNAL2_ARITY}).
-take_largest_INTERNAL2(?INTERNAL2_ARGS) ->
-    ?TAKEN(Taken, UpdatedC3) = take_largest_recur(C3),
-    ?TAKEN(Taken, ?INTERNAL2_C3_REBALANCE(UpdatedC3)).
-
-%%
-%% ?INTERNAL1
-%%
-
--compile({inline, take_largest_INTERNAL1 / ?INTERNAL1_ARITY}).
-take_largest_INTERNAL1(?INTERNAL1_ARGS) ->
-    ?TAKEN(Taken, UpdatedC2) = take_largest_recur(C2),
-    ?TAKEN(Taken, ?INTERNAL1_C2_REBALANCE(UpdatedC2)).
-
-%%
-%% ?LEAF4
-%%
-
--compile({inline, take_largest_LEAF4 / ?LEAF4_ARITY}).
-take_largest_LEAF4(?LEAF4_ARGS) ->
-    ?TAKEN_PAIR(K4, V4, ?new_LEAF3(K1, K2, K3, V1, V2, V3)).
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, take_largest_LEAF3 / ?LEAF3_ARITY}).
-take_largest_LEAF3(?LEAF3_ARGS) ->
-    ?TAKEN_PAIR(K3, V3, ?new_LEAF2(K1, K2, V1, V2)).
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, take_largest_LEAF2 / ?LEAF2_ARITY}).
-take_largest_LEAF2(?LEAF2_ARGS) ->
-    ?TAKEN_PAIR(K2, V2, ?new_LEAF1(K1, V1)).
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, take_largest_LEAF1 / ?LEAF1_ARITY}).
-take_largest_LEAF1(?LEAF1_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?LEAF0).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: take_smallest/2
@@ -4070,91 +4003,26 @@ take_largest_LEAF1(?LEAF1_ARGS) ->
 take_smallest_recur(Node) ->
     case Node of
         ?INTERNAL2_MATCH_ALL ->
-            take_smallest_INTERNAL2(?INTERNAL2_ARGS);
+            ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
+            ?TAKEN(Taken, ?INTERNAL2_C1_REBALANCE(UpdatedC1));
         %
         ?INTERNAL3_MATCH_ALL ->
-            take_smallest_INTERNAL3(?INTERNAL3_ARGS);
+            ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
+            ?TAKEN(Taken, ?INTERNAL3_C1_REBALANCE(UpdatedC1));
         %
         ?INTERNAL4_MATCH_ALL ->
-            take_smallest_INTERNAL4(?INTERNAL4_ARGS);
+            ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
+            ?TAKEN(Taken, ?INTERNAL4_C1_REBALANCE(UpdatedC1));
         %
         ?LEAF2_MATCH_ALL ->
-            take_smallest_LEAF2(?LEAF2_ARGS);
+            ?TAKEN_PAIR(K1, V1, ?new_LEAF1(K2, V2));
         %
         ?LEAF3_MATCH_ALL ->
-            take_smallest_LEAF3(?LEAF3_ARGS);
+            ?TAKEN_PAIR(K1, V1, ?new_LEAF2(K2, K3, V2, V3));
         %
         ?LEAF4_MATCH_ALL ->
-            take_smallest_LEAF4(?LEAF4_ARGS)
+            ?TAKEN_PAIR(K1, V1, ?new_LEAF3(K2, K3, K4, V2, V3, V4))
     end.
-
-%%
-%% ?INTERNAL4
-%%
-
--compile({inline, take_smallest_INTERNAL4 / ?INTERNAL4_ARITY}).
-take_smallest_INTERNAL4(?INTERNAL4_ARGS) ->
-    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
-    ?TAKEN(Taken, ?INTERNAL4_C1_REBALANCE(UpdatedC1)).
-
-%%
-%% ?INTERNAL3
-%%
-
--compile({inline, take_smallest_INTERNAL3 / ?INTERNAL3_ARITY}).
-take_smallest_INTERNAL3(?INTERNAL3_ARGS) ->
-    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
-    ?TAKEN(Taken, ?INTERNAL3_C1_REBALANCE(UpdatedC1)).
-
-%%
-%% ?INTERNAL2
-%%
-
--compile({inline, take_smallest_INTERNAL2 / ?INTERNAL2_ARITY}).
-take_smallest_INTERNAL2(?INTERNAL2_ARGS) ->
-    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
-    ?TAKEN(Taken, ?INTERNAL2_C1_REBALANCE(UpdatedC1)).
-
-%%
-%% ?INTERNAL1
-%%
-
--compile({inline, take_smallest_INTERNAL1 / ?INTERNAL1_ARITY}).
-take_smallest_INTERNAL1(?INTERNAL1_ARGS) ->
-    ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
-    ?TAKEN(Taken, ?INTERNAL1_C1_REBALANCE(UpdatedC1)).
-
-%%
-%% ?LEAF4
-%%
-
--compile({inline, take_smallest_LEAF4 / ?LEAF4_ARITY}).
-take_smallest_LEAF4(?LEAF4_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?new_LEAF3(K2, K3, K4, V2, V3, V4)).
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, take_smallest_LEAF3 / ?LEAF3_ARITY}).
-take_smallest_LEAF3(?LEAF3_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?new_LEAF2(K2, K3, V2, V3)).
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, take_smallest_LEAF2 / ?LEAF2_ARITY}).
-take_smallest_LEAF2(?LEAF2_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?new_LEAF1(K2, V2)).
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, take_smallest_LEAF1 / ?LEAF1_ARITY}).
-take_smallest_LEAF1(?LEAF1_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, ?LEAF0).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: to_list/1
