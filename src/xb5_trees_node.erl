@@ -2360,7 +2360,7 @@ bound_fwd_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
         K3,
         K4,
         %
-        %
+        % Key =< K1
         begin
             Acc2 = [
                 ?ITER_PAIR(K1, V1),
@@ -2376,25 +2376,25 @@ bound_fwd_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
             bound_fwd_iterator_recur(Key, C1, Acc2)
         end,
         %
-        %
+        % Key =< K2
         begin
             Acc2 = [?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4, ?ITER_PAIR(K4, V4), C5 | Acc],
             bound_fwd_iterator_recur(Key, C2, Acc2)
         end,
         %
-        %
+        % Key =< K3
         begin
             Acc2 = [?ITER_PAIR(K3, V3), C4, ?ITER_PAIR(K4, V4), C5 | Acc],
             bound_fwd_iterator_recur(Key, C3, Acc2)
         end,
         %
-        %
+        % Key =< K4
         begin
             Acc2 = [?ITER_PAIR(K4, V4), C5 | Acc],
             bound_fwd_iterator_recur(Key, C4, Acc2)
         end,
         %
-        %
+        % Key > K4
         case Acc of
             [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2415,25 +2415,25 @@ bound_fwd_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc) ->
         K2,
         K3,
         %
-        %
+        % Key =< K1
         begin
             Acc2 = [?ITER_PAIR(K1, V1), C2, ?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4 | Acc],
             bound_fwd_iterator_recur(Key, C1, Acc2)
         end,
         %
-        %
+        % Key =< K2
         begin
             Acc2 = [?ITER_PAIR(K2, V2), C3, ?ITER_PAIR(K3, V3), C4 | Acc],
             bound_fwd_iterator_recur(Key, C2, Acc2)
         end,
         %
-        %
+        % Key =< K3
         begin
             Acc2 = [?ITER_PAIR(K3, V3), C4 | Acc],
             bound_fwd_iterator_recur(Key, C3, Acc2)
         end,
         %
-        %
+        % Key > K3
         case Acc of
             [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2453,19 +2453,19 @@ bound_fwd_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc) ->
         K1,
         K2,
         %
-        %
+        % Key =< K1
         begin
             Acc2 = [?ITER_PAIR(K1, V1), C2, ?ITER_PAIR(K2, V2), C3 | Acc],
             bound_fwd_iterator_recur(Key, C1, Acc2)
         end,
         %
-        %
+        % Key =< K2
         begin
             Acc2 = [?ITER_PAIR(K2, V2), C3 | Acc],
             bound_fwd_iterator_recur(Key, C2, Acc2)
         end,
         %
-        %
+        % Key > K2
         case Acc of
             [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2503,11 +2503,15 @@ bound_fwd_iterator_LEAF4(Key, ?LEAF4_ARGS, Acc) ->
         K2,
         K3,
         K4,
-        %
+        % Key =< K1
         [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc],
+        % Key =< K2
         [?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc],
+        % Key =< K3
         [?ITER_PAIR(K3, V3), ?ITER_PAIR(K4, V4) | Acc],
+        % Key =< K4
         [?ITER_PAIR(K4, V4) | Acc],
+        % Key > K4
         Acc
     ).
 
@@ -2520,10 +2524,13 @@ bound_fwd_iterator_LEAF3(Key, ?LEAF3_ARGS, Acc) ->
         K1,
         K2,
         K3,
-        %
+        % Key =< K1
         [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3) | Acc],
+        % Key =< K2
         [?ITER_PAIR(K2, V2), ?ITER_PAIR(K3, V3) | Acc],
+        % Key =< K3
         [?ITER_PAIR(K3, V3) | Acc],
+        % Key > K4
         Acc
     ).
 
@@ -2535,9 +2542,11 @@ bound_fwd_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc) ->
         Key,
         K1,
         K2,
-        %
+        % Key =< K1
         [?ITER_PAIR(K1, V1), ?ITER_PAIR(K2, V2) | Acc],
+        % Key =< K2
         [?ITER_PAIR(K2, V2) | Acc],
+        % Key > K2
         Acc
     ).
 
@@ -2548,8 +2557,9 @@ bound_fwd_iterator_LEAF1(Key, ?LEAF1_ARGS) ->
     ?SMALLER_SEARCH1(
         Key,
         K1,
-        %
+        % Key =< K1
         [?ITER_PAIR(K1, V1)],
+        % Key > K1
         []
     ).
 
@@ -2606,7 +2616,7 @@ bound_rev_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
         K3,
         K4,
         %
-        %
+        % Key < K1
         case Acc of
             [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2616,25 +2626,25 @@ bound_rev_iterator_INTERNAL4(Key, ?INTERNAL4_ARGS, Acc) ->
                 bound_rev_iterator_recur(Key, C1, Acc)
         end,
         %
-        %
+        % Key < K2
         begin
             Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C2, Acc2)
         end,
         %
-        %
+        % Key < K3
         begin
             Acc2 = [?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C3, Acc2)
         end,
         %
-        %
+        % Key < K4
         begin
             Acc2 = [?ITER_PAIR(K3, V3), C3, ?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C4, Acc2)
         end,
         %
-        %
+        % Key >= K4
         begin
             Acc2 = [
                 ?ITER_PAIR(K4, V4),
@@ -2661,7 +2671,7 @@ bound_rev_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc) ->
         K2,
         K3,
         %
-        %
+        % Key < K1
         case Acc of
             [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2671,19 +2681,19 @@ bound_rev_iterator_INTERNAL3(Key, ?INTERNAL3_ARGS, Acc) ->
                 bound_rev_iterator_recur(Key, C1, Acc)
         end,
         %
-        %
+        % Key < K2
         begin
             Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C2, Acc2)
         end,
         %
-        %
+        % Key < K3
         begin
             Acc2 = [?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C3, Acc2)
         end,
         %
-        %
+        % Key >= K3
         begin
             Acc2 = [?ITER_PAIR(K3, V3), C3, ?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C4, Acc2)
@@ -2699,7 +2709,7 @@ bound_rev_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc) ->
         K1,
         K2,
         %
-        %
+        % Key < K1
         case Acc of
             [?ITER_PAIR(AccNextKey, _) | _] when AccNextKey == Key ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2709,13 +2719,13 @@ bound_rev_iterator_INTERNAL2(Key, ?INTERNAL2_ARGS, Acc) ->
                 bound_rev_iterator_recur(Key, C1, Acc)
         end,
         %
-        %
+        % Key < K2
         begin
             Acc2 = [?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C2, Acc2)
         end,
         %
-        %
+        % Key >= K2
         begin
             Acc2 = [?ITER_PAIR(K2, V2), C2, ?ITER_PAIR(K1, V1), C1 | Acc],
             bound_rev_iterator_recur(Key, C3, Acc2)
@@ -2749,11 +2759,15 @@ bound_rev_iterator_LEAF4(Key, ?LEAF4_ARGS, Acc) ->
         K2,
         K3,
         K4,
-        %
+        % Key < K1
         Acc,
+        % Key < K2
         [?ITER_PAIR(K1, V1) | Acc],
+        % Key < K3
         [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
+        % Key < K4
         [?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
+        % Key >= K4
         [?ITER_PAIR(K4, V4), ?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
     ).
 
@@ -2766,10 +2780,13 @@ bound_rev_iterator_LEAF3(Key, ?LEAF3_ARGS, Acc) ->
         K1,
         K2,
         K3,
-        %
+        % Key < K1
         Acc,
+        % Key < K2
         [?ITER_PAIR(K1, V1) | Acc],
+        % Key < K3
         [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc],
+        % Key >= K3
         [?ITER_PAIR(K3, V3), ?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
     ).
 
@@ -2781,9 +2798,11 @@ bound_rev_iterator_LEAF2(Key, ?LEAF2_ARGS, Acc) ->
         Key,
         K1,
         K2,
-        %
+        % Key < K1
         Acc,
+        % Key < K2
         [?ITER_PAIR(K1, V1) | Acc],
+        % Key >= K2
         [?ITER_PAIR(K2, V2), ?ITER_PAIR(K1, V1) | Acc]
     ).
 
@@ -2794,8 +2813,9 @@ bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS) ->
     ?LARGER_SEARCH1(
         Key,
         K1,
-        %
+        % Key < K1
         [],
+        % Key >= K1
         [?ITER_PAIR(K1, V1)]
     ).
 
@@ -2871,26 +2891,31 @@ larger_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
         K3,
         K4,
         %
+        % Key < K1
         case larger_recur(Key, C1) of
             none -> {K1, V1};
             Found -> Found
         end,
         %
+        % Key < K2
         case larger_recur(Key, C2) of
             none -> {K2, V2};
             Found -> Found
         end,
         %
+        % Key < K3
         case larger_recur(Key, C3) of
             none -> {K3, V3};
             Found -> Found
         end,
         %
+        % Key < K4
         case larger_recur(Key, C4) of
             none -> {K4, V4};
             Found -> Found
         end,
         %
+        % Key >= K4
         larger_recur(Key, C5)
     ).
 
@@ -2906,21 +2931,25 @@ larger_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
         K2,
         K3,
         %
+        % Key < K1
         case larger_recur(Key, C1) of
             none -> {K1, V1};
             Found -> Found
         end,
         %
+        % Key < K2
         case larger_recur(Key, C2) of
             none -> {K2, V2};
             Found -> Found
         end,
         %
+        % Key < K3
         case larger_recur(Key, C3) of
             none -> {K3, V3};
             Found -> Found
         end,
         %
+        % Key >= K3
         larger_recur(Key, C4)
     ).
 
@@ -2935,16 +2964,19 @@ larger_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
         K1,
         K2,
         %
+        % Key < K1
         case larger_recur(Key, C1) of
             none -> {K1, V1};
             Found -> Found
         end,
         %
+        % Key < K2
         case larger_recur(Key, C2) of
             none -> {K2, V2};
             Found -> Found
         end,
         %
+        % Key >= K2
         larger_recur(Key, C3)
     ).
 
@@ -2958,11 +2990,13 @@ larger_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
         Key,
         K1,
         %
+        % Key < K1
         case larger_recur(Key, C1) of
             none -> {K1, V1};
             Found -> Found
         end,
         %
+        % Key >= K1
         larger_recur(Key, C2)
     ).
 
@@ -2978,11 +3012,15 @@ larger_LEAF4(Key, ?LEAF4_ARGS) ->
         K2,
         K3,
         K4,
-        %
+        % Key < K1
         {K1, V1},
+        % Key < K2
         {K2, V2},
+        % Key < K3
         {K3, V3},
+        % Key < K4
         {K4, V4},
+        % Key >= K4
         none
     ).
 
@@ -2993,10 +3031,13 @@ larger_LEAF3(Key, ?LEAF3_ARGS) ->
         K1,
         K2,
         K3,
-        %
+        % Key < K1
         {K1, V1},
+        % Key < K2
         {K2, V2},
+        % Key < K3
         {K3, V3},
+        % Key >= K3
         none
     ).
 
@@ -3006,9 +3047,11 @@ larger_LEAF2(Key, ?LEAF2_ARGS) ->
         Key,
         K1,
         K2,
-        %
+        % Key < K1
         {K1, V1},
+        % Key < K2
         {K2, V2},
+        % Key >= K2
         none
     ).
 
@@ -3017,8 +3060,9 @@ larger_LEAF1(Key, ?LEAF1_ARGS) ->
     ?LARGER_SEARCH1(
         Key,
         K1,
-        %
+        % Key < K1
         {K1, V1},
+        % Key >= K1
         none
     ).
 
@@ -3391,23 +3435,28 @@ smaller_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
         K3,
         K4,
         %
+        % Key =< K1
         smaller_recur(Key, C1),
         %
+        % Key =< K2
         case smaller_recur(Key, C2) of
             none -> {K1, V1};
             Found -> Found
         end,
         %
+        % Key =< K3
         case smaller_recur(Key, C3) of
             none -> {K2, V2};
             Found -> Found
         end,
         %
+        % Key =< K4
         case smaller_recur(Key, C4) of
             none -> {K3, V3};
             Found -> Found
         end,
         %
+        % Key > K4
         case smaller_recur(Key, C5) of
             none -> {K4, V4};
             Found -> Found
@@ -3426,18 +3475,22 @@ smaller_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
         K2,
         K3,
         %
+        % Key =< K1
         smaller_recur(Key, C1),
         %
+        % Key =< K2
         case smaller_recur(Key, C2) of
             none -> {K1, V1};
             Found -> Found
         end,
         %
+        % Key =< K3
         case smaller_recur(Key, C3) of
             none -> {K2, V2};
             Found -> Found
         end,
         %
+        % Key > K3
         case smaller_recur(Key, C4) of
             none -> {K3, V3};
             Found -> Found
@@ -3455,13 +3508,16 @@ smaller_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
         K1,
         K2,
         %
+        % Key =< K1
         smaller_recur(Key, C1),
         %
+        % Key =< K2
         case smaller_recur(Key, C2) of
             none -> {K1, V1};
             Found -> Found
         end,
         %
+        % Key > K2
         case smaller_recur(Key, C3) of
             none -> {K2, V2};
             Found -> Found
@@ -3478,8 +3534,10 @@ smaller_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
         Key,
         K1,
         %
+        % Key =< K1
         smaller_recur(Key, C1),
         %
+        % Key > K1
         case smaller_recur(Key, C2) of
             none -> {K1, V1};
             Found -> Found
@@ -3498,11 +3556,15 @@ smaller_LEAF4(Key, ?LEAF4_ARGS) ->
         K2,
         K3,
         K4,
-        %
+        % Key =< K1
         none,
+        % Key =< K2
         {K1, V1},
+        % Key =< K3
         {K2, V2},
+        % Key =< K4
         {K3, V3},
+        % Key > K4
         {K4, V4}
     ).
 
@@ -3517,10 +3579,13 @@ smaller_LEAF3(Key, ?LEAF3_ARGS) ->
         K1,
         K2,
         K3,
-        %
+        % Key =< K1
         none,
+        % Key =< K2
         {K1, V1},
+        % Key =< K3
         {K2, V2},
+        % Key > K3
         {K3, V3}
     ).
 
@@ -3534,9 +3599,11 @@ smaller_LEAF2(Key, ?LEAF2_ARGS) ->
         Key,
         K1,
         K2,
-        %
+        % Key =< K1
         none,
+        % Key =< K2
         {K1, V1},
+        % Key > K2
         {K2, V2}
     ).
 
@@ -3549,8 +3616,9 @@ smaller_LEAF1(Key, ?LEAF1_ARGS) ->
     ?SMALLER_SEARCH1(
         Key,
         K1,
-        %
+        % Key =< K1
         none,
+        % Key > K1
         {K1, V1}
     ).
 

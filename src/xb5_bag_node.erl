@@ -2345,7 +2345,7 @@ bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS, Acc) ->
         E3,
         E4,
         %
-        %
+        % Elem =< E1
         begin
             Acc2 = [
                 ?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc
@@ -2353,25 +2353,25 @@ bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS, Acc) ->
             bound_fwd_iterator_recur(Elem, C1, Acc2)
         end,
         %
-        %
+        % Elem =< E2
         begin
             Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
             bound_fwd_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem =< E3
         begin
             Acc2 = [?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
             bound_fwd_iterator_recur(Elem, C3, Acc2)
         end,
         %
-        %
+        % Elem =< E4
         begin
             Acc2 = [?ITER_ELEM(E4), C5 | Acc],
             bound_fwd_iterator_recur(Elem, C4, Acc2)
         end,
         %
-        %
+        % Elem > E4
         bound_fwd_iterator_recur(Elem, C5, Acc)
     ).
 
@@ -2385,25 +2385,25 @@ bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS, Acc) ->
         E2,
         E3,
         %
-        %
+        % Elem =< E1
         begin
             Acc2 = [?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
         end,
         %
-        %
+        % Elem =< E2
         begin
             Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem =< E3
         begin
             Acc2 = [?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C3, Acc2)
         end,
         %
-        %
+        % Elem > E3
         bound_fwd_iterator_recur(Elem, C4, Acc)
     ).
 
@@ -2416,19 +2416,19 @@ bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS, Acc) ->
         E1,
         E2,
         %
-        %
+        % Elem =< E1
         begin
             Acc2 = [?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3 | Acc],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
         end,
         %
-        %
+        % Elem =< E2
         begin
             Acc2 = [?ITER_ELEM(E2), C3 | Acc],
             bound_fwd_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem > E2
         bound_fwd_iterator_recur(Elem, C3, Acc)
     ).
 
@@ -2456,11 +2456,15 @@ bound_fwd_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
         E2,
         E3,
         E4,
-        %
+        % Elem =< E1
         [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+        % Elem =< E2
         [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+        % Elem =< E3
         [?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+        % Elem =< E4
         [?ITER_ELEM(E4) | Acc],
+        % Elem > E4
         Acc
     ).
 
@@ -2473,10 +2477,13 @@ bound_fwd_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
         E1,
         E2,
         E3,
-        %
+        % Elem =< E1
         [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
+        % Elem =< E2
         [?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
+        % Elem =< E3
         [?ITER_ELEM(E3) | Acc],
+        % Elem > E3
         Acc
     ).
 
@@ -2488,9 +2495,11 @@ bound_fwd_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
         Elem,
         E1,
         E2,
-        %
+        % Elem =< E1
         [?ITER_ELEM(E1), ?ITER_ELEM(E2) | Acc],
+        % Elem =< E2
         [?ITER_ELEM(E2) | Acc],
+        % Elem > E2
         Acc
     ).
 
@@ -2501,8 +2510,9 @@ bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?SMALLER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem =< E1
         [?ITER_ELEM(E1)],
+        % Elem > E1
         []
     ).
 
@@ -2559,28 +2569,28 @@ bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS, Acc) ->
         E3,
         E4,
         %
-        %
+        % Elem < E1
         bound_rev_iterator_recur(Elem, C1, Acc),
         %
-        %
+        % Elem < E2
         begin
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem < E3
         begin
             Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
         end,
         %
-        %
+        % Elem < E4
         begin
             Acc2 = [?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C4, Acc2)
         end,
         %
-        %
+        % Elem >= E4
         begin
             Acc2 = [
                 ?ITER_ELEM(E4), C4, ?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc
@@ -2599,22 +2609,22 @@ bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS, Acc) ->
         E2,
         E3,
         %
-        %
+        % Elem < E1
         bound_rev_iterator_recur(Elem, C1, Acc),
         %
-        %
+        % Elem < E2
         begin
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem < E3
         begin
             Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
         end,
         %
-        %
+        % Elem >= E3
         begin
             Acc2 = [?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C4, Acc2)
@@ -2630,16 +2640,16 @@ bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS, Acc) ->
         E1,
         E2,
         %
-        %
+        % Elem < E1
         bound_rev_iterator_recur(Elem, C1, Acc),
         %
-        %
+        % Elem < E2
         begin
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem >= E2
         begin
             Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
@@ -2653,9 +2663,9 @@ bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS) ->
     ?LARGER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem < E1
         bound_rev_iterator_recur(Elem, C1, []),
-        %
+        % Elem >= E1
         bound_rev_iterator_recur(Elem, C2, [?ITER_ELEM(E1), C1])
     ).
 
@@ -2669,11 +2679,15 @@ bound_rev_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
         E2,
         E3,
         E4,
-        %
+        % Elem < E1
         Acc,
+        % Elem < E2
         [?ITER_ELEM(E1) | Acc],
+        % Elem < E3
         [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+        % Elem < E4
         [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+        % Elem >= E4
         [?ITER_ELEM(E4), ?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
     ).
 
@@ -2686,10 +2700,13 @@ bound_rev_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
         E1,
         E2,
         E3,
-        %
+        % Elem < E1
         Acc,
+        % Elem < E2
         [?ITER_ELEM(E1) | Acc],
+        % Elem < E3
         [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+        % Elem >= E3
         [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
     ).
 
@@ -2701,9 +2718,11 @@ bound_rev_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
         Elem,
         E1,
         E2,
-        %
+        % Elem < E1
         Acc,
+        % Elem < E2
         [?ITER_ELEM(E1) | Acc],
+        % Elem >= E2
         [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
     ).
 
@@ -2714,8 +2733,9 @@ bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?LARGER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem < E1
         [],
+        % Elem >= E1
         [?ITER_ELEM(E1)]
     ).
 
@@ -2757,26 +2777,31 @@ larger_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS) ->
         E3,
         E4,
         %
+        % Elem < E1
         case larger_recur(Elem, C1) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem < E2
         case larger_recur(Elem, C2) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem < E3
         case larger_recur(Elem, C3) of
             none -> {found, E3};
             Found -> Found
         end,
         %
+        % Elem < E4
         case larger_recur(Elem, C4) of
             none -> {found, E4};
             Found -> Found
         end,
         %
+        % Elem >= E4
         larger_recur(Elem, C5)
     ).
 
@@ -2792,21 +2817,25 @@ larger_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS) ->
         E2,
         E3,
         %
+        % Elem < E1
         case larger_recur(Elem, C1) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem < E2
         case larger_recur(Elem, C2) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem < E3
         case larger_recur(Elem, C3) of
             none -> {found, E3};
             Found -> Found
         end,
         %
+        % Elem >= E3
         larger_recur(Elem, C4)
     ).
 
@@ -2821,16 +2850,19 @@ larger_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS) ->
         E1,
         E2,
         %
+        % Elem < E1
         case larger_recur(Elem, C1) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem < E2
         case larger_recur(Elem, C2) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem >= E2
         larger_recur(Elem, C3)
     ).
 
@@ -2844,11 +2876,13 @@ larger_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS) ->
         Elem,
         E1,
         %
+        % Elem < E1
         case larger_recur(Elem, C1) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem >= E1
         larger_recur(Elem, C2)
     ).
 
@@ -2864,11 +2898,15 @@ larger_LEAF4(Elem, ?LEAF4_ARGS) ->
         E2,
         E3,
         E4,
-        %
+        % Elem < E1
         {found, E1},
+        % Elem < E2
         {found, E2},
+        % Elem < E3
         {found, E3},
+        % Elem < E4
         {found, E4},
+        % Elem >= E4
         none
     ).
 
@@ -2879,10 +2917,13 @@ larger_LEAF3(Elem, ?LEAF3_ARGS) ->
         E1,
         E2,
         E3,
-        %
+        % Elem < E1
         {found, E1},
+        % Elem < E2
         {found, E2},
+        % Elem < E3
         {found, E3},
+        % Elem >= E3
         none
     ).
 
@@ -2892,9 +2933,11 @@ larger_LEAF2(Elem, ?LEAF2_ARGS) ->
         Elem,
         E1,
         E2,
-        %
+        % Elem < E1
         {found, E1},
+        % Elem < E2
         {found, E2},
+        % Elem >= E2
         none
     ).
 
@@ -2903,8 +2946,9 @@ larger_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?LARGER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem < E1
         {found, E1},
+        % Elem >= E1
         none
     ).
 
@@ -3614,26 +3658,31 @@ rank_larger_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
         E3,
         E4,
         %
+        % Elem < E1
         case rank_larger_recur(Elem, C1, Acc) of
             none -> [Acc + O1 | E1];
             Rank -> Rank
         end,
         %
+        % Elem < E2
         case rank_larger_recur(Elem, C2, Acc + O1) of
             none -> [Acc + O2 | E2];
             Rank -> Rank
         end,
         %
+        % Elem < E3
         case rank_larger_recur(Elem, C3, Acc + O2) of
             none -> [Acc + O3 | E3];
             Rank -> Rank
         end,
         %
+        % Elem < E4
         case rank_larger_recur(Elem, C4, Acc + O3) of
             none -> [Acc + O4 | E4];
             Rank -> Rank
         end,
         %
+        % Elem >= E4
         rank_larger_recur(Elem, C5, Acc + O4)
     ).
 
@@ -3649,21 +3698,25 @@ rank_larger_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
         E2,
         E3,
         %
+        % Elem < E1
         case rank_larger_recur(Elem, C1, Acc) of
             none -> [Acc + O1 | E1];
             Rank -> Rank
         end,
         %
+        % Elem < E2
         case rank_larger_recur(Elem, C2, Acc + O1) of
             none -> [Acc + O2 | E2];
             Rank -> Rank
         end,
         %
+        % Elem < E3
         case rank_larger_recur(Elem, C3, Acc + O2) of
             none -> [Acc + O3 | E3];
             Rank -> Rank
         end,
         %
+        % Elem >= E3
         rank_larger_recur(Elem, C4, Acc + O3)
     ).
 
@@ -3678,16 +3731,19 @@ rank_larger_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
         E1,
         E2,
         %
+        % Elem < E1
         case rank_larger_recur(Elem, C1, Acc) of
             none -> [Acc + O1 | E1];
             Rank -> Rank
         end,
         %
+        % Elem < E2
         case rank_larger_recur(Elem, C2, Acc + O1) of
             none -> [Acc + O2 | E2];
             Rank -> Rank
         end,
         %
+        % Elem >= E2
         rank_larger_recur(Elem, C3, Acc + O2)
     ).
 
@@ -3701,11 +3757,13 @@ rank_larger_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
         Elem,
         E1,
         %
+        % Elem < E1
         case rank_larger_recur(Elem, C1, 0) of
             none -> [O1 | E1];
             Rank -> Rank
         end,
         %
+        % Elem >= E1
         rank_larger_recur(Elem, C2, O1)
     ).
 
@@ -3721,11 +3779,15 @@ rank_larger_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
         E2,
         E3,
         E4,
-        %
+        % Elem < E1
         [Acc + 1 | E1],
+        % Elem < E2
         [Acc + 2 | E2],
+        % Elem < E3
         [Acc + 3 | E3],
+        % Elem < E4
         [Acc + 4 | E4],
+        % Elem >= E4
         none
     ).
 
@@ -3736,10 +3798,13 @@ rank_larger_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
         E1,
         E2,
         E3,
-        %
+        % Elem < E1
         [Acc + 1 | E1],
+        % Elem < E2
         [Acc + 2 | E2],
+        % Elem < E3
         [Acc + 3 | E3],
+        % Elem >= E3
         none
     ).
 
@@ -3749,9 +3814,11 @@ rank_larger_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
         Elem,
         E1,
         E2,
-        %
+        % Elem < E1
         [Acc + 1 | E1],
+        % Elem < E2
         [Acc + 2 | E2],
+        % Elem >= E2
         none
     ).
 
@@ -3760,8 +3827,9 @@ rank_larger_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?LARGER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem < E1
         [1 | E1],
+        % Elem >= E1
         none
     ).
 
@@ -3803,10 +3871,10 @@ rank_smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
         E3,
         E4,
         %
-        %
+        % Elem =< E1
         rank_smaller_recur(Elem, C1, Acc),
         %
-        %
+        % Elem =< E2
         begin
             UpdatedAcc = Acc + O1,
             case rank_smaller_recur(Elem, C2, UpdatedAcc) of
@@ -3815,7 +3883,7 @@ rank_smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
             end
         end,
         %
-        %
+        % Elem =< E3
         begin
             UpdatedAcc = Acc + O2,
             case rank_smaller_recur(Elem, C3, UpdatedAcc) of
@@ -3824,7 +3892,7 @@ rank_smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
             end
         end,
         %
-        %
+        % Elem =< E4
         begin
             UpdatedAcc = Acc + O3,
             case rank_smaller_recur(Elem, C4, UpdatedAcc) of
@@ -3833,7 +3901,7 @@ rank_smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
             end
         end,
         %
-        %
+        % Elem > E4
         begin
             UpdatedAcc = Acc + O4,
             case rank_smaller_recur(Elem, C5, UpdatedAcc) of
@@ -3855,10 +3923,10 @@ rank_smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
         E2,
         E3,
         %
-        %
+        % Elem =< E1
         rank_smaller_recur(Elem, C1, Acc),
         %
-        %
+        % Elem =< E2
         begin
             UpdatedAcc = Acc + O1,
             case rank_smaller_recur(Elem, C2, UpdatedAcc) of
@@ -3867,7 +3935,7 @@ rank_smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
             end
         end,
         %
-        %
+        % Elem =< E3
         begin
             UpdatedAcc = Acc + O2,
             case rank_smaller_recur(Elem, C3, UpdatedAcc) of
@@ -3876,7 +3944,7 @@ rank_smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
             end
         end,
         %
-        %
+        % Elem > E4
         begin
             UpdatedAcc = Acc + O3,
             case rank_smaller_recur(Elem, C4, UpdatedAcc) of
@@ -3897,10 +3965,10 @@ rank_smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
         E1,
         E2,
         %
-        %
+        % Elem =< E1
         rank_smaller_recur(Elem, C1, Acc),
         %
-        %
+        % Elem =< E2
         begin
             UpdatedAcc = Acc + O1,
             case rank_smaller_recur(Elem, C2, UpdatedAcc) of
@@ -3909,7 +3977,7 @@ rank_smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
             end
         end,
         %
-        %
+        % Elem > E2
         begin
             UpdatedAcc = Acc + O2,
             case rank_smaller_recur(Elem, C3, UpdatedAcc) of
@@ -3929,10 +3997,10 @@ rank_smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
         Elem,
         E1,
         %
-        %
+        % Elem =< E1
         rank_smaller_recur(Elem, C1, 0),
         %
-        %
+        % Elem > E1
         begin
             UpdatedAcc = O1,
             case rank_smaller_recur(Elem, C2, UpdatedAcc) of
@@ -3954,11 +4022,15 @@ rank_smaller_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
         E2,
         E3,
         E4,
-        %
+        % Elem =< E1
         none,
+        % Elem =< E2
         [Acc + 1 | E1],
+        % Elem =< E3
         [Acc + 2 | E2],
+        % Elem =< E4
         [Acc + 3 | E3],
+        % Elem > E4
         [Acc + 4 | E4]
     ).
 
@@ -3969,10 +4041,13 @@ rank_smaller_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
         E1,
         E2,
         E3,
-        %
+        % Elem =< E1
         none,
+        % Elem =< E2
         [Acc + 1 | E1],
+        % Elem =< E3
         [Acc + 2 | E2],
+        % Elem > E3
         [Acc + 3 | E3]
     ).
 
@@ -3982,9 +4057,11 @@ rank_smaller_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
         Elem,
         E1,
         E2,
-        %
+        % Elem =< E1
         none,
+        % Elem =< E2
         [Acc + 1 | E1],
+        % Elem > E2
         [Acc + 2 | E2]
     ).
 
@@ -3993,8 +4070,9 @@ rank_smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?SMALLER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem =< E1
         none,
+        % Elem > E1
         [1 | E1]
     ).
 
@@ -4036,23 +4114,28 @@ smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS) ->
         E3,
         E4,
         %
+        % Elem =< E1
         smaller_recur(Elem, C1),
         %
+        % Elem =< E2
         case smaller_recur(Elem, C2) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem =< E3
         case smaller_recur(Elem, C3) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem =< E4
         case smaller_recur(Elem, C4) of
             none -> {found, E3};
             Found -> Found
         end,
         %
+        % Elem > E4
         case smaller_recur(Elem, C5) of
             none -> {found, E4};
             Found -> Found
@@ -4071,18 +4154,22 @@ smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS) ->
         E2,
         E3,
         %
+        % Elem =< E1
         smaller_recur(Elem, C1),
         %
+        % Elem =< E2
         case smaller_recur(Elem, C2) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem =< E3
         case smaller_recur(Elem, C3) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem > E4
         case smaller_recur(Elem, C4) of
             none -> {found, E3};
             Found -> Found
@@ -4100,13 +4187,16 @@ smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS) ->
         E1,
         E2,
         %
+        % Elem =< E1
         smaller_recur(Elem, C1),
         %
+        % Elem =< E2
         case smaller_recur(Elem, C2) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem > E2
         case smaller_recur(Elem, C3) of
             none -> {found, E2};
             Found -> Found
@@ -4123,8 +4213,10 @@ smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS) ->
         Elem,
         E1,
         %
+        % Elem =< E1
         smaller_recur(Elem, C1),
         %
+        % Elem > E1
         case smaller_recur(Elem, C2) of
             none -> {found, E1};
             Found -> Found
@@ -4143,11 +4235,15 @@ smaller_LEAF4(Elem, ?LEAF4_ARGS) ->
         E2,
         E3,
         E4,
-        %
+        % Elem =< E1
         none,
+        % Elem =< E2
         {found, E1},
+        % Elem =< E3
         {found, E2},
+        % Elem =< E4
         {found, E3},
+        % Elem > E4
         {found, E4}
     ).
 
@@ -4158,10 +4254,13 @@ smaller_LEAF3(Elem, ?LEAF3_ARGS) ->
         E1,
         E2,
         E3,
-        %
+        % Elem =< E1
         none,
+        % Elem =< E2
         {found, E1},
+        % Elem =< E3
         {found, E2},
+        % Elem > E3
         {found, E3}
     ).
 
@@ -4171,9 +4270,11 @@ smaller_LEAF2(Elem, ?LEAF2_ARGS) ->
         Elem,
         E1,
         E2,
-        %
+        % Elem =< E1
         none,
+        % Elem =< E2
         {found, E1},
+        % Elem > E2
         {found, E2}
     ).
 
@@ -4182,8 +4283,9 @@ smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?SMALLER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem =< E1
         none,
+        % Elem > E1
         {found, E1}
     ).
 

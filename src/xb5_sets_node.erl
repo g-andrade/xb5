@@ -2080,7 +2080,7 @@ bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
         E3,
         E4,
         %
-        %
+        % Elem =< E1
         begin
             Acc2 = [
                 ?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc
@@ -2088,25 +2088,25 @@ bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
             bound_fwd_iterator_recur(Elem, C1, Acc2)
         end,
         %
-        %
+        % Elem =< E2
         begin
             Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
             bound_fwd_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem =< E3
         begin
             Acc2 = [?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
             bound_fwd_iterator_recur(Elem, C3, Acc2)
         end,
         %
-        %
+        % Elem =< E4
         begin
             Acc2 = [?ITER_ELEM(E4), C5 | Acc],
             bound_fwd_iterator_recur(Elem, C4, Acc2)
         end,
         %
-        %
+        % Elem > E4
         case Acc of
             [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2127,25 +2127,25 @@ bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
         E2,
         E3,
         %
-        %
+        % Elem =< E1
         begin
             Acc2 = [?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
         end,
         %
-        %
+        % Elem =< E2
         begin
             Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem =< E3
         begin
             Acc2 = [?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C3, Acc2)
         end,
         %
-        %
+        % Elem > E3
         case Acc of
             [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2165,19 +2165,19 @@ bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
         E1,
         E2,
         %
-        %
+        % Elem =< E1
         begin
             Acc2 = [?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3 | Acc],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
         end,
         %
-        %
+        % Elem =< E2
         begin
             Acc2 = [?ITER_ELEM(E2), C3 | Acc],
             bound_fwd_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem > E2
         case Acc of
             [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2215,11 +2215,15 @@ bound_fwd_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
         E2,
         E3,
         E4,
-        %
+        % Elem =< E1
         [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+        % Elem =< E2
         [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+        % Elem =< E3
         [?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+        % Elem =< E4
         [?ITER_ELEM(E4) | Acc],
+        % Elem > E4
         Acc
     ).
 
@@ -2232,10 +2236,13 @@ bound_fwd_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
         E1,
         E2,
         E3,
-        %
+        % Elem =< E1
         [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
+        % Elem =< E2
         [?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
+        % Elem =< E3
         [?ITER_ELEM(E3) | Acc],
+        % Elem > E3
         Acc
     ).
 
@@ -2247,9 +2254,11 @@ bound_fwd_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
         Elem,
         E1,
         E2,
-        %
+        % Elem =< E1
         [?ITER_ELEM(E1), ?ITER_ELEM(E2) | Acc],
+        % Elem =< E2
         [?ITER_ELEM(E2) | Acc],
+        % Elem > E2
         Acc
     ).
 
@@ -2260,8 +2269,9 @@ bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?SMALLER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem =< E1
         [?ITER_ELEM(E1)],
+        % Elem > E1
         []
     ).
 
@@ -2318,7 +2328,7 @@ bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
         E3,
         E4,
         %
-        %
+        % Elem < E1
         case Acc of
             [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2328,25 +2338,25 @@ bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
                 bound_rev_iterator_recur(Elem, C1, Acc)
         end,
         %
-        %
+        % Elem < E2
         begin
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem < E3
         begin
             Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
         end,
         %
-        %
+        % Elem < E4
         begin
             Acc2 = [?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C4, Acc2)
         end,
         %
-        %
+        % Elem >= E4
         begin
             Acc2 = [
                 ?ITER_ELEM(E4), C4, ?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc
@@ -2365,7 +2375,7 @@ bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
         E2,
         E3,
         %
-        %
+        % Elem < E1
         case Acc of
             [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2375,19 +2385,19 @@ bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
                 bound_rev_iterator_recur(Elem, C1, Acc)
         end,
         %
-        %
+        % Elem < E2
         begin
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem < E3
         begin
             Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
         end,
         %
-        %
+        % Elem >= E3
         begin
             Acc2 = [?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C4, Acc2)
@@ -2403,7 +2413,7 @@ bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
         E1,
         E2,
         %
-        %
+        % Elem < E1
         case Acc of
             [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
                 % We overshot when recursing from this node's parent, stop here
@@ -2413,13 +2423,13 @@ bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
                 bound_rev_iterator_recur(Elem, C1, Acc)
         end,
         %
-        %
+        % Elem < E2
         begin
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C2, Acc2)
         end,
         %
-        %
+        % Elem >= E2
         begin
             Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
@@ -2453,11 +2463,15 @@ bound_rev_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
         E2,
         E3,
         E4,
-        %
+        % Elem < E1
         Acc,
+        % Elem < E2
         [?ITER_ELEM(E1) | Acc],
+        % Elem < E3
         [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+        % Elem < E4
         [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+        % Elem >= E4
         [?ITER_ELEM(E4), ?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
     ).
 
@@ -2470,10 +2484,13 @@ bound_rev_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
         E1,
         E2,
         E3,
-        %
+        % Elem < E1
         Acc,
+        % Elem < E2
         [?ITER_ELEM(E1) | Acc],
+        % Elem < E3
         [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+        % Elem >= E4
         [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
     ).
 
@@ -2485,9 +2502,11 @@ bound_rev_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
         Elem,
         E1,
         E2,
-        %
+        % Elem < E1
         Acc,
+        % Elem < E2
         [?ITER_ELEM(E1) | Acc],
+        % Elem >= E2
         [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
     ).
 
@@ -2498,8 +2517,9 @@ bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?LARGER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem < E1
         [],
+        % Elem >= E1
         [?ITER_ELEM(E1)]
     ).
 
@@ -2541,26 +2561,31 @@ larger_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
         E3,
         E4,
         %
+        % Elem < E1
         case larger_recur(Elem, C1) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem < E2
         case larger_recur(Elem, C2) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem < E3
         case larger_recur(Elem, C3) of
             none -> {found, E3};
             Found -> Found
         end,
         %
+        % Elem < E4
         case larger_recur(Elem, C4) of
             none -> {found, E4};
             Found -> Found
         end,
         %
+        % Elem >= E4
         larger_recur(Elem, C5)
     ).
 
@@ -2576,21 +2601,25 @@ larger_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
         E2,
         E3,
         %
+        % Elem < E1
         case larger_recur(Elem, C1) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem < E2
         case larger_recur(Elem, C2) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem < E3
         case larger_recur(Elem, C3) of
             none -> {found, E3};
             Found -> Found
         end,
         %
+        % Elem >= E3
         larger_recur(Elem, C4)
     ).
 
@@ -2605,16 +2634,19 @@ larger_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
         E1,
         E2,
         %
+        % Elem < E1
         case larger_recur(Elem, C1) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem < E2
         case larger_recur(Elem, C2) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem >= E2
         larger_recur(Elem, C3)
     ).
 
@@ -2628,11 +2660,13 @@ larger_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
         Elem,
         E1,
         %
+        % Elem < E1
         case larger_recur(Elem, C1) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem >= E1
         larger_recur(Elem, C2)
     ).
 
@@ -2648,11 +2682,15 @@ larger_LEAF4(Elem, ?LEAF4_ARGS) ->
         E2,
         E3,
         E4,
-        %
+        % Elem < E1
         {found, E1},
+        % Elem < E2
         {found, E2},
+        % Elem < E3
         {found, E3},
+        % Elem < E4
         {found, E4},
+        % Elem >= E4
         none
     ).
 
@@ -2663,10 +2701,13 @@ larger_LEAF3(Elem, ?LEAF3_ARGS) ->
         E1,
         E2,
         E3,
-        %
+        % Elem < E1
         {found, E1},
+        % Elem < E2
         {found, E2},
+        % Elem < E3
         {found, E3},
+        % Elem >= E3
         none
     ).
 
@@ -2676,9 +2717,11 @@ larger_LEAF2(Elem, ?LEAF2_ARGS) ->
         Elem,
         E1,
         E2,
-        %
+        % Elem < E1
         {found, E1},
+        % Elem < E2
         {found, E2},
+        % Elem >= E2
         none
     ).
 
@@ -2687,8 +2730,9 @@ larger_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?LARGER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem < E1
         {found, E1},
+        % Elem >= E1
         none
     ).
 
@@ -2808,23 +2852,28 @@ smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
         E3,
         E4,
         %
+        % Elem =< E1
         smaller_recur(Elem, C1),
         %
+        % Elem =< E2
         case smaller_recur(Elem, C2) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem =< E3
         case smaller_recur(Elem, C3) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem =< E4
         case smaller_recur(Elem, C4) of
             none -> {found, E3};
             Found -> Found
         end,
         %
+        % Elem > E4
         case smaller_recur(Elem, C5) of
             none -> {found, E4};
             Found -> Found
@@ -2843,18 +2892,22 @@ smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
         E2,
         E3,
         %
+        % Elem =< E1
         smaller_recur(Elem, C1),
         %
+        % Elem =< E2
         case smaller_recur(Elem, C2) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem =< E3
         case smaller_recur(Elem, C3) of
             none -> {found, E2};
             Found -> Found
         end,
         %
+        % Elem > E3
         case smaller_recur(Elem, C4) of
             none -> {found, E3};
             Found -> Found
@@ -2872,13 +2925,16 @@ smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
         E1,
         E2,
         %
+        % Elem =< E1
         smaller_recur(Elem, C1),
         %
+        % Elem =< E2
         case smaller_recur(Elem, C2) of
             none -> {found, E1};
             Found -> Found
         end,
         %
+        % Elem > E2
         case smaller_recur(Elem, C3) of
             none -> {found, E2};
             Found -> Found
@@ -2895,8 +2951,10 @@ smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
         Elem,
         E1,
         %
+        % Elem =< E1
         smaller_recur(Elem, C1),
         %
+        % Elem > E1
         case smaller_recur(Elem, C2) of
             none -> {found, E1};
             Found -> Found
@@ -2916,10 +2974,15 @@ smaller_LEAF4(Elem, ?LEAF4_ARGS) ->
         E3,
         E4,
         %
+        % Elem =< E1
         none,
+        % Elem =< E2
         {found, E1},
+        % Elem =< E3
         {found, E2},
+        % Elem =< E4
         {found, E3},
+        % Elem > E4
         {found, E4}
     ).
 
@@ -2932,8 +2995,11 @@ smaller_LEAF3(Elem, ?LEAF3_ARGS) ->
         E3,
         %
         none,
+        % Elem =< E1
         {found, E1},
+        % Elem =< E2
         {found, E2},
+        % Elem =< E3
         {found, E3}
     ).
 
@@ -2944,8 +3010,11 @@ smaller_LEAF2(Elem, ?LEAF2_ARGS) ->
         E1,
         E2,
         %
+        % Elem =< E1
         none,
+        % Elem =< E2
         {found, E1},
+        % Elem > E2
         {found, E2}
     ).
 
@@ -2954,8 +3023,9 @@ smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?SMALLER_SEARCH1(
         Elem,
         E1,
-        %
+        % Elem =< E1
         none,
+        % Elem > E1
         {found, E1}
     ).
 
