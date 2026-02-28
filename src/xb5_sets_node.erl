@@ -1291,7 +1291,7 @@ from_ordset_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
             [S4 | S5] = from_ordset_right_children_sizes(S - (BatchSize * 3), BatchSize),
             from_ordset_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize);
         %
-        Splits when Splits =:= 1 orelse (Splits =:= 0 andalso not AtRoot) ->
+        Quotient when Quotient =:= 1 orelse (Quotient =:= 0 andalso not AtRoot) ->
             S1 = BatchSize - 1,
             [S2 | S3] = from_ordset_right_children_sizes(S - BatchSize, BatchSize),
             from_ordset_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize);
@@ -1313,7 +1313,7 @@ from_ordset_recur(L, 2, _, _, _) ->
 from_ordset_right_children_sizes(RemainingSize, BatchSize) ->
     case RemainingSize bsr 1 < BatchSize of
         true ->
-            SLeft = (BatchSize * 3 div 4) - 1,
+            SLeft = ((BatchSize * 3) bsr 2) - 1,
             SRight = RemainingSize - SLeft - 1,
             [SLeft | SRight];
         %
