@@ -439,6 +439,10 @@ from_list(List) ->
 -doc """
 Returns a set built from the ordered set `Ordset`.
 
+The tree is built by recursively splitting the list top-down rather than by
+sequential insertion, yielding an optimally balanced result without intermediate
+allocations or element comparisons. This is analogous to `gb_sets:from_ordset/1`.
+
 ## Examples
 
 ```erlang

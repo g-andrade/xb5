@@ -468,6 +468,11 @@ Returns a bag built from the ordered list `OrderedList`.
 
 Repeated elements are kept.
 
+The bag is built by recursively splitting the list top-down rather than by
+sequential insertion, yielding an optimally balanced result without intermediate
+allocations or element comparisons. This is analogous to `gb_sets:from_ordset/1`
+and `gb_trees:from_orddict/1`.
+
 ## Examples
 
 ```erlang
@@ -488,6 +493,9 @@ from_ordered_list(OrderedList) ->
 
 -doc """
 Returns a bag built from the ordered set `Ordset`.
+
+Since ordsets contain no duplicates, neither will the resulting bag. Delegates
+to `from_ordered_list/1` — see that function for performance characteristics.
 
 ## Examples
 

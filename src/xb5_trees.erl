@@ -368,6 +368,10 @@ from_list(List) ->
 -doc """
 Returns a tree built from the ordered dictionary `Orddict`.
 
+The tree is built by recursively splitting the list top-down rather than by
+sequential insertion, yielding an optimally balanced result without intermediate
+allocations or element comparisons. This is analogous to `gb_trees:from_orddict/1`.
+
 ## Examples
 
 ```erlang
