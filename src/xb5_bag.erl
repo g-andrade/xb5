@@ -779,10 +779,6 @@ counts are combined.
 > xb5_bag:to_list(xb5_bag:merge(B1, B2)).
 [1, 2, 2, 3, 3, 4]
 ```
-
-This function is called `merge` for two reasons:
-* it's not a union: unions of multisets are [something else](https://brilliant.org/wiki/multiset/);
-* it's technically a _sum_, but I found that to be potentially confusing, and less discoverable.
 """.
 -spec merge(Bag1, Bag2) -> Bag3 when
     Bag1 :: bag(Element),
@@ -793,6 +789,16 @@ merge(
     #xb5_bag{size = Size1, root = Root1} = Bag1,
     #xb5_bag{size = Size2, root = Root2}
 ) ->
+    % The rationale for calling this `merge', and not `union':
+    %
+    % - It's not a union: unions of multisets are something else.
+    %     https://brilliant.org/wiki/multiset/
+    %
+    % - It's technically a _sum_, but I found that to be potentially confusing,
+    %   and less discoverable;
+    %
+    % - It's familiar: equivalent to `lists:merge/2' for ordered lists.
+    %
     MergedRoot = xb5_bag_node:merge(Size1, Root1, Size2, Root2),
     Bag1#xb5_bag{size = Size1 + Size2, root = MergedRoot}.
 
