@@ -128,9 +128,9 @@ significantly larger than their stdlib counterparts:
 |:---|:---:|
 | `gb_sets` | 34K |
 | `gb_trees` | 22K |
-| `xb5_sets_node` | 118K |
-| `xb5_trees_node` | 126K |
-| `xb5_bag_node` | 124K |
+| `xb5_sets_node` | 90K |
+| `xb5_trees_node` | 124K |
+| `xb5_bag_node` | 117K |
 
 ## License
 
