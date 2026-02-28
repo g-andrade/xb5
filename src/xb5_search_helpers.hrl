@@ -6,10 +6,12 @@
     K2,
     K3,
     K4,
+    %
     FoundK1,
     FoundK2,
     FoundK3,
     FoundK4,
+    %
     FoundC1,
     FoundC2,
     FoundC3,
@@ -67,9 +69,11 @@
     K1,
     K2,
     K3,
+    %
     FoundK1,
     FoundK2,
     FoundK3,
+    %
     FoundC1,
     FoundC2,
     FoundC3,
@@ -111,8 +115,10 @@
     Key,
     K1,
     K2,
+    %
     FoundK1,
     FoundK2,
+    %
     FoundC1,
     FoundC2,
     FoundC3
@@ -146,7 +152,9 @@
 -define(GAP_SEARCH1(
     Key,
     K1,
+    %
     FoundK1,
+    %
     FoundC1,
     FoundC2
 ),
