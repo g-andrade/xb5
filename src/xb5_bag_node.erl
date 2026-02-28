@@ -3521,78 +3521,60 @@ rank_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     end.
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, rank_LEAF4 / ?LEAF4_ARITY_PLUS2}).
 rank_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
-    if
-        Elem == E1 ->
-            Acc + 1;
+    ?EXACT_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem == E2 ->
-            Acc + 2;
-        %
-        Elem == E3 ->
-            Acc + 3;
-        %
-        Elem == E4 ->
-            Acc + 4;
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
+        Acc + 1,
+        Acc + 2,
+        Acc + 3,
+        Acc + 4,
+        none
+    ).
 
 -compile({inline, rank_LEAF3 / ?LEAF3_ARITY_PLUS2}).
 rank_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
-    if
-        Elem == E1 ->
-            Acc + 1;
+    ?EXACT_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem == E2 ->
-            Acc + 2;
-        %
-        Elem == E3 ->
-            Acc + 3;
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
+        Acc + 1,
+        Acc + 2,
+        Acc + 3,
+        none
+    ).
 
 -compile({inline, rank_LEAF2 / ?LEAF2_ARITY_PLUS2}).
 rank_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
-    if
-        Elem == E1 ->
-            Acc + 1;
+    ?EXACT_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem == E2 ->
-            Acc + 2;
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
+        Acc + 1,
+        Acc + 2,
+        none
+    ).
 
 -compile({inline, rank_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 rank_LEAF1(Elem, ?LEAF1_ARGS) ->
-    if
-        Elem == E1 ->
-            1;
+    ?EXACT_SEARCH1(
+        Elem,
+        E1,
         %
-        true ->
-            none
-    end.
+        1,
+        none
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: rank_larger/2
