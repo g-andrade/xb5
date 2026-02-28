@@ -36,6 +36,8 @@ API for operating over `m:xb5_bag` internal nodes directly.
 <br/>
 """.
 
+-include("src/xb5_search_helpers.hrl").
+
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
@@ -165,9 +167,9 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL4_ARITY_PLUS1, 14).
 -define(INTERNAL4_ARITY_PLUS2, 15).
 
--define(INTERNAL4_ARGS_EXCEPT_SIZES, E1, E2, E3, E4, C1, C2, C3, C4, C5).
--define(INTERNAL4_ARITY_EXCEPT_SIZES_PLUS1, 10).
--define(INTERNAL4_ARITY_EXCEPT_SIZES_PLUS2, 11).
+-define(INTERNAL4_ARGS_EXCEPT_OFFSETS, E1, E2, E3, E4, C1, C2, C3, C4, C5).
+-define(INTERNAL4_ARITY_EXCEPT_OFFSETS_PLUS1, 10).
+-define(INTERNAL4_ARITY_EXCEPT_OFFSETS_PLUS2, 11).
 
 -define(INTERNAL4_UPD_C5(UpdatedC5),
     ?new_INTERNAL4(E1, E2, E3, E4, O1, O2, O3, O4, C1, C2, C3, C4, UpdatedC5)
@@ -201,9 +203,9 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL3_ARITY_PLUS1, 11).
 -define(INTERNAL3_ARITY_PLUS2, 12).
 
--define(INTERNAL3_ARGS_EXCEPT_SIZES, E1, E2, E3, C1, C2, C3, C4).
--define(INTERNAL3_ARITY_EXCEPT_SIZES_PLUS1, 8).
--define(INTERNAL3_ARITY_EXCEPT_SIZES_PLUS2, 9).
+-define(INTERNAL3_ARGS_EXCEPT_OFFSETS, E1, E2, E3, C1, C2, C3, C4).
+-define(INTERNAL3_ARITY_EXCEPT_OFFSETS_PLUS1, 8).
+-define(INTERNAL3_ARITY_EXCEPT_OFFSETS_PLUS2, 9).
 
 -define(INTERNAL3_UPD_C4(UpdatedC4), ?new_INTERNAL3(E1, E2, E3, O1, O2, O3, C1, C2, C3, UpdatedC4)).
 
@@ -231,9 +233,9 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL2_ARITY_PLUS1, 8).
 -define(INTERNAL2_ARITY_PLUS2, 9).
 
--define(INTERNAL2_ARGS_EXCEPT_SIZES, E1, E2, C1, C2, C3).
--define(INTERNAL2_ARITY_EXCEPT_SIZES_PLUS1, 6).
--define(INTERNAL2_ARITY_EXCEPT_SIZES_PLUS2, 7).
+-define(INTERNAL2_ARGS_EXCEPT_OFFSETS, E1, E2, C1, C2, C3).
+-define(INTERNAL2_ARITY_EXCEPT_OFFSETS_PLUS1, 6).
+-define(INTERNAL2_ARITY_EXCEPT_OFFSETS_PLUS2, 7).
 
 -define(INTERNAL2_UPD_C3(UpdatedC3), ?new_INTERNAL2(E1, E2, O1, O2, C1, C2, UpdatedC3)).
 
@@ -257,8 +259,8 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL1_ARITY_PLUS1, 5).
 -define(INTERNAL1_ARITY_PLUS2, 6).
 
--define(INTERNAL1_ARGS_EXCEPT_SIZES, E1, C1, C2).
--define(INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1, 4).
+-define(INTERNAL1_ARGS_EXCEPT_OFFSETS, E1, C1, C2).
+-define(INTERNAL1_ARITY_EXCEPT_OFFSETS_PLUS1, 4).
 
 -define(INTERNAL1_UPD_C2(UpdatedC2), ?new_INTERNAL1(E1, O1, C1, UpdatedC2)).
 
@@ -274,28 +276,24 @@ API for operating over `m:xb5_bag` internal nodes directly.
 %% ?LEAF4
 
 -define(LEAF4_ARGS, E1, E2, E3, E4).
--define(LEAF4_ARITY, 4).
 -define(LEAF4_ARITY_PLUS1, 5).
 -define(LEAF4_ARITY_PLUS2, 6).
 
 %% ?LEAF3
 
 -define(LEAF3_ARGS, E1, E2, E3).
--define(LEAF3_ARITY, 3).
 -define(LEAF3_ARITY_PLUS1, 4).
 -define(LEAF3_ARITY_PLUS2, 5).
 
 %% ?LEAF2
 
 -define(LEAF2_ARGS, E1, E2).
--define(LEAF2_ARITY, 2).
 -define(LEAF2_ARITY_PLUS1, 3).
 -define(LEAF2_ARITY_PLUS2, 4).
 
 %% ?LEAF1
 
 -define(LEAF1_ARGS, E1).
--define(LEAF1_ARITY, 1).
 -define(LEAF1_ARITY_PLUS1, 2).
 
 %%
@@ -569,7 +567,7 @@ insert_att(Elem, Root) ->
 
 -spec is_member(_, t(_)) -> boolean().
 is_member(Elem, ?INTERNAL1_MATCH_IGN_OFFSETS) ->
-    is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
+    is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS);
 is_member(Elem, ?LEAF1_MATCH_ALL) ->
     is_member_LEAF1(Elem, ?LEAF1_ARGS);
 is_member(_Elem, ?LEAF0) ->
@@ -593,7 +591,7 @@ iterator_from(Elem, Root, reversed) ->
 
 -spec larger(_, t(Elem)) -> {found, Elem} | none.
 larger(Elem, ?INTERNAL1_MATCH_IGN_OFFSETS) ->
-    larger_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
+    larger_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS);
 larger(Elem, ?LEAF1_MATCH_ALL) ->
     larger_LEAF1(Elem, ?LEAF1_ARGS);
 larger(_Elem, ?LEAF0) ->
@@ -676,7 +674,7 @@ rank_smaller(Elem, Root) ->
 
 -spec smaller(_, t(Elem)) -> {found, Elem} | none.
 smaller(Elem, ?INTERNAL1_MATCH_IGN_OFFSETS) ->
-    smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
+    smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS);
 smaller(Elem, ?LEAF1_MATCH_ALL) ->
     smaller_LEAF1(Elem, ?LEAF1_ARGS);
 smaller(_Elem, ?LEAF0) ->
@@ -1091,46 +1089,24 @@ delete_att_recur(Elem, Node) ->
 
 -compile({inline, delete_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
 delete_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
-    if
-        Elem > E2 ->
-            %
-            if
-                Elem < E4 ->
-                    %
-                    if
-                        Elem > E3 ->
-                            delete_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS);
-                        %
-                        Elem < E3 ->
-                            delete_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS);
-                        %
-                        true ->
-                            delete_att_INTERNAL4_E3(?INTERNAL4_ARGS)
-                    end;
-                %
-                Elem > E4 ->
-                    delete_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL4_E4(?INTERNAL4_ARGS)
-            end;
+    ?GAP_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E2 ->
-            %
-            if
-                Elem < E1 ->
-                    delete_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS);
-                %
-                Elem > E1 ->
-                    delete_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL4_E1(?INTERNAL4_ARGS)
-            end;
+        delete_att_INTERNAL4_E1(?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_E2(?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_E3(?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_E4(?INTERNAL4_ARGS),
         %
-        true ->
-            delete_att_INTERNAL4_E2(?INTERNAL4_ARGS)
-    end.
+        delete_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS),
+        delete_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS)
+    ).
 
 -compile({inline, delete_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
 delete_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
@@ -1258,36 +1234,21 @@ delete_att_INTERNAL4_E4(?INTERNAL4_ARGS_IGN_E4) ->
 
 -compile({inline, delete_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
 delete_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
-    if
-        Elem < E2 ->
-            %
-            if
-                Elem < E1 ->
-                    delete_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS);
-                %
-                Elem > E1 ->
-                    delete_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL3_E1(?INTERNAL3_ARGS)
-            end;
+    ?GAP_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E2 ->
-            %
-            if
-                Elem < E3 ->
-                    delete_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS);
-                %
-                Elem > E3 ->
-                    delete_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL3_E3(?INTERNAL3_ARGS)
-            end;
+        delete_att_INTERNAL3_E1(?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_E2(?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_E3(?INTERNAL3_ARGS),
         %
-        true ->
-            delete_att_INTERNAL3_E2(?INTERNAL3_ARGS)
-    end.
+        delete_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS),
+        delete_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS)
+    ).
 
 -compile({inline, delete_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
 delete_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
@@ -1378,26 +1339,18 @@ delete_att_INTERNAL3_E3(?INTERNAL3_ARGS_IGN_E3) ->
 
 -compile({inline, delete_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
 delete_att_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
-    if
-        Elem > E1 ->
-            %
-            if
-                Elem < E2 ->
-                    delete_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS);
-                %
-                Elem > E2 ->
-                    delete_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS);
-                %
-                true ->
-                    delete_att_INTERNAL2_E2(?INTERNAL2_ARGS)
-            end;
+    ?GAP_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem < E1 ->
-            delete_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS);
+        delete_att_INTERNAL2_E1(?INTERNAL2_ARGS),
+        delete_att_INTERNAL2_E2(?INTERNAL2_ARGS),
         %
-        true ->
-            delete_att_INTERNAL2_E1(?INTERNAL2_ARGS)
-    end.
+        delete_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS),
+        delete_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS),
+        delete_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS)
+    ).
 
 -compile({inline, delete_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
 delete_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
@@ -1457,16 +1410,14 @@ delete_att_INTERNAL2_E2(?INTERNAL2_ARGS_IGN_E2) ->
 
 -compile({inline, delete_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 delete_att_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
-    if
-        Elem < E1 ->
-            delete_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS);
+    ?GAP_SEARCH1(
+        Elem,
+        E1,
         %
-        Elem > E1 ->
-            delete_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS);
-        %
-        true ->
-            delete_att_INTERNAL1_E1(?INTERNAL1_ARGS)
-    end.
+        delete_att_INTERNAL1_E1(?INTERNAL1_ARGS),
+        delete_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS),
+        delete_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS)
+    ).
 
 -compile({inline, delete_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
 delete_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
@@ -1484,78 +1435,56 @@ delete_att_INTERNAL1_E1(?INTERNAL1_ARGS_IGN_E1) ->
     ?INTERNAL1_E1_C2_REBALANCE(ReplacementE, UpdatedC2).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, delete_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 delete_att_LEAF4(Elem, ?LEAF4_ARGS) ->
-    if
-        Elem == E1 ->
-            ?new_LEAF3(E2, E3, E4);
-        %
-        Elem == E2 ->
-            ?new_LEAF3(E1, E3, E4);
-        %
-        Elem == E3 ->
-            ?new_LEAF3(E1, E2, E4);
-        %
-        Elem == E4 ->
-            ?new_LEAF3(E1, E2, E3);
-        %
-        true ->
-            badkey
-    end.
-
-%%
-%% ?LEAF3
-%%
+    ?EXACT_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
+        ?new_LEAF3(E2, E3, E4),
+        ?new_LEAF3(E1, E3, E4),
+        ?new_LEAF3(E1, E2, E4),
+        ?new_LEAF3(E1, E2, E3),
+        badkey
+    ).
 
 -compile({inline, delete_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 delete_att_LEAF3(Elem, ?LEAF3_ARGS) ->
-    if
-        Elem == E1 ->
-            ?new_LEAF2(E2, E3);
-        %
-        Elem == E2 ->
-            ?new_LEAF2(E1, E3);
-        %
-        Elem == E3 ->
-            ?new_LEAF2(E1, E2);
-        %
-        true ->
-            badkey
-    end.
-
-%%
-%% ?LEAF2
-%%
+    ?EXACT_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
+        ?new_LEAF2(E2, E3),
+        ?new_LEAF2(E1, E3),
+        ?new_LEAF2(E1, E2),
+        badkey
+    ).
 
 -compile({inline, delete_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 delete_att_LEAF2(Elem, ?LEAF2_ARGS) ->
-    if
-        Elem == E1 ->
-            ?new_LEAF1(E2);
-        %
-        Elem == E2 ->
-            ?new_LEAF1(E1);
-        %
-        true ->
-            badkey
-    end.
-
-%%
-%% ?LEAF1
-%%
+    ?EXACT_SEARCH2(
+        Elem,
+        E1,
+        E2,
+        ?new_LEAF1(E2),
+        ?new_LEAF1(E1),
+        badkey
+    ).
 
 -compile({inline, delete_att_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
-    if
-        Elem == E1 ->
-            ?LEAF0;
-        %
-        true ->
-            badkey
-    end.
+    ?EXACT_SEARCH1(
+        Elem,
+        E1,
+        ?LEAF0,
+        badkey
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: filtermap/2
@@ -1895,46 +1824,24 @@ insert_att_recur(Elem, Node) ->
 
 -compile({inline, insert_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
 insert_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
-    if
-        Elem > E2 ->
-            %
-            if
-                Elem < E4 ->
-                    %
-                    if
-                        Elem > E3 ->
-                            insert_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS);
-                        %
-                        Elem < E3 ->
-                            insert_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS);
-                        %
-                        true ->
-                            key_exists
-                    end;
-                %
-                Elem > E4 ->
-                    insert_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E2 ->
-            %
-            if
-                Elem < E1 ->
-                    insert_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS);
-                %
-                Elem > E1 ->
-                    insert_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+        key_exists,
+        key_exists,
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
+        insert_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS),
+        insert_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS),
+        insert_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS),
+        insert_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS),
+        insert_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS)
+    ).
 
 -compile({inline, insert_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
 insert_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
@@ -1967,36 +1874,21 @@ insert_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
 insert_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
-    if
-        Elem < E2 ->
-            %
-            if
-                Elem < E1 ->
-                    insert_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS);
-                %
-                Elem > E1 ->
-                    insert_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E2 ->
-            %
-            if
-                Elem < E3 ->
-                    insert_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS);
-                %
-                Elem > E3 ->
-                    insert_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+        key_exists,
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
+        insert_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS),
+        insert_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS),
+        insert_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS),
+        insert_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS)
+    ).
 
 -compile({inline, insert_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
 insert_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
@@ -2024,26 +1916,18 @@ insert_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
 insert_att_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
-    if
-        Elem > E1 ->
-            %
-            if
-                Elem < E2 ->
-                    insert_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS);
-                %
-                Elem > E2 ->
-                    insert_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem < E1 ->
-            insert_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS);
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
+        insert_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS),
+        insert_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS),
+        insert_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS)
+    ).
 
 -compile({inline, insert_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
 insert_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
@@ -2066,16 +1950,15 @@ insert_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
 
 -compile({inline, insert_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 insert_att_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
-    if
-        Elem < E1 ->
-            insert_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS);
+    ?GAP_SEARCH1(
+        Elem,
+        E1,
         %
-        Elem > E1 ->
-            insert_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS);
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
+        insert_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS),
+        insert_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS)
+    ).
 
 -compile({inline, insert_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
 insert_att_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
@@ -2088,168 +1971,74 @@ insert_att_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
     ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, insert_att_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 insert_att_LEAF4(Elem, ?LEAF4_ARGS) ->
-    if
-        Elem > E2 ->
-            %
-            if
-                Elem < E4 ->
-                    %
-                    if
-                        Elem > E3 ->
-                            ?SPLIT(4, []);
-                        %
-                        Elem < E3 ->
-                            ?SPLIT(3, []);
-                        %
-                        true ->
-                            key_exists
-                    end;
-                %
-                Elem > E4 ->
-                    ?SPLIT(5, []);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E2 ->
-            %
-            if
-                Elem < E1 ->
-                    ?SPLIT(1, []);
-                %
-                Elem > E1 ->
-                    ?SPLIT(2, []);
-                %
-                true ->
-                    key_exists
-            end;
+        key_exists,
+        key_exists,
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
-
-%%
-%% ?LEAF3
-%%
+        ?SPLIT(1, []),
+        ?SPLIT(2, []),
+        ?SPLIT(3, []),
+        ?SPLIT(4, []),
+        ?SPLIT(5, [])
+    ).
 
 -compile({inline, insert_att_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 insert_att_LEAF3(Elem, ?LEAF3_ARGS) ->
-    if
-        Elem < E2 ->
-            %
-            if
-                Elem < E1 ->
-                    insert_att_LEAF3_POS1(Elem, ?LEAF3_ARGS);
-                %
-                Elem > E1 ->
-                    insert_att_LEAF3_POS2(Elem, ?LEAF3_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E2 ->
-            %
-            if
-                Elem < E3 ->
-                    insert_att_LEAF3_POS3(Elem, ?LEAF3_ARGS);
-                %
-                Elem > E3 ->
-                    insert_att_LEAF3_POS4(Elem, ?LEAF3_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+        key_exists,
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
-
--compile({inline, insert_att_LEAF3_POS1 / ?LEAF3_ARITY_PLUS1}).
-insert_att_LEAF3_POS1(Elem, ?LEAF3_ARGS) ->
-    ?new_LEAF4(Elem, E1, E2, E3).
-
--compile({inline, insert_att_LEAF3_POS2 / ?LEAF3_ARITY_PLUS1}).
-insert_att_LEAF3_POS2(Elem, ?LEAF3_ARGS) ->
-    ?new_LEAF4(E1, Elem, E2, E3).
-
--compile({inline, insert_att_LEAF3_POS3 / ?LEAF3_ARITY_PLUS1}).
-insert_att_LEAF3_POS3(Elem, ?LEAF3_ARGS) ->
-    ?new_LEAF4(E1, E2, Elem, E3).
-
--compile({inline, insert_att_LEAF3_POS4 / ?LEAF3_ARITY_PLUS1}).
-insert_att_LEAF3_POS4(Elem, ?LEAF3_ARGS) ->
-    ?new_LEAF4(E1, E2, E3, Elem).
-
-%%
-%% ?LEAF2
-%%
+        ?new_LEAF4(Elem, E1, E2, E3),
+        ?new_LEAF4(E1, Elem, E2, E3),
+        ?new_LEAF4(E1, E2, Elem, E3),
+        ?new_LEAF4(E1, E2, E3, Elem)
+    ).
 
 -compile({inline, insert_att_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 insert_att_LEAF2(Elem, ?LEAF2_ARGS) ->
-    if
-        Elem > E1 ->
-            %
-            if
-                Elem < E2 ->
-                    insert_att_LEAF2_POS2(Elem, ?LEAF2_ARGS);
-                %
-                Elem > E2 ->
-                    insert_att_LEAF2_POS3(Elem, ?LEAF2_ARGS);
-                %
-                true ->
-                    key_exists
-            end;
+    ?GAP_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem < E1 ->
-            insert_att_LEAF2_POS1(Elem, ?LEAF2_ARGS);
+        key_exists,
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
-
--compile({inline, insert_att_LEAF2_POS1 / ?LEAF2_ARITY_PLUS1}).
-insert_att_LEAF2_POS1(Elem, ?LEAF2_ARGS) ->
-    ?new_LEAF3(Elem, E1, E2).
-
--compile({inline, insert_att_LEAF2_POS2 / ?LEAF2_ARITY_PLUS1}).
-insert_att_LEAF2_POS2(Elem, ?LEAF2_ARGS) ->
-    ?new_LEAF3(E1, Elem, E2).
-
--compile({inline, insert_att_LEAF2_POS3 / ?LEAF2_ARITY_PLUS1}).
-insert_att_LEAF2_POS3(Elem, ?LEAF2_ARGS) ->
-    ?new_LEAF3(E1, E2, Elem).
-
-%%
-%% ?LEAF1
-%%
+        ?new_LEAF3(Elem, E1, E2),
+        ?new_LEAF3(E1, Elem, E2),
+        ?new_LEAF3(E1, E2, Elem)
+    ).
 
 -compile({inline, insert_att_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 insert_att_LEAF1(Elem, ?LEAF1_ARGS) ->
-    if
-        Elem < E1 ->
-            insert_att_LEAF1_POS1(Elem, ?LEAF1_ARGS);
+    ?GAP_SEARCH1(
+        Elem,
+        E1,
         %
-        Elem > E1 ->
-            insert_att_LEAF1_POS2(Elem, ?LEAF1_ARGS);
+        key_exists,
         %
-        true ->
-            key_exists
-    end.
-
--compile({inline, insert_att_LEAF1_POS1 / ?LEAF1_ARITY_PLUS1}).
-insert_att_LEAF1_POS1(Elem, ?LEAF1_ARGS) ->
-    ?new_LEAF2(Elem, E1).
-
--compile({inline, insert_att_LEAF1_POS2 / ?LEAF1_ARITY_PLUS1}).
-insert_att_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
-    ?new_LEAF2(E1, Elem).
+        ?new_LEAF2(Elem, E1),
+        ?new_LEAF2(E1, Elem)
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: is_member/2
@@ -2258,13 +2047,13 @@ insert_att_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
 is_member_recur(Elem, Node) ->
     case Node of
         ?INTERNAL2_MATCH_IGN_OFFSETS ->
-            is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
+            is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS);
         %
         ?INTERNAL3_MATCH_IGN_OFFSETS ->
-            is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES);
+            is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS);
         %
         ?INTERNAL4_MATCH_IGN_OFFSETS ->
-            is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES);
+            is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS);
         %
         ?LEAF2_MATCH_ALL ->
             is_member_LEAF2(Elem, ?LEAF2_ARGS);
@@ -2280,129 +2069,83 @@ is_member_recur(Elem, Node) ->
 %% ?INTERNAL4
 %%
 
--compile({inline, is_member_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS1}).
-is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem > E2 ->
-            %
-            if
-                Elem < E4 ->
-                    %
-                    if
-                        Elem > E3 ->
-                            is_member_recur(Elem, C4);
-                        %
-                        Elem < E3 ->
-                            is_member_recur(Elem, C3);
-                        %
-                        true ->
-                            true
-                    end;
-                %
-                Elem > E4 ->
-                    is_member_recur(Elem, C5);
-                %
-                true ->
-                    true
-            end;
+-compile({inline, is_member_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_OFFSETS_PLUS1}).
+is_member_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS) ->
+    ?GAP_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E2 ->
-            %
-            if
-                Elem < E1 ->
-                    is_member_recur(Elem, C1);
-                %
-                Elem > E1 ->
-                    is_member_recur(Elem, C2);
-                %
-                true ->
-                    true
-            end;
+        true,
+        true,
+        true,
+        true,
         %
-        true ->
-            true
-    end.
+        is_member_recur(Elem, C1),
+        is_member_recur(Elem, C2),
+        is_member_recur(Elem, C3),
+        is_member_recur(Elem, C4),
+        is_member_recur(Elem, C5)
+    ).
 
 %%
 %% ?INTERNAL3
 %%
 
--compile({inline, is_member_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS1}).
-is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem < E2 ->
-            %
-            if
-                Elem < E1 ->
-                    is_member_recur(Elem, C1);
-                %
-                Elem > E1 ->
-                    is_member_recur(Elem, C2);
-                %
-                true ->
-                    true
-            end;
+-compile({inline, is_member_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_OFFSETS_PLUS1}).
+is_member_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS) ->
+    ?GAP_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E2 ->
-            %
-            if
-                Elem < E3 ->
-                    is_member_recur(Elem, C3);
-                %
-                Elem > E3 ->
-                    is_member_recur(Elem, C4);
-                %
-                true ->
-                    true
-            end;
+        true,
+        true,
+        true,
         %
-        true ->
-            true
-    end.
+        is_member_recur(Elem, C1),
+        is_member_recur(Elem, C2),
+        is_member_recur(Elem, C3),
+        is_member_recur(Elem, C4)
+    ).
 
 %%
 %% ?INTERNAL2
 %%
 
--compile({inline, is_member_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS1}).
-is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem > E1 ->
-            %
-            if
-                Elem < E2 ->
-                    is_member_recur(Elem, C2);
-                %
-                Elem > E2 ->
-                    is_member_recur(Elem, C3);
-                %
-                true ->
-                    true
-            end;
+-compile({inline, is_member_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_OFFSETS_PLUS1}).
+is_member_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS) ->
+    ?GAP_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem < E1 ->
-            is_member_recur(Elem, C1);
+        true,
+        true,
         %
-        true ->
-            true
-    end.
+        is_member_recur(Elem, C1),
+        is_member_recur(Elem, C2),
+        is_member_recur(Elem, C3)
+    ).
 
 %%
 %% ?INTERNAL1
 %%
 
--compile({inline, is_member_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
-is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem < E1 ->
-            is_member_recur(Elem, C1);
+-compile({inline, is_member_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_OFFSETS_PLUS1}).
+is_member_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS) ->
+    ?GAP_SEARCH1(
+        Elem,
+        E1,
         %
-        Elem > E1 ->
-            is_member_recur(Elem, C2);
+        true,
         %
-        true ->
-            true
-    end.
+        is_member_recur(Elem, C1),
+        is_member_recur(Elem, C2)
+    ).
 
 %%
 %% Leaves
@@ -2556,7 +2299,7 @@ rev_iterator_recur(?INTERNAL4_MATCH_IGN_OFFSETS, Acc) ->
 bound_fwd_iterator(Elem, Root) ->
     case Root of
         ?INTERNAL1_MATCH_IGN_OFFSETS ->
-            bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
+            bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS);
         %
         ?LEAF1_MATCH_ALL ->
             bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS);
@@ -2582,84 +2325,117 @@ bound_fwd_iterator_recur(Elem, Node, Acc) ->
             bound_fwd_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc);
         %
         ?INTERNAL2_MATCH_IGN_OFFSETS ->
-            bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc);
+            bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS, Acc);
         %
         ?INTERNAL3_MATCH_IGN_OFFSETS ->
-            bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc);
+            bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS, Acc);
         %
         ?INTERNAL4_MATCH_IGN_OFFSETS ->
-            bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc)
+            bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS, Acc)
     end.
 
 %% INTERNAL4
 
--compile({inline, bound_fwd_iterator_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS2}).
-bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc) ->
-    if
-        Elem > E4 ->
-            bound_fwd_iterator_recur(Elem, C5, Acc);
+-compile({inline, bound_fwd_iterator_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_OFFSETS_PLUS2}).
+bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS, Acc) ->
+    ?SMALLER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem > E3 ->
-            Acc2 = [?ITER_ELEM(E4), C5 | Acc],
-            bound_fwd_iterator_recur(Elem, C4, Acc2);
         %
-        Elem > E2 ->
-            Acc2 = [?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
-            bound_fwd_iterator_recur(Elem, C3, Acc2);
-        %
-        Elem > E1 ->
-            Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
-            bound_fwd_iterator_recur(Elem, C2, Acc2);
-        %
-        true ->
+        begin
             Acc2 = [
                 ?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc
             ],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
-    end.
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
+            bound_fwd_iterator_recur(Elem, C2, Acc2)
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
+            bound_fwd_iterator_recur(Elem, C3, Acc2)
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_ELEM(E4), C5 | Acc],
+            bound_fwd_iterator_recur(Elem, C4, Acc2)
+        end,
+        %
+        %
+        bound_fwd_iterator_recur(Elem, C5, Acc)
+    ).
 
 %% INTERNAL3
 
--compile({inline, bound_fwd_iterator_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS2}).
-bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc) ->
-    if
-        Elem > E3 ->
-            bound_fwd_iterator_recur(Elem, C4, Acc);
+-compile({inline, bound_fwd_iterator_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_OFFSETS_PLUS2}).
+bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS, Acc) ->
+    ?SMALLER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E2 ->
-            Acc2 = [?ITER_ELEM(E3), C4 | Acc],
-            bound_fwd_iterator_recur(Elem, C3, Acc2);
         %
-        Elem > E1 ->
-            Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4 | Acc],
-            bound_fwd_iterator_recur(Elem, C2, Acc2);
-        %
-        true ->
+        begin
             Acc2 = [?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
-    end.
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4 | Acc],
+            bound_fwd_iterator_recur(Elem, C2, Acc2)
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_ELEM(E3), C4 | Acc],
+            bound_fwd_iterator_recur(Elem, C3, Acc2)
+        end,
+        %
+        %
+        bound_fwd_iterator_recur(Elem, C4, Acc)
+    ).
 
 %% INTERNAL2
 
--compile({inline, bound_fwd_iterator_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS2}).
-bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc) ->
-    if
-        Elem > E2 ->
-            bound_fwd_iterator_recur(Elem, C3, Acc);
+-compile({inline, bound_fwd_iterator_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_OFFSETS_PLUS2}).
+bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS, Acc) ->
+    ?SMALLER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem > E1 ->
-            Acc2 = [?ITER_ELEM(E2), C3 | Acc],
-            bound_fwd_iterator_recur(Elem, C2, Acc2);
         %
-        true ->
+        begin
             Acc2 = [?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3 | Acc],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
-    end.
+        end,
+        %
+        %
+        begin
+            Acc2 = [?ITER_ELEM(E2), C3 | Acc],
+            bound_fwd_iterator_recur(Elem, C2, Acc2)
+        end,
+        %
+        %
+        bound_fwd_iterator_recur(Elem, C3, Acc)
+    ).
 
 %% INTERNAL1
 
--compile({inline, bound_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
-bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
+-compile({inline, bound_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_OFFSETS_PLUS1}).
+bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS) ->
     if
         Elem =< E1 ->
             Acc = [?ITER_ELEM(E1), C2],
@@ -2674,67 +2450,61 @@ bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
 
 -compile({inline, bound_fwd_iterator_LEAF4 / ?LEAF4_ARITY_PLUS2}).
 bound_fwd_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
-    if
-        Elem > E4 ->
-            Acc;
+    ?SMALLER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem > E3 ->
-            [?ITER_ELEM(E4) | Acc];
-        %
-        Elem > E2 ->
-            [?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc];
-        %
-        Elem > E1 ->
-            [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc];
-        %
-        true ->
-            [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc]
-    end.
+        [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+        [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+        [?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+        [?ITER_ELEM(E4) | Acc],
+        Acc
+    ).
 
 %% LEAF3
 
 -compile({inline, bound_fwd_iterator_LEAF3 / ?LEAF3_ARITY_PLUS2}).
 bound_fwd_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
-    if
-        Elem > E3 ->
-            Acc;
+    ?SMALLER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E2 ->
-            [?ITER_ELEM(E3) | Acc];
-        %
-        Elem > E1 ->
-            [?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc];
-        %
-        true ->
-            [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc]
-    end.
+        [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
+        [?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
+        [?ITER_ELEM(E3) | Acc],
+        Acc
+    ).
 
 %% LEAF2
 
 -compile({inline, bound_fwd_iterator_LEAF2 / ?LEAF2_ARITY_PLUS2}).
 bound_fwd_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
-    if
-        Elem > E2 ->
-            Acc;
+    ?SMALLER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem > E1 ->
-            [?ITER_ELEM(E2) | Acc];
-        %
-        true ->
-            [?ITER_ELEM(E1), ?ITER_ELEM(E2) | Acc]
-    end.
+        [?ITER_ELEM(E1), ?ITER_ELEM(E2) | Acc],
+        [?ITER_ELEM(E2) | Acc],
+        Acc
+    ).
 
 %% LEAF1
 
 -compile({inline, bound_fwd_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
-    if
-        Elem > E1 ->
-            [];
+    ?SMALLER_SEARCH1(
+        Elem,
+        E1,
         %
-        true ->
-            [?ITER_ELEM(E1)]
-    end.
+        [?ITER_ELEM(E1)],
+        []
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator_from/3 - forward
@@ -2743,7 +2513,7 @@ bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
 bound_rev_iterator(Elem, Root) ->
     case Root of
         ?INTERNAL1_MATCH_IGN_OFFSETS ->
-            bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES);
+            bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS);
         %
         ?LEAF1_MATCH_ALL ->
             bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS);
@@ -2769,159 +2539,185 @@ bound_rev_iterator_recur(Elem, Node, Acc) ->
             bound_rev_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc);
         %
         ?INTERNAL2_MATCH_IGN_OFFSETS ->
-            bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc);
+            bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS, Acc);
         %
         ?INTERNAL3_MATCH_IGN_OFFSETS ->
-            bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc);
+            bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS, Acc);
         %
         ?INTERNAL4_MATCH_IGN_OFFSETS ->
-            bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc)
+            bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS, Acc)
     end.
 
 %% INTERNAL4
 
--compile({inline, bound_rev_iterator_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS2}).
-bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES, Acc) ->
-    if
-        Elem < E1 ->
-            bound_rev_iterator_recur(Elem, C1, Acc);
+-compile({inline, bound_rev_iterator_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_OFFSETS_PLUS2}).
+bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS, Acc) ->
+    ?LARGER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E2 ->
+        %
+        bound_rev_iterator_recur(Elem, C1, Acc),
+        %
+        %
+        begin
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
-            bound_rev_iterator_recur(Elem, C2, Acc2);
+            bound_rev_iterator_recur(Elem, C2, Acc2)
+        end,
         %
-        Elem < E3 ->
+        %
+        begin
             Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
-            bound_rev_iterator_recur(Elem, C3, Acc2);
+            bound_rev_iterator_recur(Elem, C3, Acc2)
+        end,
         %
-        Elem < E4 ->
+        %
+        begin
             Acc2 = [?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
-            bound_rev_iterator_recur(Elem, C4, Acc2);
+            bound_rev_iterator_recur(Elem, C4, Acc2)
+        end,
         %
-        true ->
+        %
+        begin
             Acc2 = [
                 ?ITER_ELEM(E4), C4, ?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc
             ],
             bound_rev_iterator_recur(Elem, C5, Acc2)
-    end.
+        end
+    ).
 
 %% INTERNAL3
 
--compile({inline, bound_rev_iterator_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS2}).
-bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES, Acc) ->
-    if
-        Elem < E1 ->
-            bound_rev_iterator_recur(Elem, C1, Acc);
+-compile({inline, bound_rev_iterator_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_OFFSETS_PLUS2}).
+bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS, Acc) ->
+    ?LARGER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem < E2 ->
+        %
+        bound_rev_iterator_recur(Elem, C1, Acc),
+        %
+        %
+        begin
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
-            bound_rev_iterator_recur(Elem, C2, Acc2);
+            bound_rev_iterator_recur(Elem, C2, Acc2)
+        end,
         %
-        Elem < E3 ->
+        %
+        begin
             Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
-            bound_rev_iterator_recur(Elem, C3, Acc2);
+            bound_rev_iterator_recur(Elem, C3, Acc2)
+        end,
         %
-        true ->
+        %
+        begin
             Acc2 = [?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C4, Acc2)
-    end.
+        end
+    ).
 
 %% INTERNAL2
 
--compile({inline, bound_rev_iterator_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS2}).
-bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES, Acc) ->
-    if
-        Elem < E1 ->
-            bound_rev_iterator_recur(Elem, C1, Acc);
+-compile({inline, bound_rev_iterator_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_OFFSETS_PLUS2}).
+bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS, Acc) ->
+    ?LARGER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem < E2 ->
+        %
+        bound_rev_iterator_recur(Elem, C1, Acc),
+        %
+        %
+        begin
             Acc2 = [?ITER_ELEM(E1), C1 | Acc],
-            bound_rev_iterator_recur(Elem, C2, Acc2);
+            bound_rev_iterator_recur(Elem, C2, Acc2)
+        end,
         %
-        true ->
+        %
+        begin
             Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
-    end.
+        end
+    ).
 
 %% INTERNAL1
 
--compile({inline, bound_rev_iterator_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
-bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem >= E1 ->
-            Acc = [?ITER_ELEM(E1), C1],
-            bound_rev_iterator_recur(Elem, C2, Acc);
+-compile({inline, bound_rev_iterator_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_OFFSETS_PLUS1}).
+bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS) ->
+    ?LARGER_SEARCH1(
+        Elem,
+        E1,
         %
-        true ->
-            Acc = [],
-            bound_rev_iterator_recur(Elem, C1, Acc)
-    end.
+        bound_rev_iterator_recur(Elem, C1, []),
+        %
+        bound_rev_iterator_recur(Elem, C2, [?ITER_ELEM(E1), C1])
+    ).
 
 %% LEAF4
 
 -compile({inline, bound_rev_iterator_LEAF4 / ?LEAF4_ARITY_PLUS2}).
 bound_rev_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
-    if
-        Elem < E1 ->
-            Acc;
+    ?LARGER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E2 ->
-            [?ITER_ELEM(E1) | Acc];
-        %
-        Elem < E3 ->
-            [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc];
-        %
-        Elem < E4 ->
-            [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc];
-        %
-        true ->
-            [?ITER_ELEM(E4), ?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
-    end.
+        Acc,
+        [?ITER_ELEM(E1) | Acc],
+        [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+        [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+        [?ITER_ELEM(E4), ?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
+    ).
 
 %% LEAF3
 
 -compile({inline, bound_rev_iterator_LEAF3 / ?LEAF3_ARITY_PLUS2}).
 bound_rev_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
-    if
-        Elem < E1 ->
-            Acc;
+    ?LARGER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem < E2 ->
-            [?ITER_ELEM(E1) | Acc];
-        %
-        Elem < E3 ->
-            [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc];
-        %
-        true ->
-            [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
-    end.
+        Acc,
+        [?ITER_ELEM(E1) | Acc],
+        [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+        [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
+    ).
 
 %% LEAF2
 
 -compile({inline, bound_rev_iterator_LEAF2 / ?LEAF2_ARITY_PLUS2}).
 bound_rev_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
-    if
-        Elem < E1 ->
-            Acc;
+    ?LARGER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem < E2 ->
-            [?ITER_ELEM(E1) | Acc];
-        %
-        true ->
-            [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
-    end.
+        Acc,
+        [?ITER_ELEM(E1) | Acc],
+        [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
+    ).
 
 %% LEAF1
 
 -compile({inline, bound_rev_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
-    if
-        Elem < E1 ->
-            [];
+    ?LARGER_SEARCH1(
+        Elem,
+        E1,
         %
-        true ->
-            [?ITER_ELEM(E1)]
-    end.
+        [],
+        [?ITER_ELEM(E1)]
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: larger/2
@@ -2930,13 +2726,13 @@ bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
 larger_recur(Elem, Node) ->
     case Node of
         ?INTERNAL2_MATCH_IGN_OFFSETS ->
-            larger_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
+            larger_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS);
         %
         ?INTERNAL3_MATCH_IGN_OFFSETS ->
-            larger_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES);
+            larger_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS);
         %
         ?INTERNAL4_MATCH_IGN_OFFSETS ->
-            larger_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES);
+            larger_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS);
         %
         ?LEAF2_MATCH_ALL ->
             larger_LEAF2(Elem, ?LEAF2_ARGS);
@@ -2952,187 +2748,165 @@ larger_recur(Elem, Node) ->
 %% ?INTERNAL4
 %%
 
--compile({inline, larger_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS1}).
-larger_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem < E2 ->
-            case Elem < E1 of
-                true ->
-                    case larger_recur(Elem, C1) of
-                        none -> {found, E1};
-                        Found -> Found
-                    end;
-                _ ->
-                    case larger_recur(Elem, C2) of
-                        none -> {found, E2};
-                        Found -> Found
-                    end
-            end;
+-compile({inline, larger_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_OFFSETS_PLUS1}).
+larger_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS) ->
+    ?LARGER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E3 ->
-            case larger_recur(Elem, C3) of
-                none -> {found, E3};
-                Found -> Found
-            end;
+        case larger_recur(Elem, C1) of
+            none -> {found, E1};
+            Found -> Found
+        end,
         %
-        Elem < E4 ->
-            case larger_recur(Elem, C4) of
-                none -> {found, E4};
-                Found -> Found
-            end;
+        case larger_recur(Elem, C2) of
+            none -> {found, E2};
+            Found -> Found
+        end,
         %
-        true ->
-            larger_recur(Elem, C5)
-    end.
+        case larger_recur(Elem, C3) of
+            none -> {found, E3};
+            Found -> Found
+        end,
+        %
+        case larger_recur(Elem, C4) of
+            none -> {found, E4};
+            Found -> Found
+        end,
+        %
+        larger_recur(Elem, C5)
+    ).
 
 %%
 %% ?INTERNAL3
 %%
 
--compile({inline, larger_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS1}).
-larger_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem < E2 ->
-            case Elem < E1 of
-                true ->
-                    case larger_recur(Elem, C1) of
-                        none -> {found, E1};
-                        Found -> Found
-                    end;
-                _ ->
-                    case larger_recur(Elem, C2) of
-                        none -> {found, E2};
-                        Found -> Found
-                    end
-            end;
+-compile({inline, larger_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_OFFSETS_PLUS1}).
+larger_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS) ->
+    ?LARGER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem < E3 ->
-            case larger_recur(Elem, C3) of
-                none -> {found, E3};
-                Found -> Found
-            end;
+        case larger_recur(Elem, C1) of
+            none -> {found, E1};
+            Found -> Found
+        end,
         %
-        true ->
-            larger_recur(Elem, C4)
-    end.
+        case larger_recur(Elem, C2) of
+            none -> {found, E2};
+            Found -> Found
+        end,
+        %
+        case larger_recur(Elem, C3) of
+            none -> {found, E3};
+            Found -> Found
+        end,
+        %
+        larger_recur(Elem, C4)
+    ).
 
 %%
 %% ?INTERNAL2
 %%
 
--compile({inline, larger_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS1}).
-larger_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem < E1 ->
-            case larger_recur(Elem, C1) of
-                none -> {found, E1};
-                Found -> Found
-            end;
+-compile({inline, larger_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_OFFSETS_PLUS1}).
+larger_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS) ->
+    ?LARGER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem < E2 ->
-            case larger_recur(Elem, C2) of
-                none -> {found, E2};
-                Found -> Found
-            end;
+        case larger_recur(Elem, C1) of
+            none -> {found, E1};
+            Found -> Found
+        end,
         %
-        true ->
-            larger_recur(Elem, C3)
-    end.
+        case larger_recur(Elem, C2) of
+            none -> {found, E2};
+            Found -> Found
+        end,
+        %
+        larger_recur(Elem, C3)
+    ).
 
 %%
 %% ?INTERNAL1
 %%
 
--compile({inline, larger_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
-larger_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem < E1 ->
-            case larger_recur(Elem, C1) of
-                none -> {found, E1};
-                Found -> Found
-            end;
+-compile({inline, larger_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_OFFSETS_PLUS1}).
+larger_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS) ->
+    ?LARGER_SEARCH1(
+        Elem,
+        E1,
         %
-        true ->
-            larger_recur(Elem, C2)
-    end.
+        case larger_recur(Elem, C1) of
+            none -> {found, E1};
+            Found -> Found
+        end,
+        %
+        larger_recur(Elem, C2)
+    ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, larger_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 larger_LEAF4(Elem, ?LEAF4_ARGS) ->
-    if
-        Elem < E2 ->
-            case Elem < E1 of
-                true ->
-                    {found, E1};
-                _ ->
-                    {found, E2}
-            end;
+    ?LARGER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E3 ->
-            {found, E3};
-        %
-        Elem < E4 ->
-            {found, E4};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
+        {found, E1},
+        {found, E2},
+        {found, E3},
+        {found, E4},
+        none
+    ).
 
 -compile({inline, larger_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 larger_LEAF3(Elem, ?LEAF3_ARGS) ->
-    if
-        Elem < E2 ->
-            case Elem < E1 of
-                true ->
-                    {found, E1};
-                _ ->
-                    {found, E2}
-            end;
+    ?LARGER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem < E3 ->
-            {found, E3};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
+        {found, E1},
+        {found, E2},
+        {found, E3},
+        none
+    ).
 
 -compile({inline, larger_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 larger_LEAF2(Elem, ?LEAF2_ARGS) ->
-    if
-        Elem < E1 ->
-            {found, E1};
+    ?LARGER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem < E2 ->
-            {found, E2};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
+        {found, E1},
+        {found, E2},
+        none
+    ).
 
 -compile({inline, larger_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 larger_LEAF1(Elem, ?LEAF1_ARGS) ->
-    case Elem < E1 of
-        true ->
-            {found, E1};
+    ?LARGER_SEARCH1(
+        Elem,
+        E1,
         %
-        _ ->
-            none
-    end.
+        {found, E1},
+        none
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: largest/1
@@ -3851,37 +3625,35 @@ rank_larger_recur(Elem, Node, Acc) ->
 
 -compile({inline, rank_larger_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
 rank_larger_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
-    if
-        Elem < E2 ->
-            if
-                Elem < E1 ->
-                    case rank_larger_recur(Elem, C1, Acc) of
-                        none -> [Acc + O1 | E1];
-                        Rank -> Rank
-                    end;
-                %
-                true ->
-                    case rank_larger_recur(Elem, C2, Acc + O1) of
-                        none -> [Acc + O2 | E2];
-                        Rank -> Rank
-                    end
-            end;
+    ?LARGER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E3 ->
-            case rank_larger_recur(Elem, C3, Acc + O2) of
-                none -> [Acc + O3 | E3];
-                Rank -> Rank
-            end;
+        case rank_larger_recur(Elem, C1, Acc) of
+            none -> [Acc + O1 | E1];
+            Rank -> Rank
+        end,
         %
-        Elem < E4 ->
-            case rank_larger_recur(Elem, C4, Acc + O3) of
-                none -> [Acc + O4 | E4];
-                Rank -> Rank
-            end;
+        case rank_larger_recur(Elem, C2, Acc + O1) of
+            none -> [Acc + O2 | E2];
+            Rank -> Rank
+        end,
         %
-        true ->
-            rank_larger_recur(Elem, C5, Acc + O4)
-    end.
+        case rank_larger_recur(Elem, C3, Acc + O2) of
+            none -> [Acc + O3 | E3];
+            Rank -> Rank
+        end,
+        %
+        case rank_larger_recur(Elem, C4, Acc + O3) of
+            none -> [Acc + O4 | E4];
+            Rank -> Rank
+        end,
+        %
+        rank_larger_recur(Elem, C5, Acc + O4)
+    ).
 
 %%
 %% ?INTERNAL3
@@ -3889,31 +3661,29 @@ rank_larger_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
 
 -compile({inline, rank_larger_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
 rank_larger_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
-    if
-        Elem < E2 ->
-            if
-                Elem < E1 ->
-                    case rank_larger_recur(Elem, C1, Acc) of
-                        none -> [Acc + O1 | E1];
-                        Rank -> Rank
-                    end;
-                %
-                true ->
-                    case rank_larger_recur(Elem, C2, Acc + O1) of
-                        none -> [Acc + O2 | E2];
-                        Rank -> Rank
-                    end
-            end;
+    ?LARGER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem < E3 ->
-            case rank_larger_recur(Elem, C3, Acc + O2) of
-                none -> [Acc + O3 | E3];
-                Rank -> Rank
-            end;
+        case rank_larger_recur(Elem, C1, Acc) of
+            none -> [Acc + O1 | E1];
+            Rank -> Rank
+        end,
         %
-        true ->
-            rank_larger_recur(Elem, C4, Acc + O3)
-    end.
+        case rank_larger_recur(Elem, C2, Acc + O1) of
+            none -> [Acc + O2 | E2];
+            Rank -> Rank
+        end,
+        %
+        case rank_larger_recur(Elem, C3, Acc + O2) of
+            none -> [Acc + O3 | E3];
+            Rank -> Rank
+        end,
+        %
+        rank_larger_recur(Elem, C4, Acc + O3)
+    ).
 
 %%
 %% ?INTERNAL2
@@ -3921,25 +3691,23 @@ rank_larger_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
 
 -compile({inline, rank_larger_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
 rank_larger_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
-    if
-        Elem < E2 ->
-            if
-                Elem < E1 ->
-                    case rank_larger_recur(Elem, C1, Acc) of
-                        none -> [Acc + O1 | E1];
-                        Rank -> Rank
-                    end;
-                %
-                true ->
-                    case rank_larger_recur(Elem, C2, Acc + O1) of
-                        none -> [Acc + O2 | E2];
-                        Rank -> Rank
-                    end
-            end;
+    ?LARGER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        true ->
-            rank_larger_recur(Elem, C3, Acc + O2)
-    end.
+        case rank_larger_recur(Elem, C1, Acc) of
+            none -> [Acc + O1 | E1];
+            Rank -> Rank
+        end,
+        %
+        case rank_larger_recur(Elem, C2, Acc + O1) of
+            none -> [Acc + O2 | E2];
+            Rank -> Rank
+        end,
+        %
+        rank_larger_recur(Elem, C3, Acc + O2)
+    ).
 
 %%
 %% ?INTERNAL1
@@ -3947,94 +3715,73 @@ rank_larger_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
 
 -compile({inline, rank_larger_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 rank_larger_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
-    if
-        Elem < E1 ->
-            case rank_larger_recur(Elem, C1, 0) of
-                none -> [O1 | E1];
-                Rank -> Rank
-            end;
+    ?LARGER_SEARCH1(
+        Elem,
+        E1,
         %
-        true ->
-            Acc = O1,
-            rank_larger_recur(Elem, C2, Acc)
-    end.
+        case rank_larger_recur(Elem, C1, 0) of
+            none -> [O1 | E1];
+            Rank -> Rank
+        end,
+        %
+        rank_larger_recur(Elem, C2, O1)
+    ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, rank_larger_LEAF4 / ?LEAF4_ARITY_PLUS2}).
 rank_larger_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
-    if
-        Elem < E2 ->
-            if
-                Elem < E1 ->
-                    [Acc + 1 | E1];
-                %
-                true ->
-                    [Acc + 2 | E2]
-            end;
+    ?LARGER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem < E3 ->
-            [Acc + 3 | E3];
-        %
-        Elem < E4 ->
-            [Acc + 4 | E4];
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
+        [Acc + 1 | E1],
+        [Acc + 2 | E2],
+        [Acc + 3 | E3],
+        [Acc + 4 | E4],
+        none
+    ).
 
 -compile({inline, rank_larger_LEAF3 / ?LEAF3_ARITY_PLUS2}).
 rank_larger_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
-    if
-        Elem < E1 ->
-            [Acc + 1 | E1];
+    ?LARGER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem < E2 ->
-            [Acc + 2 | E2];
-        %
-        Elem < E3 ->
-            [Acc + 3 | E3];
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
+        [Acc + 1 | E1],
+        [Acc + 2 | E2],
+        [Acc + 3 | E3],
+        none
+    ).
 
 -compile({inline, rank_larger_LEAF2 / ?LEAF2_ARITY_PLUS2}).
 rank_larger_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
-    if
-        Elem < E1 ->
-            [Acc + 1 | E1];
+    ?LARGER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem < E2 ->
-            [Acc + 2 | E2];
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
+        [Acc + 1 | E1],
+        [Acc + 2 | E2],
+        none
+    ).
 
 -compile({inline, rank_larger_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 rank_larger_LEAF1(Elem, ?LEAF1_ARGS) ->
-    if
-        Elem < E1 ->
-            [1 | E1];
+    ?LARGER_SEARCH1(
+        Elem,
+        E1,
         %
-        true ->
-            none
-    end.
+        [1 | E1],
+        none
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: rank_smaller/2
@@ -4067,41 +3814,52 @@ rank_smaller_recur(Elem, Node, Acc) ->
 
 -compile({inline, rank_smaller_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
 rank_smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
-    if
-        Elem > E3 ->
-            if
-                Elem > E4 ->
-                    UpdatedAcc = Acc + O4,
-                    case rank_smaller_recur(Elem, C5, UpdatedAcc) of
-                        none -> [UpdatedAcc | E4];
-                        Rank -> Rank
-                    end;
-                %
-                true ->
-                    UpdatedAcc = Acc + O3,
-                    case rank_smaller_recur(Elem, C4, UpdatedAcc) of
-                        none -> [UpdatedAcc | E3];
-                        Rank -> Rank
-                    end
-            end;
+    ?SMALLER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem > E2 ->
-            UpdatedAcc = Acc + O2,
-            case rank_smaller_recur(Elem, C3, UpdatedAcc) of
-                none -> [UpdatedAcc | E2];
-                Rank -> Rank
-            end;
         %
-        Elem > E1 ->
+        rank_smaller_recur(Elem, C1, Acc),
+        %
+        %
+        begin
             UpdatedAcc = Acc + O1,
             case rank_smaller_recur(Elem, C2, UpdatedAcc) of
                 none -> [UpdatedAcc | E1];
                 Rank -> Rank
-            end;
+            end
+        end,
         %
-        true ->
-            rank_smaller_recur(Elem, C1, Acc)
-    end.
+        %
+        begin
+            UpdatedAcc = Acc + O2,
+            case rank_smaller_recur(Elem, C3, UpdatedAcc) of
+                none -> [UpdatedAcc | E2];
+                Rank -> Rank
+            end
+        end,
+        %
+        %
+        begin
+            UpdatedAcc = Acc + O3,
+            case rank_smaller_recur(Elem, C4, UpdatedAcc) of
+                none -> [UpdatedAcc | E3];
+                Rank -> Rank
+            end
+        end,
+        %
+        %
+        begin
+            UpdatedAcc = Acc + O4,
+            case rank_smaller_recur(Elem, C5, UpdatedAcc) of
+                none -> [UpdatedAcc | E4];
+                Rank -> Rank
+            end
+        end
+    ).
 
 %%
 %% ?INTERNAL3
@@ -4109,34 +3867,42 @@ rank_smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
 
 -compile({inline, rank_smaller_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
 rank_smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
-    if
-        Elem > E2 ->
-            if
-                Elem > E3 ->
-                    UpdatedAcc = Acc + O3,
-                    case rank_smaller_recur(Elem, C4, UpdatedAcc) of
-                        none -> [UpdatedAcc | E3];
-                        Rank -> Rank
-                    end;
-                %
-                true ->
-                    UpdatedAcc = Acc + O2,
-                    case rank_smaller_recur(Elem, C3, UpdatedAcc) of
-                        none -> [UpdatedAcc | E2];
-                        Rank -> Rank
-                    end
-            end;
+    ?SMALLER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E1 ->
+        %
+        rank_smaller_recur(Elem, C1, Acc),
+        %
+        %
+        begin
             UpdatedAcc = Acc + O1,
             case rank_smaller_recur(Elem, C2, UpdatedAcc) of
                 none -> [UpdatedAcc | E1];
                 Rank -> Rank
-            end;
+            end
+        end,
         %
-        true ->
-            rank_smaller_recur(Elem, C1, Acc)
-    end.
+        %
+        begin
+            UpdatedAcc = Acc + O2,
+            case rank_smaller_recur(Elem, C3, UpdatedAcc) of
+                none -> [UpdatedAcc | E2];
+                Rank -> Rank
+            end
+        end,
+        %
+        %
+        begin
+            UpdatedAcc = Acc + O3,
+            case rank_smaller_recur(Elem, C4, UpdatedAcc) of
+                none -> [UpdatedAcc | E3];
+                Rank -> Rank
+            end
+        end
+    ).
 
 %%
 %% ?INTERNAL2
@@ -4144,27 +3910,32 @@ rank_smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
 
 -compile({inline, rank_smaller_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
 rank_smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
-    if
-        Elem > E1 ->
-            if
-                Elem > E2 ->
-                    UpdatedAcc = Acc + O2,
-                    case rank_smaller_recur(Elem, C3, UpdatedAcc) of
-                        none -> [UpdatedAcc | E2];
-                        Rank -> Rank
-                    end;
-                %
-                true ->
-                    UpdatedAcc = Acc + O1,
-                    case rank_smaller_recur(Elem, C2, UpdatedAcc) of
-                        none -> [UpdatedAcc | E1];
-                        Rank -> Rank
-                    end
-            end;
+    ?SMALLER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        true ->
-            rank_smaller_recur(Elem, C1, Acc)
-    end.
+        %
+        rank_smaller_recur(Elem, C1, Acc),
+        %
+        %
+        begin
+            UpdatedAcc = Acc + O1,
+            case rank_smaller_recur(Elem, C2, UpdatedAcc) of
+                none -> [UpdatedAcc | E1];
+                Rank -> Rank
+            end
+        end,
+        %
+        %
+        begin
+            UpdatedAcc = Acc + O2,
+            case rank_smaller_recur(Elem, C3, UpdatedAcc) of
+                none -> [UpdatedAcc | E2];
+                Rank -> Rank
+            end
+        end
+    ).
 
 %%
 %% ?INTERNAL1
@@ -4172,93 +3943,78 @@ rank_smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
 
 -compile({inline, rank_smaller_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
 rank_smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
-    if
-        Elem > E1 ->
-            case rank_smaller_recur(Elem, C2, O1) of
-                none -> [O1 | E1];
-                Rank -> Rank
-            end;
+    ?SMALLER_SEARCH1(
+        Elem,
+        E1,
         %
-        true ->
-            rank_smaller_recur(Elem, C1, 0)
-    end.
+        %
+        rank_smaller_recur(Elem, C1, 0),
+        %
+        %
+        begin
+            UpdatedAcc = O1,
+            case rank_smaller_recur(Elem, C2, UpdatedAcc) of
+                none -> [UpdatedAcc | E1];
+                Rank -> Rank
+            end
+        end
+    ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, rank_smaller_LEAF4 / ?LEAF4_ARITY_PLUS2}).
 rank_smaller_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
-    if
-        Elem > E3 ->
-            if
-                Elem > E4 ->
-                    [Acc + 4 | E4];
-                %
-                true ->
-                    [Acc + 3 | E3]
-            end;
+    ?SMALLER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem > E2 ->
-            [Acc + 2 | E2];
-        %
-        Elem > E1 ->
-            [Acc + 1 | E1];
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
+        none,
+        [Acc + 1 | E1],
+        [Acc + 2 | E2],
+        [Acc + 3 | E3],
+        [Acc + 4 | E4]
+    ).
 
 -compile({inline, rank_smaller_LEAF3 / ?LEAF3_ARITY_PLUS2}).
 rank_smaller_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
-    if
-        Elem > E3 ->
-            [Acc + 3 | E3];
+    ?SMALLER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E2 ->
-            [Acc + 2 | E2];
-        %
-        Elem > E1 ->
-            [Acc + 1 | E1];
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
+        none,
+        [Acc + 1 | E1],
+        [Acc + 2 | E2],
+        [Acc + 3 | E3]
+    ).
 
 -compile({inline, rank_smaller_LEAF2 / ?LEAF2_ARITY_PLUS2}).
 rank_smaller_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
-    if
-        Elem > E2 ->
-            [Acc + 2 | E2];
+    ?SMALLER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem > E1 ->
-            [Acc + 1 | E1];
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
+        none,
+        [Acc + 1 | E1],
+        [Acc + 2 | E2]
+    ).
 
 -compile({inline, rank_smaller_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 rank_smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
-    if
-        Elem > E1 ->
-            [1 | E1];
+    ?SMALLER_SEARCH1(
+        Elem,
+        E1,
         %
-        true ->
-            none
-    end.
+        none,
+        [1 | E1]
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: smaller/2
@@ -4267,13 +4023,13 @@ rank_smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
 smaller_recur(Elem, Node) ->
     case Node of
         ?INTERNAL2_MATCH_IGN_OFFSETS ->
-            smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES);
+            smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS);
         %
         ?INTERNAL3_MATCH_IGN_OFFSETS ->
-            smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES);
+            smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS);
         %
         ?INTERNAL4_MATCH_IGN_OFFSETS ->
-            smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES);
+            smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS);
         %
         ?LEAF2_MATCH_ALL ->
             smaller_LEAF2(Elem, ?LEAF2_ARGS);
@@ -4289,187 +4045,165 @@ smaller_recur(Elem, Node) ->
 %% ?INTERNAL4
 %%
 
--compile({inline, smaller_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_SIZES_PLUS1}).
-smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem > E3 ->
-            case Elem > E4 of
-                true ->
-                    case smaller_recur(Elem, C5) of
-                        none -> {found, E4};
-                        Found -> Found
-                    end;
-                _ ->
-                    case smaller_recur(Elem, C4) of
-                        none -> {found, E3};
-                        Found -> Found
-                    end
-            end;
+-compile({inline, smaller_INTERNAL4 / ?INTERNAL4_ARITY_EXCEPT_OFFSETS_PLUS1}).
+smaller_INTERNAL4(Elem, ?INTERNAL4_ARGS_EXCEPT_OFFSETS) ->
+    ?SMALLER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem > E2 ->
-            case smaller_recur(Elem, C3) of
-                none -> {found, E2};
-                Found -> Found
-            end;
+        smaller_recur(Elem, C1),
         %
-        Elem > E1 ->
-            case smaller_recur(Elem, C2) of
-                none -> {found, E1};
-                Found -> Found
-            end;
+        case smaller_recur(Elem, C2) of
+            none -> {found, E1};
+            Found -> Found
+        end,
         %
-        true ->
-            smaller_recur(Elem, C1)
-    end.
+        case smaller_recur(Elem, C3) of
+            none -> {found, E2};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Elem, C4) of
+            none -> {found, E3};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Elem, C5) of
+            none -> {found, E4};
+            Found -> Found
+        end
+    ).
 
 %%
 %% ?INTERNAL3
 %%
 
--compile({inline, smaller_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_SIZES_PLUS1}).
-smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem > E2 ->
-            case Elem > E3 of
-                true ->
-                    case smaller_recur(Elem, C4) of
-                        none -> {found, E3};
-                        Found -> Found
-                    end;
-                _ ->
-                    case smaller_recur(Elem, C3) of
-                        none -> {found, E2};
-                        Found -> Found
-                    end
-            end;
+-compile({inline, smaller_INTERNAL3 / ?INTERNAL3_ARITY_EXCEPT_OFFSETS_PLUS1}).
+smaller_INTERNAL3(Elem, ?INTERNAL3_ARGS_EXCEPT_OFFSETS) ->
+    ?SMALLER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E1 ->
-            case smaller_recur(Elem, C2) of
-                none -> {found, E1};
-                Found -> Found
-            end;
+        smaller_recur(Elem, C1),
         %
-        true ->
-            smaller_recur(Elem, C1)
-    end.
+        case smaller_recur(Elem, C2) of
+            none -> {found, E1};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Elem, C3) of
+            none -> {found, E2};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Elem, C4) of
+            none -> {found, E3};
+            Found -> Found
+        end
+    ).
 
 %%
 %% ?INTERNAL2
 %%
 
--compile({inline, smaller_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_SIZES_PLUS1}).
-smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_SIZES) ->
-    if
-        Elem > E2 ->
-            case smaller_recur(Elem, C3) of
-                none -> {found, E2};
-                Found -> Found
-            end;
+-compile({inline, smaller_INTERNAL2 / ?INTERNAL2_ARITY_EXCEPT_OFFSETS_PLUS1}).
+smaller_INTERNAL2(Elem, ?INTERNAL2_ARGS_EXCEPT_OFFSETS) ->
+    ?SMALLER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem > E1 ->
-            case smaller_recur(Elem, C2) of
-                none -> {found, E1};
-                Found -> Found
-            end;
+        smaller_recur(Elem, C1),
         %
-        true ->
-            smaller_recur(Elem, C1)
-    end.
+        case smaller_recur(Elem, C2) of
+            none -> {found, E1};
+            Found -> Found
+        end,
+        %
+        case smaller_recur(Elem, C3) of
+            none -> {found, E2};
+            Found -> Found
+        end
+    ).
 
 %%
 %% ?INTERNAL1
 %%
 
--compile({inline, smaller_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_SIZES_PLUS1}).
-smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_SIZES) ->
-    case Elem > E1 of
-        true ->
-            case smaller_recur(Elem, C2) of
-                none -> {found, E1};
-                Found -> Found
-            end;
+-compile({inline, smaller_INTERNAL1 / ?INTERNAL1_ARITY_EXCEPT_OFFSETS_PLUS1}).
+smaller_INTERNAL1(Elem, ?INTERNAL1_ARGS_EXCEPT_OFFSETS) ->
+    ?SMALLER_SEARCH1(
+        Elem,
+        E1,
         %
-        _ ->
-            smaller_recur(Elem, C1)
-    end.
+        smaller_recur(Elem, C1),
+        %
+        case smaller_recur(Elem, C2) of
+            none -> {found, E1};
+            Found -> Found
+        end
+    ).
 
 %%
-%% ?LEAF4
+%% Leaves
 %%
 
 -compile({inline, smaller_LEAF4 / ?LEAF4_ARITY_PLUS1}).
 smaller_LEAF4(Elem, ?LEAF4_ARGS) ->
-    if
-        Elem > E3 ->
-            case Elem > E4 of
-                true ->
-                    {found, E4};
-                _ ->
-                    {found, E3}
-            end;
+    ?SMALLER_SEARCH4(
+        Elem,
+        E1,
+        E2,
+        E3,
+        E4,
         %
-        Elem > E2 ->
-            {found, E2};
-        %
-        Elem > E1 ->
-            {found, E1};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF3
-%%
+        none,
+        {found, E1},
+        {found, E2},
+        {found, E3},
+        {found, E4}
+    ).
 
 -compile({inline, smaller_LEAF3 / ?LEAF3_ARITY_PLUS1}).
 smaller_LEAF3(Elem, ?LEAF3_ARGS) ->
-    if
-        Elem > E2 ->
-            case Elem > E3 of
-                true ->
-                    {found, E3};
-                _ ->
-                    {found, E2}
-            end;
+    ?SMALLER_SEARCH3(
+        Elem,
+        E1,
+        E2,
+        E3,
         %
-        Elem > E1 ->
-            {found, E1};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF2
-%%
+        none,
+        {found, E1},
+        {found, E2},
+        {found, E3}
+    ).
 
 -compile({inline, smaller_LEAF2 / ?LEAF2_ARITY_PLUS1}).
 smaller_LEAF2(Elem, ?LEAF2_ARGS) ->
-    if
-        Elem > E2 ->
-            {found, E2};
+    ?SMALLER_SEARCH2(
+        Elem,
+        E1,
+        E2,
         %
-        Elem > E1 ->
-            {found, E1};
-        %
-        true ->
-            none
-    end.
-
-%%
-%% ?LEAF1
-%%
+        none,
+        {found, E1},
+        {found, E2}
+    ).
 
 -compile({inline, smaller_LEAF1 / ?LEAF1_ARITY_PLUS1}).
 smaller_LEAF1(Elem, ?LEAF1_ARGS) ->
-    case Elem > E1 of
-        true ->
-            {found, E1};
+    ?SMALLER_SEARCH1(
+        Elem,
+        E1,
         %
-        _ ->
-            none
-    end.
+        none,
+        {found, E1}
+    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: smallest/1
