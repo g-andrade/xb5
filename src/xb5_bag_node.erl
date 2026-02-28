@@ -799,7 +799,7 @@ add_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
         Elem =< E1 ->
             add_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS);
         %
-        Elem > E1 ->
+        true ->
             add_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS)
     end.
 
