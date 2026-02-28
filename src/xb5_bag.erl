@@ -251,6 +251,19 @@ add(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
 
 %%
 
+-doc """
+Returns the number of occurrences of `Element` in `Bag`. Runs in O(log n) time.
+
+## Examples
+
+```erlang
+> B = xb5_bag:from_list([1, 2, 2, 3]).
+> xb5_bag:count(2, B).
+2
+> xb5_bag:count(4, B).
+0
+```
+""".
 -spec count(Element, Bag) -> Count when
     Bag :: bag(Element),
     Count :: non_neg_integer().
