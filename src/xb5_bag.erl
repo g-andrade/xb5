@@ -452,6 +452,9 @@ fold(Fun, Acc, #xb5_bag{root = Root}) ->
 Returns a bag of the elements in `List`. Unlike `xb5_sets:from_list/1`,
 duplicate elements are preserved.
 
+It sorts the `List` and then delegates to `from_ordered_list/1` - see that
+function for performance characteristics.
+
 ## Examples
 
 ```erlang
@@ -466,9 +469,7 @@ duplicate elements are preserved.
     Bag :: bag(Element).
 
 from_list(List) ->
-    Root = xb5_bag_node:new(),
-    Size = 0,
-    from_list_recur(List, Size, Root).
+    from_ordered_list(lists:sort(List)).
 
 %%
 
@@ -1409,14 +1410,6 @@ error_empty_bag() ->
 -spec error_key_exists(_) -> no_return().
 error_key_exists(Elem) ->
     error({key_exists, Elem}).
-
-%%
-
-from_list_recur([Element | Next], Size, Root) ->
-    UpdatedRoot = xb5_bag_node:add(Element, Root),
-    from_list_recur(Next, Size + 1, UpdatedRoot);
-from_list_recur([], Size, Root) ->
-    #xb5_bag{size = Size, root = Root}.
 
 %%%%%%%%
 

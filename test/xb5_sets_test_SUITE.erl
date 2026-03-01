@@ -200,7 +200,8 @@ test_construction(_Config) ->
             ?assertListsCanonEqual(RefElements, xb5_sets:to_list(Set)),
             ?assertEqual(Size, xb5_sets:size(Set)),
             ?assertEqual(Size =:= 0, xb5_sets:is_empty(Set)),
-            ?assertEqual(Set, new_set_from_each_inserted(RefElements)),
+
+            ?assertEqual(RefElements, xb5_sets:to_list(new_set_from_each_inserted(RefElements))),
 
             ?assertEqual(RefElements, xb5_sets:to_list(xb5_sets:from_ordset(RefElements))),
 
@@ -584,15 +585,11 @@ test_structure_sequentially_built(_Config) ->
             fun(RefElements) ->
                 ?assertEqual(RefElements, lists:usort(RefElements)),
 
-                case rand:uniform(4) of
+                case rand:uniform(2) of
                     1 ->
                         new_set_from_each_inserted(RefElements);
                     2 ->
-                        xb5_sets:from_list(RefElements);
-                    3 ->
-                        new_set_from_each_inserted(lists:reverse(RefElements));
-                    4 ->
-                        xb5_sets:from_list(lists:reverse(RefElements))
+                        new_set_from_each_inserted(lists:reverse(RefElements))
                 end
             end
         ),
@@ -793,7 +790,7 @@ foreach_test_set(Fun) ->
 foreach_test_set(Fun, Opts) ->
     foreach_tested_size(
         fun(Size, RefElements) ->
-            Set = xb5_sets:from_list(maybe_shuffle_elements_for_new_set(RefElements)),
+            Set = new_set_from_each_inserted(maybe_shuffle_elements_for_new_set(RefElements)),
             ?assertEqual(Size, xb5_sets:size(Set)),
 
             Stats = xb5_sets:structural_stats(Set),

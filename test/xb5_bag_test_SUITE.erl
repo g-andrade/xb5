@@ -237,7 +237,10 @@ test_construction(_Config) ->
             ?assertListsCanonEqual(RefElements, xb5_bag:to_list(Bag)),
             ?assertEqual(Size, xb5_bag:size(Bag)),
             ?assertEqual(Size =:= 0, xb5_bag:is_empty(Bag)),
-            ?assertEqual(Bag, new_bag_from_each_added(RefElements)),
+
+            ?assertListsCanonEqual(
+                RefElements, xb5_bag:to_list(new_bag_from_each_added(RefElements))
+            ),
 
             ?assertListsCanonEqual(
                 RefElements, xb5_bag:to_list(xb5_bag:from_ordered_list(RefElements))
@@ -1125,15 +1128,11 @@ test_structure_sequentially_built(_Config) ->
             fun(RefElements) ->
                 ?assertEqual(RefElements, lists:usort(RefElements)),
 
-                case rand:uniform(4) of
+                case rand:uniform(2) of
                     1 ->
                         new_bag_from_each_added(RefElements);
                     2 ->
-                        xb5_bag:from_list(RefElements);
-                    3 ->
-                        new_bag_from_each_added(lists:reverse(RefElements));
-                    4 ->
-                        xb5_bag:from_list(lists:reverse(RefElements))
+                        new_bag_from_each_added(lists:reverse(RefElements))
                 end
             end
         ),
@@ -1334,7 +1333,7 @@ foreach_test_bag(Fun) ->
 foreach_test_bag(Fun, Opts) ->
     foreach_tested_size(
         fun(Size, RefElements) ->
-            Bag = xb5_bag:from_list(maybe_shuffle_elements_for_new_bag(RefElements)),
+            Bag = new_bag_from_each_added(maybe_shuffle_elements_for_new_bag(RefElements)),
 
             Stats = xb5_bag:structural_stats(Bag),
             ?assertEqual(Size, proplists:get_value(total_keys, Stats)),

@@ -343,6 +343,9 @@ foldr(Fun, Acc0, #xb5_tree{root = Root}) ->
 Returns a tree of the key-value pairs in `List`. Duplicate keys are
 resolved by keeping the last occurrence.
 
+It sorts the `List` by key and then delegates to `from_orddict/1` - see that
+function for performance characteristics.
+
 ## Examples
 
 ```erlang
@@ -359,9 +362,7 @@ resolved by keeping the last occurrence.
     Tree :: tree(Key, Value).
 
 from_list(List) ->
-    Size = 0,
-    Root = xb5_trees_node:new(),
-    from_list_recur(List, Size, Root).
+    from_orddict(orddict:from_list(List)).
 
 %%
 
@@ -1213,17 +1214,3 @@ error_empty_tree() ->
 -spec error_key_exists(term()) -> no_return().
 error_key_exists(Key) ->
     error({key_exists, Key}).
-
-%%
-
-from_list_recur([{Key, Value} | Next], Size, Root) ->
-    case xb5_trees_node:insert_att(Key, eager, Value, Root) of
-        key_exists ->
-            UpdatedRoot = xb5_trees_node:update_att(Key, eager, Value, Root),
-            from_list_recur(Next, Size, UpdatedRoot);
-        %
-        UpdatedRoot ->
-            from_list_recur(Next, Size + 1, UpdatedRoot)
-    end;
-from_list_recur([], Size, Root) ->
-    #xb5_tree{size = Size, root = Root}.

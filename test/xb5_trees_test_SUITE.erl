@@ -190,7 +190,10 @@ test_construction(_Config) ->
             ?assertKvListsCanonEqual(RefKvs, xb5_trees:to_list(Tree)),
             ?assertEqual(Size, xb5_trees:size(Tree)),
             ?assertEqual(Size =:= 0, xb5_trees:is_empty(Tree)),
-            ?assertEqual(Tree, new_tree_from_each_inserted(RefKvs)),
+
+            ?assertKvListsCanonEqual(
+                RefKvs, xb5_trees:to_list(new_tree_from_each_inserted(RefKvs))
+            ),
 
             ?assertKvListsCanonEqual(RefKvs, xb5_trees:to_list(xb5_trees:from_orddict(RefKvs))),
 
@@ -748,15 +751,11 @@ test_structure_sequentially_built(_Config) ->
             fun(RefKvs) ->
                 ?assertEqual(RefKvs, lists:keysort(1, RefKvs)),
 
-                case rand:uniform(4) of
+                case rand:uniform(2) of
                     1 ->
                         new_tree_from_each_inserted(RefKvs);
                     2 ->
-                        xb5_trees:from_list(RefKvs);
-                    3 ->
-                        new_tree_from_each_inserted(lists:reverse(RefKvs));
-                    4 ->
-                        xb5_trees:from_list(lists:reverse(RefKvs))
+                        new_tree_from_each_inserted(lists:reverse(RefKvs))
                 end
             end
         ),
@@ -957,7 +956,7 @@ foreach_test_tree(Fun) ->
 foreach_test_tree(Fun, Opts) ->
     foreach_tested_size(
         fun(Size, RefKvs) ->
-            Tree = xb5_trees:from_list(maybe_shuffle_list_for_new_tree(RefKvs)),
+            Tree = new_tree_from_each_inserted(maybe_shuffle_list_for_new_tree(RefKvs)),
             ?assertEqual(Size, xb5_trees:size(Tree)),
 
             Stats = xb5_trees:structural_stats(Tree),

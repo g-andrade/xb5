@@ -416,6 +416,9 @@ fold(Fun, Acc, #xb5_set{root = Root}) ->
 -doc """
 Returns a set of the elements in `List`. Duplicate elements are removed.
 
+It sorts the `List` and then delegates to `from_ordset/1` - see that function
+for performance characteristics.
+
 ## Examples
 
 ```erlang
@@ -430,9 +433,7 @@ Returns a set of the elements in `List`. Duplicate elements are removed.
     Set :: set(Element).
 
 from_list(List) ->
-    Root = xb5_sets_node:new(),
-    Size = 0,
-    from_list_recur(List, Root, Size).
+    from_ordset(ordsets:from_list(List)).
 
 %%
 
@@ -1226,20 +1227,6 @@ error_empty_set() ->
 -spec error_key_exists(_) -> no_return().
 error_key_exists(Elem) ->
     error({key_exists, Elem}).
-
-%%
-
-from_list_recur([Element | Next], Root, Size) ->
-    case xb5_sets_node:insert_att(Element, Root) of
-        key_exists ->
-            from_list_recur(Next, Root, Size);
-        %
-        UpdatedRoot ->
-            UpdatedSize = Size + 1,
-            from_list_recur(Next, UpdatedRoot, UpdatedSize)
-    end;
-from_list_recur([], Root, Size) ->
-    #xb5_set{size = Size, root = Root}.
 
 %%
 
