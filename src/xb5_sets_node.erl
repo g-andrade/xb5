@@ -149,8 +149,7 @@ API for operating over `m:xb5_sets` internal nodes directly.
 
 %%%%%%%
 
-%-define(ITER_ELEM(Elem), [Elem]).
--define(ITER_POS(Pos, Node), [Pos | Node]).
+-define(ITER_ELEM(Elem), [Elem]).
 -define(REV_ITER_TAG, reversed).
 
 %% ------------------------------------------------------------------
@@ -163,7 +162,6 @@ API for operating over `m:xb5_sets` internal nodes directly.
 -define(INTERNAL4_ARITY, 9).
 -define(INTERNAL4_ARITY_PLUS1, 10).
 -define(INTERNAL4_ARITY_PLUS2, 11).
--define(INTERNAL4_ARITY_PLUS3, 12).
 
 -define(INTERNAL4_UPD_C1(UpdatedC1),
     ?new_INTERNAL4(E1, E2, E3, E4, UpdatedC1, C2, C3, C4, C5)
@@ -208,7 +206,6 @@ API for operating over `m:xb5_sets` internal nodes directly.
 -define(INTERNAL3_ARITY, 7).
 -define(INTERNAL3_ARITY_PLUS1, 8).
 -define(INTERNAL3_ARITY_PLUS2, 9).
--define(INTERNAL3_ARITY_PLUS3, 10).
 
 -define(INTERNAL3_UPD_C1(UpdatedC1), ?new_INTERNAL3(E1, E2, E3, UpdatedC1, C2, C3, C4)).
 -define(INTERNAL3_UPD_C2(UpdatedC2), ?new_INTERNAL3(E1, E2, E3, C1, UpdatedC2, C3, C4)).
@@ -238,7 +235,6 @@ API for operating over `m:xb5_sets` internal nodes directly.
 -define(INTERNAL2_ARITY, 5).
 -define(INTERNAL2_ARITY_PLUS1, 6).
 -define(INTERNAL2_ARITY_PLUS2, 7).
--define(INTERNAL2_ARITY_PLUS3, 8).
 
 -define(INTERNAL2_UPD_C1(UpdatedC1), ?new_INTERNAL2(E1, E2, UpdatedC1, C2, C3)).
 -define(INTERNAL2_UPD_C2(UpdatedC2), ?new_INTERNAL2(E1, E2, C1, UpdatedC2, C3)).
@@ -280,25 +276,24 @@ API for operating over `m:xb5_sets` internal nodes directly.
 
 -define(LEAF4_ARGS, E1, E2, E3, E4).
 -define(LEAF4_ARITY_PLUS1, 5).
--define(LEAF4_ARITY_PLUS3, 7).
+-define(LEAF4_ARITY_PLUS2, 6).
 
 %% ?LEAF3
 
 -define(LEAF3_ARGS, E1, E2, E3).
 -define(LEAF3_ARITY_PLUS1, 4).
--define(LEAF3_ARITY_PLUS3, 6).
+-define(LEAF3_ARITY_PLUS2, 5).
 
 %% ?LEAF2
 
 -define(LEAF2_ARGS, E1, E2).
 -define(LEAF2_ARITY_PLUS1, 3).
--define(LEAF2_ARITY_PLUS3, 5).
+-define(LEAF2_ARITY_PLUS2, 4).
 
 %% ?LEAF1
 
 -define(LEAF1_ARGS, E1).
 -define(LEAF1_ARITY_PLUS1, 2).
--define(LEAF1_ARITY_PLUS2, 3).
 
 %%
 
@@ -1677,22 +1672,28 @@ intersection_2(_List1, [], AccSize, Acc) ->
 %% ------------------------------------------------------------------
 
 is_disjoint_root(Root1, Root2) ->
-    % TODO optimize as before?
     MinElem = smallest(Root2),
     MaxElem = largest(Root2),
     Iter = bound_fwd_iterator(MinElem, Root1),
     is_disjoint_recur(Iter, Root2, MaxElem).
 
-is_disjoint_recur(Iter1, Root2, MaxElem) ->
-    case next(Iter1) of
-        {Elem, Next} ->
+is_disjoint_recur([Head | Tail], Root2, MaxElem) ->
+    is_disjoint_iter(Head, Tail, Root2, MaxElem);
+is_disjoint_recur([], _Root2, _MaxElem) ->
+    true.
+
+-compile({inline, is_disjoint_iter/4}).
+is_disjoint_iter(Head, Tail, Root2, MaxElem) ->
+    case Head of
+        ?ITER_ELEM(Elem) ->
+            Next = Tail,
             is_disjoint_check(Elem, Next, Root2, MaxElem);
         %
-        none ->
-            true
+        Node ->
+            [?ITER_ELEM(Elem) | Next] = fwd_iterator_recur(Node, Tail),
+            is_disjoint_check(Elem, Next, Root2, MaxElem)
     end.
 
--compile({inline, is_disjoint_check/4}).
 is_disjoint_check(Elem, Next, Root2, MaxElem) ->
     case is_member(Elem, Root2) of
         true ->
@@ -1709,22 +1710,37 @@ is_disjoint_check(Elem, Next, Root2, MaxElem) ->
 %% Internal Function Definitions: is_equal/2
 %% ------------------------------------------------------------------
 
-is_equal_recur(IterA, IterB) ->
-    % TODO optimize as before?
-    case next(IterA) of
-        {ElemA, NextA} ->
-            case next(IterB) of
-                {ElemB, NextB} ->
-                    (ElemA == ElemB andalso
-                        is_equal_recur(NextA, NextB));
-                %
-                none ->
-                    false
-            end;
+is_equal_recur([HeadA | TailA], IterB) ->
+    is_equal_iterA(HeadA, TailA, IterB);
+is_equal_recur([], []) ->
+    true.
+
+-compile({is_equal_iterA/3}).
+is_equal_iterA(HeadA, TailA, IterB) ->
+    case HeadA of
+        ?ITER_ELEM(ElemA) ->
+            NextA = TailA,
+            is_equal_iterB(ElemA, NextA, IterB);
         %
-        none ->
-            next(IterB) =:= none
+        NodeA ->
+            [?ITER_ELEM(ElemA) | NextA] = fwd_iterator_recur(NodeA, TailA),
+            is_equal_iterB(ElemA, NextA, IterB)
     end.
+
+is_equal_iterB(ElemA, NextA, [HeadB | TailB]) ->
+    case HeadB of
+        ?ITER_ELEM(ElemB) ->
+            NextB = TailB,
+            is_equal_check(ElemA, NextA, ElemB, NextB);
+        %
+        NodeB ->
+            [?ITER_ELEM(ElemB) | NextB] = fwd_iterator_recur(NodeB, TailB),
+            is_equal_check(ElemA, NextA, ElemB, NextB)
+    end.
+
+-compile({is_equal_check/4}).
+is_equal_check(ElemA, NextA, ElemB, NextB) ->
+    (ElemA == ElemB) andalso is_equal_recur(NextA, NextB).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: is_member/2
@@ -1900,83 +1916,121 @@ is_subset_2(_, []) ->
 %% Internal Function Definitions: iterator/2 - forward
 %% ------------------------------------------------------------------
 
+fwd_iterator(?INTERNAL1_MATCH(E1, C1, C2)) ->
+    Acc = [?ITER_ELEM(E1), C2],
+    fwd_iterator_recur(C1, Acc);
+fwd_iterator(?LEAF1_MATCH(E1)) ->
+    Iter = [?ITER_ELEM(E1)],
+    Iter;
+fwd_iterator(?LEAF0) ->
+    Iter = [],
+    Iter;
 fwd_iterator(Root) ->
-    case Root of
-        ?INTERNAL1_MATCH(_, C1, _) ->
-            Acc = [Root],
-            fwd_iterator_recur(C1, Acc);
-        %
-        ?LEAF1_MATCH(_) ->
-            [Root];
-        %
-        ?LEAF0 ->
-            [];
-        %
-        _ ->
-            fwd_iterator_recur(Root, [])
-    end.
+    Acc = [],
+    fwd_iterator_recur(Root, Acc).
 
-fwd_iterator_recur(Node, Acc) ->
-    Acc2 = [Node | Acc],
-
-    case iterator_node_c1(Node) of
-        none ->
-            Acc2;
-        %
-        C1 ->
-            fwd_iterator_recur(C1, Acc2)
-    end.
-
-%%
-
-iterator_node_c1(?INTERNAL2_MATCH(_, _, C1, _, _)) ->
-    C1;
-iterator_node_c1(?INTERNAL3_MATCH(_, _, _, C1, _, _, _)) ->
-    C1;
-iterator_node_c1(?INTERNAL4_MATCH(_, _, _, _, C1, _, _, _, _)) ->
-    C1;
-iterator_node_c1(_Node) ->
-    none.
+fwd_iterator_recur(?LEAF2_MATCH_ALL, Acc) ->
+    Acc2 = [?ITER_ELEM(E1), ?ITER_ELEM(E2) | Acc],
+    Acc2;
+fwd_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
+    Acc2 = [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
+    Acc2;
+fwd_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
+    Acc2 = [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
+    Acc2;
+fwd_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
+    Acc2 = [
+        ?ITER_ELEM(E1),
+        C2,
+        ?ITER_ELEM(E2),
+        C3
+        | Acc
+    ],
+    fwd_iterator_recur(C1, Acc2);
+fwd_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
+    Acc2 = [
+        ?ITER_ELEM(E1),
+        C2,
+        ?ITER_ELEM(E2),
+        C3,
+        ?ITER_ELEM(E3),
+        C4
+        | Acc
+    ],
+    fwd_iterator_recur(C1, Acc2);
+fwd_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
+    Acc2 = [
+        ?ITER_ELEM(E1),
+        C2,
+        ?ITER_ELEM(E2),
+        C3,
+        ?ITER_ELEM(E3),
+        C4,
+        ?ITER_ELEM(E4),
+        C5
+        | Acc
+    ],
+    fwd_iterator_recur(C1, Acc2).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - reverse
 %% ------------------------------------------------------------------
 
+rev_iterator(?INTERNAL1_MATCH(E1, C1, C2)) ->
+    Acc = [?ITER_ELEM(E1), C1],
+    rev_iterator_recur(C2, Acc);
+rev_iterator(?LEAF1_MATCH(E1)) ->
+    Iter = [?ITER_ELEM(E1)],
+    Iter;
+rev_iterator(?LEAF0) ->
+    Iter = [],
+    Iter;
 rev_iterator(Root) ->
-    case Root of
-        ?INTERNAL1_MATCH(_, _, C2) ->
-            Acc = [Root],
-            rev_iterator_recur(C2, Acc);
-        %
-        ?LEAF1_MATCH(_) ->
-            [Root];
-        %
-        ?LEAF0 ->
-            [];
-        %
-        _ ->
-            rev_iterator_recur(Root, [])
-    end.
+    Acc = [],
+    rev_iterator_recur(Root, Acc).
 
-rev_iterator_recur(Node, Acc) ->
-    Acc2 = [Node | Acc],
-
-    case iterator_node_rightmost_child(Node) of
-        none ->
-            Acc2;
-        %
-        RightmostC ->
-            rev_iterator_recur(RightmostC, Acc2)
-    end.
-
-iterator_node_rightmost_child(?INTERNAL2_MATCH(_, _, _, _, C3)) ->
-    C3;
-iterator_node_rightmost_child(?INTERNAL3_MATCH(_, _, _, _, _, _, C4)) ->
-    C4;
-iterator_node_rightmost_child(?INTERNAL4_MATCH(_, _, _, _, _, _, _, _, C5)) ->
-    C5;
-iterator_node_rightmost_child(_Leaf) ->
-    none.
+rev_iterator_recur(?LEAF2_MATCH_ALL, Acc) ->
+    Acc2 = [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+    Acc2;
+rev_iterator_recur(?LEAF3_MATCH_ALL, Acc) ->
+    Acc2 = [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+    Acc2;
+rev_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
+    Acc2 = [?ITER_ELEM(E4), ?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
+    Acc2;
+rev_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
+    Acc2 = [
+        ?ITER_ELEM(E2),
+        C2,
+        ?ITER_ELEM(E1),
+        C1
+        | Acc
+    ],
+    rev_iterator_recur(C3, Acc2);
+rev_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
+    Acc2 = [
+        ?ITER_ELEM(E3),
+        C3,
+        ?ITER_ELEM(E2),
+        C2,
+        ?ITER_ELEM(E1),
+        C1
+        | Acc
+    ],
+    rev_iterator_recur(C4, Acc2);
+rev_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
+    Acc2 = [
+        ?ITER_ELEM(E4),
+        C4,
+        ?ITER_ELEM(E3),
+        C3,
+        ?ITER_ELEM(E2),
+        C2,
+        ?ITER_ELEM(E1),
+        C1
+        | Acc
+    ],
+    rev_iterator_recur(C5, Acc2).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator_from/3 - forward
@@ -1985,10 +2039,10 @@ iterator_node_rightmost_child(_Leaf) ->
 bound_fwd_iterator(Elem, Root) ->
     case Root of
         ?INTERNAL1_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL1(Elem, Root, ?INTERNAL1_ARGS);
+            bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS);
         %
         ?LEAF1_MATCH_ALL ->
-            bound_fwd_iterator_LEAF1(Elem, Root, ?LEAF1_ARGS);
+            bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS);
         %
         ?LEAF0 ->
             Iter = [],
@@ -2002,28 +2056,28 @@ bound_fwd_iterator(Elem, Root) ->
 bound_fwd_iterator_recur(Elem, Node, Acc) ->
     case Node of
         ?LEAF2_MATCH_ALL ->
-            bound_fwd_iterator_LEAF2(Elem, Node, ?LEAF2_ARGS, Acc);
+            bound_fwd_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc);
         %
         ?LEAF3_MATCH_ALL ->
-            bound_fwd_iterator_LEAF3(Elem, Node, ?LEAF3_ARGS, Acc);
+            bound_fwd_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc);
         %
         ?LEAF4_MATCH_ALL ->
-            bound_fwd_iterator_LEAF4(Elem, Node, ?LEAF4_ARGS, Acc);
+            bound_fwd_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc);
         %
         ?INTERNAL2_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL2(Elem, Node, ?INTERNAL2_ARGS, Acc);
+            bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc);
         %
         ?INTERNAL3_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL3(Elem, Node, ?INTERNAL3_ARGS, Acc);
+            bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc);
         %
         ?INTERNAL4_MATCH_ALL ->
-            bound_fwd_iterator_INTERNAL4(Elem, Node, ?INTERNAL4_ARGS, Acc)
+            bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc)
     end.
 
 %% INTERNAL4
 
--compile({inline, bound_fwd_iterator_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
-bound_fwd_iterator_INTERNAL4(Elem, Node, ?INTERNAL4_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
+bound_fwd_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
     ?SMALLER_SEARCH4(
         Elem,
         E1,
@@ -2033,36 +2087,45 @@ bound_fwd_iterator_INTERNAL4(Elem, Node, ?INTERNAL4_ARGS, Acc) ->
         %
         % Elem =< E1
         begin
-            Acc2 = [Node | Acc],
+            Acc2 = [
+                ?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc
+            ],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
         end,
         %
         % Elem =< E2
         begin
-            Acc2 = [?ITER_POS(2, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
             bound_fwd_iterator_recur(Elem, C2, Acc2)
         end,
         %
         % Elem =< E3
         begin
-            Acc2 = [?ITER_POS(3, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E3), C4, ?ITER_ELEM(E4), C5 | Acc],
             bound_fwd_iterator_recur(Elem, C3, Acc2)
         end,
         %
         % Elem =< E4
         begin
-            Acc2 = [?ITER_POS(4, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E4), C5 | Acc],
             bound_fwd_iterator_recur(Elem, C4, Acc2)
         end,
         %
         % Elem > E4
-        bound_fwd_iterator_recur(Elem, C5, Acc)
+        case Acc of
+            [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_fwd_iterator_recur(Elem, C5, Acc)
+        end
     ).
 
 %% INTERNAL3
 
--compile({inline, bound_fwd_iterator_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
-bound_fwd_iterator_INTERNAL3(Elem, Node, ?INTERNAL3_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
+bound_fwd_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
     ?SMALLER_SEARCH3(
         Elem,
         E1,
@@ -2071,30 +2134,37 @@ bound_fwd_iterator_INTERNAL3(Elem, Node, ?INTERNAL3_ARGS, Acc) ->
         %
         % Elem =< E1
         begin
-            Acc2 = [Node | Acc],
+            Acc2 = [?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
         end,
         %
         % Elem =< E2
         begin
-            Acc2 = [?ITER_POS(2, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E2), C3, ?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C2, Acc2)
         end,
         %
         % Elem =< E3
         begin
-            Acc2 = [?ITER_POS(3, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E3), C4 | Acc],
             bound_fwd_iterator_recur(Elem, C3, Acc2)
         end,
         %
         % Elem > E3
-        bound_fwd_iterator_recur(Elem, C4, Acc)
+        case Acc of
+            [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_fwd_iterator_recur(Elem, C4, Acc)
+        end
     ).
 
 %% INTERNAL2
 
--compile({inline, bound_fwd_iterator_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
-bound_fwd_iterator_INTERNAL2(Elem, Node, ?INTERNAL2_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
+bound_fwd_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
     ?SMALLER_SEARCH2(
         Elem,
         E1,
@@ -2102,27 +2172,34 @@ bound_fwd_iterator_INTERNAL2(Elem, Node, ?INTERNAL2_ARGS, Acc) ->
         %
         % Elem =< E1
         begin
-            Acc2 = [Node | Acc],
+            Acc2 = [?ITER_ELEM(E1), C2, ?ITER_ELEM(E2), C3 | Acc],
             bound_fwd_iterator_recur(Elem, C1, Acc2)
         end,
         %
         % Elem =< E2
         begin
-            Acc2 = [?ITER_POS(2, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E2), C3 | Acc],
             bound_fwd_iterator_recur(Elem, C2, Acc2)
         end,
         %
         % Elem > E2
-        bound_fwd_iterator_recur(Elem, C3, Acc)
+        case Acc of
+            [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_fwd_iterator_recur(Elem, C3, Acc)
+        end
     ).
 
 %% INTERNAL1
 
--compile({inline, bound_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS2}).
-bound_fwd_iterator_INTERNAL1(Elem, Node, ?INTERNAL1_ARGS) ->
+-compile({inline, bound_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+bound_fwd_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     if
         Elem < E1 ->
-            Acc = [Node],
+            Acc = [?ITER_ELEM(E1), C2],
             bound_fwd_iterator_recur(Elem, C1, Acc);
         %
         Elem > E1 ->
@@ -2130,13 +2207,13 @@ bound_fwd_iterator_INTERNAL1(Elem, Node, ?INTERNAL1_ARGS) ->
             bound_fwd_iterator_recur(Elem, C2, Acc);
         %
         true ->
-            _Acc = [Node]
+            _Acc = [?ITER_ELEM(E1), C2]
     end.
 
 %% LEAF4
 
--compile({inline, bound_fwd_iterator_LEAF4 / ?LEAF4_ARITY_PLUS3}).
-bound_fwd_iterator_LEAF4(Elem, Node, ?LEAF4_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_LEAF4 / ?LEAF4_ARITY_PLUS2}).
+bound_fwd_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
     ?SMALLER_SEARCH4(
         Elem,
         E1,
@@ -2144,61 +2221,61 @@ bound_fwd_iterator_LEAF4(Elem, Node, ?LEAF4_ARGS, Acc) ->
         E3,
         E4,
         % Elem =< E1
-        [Node | Acc],
+        [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
         % Elem =< E2
-        [?ITER_POS(2, Node) | Acc],
+        [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
         % Elem =< E3
-        [?ITER_POS(3, Node) | Acc],
+        [?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
         % Elem =< E4
-        [?ITER_POS(4, Node) | Acc],
+        [?ITER_ELEM(E4) | Acc],
         % Elem > E4
         Acc
     ).
 
 %% LEAF3
 
--compile({inline, bound_fwd_iterator_LEAF3 / ?LEAF3_ARITY_PLUS3}).
-bound_fwd_iterator_LEAF3(Elem, Node, ?LEAF3_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_LEAF3 / ?LEAF3_ARITY_PLUS2}).
+bound_fwd_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
     ?SMALLER_SEARCH3(
         Elem,
         E1,
         E2,
         E3,
         % Elem =< E1
-        [Node | Acc],
+        [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
         % Elem =< E2
-        [?ITER_POS(2, Node) | Acc],
+        [?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc],
         % Elem =< E3
-        [?ITER_POS(3, Node) | Acc],
+        [?ITER_ELEM(E3) | Acc],
         % Elem > E3
         Acc
     ).
 
 %% LEAF2
 
--compile({inline, bound_fwd_iterator_LEAF2 / ?LEAF2_ARITY_PLUS3}).
-bound_fwd_iterator_LEAF2(Elem, Node, ?LEAF2_ARGS, Acc) ->
+-compile({inline, bound_fwd_iterator_LEAF2 / ?LEAF2_ARITY_PLUS2}).
+bound_fwd_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
     ?SMALLER_SEARCH2(
         Elem,
         E1,
         E2,
         % Elem =< E1
-        [Node | Acc],
+        [?ITER_ELEM(E1), ?ITER_ELEM(E2) | Acc],
         % Elem =< E2
-        [?ITER_POS(2, Node) | Acc],
+        [?ITER_ELEM(E2) | Acc],
         % Elem > E2
         Acc
     ).
 
 %% LEAF1
 
--compile({inline, bound_fwd_iterator_LEAF1 / ?LEAF1_ARITY_PLUS2}).
-bound_fwd_iterator_LEAF1(Elem, Node, ?LEAF1_ARGS) ->
+-compile({inline, bound_fwd_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?SMALLER_SEARCH1(
         Elem,
         E1,
         % Elem =< E1
-        [Node],
+        [?ITER_ELEM(E1)],
         % Elem > E1
         []
     ).
@@ -2210,10 +2287,10 @@ bound_fwd_iterator_LEAF1(Elem, Node, ?LEAF1_ARGS) ->
 bound_rev_iterator(Elem, Root) ->
     case Root of
         ?INTERNAL1_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL1(Elem, Root, ?INTERNAL1_ARGS);
+            bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS);
         %
         ?LEAF1_MATCH_ALL ->
-            bound_rev_iterator_LEAF1(Elem, Root, ?LEAF1_ARGS);
+            bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS);
         %
         ?LEAF0 ->
             Iter = [],
@@ -2227,28 +2304,28 @@ bound_rev_iterator(Elem, Root) ->
 bound_rev_iterator_recur(Elem, Node, Acc) ->
     case Node of
         ?LEAF2_MATCH_ALL ->
-            bound_rev_iterator_LEAF2(Elem, Node, ?LEAF2_ARGS, Acc);
+            bound_rev_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc);
         %
         ?LEAF3_MATCH_ALL ->
-            bound_rev_iterator_LEAF3(Elem, Node, ?LEAF3_ARGS, Acc);
+            bound_rev_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc);
         %
         ?LEAF4_MATCH_ALL ->
-            bound_rev_iterator_LEAF4(Elem, Node, ?LEAF4_ARGS, Acc);
+            bound_rev_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc);
         %
         ?INTERNAL2_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL2(Elem, Node, ?INTERNAL2_ARGS, Acc);
+            bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc);
         %
         ?INTERNAL3_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL3(Elem, Node, ?INTERNAL3_ARGS, Acc);
+            bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc);
         %
         ?INTERNAL4_MATCH_ALL ->
-            bound_rev_iterator_INTERNAL4(Elem, Node, ?INTERNAL4_ARGS, Acc)
+            bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc)
     end.
 
 %% INTERNAL4
 
--compile({inline, bound_rev_iterator_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
-bound_rev_iterator_INTERNAL4(Elem, Node, ?INTERNAL4_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_INTERNAL4 / ?INTERNAL4_ARITY_PLUS2}).
+bound_rev_iterator_INTERNAL4(Elem, ?INTERNAL4_ARGS, Acc) ->
     ?LARGER_SEARCH4(
         Elem,
         E1,
@@ -2257,37 +2334,46 @@ bound_rev_iterator_INTERNAL4(Elem, Node, ?INTERNAL4_ARGS, Acc) ->
         E4,
         %
         % Elem < E1
-        bound_rev_iterator_recur(Elem, C1, Acc),
+        case Acc of
+            [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_rev_iterator_recur(Elem, C1, Acc)
+        end,
         %
         % Elem < E2
         begin
-            Acc2 = [?ITER_POS(1, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C2, Acc2)
         end,
         %
         % Elem < E3
         begin
-            Acc2 = [?ITER_POS(2, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
         end,
         %
         % Elem < E4
         begin
-            Acc2 = [?ITER_POS(3, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C4, Acc2)
         end,
         %
         % Elem >= E4
         begin
-            Acc2 = [Node | Acc],
+            Acc2 = [
+                ?ITER_ELEM(E4), C4, ?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc
+            ],
             bound_rev_iterator_recur(Elem, C5, Acc2)
         end
     ).
 
 %% INTERNAL3
 
--compile({inline, bound_rev_iterator_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
-bound_rev_iterator_INTERNAL3(Elem, Node, ?INTERNAL3_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_INTERNAL3 / ?INTERNAL3_ARITY_PLUS2}).
+bound_rev_iterator_INTERNAL3(Elem, ?INTERNAL3_ARGS, Acc) ->
     ?LARGER_SEARCH3(
         Elem,
         E1,
@@ -2295,59 +2381,73 @@ bound_rev_iterator_INTERNAL3(Elem, Node, ?INTERNAL3_ARGS, Acc) ->
         E3,
         %
         % Elem < E1
-        bound_rev_iterator_recur(Elem, C1, Acc),
+        case Acc of
+            [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_rev_iterator_recur(Elem, C1, Acc)
+        end,
         %
         % Elem < E2
         begin
-            Acc2 = [?ITER_POS(1, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C2, Acc2)
         end,
         %
         % Elem < E3
         begin
-            Acc2 = [?ITER_POS(2, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
         end,
         %
         % Elem >= E3
         begin
-            Acc2 = [Node | Acc],
+            Acc2 = [?ITER_ELEM(E3), C3, ?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C4, Acc2)
         end
     ).
 
 %% INTERNAL2
 
--compile({inline, bound_rev_iterator_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
-bound_rev_iterator_INTERNAL2(Elem, Node, ?INTERNAL2_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_INTERNAL2 / ?INTERNAL2_ARITY_PLUS2}).
+bound_rev_iterator_INTERNAL2(Elem, ?INTERNAL2_ARGS, Acc) ->
     ?LARGER_SEARCH2(
         Elem,
         E1,
         E2,
         %
         % Elem < E1
-        bound_rev_iterator_recur(Elem, C1, Acc),
+        case Acc of
+            [?ITER_ELEM(AccNextElem) | _] when AccNextElem == Elem ->
+                % We overshot when recursing from this node's parent, stop here
+                % since no more elements can possibly be included.
+                Acc;
+            _ ->
+                bound_rev_iterator_recur(Elem, C1, Acc)
+        end,
         %
         % Elem < E2
         begin
-            Acc2 = [?ITER_POS(1, Node) | Acc],
+            Acc2 = [?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C2, Acc2)
         end,
         %
         % Elem >= E2
         begin
-            Acc2 = [Node | Acc],
+            Acc2 = [?ITER_ELEM(E2), C2, ?ITER_ELEM(E1), C1 | Acc],
             bound_rev_iterator_recur(Elem, C3, Acc2)
         end
     ).
 
 %% INTERNAL1
 
--compile({inline, bound_rev_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS2}).
-bound_rev_iterator_INTERNAL1(Elem, Node, ?INTERNAL1_ARGS) ->
+-compile({inline, bound_rev_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+bound_rev_iterator_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
     if
         Elem > E1 ->
-            Acc = [Node],
+            Acc = [?ITER_ELEM(E1), C1],
             bound_rev_iterator_recur(Elem, C2, Acc);
         %
         Elem < E1 ->
@@ -2355,13 +2455,13 @@ bound_rev_iterator_INTERNAL1(Elem, Node, ?INTERNAL1_ARGS) ->
             bound_rev_iterator_recur(Elem, C1, Acc);
         %
         true ->
-            _Acc = [Node]
+            _Acc = [?ITER_ELEM(E1), C1]
     end.
 
 %% LEAF4
 
--compile({inline, bound_rev_iterator_LEAF4 / ?LEAF4_ARITY_PLUS3}).
-bound_rev_iterator_LEAF4(Elem, Node, ?LEAF4_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_LEAF4 / ?LEAF4_ARITY_PLUS2}).
+bound_rev_iterator_LEAF4(Elem, ?LEAF4_ARGS, Acc) ->
     ?LARGER_SEARCH4(
         Elem,
         E1,
@@ -2371,19 +2471,19 @@ bound_rev_iterator_LEAF4(Elem, Node, ?LEAF4_ARGS, Acc) ->
         % Elem < E1
         Acc,
         % Elem < E2
-        [?ITER_POS(1, Node) | Acc],
+        [?ITER_ELEM(E1) | Acc],
         % Elem < E3
-        [?ITER_POS(2, Node) | Acc],
+        [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
         % Elem < E4
-        [?ITER_POS(3, Node) | Acc],
+        [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
         % Elem >= E4
-        [Node | Acc]
+        [?ITER_ELEM(E4), ?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
     ).
 
 %% LEAF3
 
--compile({inline, bound_rev_iterator_LEAF3 / ?LEAF3_ARITY_PLUS3}).
-bound_rev_iterator_LEAF3(Elem, Node, ?LEAF3_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_LEAF3 / ?LEAF3_ARITY_PLUS2}).
+bound_rev_iterator_LEAF3(Elem, ?LEAF3_ARGS, Acc) ->
     ?LARGER_SEARCH3(
         Elem,
         E1,
@@ -2392,17 +2492,17 @@ bound_rev_iterator_LEAF3(Elem, Node, ?LEAF3_ARGS, Acc) ->
         % Elem < E1
         Acc,
         % Elem < E2
-        [?ITER_POS(1, Node) | Acc],
+        [?ITER_ELEM(E1) | Acc],
         % Elem < E3
-        [?ITER_POS(2, Node) | Acc],
+        [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc],
         % Elem >= E4
-        [Node | Acc]
+        [?ITER_ELEM(E3), ?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
     ).
 
 %% LEAF2
 
--compile({inline, bound_rev_iterator_LEAF2 / ?LEAF2_ARITY_PLUS3}).
-bound_rev_iterator_LEAF2(Elem, Node, ?LEAF2_ARGS, Acc) ->
+-compile({inline, bound_rev_iterator_LEAF2 / ?LEAF2_ARITY_PLUS2}).
+bound_rev_iterator_LEAF2(Elem, ?LEAF2_ARGS, Acc) ->
     ?LARGER_SEARCH2(
         Elem,
         E1,
@@ -2410,22 +2510,22 @@ bound_rev_iterator_LEAF2(Elem, Node, ?LEAF2_ARGS, Acc) ->
         % Elem < E1
         Acc,
         % Elem < E2
-        [?ITER_POS(1, Node) | Acc],
+        [?ITER_ELEM(E1) | Acc],
         % Elem >= E2
-        [Node | Acc]
+        [?ITER_ELEM(E2), ?ITER_ELEM(E1) | Acc]
     ).
 
 %% LEAF1
 
--compile({inline, bound_rev_iterator_LEAF1 / ?LEAF1_ARITY_PLUS2}).
-bound_rev_iterator_LEAF1(Elem, Node, ?LEAF1_ARGS) ->
+-compile({inline, bound_rev_iterator_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
     ?LARGER_SEARCH1(
         Elem,
         E1,
         % Elem < E1
         [],
         % Elem >= E1
-        [Node]
+        [?ITER_ELEM(E1)]
     ).
 
 %% ------------------------------------------------------------------
@@ -2711,191 +2811,32 @@ next(Head, Tail) ->
 
 fwd_next(Head, Tail) ->
     case Head of
-        ?ITER_POS(Pos, Node) ->
-            fwd_next(Pos, Node, Tail);
+        ?ITER_ELEM(Elem) ->
+            Iter2 = Tail,
+            {Elem, Iter2};
         %
         Node ->
-            fwd_next(1, Node, Tail)
+            [?ITER_ELEM(Elem) | NewTail] = fwd_iterator_recur(Node, Tail),
+            Iter2 = NewTail,
+            {Elem, Iter2}
     end.
 
-%%%%%%%%%%%%%%%%%%
-
-fwd_next(Pos, ?LEAF2_MATCH_ALL = Node, Tail) ->
-    case Pos of
-        1 ->
-            Iter2 = [?ITER_POS(2, Node) | Tail],
-            {E1, Iter2};
-        2 ->
-            Iter2 = Tail,
-            {E2, Iter2}
-    end;
-fwd_next(Pos, ?LEAF3_MATCH_ALL = Node, Tail) ->
-    case Pos of
-        1 ->
-            Iter2 = [?ITER_POS(2, Node) | Tail],
-            {E1, Iter2};
-        2 ->
-            Iter2 = [?ITER_POS(3, Node) | Tail],
-            {E2, Iter2};
-        3 ->
-            Iter2 = Tail,
-            {E3, Iter2}
-    end;
-fwd_next(Pos, ?LEAF4_MATCH_ALL = Node, Tail) ->
-    case Pos of
-        1 ->
-            Iter2 = [?ITER_POS(2, Node) | Tail],
-            {E1, Iter2};
-        2 ->
-            Iter2 = [?ITER_POS(3, Node) | Tail],
-            {E2, Iter2};
-        3 ->
-            Iter2 = [?ITER_POS(4, Node) | Tail],
-            {E3, Iter2};
-        4 ->
-            Iter2 = Tail,
-            {E4, Iter2}
-    end;
-fwd_next(Pos, ?INTERNAL2_MATCH(E1, E2, _, C2, C3) = Node, Tail) ->
-    case Pos of
-        1 ->
-            Iter2 = fwd_iterator_recur(C2, [?ITER_POS(2, Node) | Tail]),
-            {E1, Iter2};
-        2 ->
-            Iter2 = fwd_iterator_recur(C3, Tail),
-            {E2, Iter2}
-    end;
-fwd_next(Pos, ?INTERNAL3_MATCH(E1, E2, E3, _, C2, C3, C4) = Node, Tail) ->
-    case Pos of
-        1 ->
-            Iter2 = fwd_iterator_recur(C2, [?ITER_POS(2, Node) | Tail]),
-            {E1, Iter2};
-        2 ->
-            Iter2 = fwd_iterator_recur(C3, [?ITER_POS(3, Node) | Tail]),
-            {E2, Iter2};
-        3 ->
-            Iter2 = fwd_iterator_recur(C4, Tail),
-            {E3, Iter2}
-    end;
-fwd_next(Pos, ?INTERNAL4_MATCH(E1, E2, E3, E4, _, C2, C3, C4, C5) = Node, Tail) ->
-    case Pos of
-        1 ->
-            Iter2 = fwd_iterator_recur(C2, [?ITER_POS(2, Node) | Tail]),
-            {E1, Iter2};
-        2 ->
-            Iter2 = fwd_iterator_recur(C3, [?ITER_POS(3, Node) | Tail]),
-            {E2, Iter2};
-        3 ->
-            Iter2 = fwd_iterator_recur(C4, [?ITER_POS(4, Node) | Tail]),
-            {E3, Iter2};
-        4 ->
-            Iter2 = fwd_iterator_recur(C5, Tail),
-            {E4, Iter2}
-    end;
-%
-% Rare cases
-%
-fwd_next(1, ?INTERNAL1_MATCH(E1, _, C2), []) ->
-    Iter2 = fwd_iterator_recur(C2, []),
-    {E1, Iter2};
-fwd_next(1, ?LEAF1_MATCH(E1), []) ->
-    Iter2 = [],
-    {E1, Iter2}.
-
-%%%%%%%%%%%%%%%%%%
-
 rev_next([Head | Tail]) ->
-    case Head of
-        ?ITER_POS(Pos, Node) ->
-            rev_next(Pos, Node, Tail);
-        %
-        Node ->
-            rev_next(last, Node, Tail)
-    end;
+    rev_next(Head, Tail);
 rev_next([]) ->
     none.
 
-rev_next(Pos, ?LEAF2_MATCH_ALL = Node, Tail) ->
-    case Pos of
-        last ->
-            Iter2 = [?REV_ITER_TAG, ?ITER_POS(1, Node) | Tail],
-            {E2, Iter2};
-        1 ->
+rev_next(Head, Tail) ->
+    case Head of
+        ?ITER_ELEM(Elem) ->
             Iter2 = [?REV_ITER_TAG | Tail],
-            {E1, Iter2}
-    end;
-rev_next(Pos, ?LEAF3_MATCH_ALL = Node, Tail) ->
-    case Pos of
-        last ->
-            Iter2 = [?REV_ITER_TAG, ?ITER_POS(2, Node) | Tail],
-            {E3, Iter2};
-        2 ->
-            Iter2 = [?REV_ITER_TAG, ?ITER_POS(1, Node) | Tail],
-            {E2, Iter2};
-        1 ->
-            Iter2 = [?REV_ITER_TAG | Tail],
-            {E1, Iter2}
-    end;
-rev_next(Pos, ?LEAF4_MATCH_ALL = Node, Tail) ->
-    case Pos of
-        last ->
-            Iter2 = [?REV_ITER_TAG, ?ITER_POS(3, Node) | Tail],
-            {E4, Iter2};
-        3 ->
-            Iter2 = [?REV_ITER_TAG, ?ITER_POS(2, Node) | Tail],
-            {E3, Iter2};
-        2 ->
-            Iter2 = [?REV_ITER_TAG, ?ITER_POS(1, Node) | Tail],
-            {E2, Iter2};
-        1 ->
-            Iter2 = [?REV_ITER_TAG | Tail],
-            {E1, Iter2}
-    end;
-rev_next(Pos, ?INTERNAL2_MATCH(E1, E2, C1, C2, _) = Node, Tail) ->
-    case Pos of
-        last ->
-            Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C2, [?ITER_POS(1, Node) | Tail])],
-            {E2, Iter2};
-        1 ->
-            Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C1, Tail)],
-            {E1, Iter2}
-    end;
-rev_next(Pos, ?INTERNAL3_MATCH(E1, E2, E3, C1, C2, C3, _) = Node, Tail) ->
-    case Pos of
-        last ->
-            Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C3, [?ITER_POS(2, Node) | Tail])],
-            {E3, Iter2};
-        2 ->
-            Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C2, [?ITER_POS(1, Node) | Tail])],
-            {E2, Iter2};
-        1 ->
-            Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C1, Tail)],
-            {E1, Iter2}
-    end;
-rev_next(Pos, ?INTERNAL4_MATCH(E1, E2, E3, E4, C1, C2, C3, C4, _) = Node, Tail) ->
-    case Pos of
-        last ->
-            Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C4, [?ITER_POS(3, Node) | Tail])],
-            {E4, Iter2};
-        3 ->
-            Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C3, [?ITER_POS(2, Node) | Tail])],
-            {E3, Iter2};
-        2 ->
-            Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C2, [?ITER_POS(1, Node) | Tail])],
-            {E2, Iter2};
-        1 ->
-            Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C1, Tail)],
-            {E1, Iter2}
-    end;
-%
-% Rare cases
-%
-rev_next(last, ?INTERNAL1_MATCH(E1, C1, _), []) ->
-    Iter2 = [?REV_ITER_TAG | rev_iterator_recur(C1, [])],
-    {E1, Iter2};
-rev_next(last, ?LEAF1_MATCH(E1), []) ->
-    Iter2 = [?REV_ITER_TAG],
-    {E1, Iter2}.
+            {Elem, Iter2};
+        %
+        Node ->
+            [?ITER_ELEM(Elem) | NewTail] = rev_iterator_recur(Node, Tail),
+            Iter2 = [?REV_ITER_TAG | NewTail],
+            {Elem, Iter2}
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: smaller/2
