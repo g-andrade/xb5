@@ -45,7 +45,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -export([
     add/2,
     delete_att/2,
-    filtermap/2,
+    filtermap_to_list/2,
     fold/3,
     from_ordered_list/2,
     insert_att/2,
@@ -513,13 +513,17 @@ delete_att(_Elem, ?LEAF0) ->
 delete_att(Elem, Root) ->
     delete_att_recur(Elem, Root).
 
--spec filtermap(fun((Elem) -> {true, MappedElem} | boolean()), t(Elem)) ->
-    nonempty_improper_list(FilteredSize, t(Elem | MappedElem))
-when
-    FilteredSize :: non_neg_integer().
-filtermap(Fun, Root) ->
-    List = to_rev_list(Root),
-    filtermap_recur(Fun, List, 0, [], []).
+-spec filtermap_to_list(fun((Elem) -> {true, MappedElem} | boolean()), t(Elem)) ->
+    [MappedElem].
+filtermap_to_list(Fun, ?INTERNAL1_MATCH_IGN_OFFSETS) ->
+    Acc2 = filtermap_e(Fun, E1, filtermap_recur(Fun, C2, [])),
+    filtermap_recur(Fun, C1, Acc2);
+filtermap_to_list(Fun, ?LEAF1_MATCH_ALL) ->
+    filtermap_e(Fun, E1, []);
+filtermap_to_list(_Fun, ?LEAF0) ->
+    [];
+filtermap_to_list(Fun, Root) ->
+    filtermap_recur(Fun, Root, []).
 
 -spec fold(fun((Elem, Acc1) -> Acc2), Acc0, t(Elem)) -> AccN when
     Acc0 :: term(),
@@ -1496,26 +1500,50 @@ delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
 %% Internal Function Definitions: filtermap/2
 %% ------------------------------------------------------------------
 
-filtermap_recur(Fun, [Element | Prev], FilteredSize, Filtered, Mapped) ->
-    case Fun(Element) of
-        {true, MappedElement} ->
-            filtermap_recur(Fun, Prev, FilteredSize, Filtered, [MappedElement | Mapped]);
+filtermap_recur(Fun, Node, Acc) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            filtermap_e(Fun, E1, filtermap_e(Fun, E2, Acc));
+        %
+        ?LEAF3_MATCH_ALL ->
+            filtermap_e(Fun, E1, filtermap_e(Fun, E2, filtermap_e(Fun, E3, Acc)));
+        %
+        ?LEAF4_MATCH_ALL ->
+            filtermap_e(
+                Fun, E1, filtermap_e(Fun, E2, filtermap_e(Fun, E3, filtermap_e(Fun, E4, Acc)))
+            );
+        %
+        ?INTERNAL2_MATCH_IGN_OFFSETS ->
+            Acc2 = filtermap_e(Fun, E2, filtermap_recur(Fun, C3, Acc)),
+            Acc3 = filtermap_e(Fun, E1, filtermap_recur(Fun, C2, Acc2)),
+            filtermap_recur(Fun, C1, Acc3);
+        %
+        ?INTERNAL3_MATCH_IGN_OFFSETS ->
+            Acc2 = filtermap_e(Fun, E3, filtermap_recur(Fun, C4, Acc)),
+            Acc3 = filtermap_e(Fun, E2, filtermap_recur(Fun, C3, Acc2)),
+            Acc4 = filtermap_e(Fun, E1, filtermap_recur(Fun, C2, Acc3)),
+            filtermap_recur(Fun, C1, Acc4);
+        %
+        ?INTERNAL4_MATCH_IGN_OFFSETS ->
+            Acc2 = filtermap_e(Fun, E4, filtermap_recur(Fun, C5, Acc)),
+            Acc3 = filtermap_e(Fun, E3, filtermap_recur(Fun, C4, Acc2)),
+            Acc4 = filtermap_e(Fun, E2, filtermap_recur(Fun, C3, Acc3)),
+            Acc5 = filtermap_e(Fun, E1, filtermap_recur(Fun, C2, Acc4)),
+            filtermap_recur(Fun, C1, Acc5)
+    end.
+
+-compile({inline, filtermap_e/3}).
+filtermap_e(Fun, Elem, Acc) ->
+    case Fun(Elem) of
+        {true, MappedElem} ->
+            [MappedElem | Acc];
         %
         true ->
-            filtermap_recur(Fun, Prev, FilteredSize + 1, [Element | Filtered], Mapped);
+            [Elem | Acc];
         %
         false ->
-            filtermap_recur(Fun, Prev, FilteredSize, Filtered, Mapped)
-    end;
-filtermap_recur(_Fun, [], FilteredSize, Filtered, Mapped) ->
-    NewRoot = from_ordered_list(Filtered, FilteredSize),
-    filtermap_add_mapped(FilteredSize, NewRoot, Mapped).
-
-filtermap_add_mapped(Size, Root, [Element | Next]) ->
-    UpdatedRoot = add(Element, Root),
-    filtermap_add_mapped(Size + 1, UpdatedRoot, Next);
-filtermap_add_mapped(Size, Root, []) ->
-    [Size | Root].
+            Acc
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: fold/3

@@ -417,9 +417,9 @@ For each element, `Fun` must return either `true` (keep the element),
     Bag1 :: bag(Element1),
     Bag2 :: bag(Element1 | Element2).
 
-filtermap(Fun, #xb5_bag{root = Root} = Bag) ->
-    [FilteredSize | FilteredRoot] = xb5_bag_node:filtermap(Fun, Root),
-    Bag#xb5_bag{size = FilteredSize, root = FilteredRoot}.
+filtermap(Fun, #xb5_bag{root = Root}) ->
+    FiltermappedList = xb5_bag_node:filtermap_to_list(Fun, Root),
+    from_list(FiltermappedList).
 
 %%
 
