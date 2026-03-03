@@ -52,7 +52,7 @@ API for operating over `m:xb5_sets` internal nodes directly.
     insert_att/2,
     intersection/4,
     is_disjoint/4,
-    is_equal/2,
+    is_equal/4,
     is_member/2,
     is_subset/4,
     iterator/2,
@@ -604,11 +604,16 @@ is_disjoint(Root1, Size1, Root2, Size2) ->
             is_disjoint_root(Root2, Root1)
     end.
 
--spec is_equal(t(_), t(_)) -> boolean().
-is_equal(Root1, Root2) ->
-    Iter1 = fwd_iterator(Root1),
-    Iter2 = fwd_iterator(Root2),
-    is_equal_recur(Iter1, Iter2).
+-spec is_equal(non_neg_integer(), t(_), non_neg_integer(), t(_)) -> boolean().
+is_equal(Size1, Root1, Size2, Root2) ->
+    case Size1 =:= Size2 of
+        true ->
+            Iter2 = fwd_iterator(Root2),
+            is_equal_root(Root1, Iter2) =:= [];
+        %
+        _ ->
+            false
+    end.
 
 -spec is_member(_, t(_)) -> boolean().
 is_member(Elem, ?INTERNAL1_MATCH_ALL) ->
@@ -1737,37 +1742,117 @@ is_disjoint_check(Elem, Next, Root2, MaxElem) ->
 %% Internal Function Definitions: is_equal/2
 %% ------------------------------------------------------------------
 
-is_equal_recur([HeadA | TailA], IterB) ->
-    is_equal_iterA(HeadA, TailA, IterB);
-is_equal_recur([], []) ->
-    true.
-
--compile({is_equal_iterA/3}).
-is_equal_iterA(HeadA, TailA, IterB) ->
-    case HeadA of
-        ?ITER_ELEM(ElemA) ->
-            NextA = TailA,
-            is_equal_iterB(ElemA, NextA, IterB);
+is_equal_root(?INTERNAL1_MATCH_ALL, Iter) ->
+    case is_equal_internal_pair(E1, C1, Iter) of
+        false ->
+            false;
         %
-        NodeA ->
-            [?ITER_ELEM(ElemA) | NextA] = fwd_iterator_recur(NodeA, TailA),
-            is_equal_iterB(ElemA, NextA, IterB)
+        Iter2 ->
+            is_equal_recur(C2, Iter2)
+    end;
+is_equal_root(?LEAF1_MATCH_ALL, Iter) ->
+    next_elem_is_equal(E1, Iter);
+is_equal_root(?LEAF0, []) ->
+    [];
+is_equal_root(Root, Iter) ->
+    is_equal_recur(Root, Iter).
+
+is_equal_recur(?LEAF2_MATCH_ALL, Iter) ->
+    is_equal_leaf_batch2(?LEAF2_ARGS, Iter);
+is_equal_recur(?LEAF3_MATCH_ALL, Iter) ->
+    is_equal_leaf_batch3(?LEAF3_ARGS, Iter);
+is_equal_recur(?LEAF4_MATCH_ALL, Iter) ->
+    case next_elem_is_equal(E1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            is_equal_leaf_batch3(E2, E3, E4, Iter2)
+    end;
+is_equal_recur(?INTERNAL2_MATCH_ALL, Iter) ->
+    is_equal_internal_batch2(E1, E2, C1, C2, C3, Iter);
+is_equal_recur(?INTERNAL3_MATCH_ALL, Iter) ->
+    is_equal_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Iter);
+is_equal_recur(?INTERNAL4_MATCH_ALL, Iter) ->
+    case is_equal_internal_pair(E1, C1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            is_equal_internal_batch3(E2, E3, E4, C2, C3, C4, C5, Iter2)
     end.
 
-is_equal_iterB(ElemA, NextA, [HeadB | TailB]) ->
-    case HeadB of
+%%%%%
+
+-compile({inline, is_equal_internal_batch3 / ?INTERNAL3_ARITY_PLUS1}).
+is_equal_internal_batch3(E1, E2, E3, C1, C2, C3, C4, Iter) ->
+    case is_equal_internal_pair(E1, C1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            is_equal_internal_batch2(E2, E3, C2, C3, C4, Iter2)
+    end.
+
+-compile({inline, is_equal_internal_batch2 / ?INTERNAL2_ARITY_PLUS1}).
+is_equal_internal_batch2(E1, E2, C1, C2, C3, Iter) ->
+    case is_equal_internal_pair(E1, C1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            case is_equal_internal_pair(E2, C2, Iter2) of
+                false ->
+                    false;
+                %
+                Iter3 ->
+                    is_equal_recur(C3, Iter3)
+            end
+    end.
+
+-compile({inline, is_equal_internal_pair/3}).
+is_equal_internal_pair(E1, C1, Iter) ->
+    case is_equal_recur(C1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            next_elem_is_equal(E1, Iter2)
+    end.
+
+%%%%%
+
+-compile({inline, is_equal_leaf_batch3 / ?LEAF3_ARITY_PLUS1}).
+is_equal_leaf_batch3(E1, E2, E3, Iter) ->
+    case next_elem_is_equal(E1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            is_equal_leaf_batch2(E2, E3, Iter2)
+    end.
+
+-compile({inline, is_equal_leaf_batch2 / ?LEAF2_ARITY_PLUS1}).
+is_equal_leaf_batch2(E1, E2, Iter) ->
+    case next_elem_is_equal(E1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            next_elem_is_equal(E2, Iter2)
+    end.
+
+%%%%%%
+
+next_elem_is_equal(ElemA, [Head | Tail]) ->
+    case Head of
         ?ITER_ELEM(ElemB) ->
-            NextB = TailB,
-            is_equal_check(ElemA, NextA, ElemB, NextB);
+            ElemA == ElemB andalso Tail;
         %
-        NodeB ->
-            [?ITER_ELEM(ElemB) | NextB] = fwd_iterator_recur(NodeB, TailB),
-            is_equal_check(ElemA, NextA, ElemB, NextB)
+        Node ->
+            [?ITER_ELEM(ElemB) | NewTail] = fwd_iterator_recur(Node, Tail),
+            ElemA == ElemB andalso NewTail
     end.
-
--compile({is_equal_check/4}).
-is_equal_check(ElemA, NextA, ElemB, NextB) ->
-    (ElemA == ElemB) andalso is_equal_recur(NextA, NextB).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: is_member/2
