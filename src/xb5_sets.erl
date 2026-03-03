@@ -854,8 +854,8 @@ Duplicates arising from the mapping are removed.
     Set2 :: set(Element2).
 
 map(Fun, #xb5_set{root = Root}) ->
-    [NewSize | MappedRoot] = xb5_sets_node:map(Fun, Root),
-    #xb5_set{size = NewSize, root = MappedRoot}.
+    MappedList = xb5_sets_node:map_to_list(Fun, Root),
+    from_list(MappedList).
 
 %%
 

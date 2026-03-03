@@ -762,9 +762,11 @@ Maps `Fun` over all elements of `Bag1`, returning a new bag `Bag2`.
     Bag1 :: bag(Element1),
     Bag2 :: bag(Element2).
 
-map(Fun, #xb5_bag{root = Root} = Bag) ->
-    MappedRoot = xb5_bag_node:map(Fun, Root),
-    Bag#xb5_bag{root = MappedRoot}.
+map(Fun, #xb5_bag{size = Size, root = Root}) ->
+    MappedList = xb5_bag_node:map_to_list(Fun, Root),
+    OrderedList = lists:sort(MappedList),
+    MappedRoot = xb5_bag_node:from_ordered_list(OrderedList, Size),
+    #xb5_bag{size = Size, root = MappedRoot}.
 
 %%
 

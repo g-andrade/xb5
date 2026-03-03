@@ -59,7 +59,7 @@ API for operating over `m:xb5_sets` internal nodes directly.
     iterator_from/3,
     larger/2,
     largest/1,
-    map/2,
+    map_to_list/2,
     new/0,
     next/1,
     singleton/1,
@@ -650,11 +650,16 @@ largest(?LEAF1_MATCH(E1)) ->
 largest(Root) ->
     largest_recur(Root).
 
--spec map(fun((Elem) -> MappedElem), t(Elem)) -> nonempty_improper_list(NewSize, t(MappedElem)) when
-    NewSize :: non_neg_integer().
-map(Fun, Root) ->
-    List = to_list(Root),
-    map_recur(Fun, List, 0, new()).
+-spec map_to_list(fun((Elem) -> MappedElem), t(Elem)) -> [MappedElem].
+map_to_list(Fun, ?INTERNAL1_MATCH_ALL) ->
+    Acc2 = [Fun(E1) | map_to_list_recur(Fun, C2, [])],
+    map_to_list_recur(Fun, C1, Acc2);
+map_to_list(Fun, ?LEAF1_MATCH_ALL) ->
+    [Fun(E1)];
+map_to_list(_Fun, ?LEAF0) ->
+    [];
+map_to_list(Fun, Root) ->
+    map_to_list_recur(Fun, Root, []).
 
 -spec new() -> t(_).
 new() ->
@@ -2762,19 +2767,38 @@ largest_recur(Node) ->
     end.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: map/2
+%% Internal Function Definitions: map_to_list/2
 %% ------------------------------------------------------------------
 
-map_recur(Fun, [Element | Next], AccSize, Acc) ->
-    case insert_att(Fun(Element), Acc) of
-        key_exists ->
-            map_recur(Fun, Next, AccSize, Acc);
+map_to_list_recur(Fun, Node, Acc) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            [Fun(E1), Fun(E2) | Acc];
         %
-        UpdatedAcc ->
-            map_recur(Fun, Next, AccSize + 1, UpdatedAcc)
-    end;
-map_recur(_Fun, [], AccSize, Acc) ->
-    [AccSize | Acc].
+        ?LEAF3_MATCH_ALL ->
+            [Fun(E1), Fun(E2), Fun(E3) | Acc];
+        %
+        ?LEAF4_MATCH_ALL ->
+            [Fun(E1), Fun(E2), Fun(E3), Fun(E4) | Acc];
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            Acc2 = [Fun(E2) | map_to_list_recur(Fun, C3, Acc)],
+            Acc3 = [Fun(E1) | map_to_list_recur(Fun, C2, Acc2)],
+            map_to_list_recur(Fun, C1, Acc3);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Acc2 = [Fun(E3) | map_to_list_recur(Fun, C4, Acc)],
+            Acc3 = [Fun(E2) | map_to_list_recur(Fun, C3, Acc2)],
+            Acc4 = [Fun(E1) | map_to_list_recur(Fun, C2, Acc3)],
+            map_to_list_recur(Fun, C1, Acc4);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Acc2 = [Fun(E4) | map_to_list_recur(Fun, C5, Acc)],
+            Acc3 = [Fun(E3) | map_to_list_recur(Fun, C4, Acc2)],
+            Acc4 = [Fun(E2) | map_to_list_recur(Fun, C3, Acc3)],
+            Acc5 = [Fun(E1) | map_to_list_recur(Fun, C2, Acc4)],
+            map_to_list_recur(Fun, C1, Acc5)
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: next/1
