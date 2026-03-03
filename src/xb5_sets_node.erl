@@ -484,6 +484,8 @@ delete_att(Elem, Root) ->
 
 -spec difference(non_neg_integer(), t(Elem1), non_neg_integer(), t(_)) ->
     nonempty_improper_list(NewSize :: non_neg_integer(), NewRoot :: t(Elem1)).
+difference(0, _Root1, _Size2, _Root2) ->
+    [0 | ?LEAF0];
 difference(Size1, Root1, Size2, Root2) ->
     difference_root(Size1, to_rev_list(Root1), Size2, Root2).
 
@@ -619,6 +621,8 @@ is_member(Elem, Root) ->
     is_member_recur(Elem, Root).
 
 -spec is_subset(non_neg_integer(), t(_), non_neg_integer(), t(_)) -> boolean().
+is_subset(Size1, _Root1, Size2, _Root2) when Size1 > Size2 ->
+    false;
 is_subset(Size1, Root1, Size2, Root2) ->
     is_subset_root(Size1, to_rev_list(Root1), Size2, Root2).
 
