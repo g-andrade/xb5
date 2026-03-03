@@ -383,8 +383,8 @@ For each element, `Fun` must return either `true` (keep the element),
     Set2 :: set(Element1 | Element2).
 
 filtermap(Fun, #xb5_set{root = Root}) ->
-    [FilteredSize | FilteredRoot] = xb5_sets_node:filtermap(Fun, Root),
-    #xb5_set{size = FilteredSize, root = FilteredRoot}.
+    FiltermappedList = xb5_sets_node:filtermap_to_list(Fun, Root),
+    from_list(FiltermappedList).
 
 %%
 
