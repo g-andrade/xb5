@@ -609,7 +609,7 @@ is_equal(Size1, Root1, Size2, Root2) ->
     case Size1 =:= Size2 of
         true ->
             Iter2 = fwd_iterator(Root2),
-            is_equal_root(Root1, Iter2) =:= [];
+            is_equal_root(Root1, Iter2) =/= false;
         %
         _ ->
             false
@@ -1845,13 +1845,19 @@ is_equal_leaf_batch2(E1, E2, Iter) ->
 %%%%%%
 
 next_elem_is_equal(ElemA, [Head | Tail]) ->
+    next_elem_is_equal(ElemA, Head, Tail).
+
+next_elem_is_equal(ElemA, Head, Tail) ->
     case Head of
-        ?ITER_ELEM(ElemB) ->
-            ElemA == ElemB andalso Tail;
+        [ElemB | BatchNext] ->
+            ElemA == ElemB andalso [BatchNext | Tail];
+        %
+        [] ->
+            next_elem_is_equal(ElemA, Tail);
         %
         Node ->
-            [?ITER_ELEM(ElemB) | NewTail] = fwd_iterator_recur(Node, Tail),
-            ElemA == ElemB andalso NewTail
+            [NewHead | NewTail] = fwd_iterator_recur(Node, Tail),
+            next_elem_is_equal(ElemA, NewHead, NewTail)
     end.
 
 %% ------------------------------------------------------------------
@@ -2029,8 +2035,15 @@ is_subset_2(_, []) ->
 %% ------------------------------------------------------------------
 
 fwd_iterator(?INTERNAL1_MATCH(E1, C1, C2)) ->
-    Acc = [?ITER_ELEM(E1), C2],
-    fwd_iterator_recur(C1, Acc);
+    case fwd_iterator_unroll_leaf(C2, []) of
+        no ->
+            Acc = [?ITER_ELEM(E1), C2],
+            fwd_iterator_recur(C1, Acc);
+        %
+        Unrolled ->
+            Unrolled2 = fwd_iterator_unroll_leaf(C1, [E1 | Unrolled]),
+            [Unrolled2]
+    end;
 fwd_iterator(?LEAF1_MATCH(E1)) ->
     Iter = [?ITER_ELEM(E1)],
     Iter;
@@ -2051,38 +2064,76 @@ fwd_iterator_recur(?LEAF4_MATCH_ALL, Acc) ->
     Acc2 = [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc],
     Acc2;
 fwd_iterator_recur(?INTERNAL2_MATCH_ALL, Acc) ->
-    Acc2 = [
-        ?ITER_ELEM(E1),
-        C2,
-        ?ITER_ELEM(E2),
-        C3
-        | Acc
-    ],
-    fwd_iterator_recur(C1, Acc2);
+    case fwd_iterator_unroll_leaf(C3, []) of
+        no ->
+            Acc2 = [
+                ?ITER_ELEM(E1),
+                C2,
+                ?ITER_ELEM(E2),
+                C3
+                | Acc
+            ],
+            fwd_iterator_recur(C1, Acc2);
+        %
+        Unrolled ->
+            Unrolled2 = fwd_iterator_unroll_leaf(C2, [E2 | Unrolled]),
+            Unrolled3 = fwd_iterator_unroll_leaf(C1, [E1 | Unrolled2]),
+            [Unrolled3 | Acc]
+    end;
 fwd_iterator_recur(?INTERNAL3_MATCH_ALL, Acc) ->
-    Acc2 = [
-        ?ITER_ELEM(E1),
-        C2,
-        ?ITER_ELEM(E2),
-        C3,
-        ?ITER_ELEM(E3),
-        C4
-        | Acc
-    ],
-    fwd_iterator_recur(C1, Acc2);
+    case fwd_iterator_unroll_leaf(C4, []) of
+        no ->
+            Acc2 = [
+                ?ITER_ELEM(E1),
+                C2,
+                ?ITER_ELEM(E2),
+                C3,
+                ?ITER_ELEM(E3),
+                C4
+                | Acc
+            ],
+            fwd_iterator_recur(C1, Acc2);
+        %
+        Unrolled ->
+            Unrolled2 = fwd_iterator_unroll_leaf(C3, [E3 | Unrolled]),
+            Unrolled3 = fwd_iterator_unroll_leaf(C2, [E2 | Unrolled2]),
+            Unrolled4 = fwd_iterator_unroll_leaf(C1, [E1 | Unrolled3]),
+            [Unrolled4 | Acc]
+    end;
 fwd_iterator_recur(?INTERNAL4_MATCH_ALL, Acc) ->
-    Acc2 = [
-        ?ITER_ELEM(E1),
-        C2,
-        ?ITER_ELEM(E2),
-        C3,
-        ?ITER_ELEM(E3),
-        C4,
-        ?ITER_ELEM(E4),
-        C5
-        | Acc
-    ],
-    fwd_iterator_recur(C1, Acc2).
+    case fwd_iterator_unroll_leaf(C5, []) of
+        no ->
+            Acc2 = [
+                ?ITER_ELEM(E1),
+                C2,
+                ?ITER_ELEM(E2),
+                C3,
+                ?ITER_ELEM(E3),
+                C4,
+                ?ITER_ELEM(E4),
+                C5
+                | Acc
+            ],
+            fwd_iterator_recur(C1, Acc2);
+        %
+        Unrolled ->
+            Unrolled2 = fwd_iterator_unroll_leaf(C4, [E4 | Unrolled]),
+            Unrolled3 = fwd_iterator_unroll_leaf(C3, [E3 | Unrolled2]),
+            Unrolled4 = fwd_iterator_unroll_leaf(C2, [E2 | Unrolled3]),
+            Unrolled5 = fwd_iterator_unroll_leaf(C1, [E1 | Unrolled4]),
+            [Unrolled5 | Acc]
+    end.
+
+%%%
+
+fwd_iterator_unroll_leaf(?LEAF2_MATCH_ALL, Acc) ->
+    [E1, E2 | Acc];
+fwd_iterator_unroll_leaf(?LEAF3_MATCH_ALL, Acc) ->
+    [E1, E2, E3 | Acc];
+fwd_iterator_unroll_leaf(?LEAF4_MATCH_ALL, Acc) ->
+    [E1, E2, E3, E4 | Acc];
+fwd_iterator_unroll_leaf(_, _) ->
+    no.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - reverse
@@ -2921,16 +2972,19 @@ next(?REV_ITER_TAG, Tail) ->
 next(Head, Tail) ->
     fwd_next(Head, Tail).
 
+fwd_next([], []) ->
+    none;
+fwd_next([], [Head | Tail]) ->
+    fwd_next(Head, Tail);
 fwd_next(Head, Tail) ->
     case Head of
-        ?ITER_ELEM(Elem) ->
-            Iter2 = Tail,
+        [Elem | BatchNext] ->
+            Iter2 = [BatchNext | Tail],
             {Elem, Iter2};
         %
         Node ->
-            [?ITER_ELEM(Elem) | NewTail] = fwd_iterator_recur(Node, Tail),
-            Iter2 = NewTail,
-            {Elem, Iter2}
+            [NewHead | NewTail] = fwd_iterator_recur(Node, Tail),
+            fwd_next(NewHead, NewTail)
     end.
 
 rev_next([Head | Tail]) ->
