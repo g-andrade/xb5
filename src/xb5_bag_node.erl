@@ -547,7 +547,7 @@ from_ordered_list([], 0) ->
 from_ordered_list([E1], 1) ->
     ?new_LEAF1(E1);
 from_ordered_list(L, S) ->
-    [BatchOffset | BatchSize] = from_ordered_list_initial_batch_params(S),
+    [BatchOffset | BatchSize] = xb5_utils:bulk_construction_params(S),
     AtRoot = true,
 
     [Root | []] = from_ordered_list_recur(L, S, BatchOffset, BatchSize, AtRoot),
@@ -1582,17 +1582,6 @@ fold_recur(Fun, Acc, Node) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: from_ordered_list/2
 %% ------------------------------------------------------------------
-
-from_ordered_list_initial_batch_params(S) when S >= 1 ->
-    from_ordered_list_initial_batch_params(S, 1, 1).
-
-from_ordered_list_initial_batch_params(S, BatchOffset, BatchSize) ->
-    case BatchOffset + (4 * BatchSize) of
-        NextOffset when NextOffset =< S ->
-            from_ordered_list_initial_batch_params(S, NextOffset, BatchSize * 4);
-        _ ->
-            [BatchOffset | BatchSize]
-    end.
 
 from_ordered_list_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
     ChildrenBatchOffset = BatchOffset - BatchSize,

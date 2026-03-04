@@ -560,7 +560,7 @@ from_orddict([], 0) ->
 from_orddict([{K1, V1}], 1) ->
     ?new_LEAF1(K1, V1);
 from_orddict(L, S) ->
-    [BatchOffset | BatchSize] = from_orddict_initial_batch_params(S),
+    [BatchOffset | BatchSize] = xb5_utils:bulk_construction_params(S),
     AtRoot = true,
 
     [Root | []] = from_orddict_recur(L, S, BatchOffset, BatchSize, AtRoot),
@@ -1292,17 +1292,6 @@ foldr_recur(Fun, Acc, Node) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: from_orddict/2
 %% ------------------------------------------------------------------
-
-from_orddict_initial_batch_params(S) when S >= 1 ->
-    from_orddict_initial_batch_params(S, 1, 1).
-
-from_orddict_initial_batch_params(S, BatchOffset, BatchSize) ->
-    case BatchOffset + (4 * BatchSize) of
-        NextOffset when NextOffset =< S ->
-            from_orddict_initial_batch_params(S, NextOffset, BatchSize * 4);
-        _ ->
-            [BatchOffset | BatchSize]
-    end.
 
 from_orddict_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
     ChildrenBatchOffset = BatchOffset - BatchSize,
