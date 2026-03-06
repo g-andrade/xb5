@@ -141,8 +141,10 @@ API for operating over `m:xb5_trees_v2` internal nodes directly.
 
 %%%
 
-% improper list
--define(ROTATED(UpdatedLeft, UpdatedRight), [UpdatedLeft | UpdatedRight]).
+% 4 elements
+-define(ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedRight),
+    {UpKey, UpValue, UpdatedLeft, UpdatedRight}
+).
 
 -define(MERGED(MergedNode), (MergedNode)).
 
@@ -6285,10 +6287,7 @@ del_rebalance_INTERNAL4_C1(?INTERNAL4_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC1, UpdatedC2) ->
-            UpKey = del_rebalance_child_k1(C2),
-            UpValue = del_rebalance_child_v1(C2),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL4(
                 UpKey,
                 K2,
@@ -6345,10 +6344,7 @@ del_rebalance_INTERNAL4_C2(?INTERNAL4_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC1, RebalancedC2) ->
-            UpKey = del_rebalance_child_k_rightmost(C1),
-            UpValue = del_rebalance_child_v_rightmost(C1),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC1, RebalancedC2) ->
             ?new_INTERNAL4(
                 UpKey,
                 K2,
@@ -6405,10 +6401,7 @@ del_rebalance_INTERNAL4_C3(?INTERNAL4_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC2, RebalancedC3) ->
-            UpKey = del_rebalance_child_k_rightmost(C2),
-            UpValue = del_rebalance_child_v_rightmost(C2),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL4(
                 K1,
                 UpKey,
@@ -6465,10 +6458,7 @@ del_rebalance_INTERNAL4_C4(?INTERNAL4_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC3, RebalancedC4) ->
-            UpKey = del_rebalance_child_k_rightmost(C3),
-            UpValue = del_rebalance_child_v_rightmost(C3),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL4(
                 K1,
                 K2,
@@ -6517,10 +6507,7 @@ del_rebalance_INTERNAL4_C5(?INTERNAL4_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC4, RebalancedC5) ->
-            UpKey = del_rebalance_child_k_rightmost(C4),
-            UpValue = del_rebalance_child_v_rightmost(C4),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC4, RebalancedC5) ->
             ?new_INTERNAL4(
                 K1,
                 K2,
@@ -6573,10 +6560,7 @@ del_rebalance_INTERNAL3_C1(?INTERNAL3_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC1, UpdatedC2) ->
-            UpKey = del_rebalance_child_k1(C2),
-            UpValue = del_rebalance_child_v1(C2),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL3(
                 UpKey,
                 K2,
@@ -6627,10 +6611,7 @@ del_rebalance_INTERNAL3_C2(?INTERNAL3_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC1, RebalancedC2) ->
-            UpKey = del_rebalance_child_k_rightmost(C1),
-            UpValue = del_rebalance_child_v_rightmost(C1),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC1, RebalancedC2) ->
             ?new_INTERNAL3(
                 UpKey,
                 K2,
@@ -6681,10 +6662,7 @@ del_rebalance_INTERNAL3_C3(?INTERNAL3_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC2, RebalancedC3) ->
-            UpKey = del_rebalance_child_k_rightmost(C2),
-            UpValue = del_rebalance_child_v_rightmost(C2),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL3(
                 K1,
                 UpKey,
@@ -6727,10 +6705,7 @@ del_rebalance_INTERNAL3_C4(?INTERNAL3_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC3, RebalancedC4) ->
-            UpKey = del_rebalance_child_k_rightmost(C3),
-            UpValue = del_rebalance_child_v_rightmost(C3),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC3, RebalancedC4) ->
             ?new_INTERNAL3(
                 K1,
                 K2,
@@ -6777,10 +6752,7 @@ del_rebalance_INTERNAL2_C1(?INTERNAL2_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC1, UpdatedC2) ->
-            UpKey = del_rebalance_child_k1(C2),
-            UpValue = del_rebalance_child_v1(C2),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL2(
                 UpKey,
                 K2,
@@ -6818,10 +6790,7 @@ del_rebalance_INTERNAL2_C2(?INTERNAL2_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC1, RebalancedC2) ->
-            UpKey = del_rebalance_child_k_rightmost(C1),
-            UpValue = del_rebalance_child_v_rightmost(C1),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC1, RebalancedC2) ->
             ?new_INTERNAL2(
                 UpKey,
                 K2,
@@ -6858,10 +6827,7 @@ del_rebalance_INTERNAL2_C3(?INTERNAL2_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC2, RebalancedC3) ->
-            UpKey = del_rebalance_child_k_rightmost(C2),
-            UpValue = del_rebalance_child_v_rightmost(C2),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC2, RebalancedC3) ->
             ?new_INTERNAL2(
                 K1,
                 UpKey,
@@ -6902,10 +6868,7 @@ del_rebalance_INTERNAL1_C1(?INTERNAL1_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC1, UpdatedC2) ->
-            UpKey = del_rebalance_child_k1(C2),
-            UpValue = del_rebalance_child_v1(C2),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
         %
         ?MERGED(MergedC1C2) ->
@@ -6926,10 +6889,7 @@ del_rebalance_INTERNAL1_C2(?INTERNAL1_ARGS) ->
         badkey ->
             badkey;
         %
-        ?ROTATED(UpdatedC1, UpdatedC2) ->
-            UpKey = del_rebalance_child_k_rightmost(C1),
-            UpValue = del_rebalance_child_v_rightmost(C1),
-
+        ?ROTATED(UpKey, UpValue, UpdatedC1, UpdatedC2) ->
             ?new_INTERNAL1(UpKey, UpValue, UpdatedC1, UpdatedC2);
         %
         ?MERGED(MergedC1C2) ->
@@ -6973,7 +6933,7 @@ del_rebalance_maybe_from_right_sibling(Child, RParentK, RParentV, Right) ->
             balanced
     end.
 
-%-compile({inline, del_rebalance_internal_from_right_sibling/7}).
+-compile({inline, del_rebalance_internal_from_right_sibling/7}).
 del_rebalance_internal_from_right_sibling(
     CKey,
     CValue,
@@ -7008,7 +6968,9 @@ del_rebalance_internal_from_right_sibling(
         %
         %
         %
-        ?INTERNAL3_MATCH(_, K2, K3, _, V2, V3, C1, C2, C3, C4) ->
+        ?INTERNAL3_MATCH_ALL ->
+            UpKey = K1,
+            UpValue = V1,
             MovedC = C1,
 
             UpdatedNode = ?new_INTERNAL2(
@@ -7035,11 +6997,13 @@ del_rebalance_internal_from_right_sibling(
                 C4
             ),
 
-            ?ROTATED(UpdatedNode, UpdatedRight);
+            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight);
         %
         %
         %
-        ?INTERNAL4_MATCH(_, K2, K3, K4, _, V2, V3, V4, C1, C2, C3, C4, C5) ->
+        ?INTERNAL4_MATCH_ALL ->
+            UpKey = K1,
+            UpValue = V1,
             MovedC = C1,
 
             UpdatedNode = ?new_INTERNAL2(
@@ -7069,7 +7033,7 @@ del_rebalance_internal_from_right_sibling(
                 C5
             ),
 
-            ?ROTATED(UpdatedNode, UpdatedRight)
+            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight)
         %
         %
     end.
@@ -7093,18 +7057,24 @@ del_rebalance_leaf_from_right_sibling(CKey, CValue, RParentK, RParentV, Right) -
             MergedNode;
         %
         %
-        ?LEAF3_MATCH(_, K2, K3, _, V2, V3) ->
+        ?LEAF3_MATCH_ALL ->
+            UpKey = K1,
+            UpValue = V1,
+
             UpdatedNode = ?new_LEAF2(CKey, RParentK, CValue, RParentV),
             UpdatedRight = ?new_LEAF2(K2, K3, V2, V3),
 
-            ?ROTATED(UpdatedNode, UpdatedRight);
+            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight);
         %
         %
-        ?LEAF4_MATCH(_, K2, K3, K4, _, V2, V3, V4) ->
+        ?LEAF4_MATCH_ALL ->
+            UpKey = K1,
+            UpValue = V1,
+
             UpdatedNode = ?new_LEAF2(CKey, RParentK, CValue, RParentV),
             UpdatedRight = ?new_LEAF3(K2, K3, K4, V2, V3, V4),
 
-            ?ROTATED(UpdatedNode, UpdatedRight)
+            ?ROTATED(UpKey, UpValue, UpdatedNode, UpdatedRight)
         %
         %
     end.
@@ -7145,7 +7115,7 @@ del_rebalance_maybe_from_left_sibling(Child, LParentK, LParentV, Left) ->
             balanced
     end.
 
-%-compile({inline, del_rebalance_internal_from_left_sibling/7}).
+-compile({inline, del_rebalance_internal_from_left_sibling/7}).
 del_rebalance_internal_from_left_sibling(
     CKey,
     CValue,
@@ -7180,7 +7150,9 @@ del_rebalance_internal_from_left_sibling(
         %
         %
         %
-        ?INTERNAL3_MATCH(K1, K2, _, V1, V2, _, C1, C2, C3, C4) ->
+        ?INTERNAL3_MATCH_ALL ->
+            UpKey = K3,
+            UpValue = V3,
             MovedC = C4,
 
             UpdatedNode = ?new_INTERNAL2(
@@ -7206,11 +7178,13 @@ del_rebalance_internal_from_left_sibling(
                 C3
             ),
 
-            ?ROTATED(UpdatedLeft, UpdatedNode);
+            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode);
         %
         %
         %
-        ?INTERNAL4_MATCH(K1, K2, K3, _, V1, V2, V3, _, C1, C2, C3, C4, C5) ->
+        ?INTERNAL4_MATCH_ALL ->
+            UpKey = K4,
+            UpValue = V4,
             MovedC = C5,
 
             UpdatedNode = ?new_INTERNAL2(
@@ -7240,7 +7214,7 @@ del_rebalance_internal_from_left_sibling(
                 C4
             ),
 
-            ?ROTATED(UpdatedLeft, UpdatedNode)
+            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode)
         %
         %
     end.
@@ -7270,18 +7244,24 @@ del_rebalance_leaf_from_left_sibling(
             MergedNode;
         %
         %
-        ?LEAF3_MATCH(K1, K2, _, V1, V2, _) ->
+        ?LEAF3_MATCH_ALL ->
+            UpKey = K3,
+            UpValue = V3,
+
             UpdatedNode = ?new_LEAF2(LParentK, CKey, LParentV, CValue),
             UpdatedLeft = ?new_LEAF2(K1, K2, V1, V2),
 
-            ?ROTATED(UpdatedLeft, UpdatedNode);
+            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode);
         %
         %
-        ?LEAF4(K1, K2, K3, _, V1, V2, V3, _) ->
+        ?LEAF4_MATCH_ALL ->
+            UpKey = K4,
+            UpValue = V4,
+
             UpdatedNode = ?new_LEAF2(LParentK, CKey, LParentV, CValue),
             UpdatedLeft = ?new_LEAF3(K1, K2, K3, V1, V2, V3),
 
-            ?ROTATED(UpdatedLeft, UpdatedNode)
+            ?ROTATED(UpKey, UpValue, UpdatedLeft, UpdatedNode)
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7390,40 +7370,3 @@ check_node_keys(_, []) ->
 
 % -if(?NODE_CHECK_ENABLED).
 -endif.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% FIXME organize
-
--compile({inline, del_rebalance_child_k1/1}).
-del_rebalance_child_k1(Node) ->
-    element(1, Node).
-
-del_rebalance_child_v1(?INTERNAL4_MATCH(_, _, _, _, V1, _, _, _, _, _, _, _, _)) ->
-    V1;
-del_rebalance_child_v1(?INTERNAL3_MATCH(_, _, _, V1, _, _, _, _, _, _)) ->
-    V1;
-del_rebalance_child_v1(?LEAF4_MATCH(_, _, _, _, V1, _, _, _)) ->
-    V1;
-del_rebalance_child_v1(?LEAF3_MATCH(_, _, _, V1, _, _)) ->
-    V1.
-
-%%%
-
-del_rebalance_child_k_rightmost(?INTERNAL4_MATCH(_, _, _, K4, _, _, _, _, _, _, _, _, _)) ->
-    K4;
-del_rebalance_child_k_rightmost(?INTERNAL3_MATCH(_, _, K3, _, _, _, _, _, _, _)) ->
-    K3;
-del_rebalance_child_k_rightmost(?LEAF4_MATCH(_, _, _, K4, _, _, _, _)) ->
-    K4;
-del_rebalance_child_k_rightmost(?LEAF3_MATCH(_, _, K3, _, _, _)) ->
-    K3.
-
-del_rebalance_child_v_rightmost(?INTERNAL4_MATCH(_, _, _, _, _, _, _, V4, _, _, _, _, _)) ->
-    V4;
-del_rebalance_child_v_rightmost(?INTERNAL3_MATCH(_, _, _, _, _, V3, _, _, _, _)) ->
-    V3;
-del_rebalance_child_v_rightmost(?LEAF4_MATCH(_, _, _, _, _, _, _, V4)) ->
-    V4;
-del_rebalance_child_v_rightmost(?LEAF3_MATCH(_, _, _, _, _, V3)) ->
-    V3.
