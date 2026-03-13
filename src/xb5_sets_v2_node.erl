@@ -3348,33 +3348,27 @@ take_largest_recur(Node, Extreme) ->
 take_smallest_recur(Node, Extreme) ->
     case Node of
         ?INTERNAL2_MATCH_ALL ->
-            ChildExtreme = leftmost_child_extreme(Extreme),
-
-            case take_smallest_recur(C1, ChildExtreme) of
+            case take_smallest_recur(C1, Extreme) of
                 ?TAKEN(Taken, UpdatedC1) ->
-                    ?TAKEN(Taken, ?INTERNAL2_C1_REBALANCE(UpdatedC1, ChildExtreme));
+                    ?TAKEN(Taken, ?INTERNAL2_C1_REBALANCE(UpdatedC1, Extreme));
                 %
                 none ->
                     ?TAKEN(E1, ?new_INTERNAL1(E2, C2, C3))
             end;
         %
         ?INTERNAL3_MATCH_ALL ->
-            ChildExtreme = leftmost_child_extreme(Extreme),
-
-            case take_smallest_recur(C1, ChildExtreme) of
+            case take_smallest_recur(C1, Extreme) of
                 ?TAKEN(Taken, UpdatedC1) ->
-                    ?TAKEN(Taken, ?INTERNAL3_C1_REBALANCE(UpdatedC1, ChildExtreme));
+                    ?TAKEN(Taken, ?INTERNAL3_C1_REBALANCE(UpdatedC1, Extreme));
                 %
                 none ->
                     ?TAKEN(E1, ?new_INTERNAL2(E2, E3, C2, C3, C4))
             end;
         %
         ?INTERNAL4_MATCH_ALL ->
-            ChildExtreme = leftmost_child_extreme(Extreme),
-
-            case take_smallest_recur(C1, ChildExtreme) of
+            case take_smallest_recur(C1, Extreme) of
                 ?TAKEN(Taken, UpdatedC1) ->
-                    ?TAKEN(Taken, ?INTERNAL4_C1_REBALANCE(UpdatedC1, ChildExtreme));
+                    ?TAKEN(Taken, ?INTERNAL4_C1_REBALANCE(UpdatedC1, Extreme));
                 %
                 none ->
                     ?TAKEN(E1, ?new_INTERNAL3(E2, E3, E4, C2, C3, C4, C5))
