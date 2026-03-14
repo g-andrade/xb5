@@ -557,8 +557,8 @@ false
     Set1 :: set(Element),
     Set2 :: set(Element).
 
-is_disjoint(#xb5_set{root = Root1, size = Size1}, #xb5_set{root = Root2, size = Size2}) ->
-    xb5_sets_node:is_disjoint(Root1, Size1, Root2, Size2).
+is_disjoint(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = Root2}) ->
+    xb5_sets_node:is_disjoint(Size1, Root1, Size2, Root2).
 
 %%
 

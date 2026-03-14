@@ -591,8 +591,8 @@ intersection(Size1, Root1, Size2, Root2) ->
             intersection_root(Size1, to_rev_list(Root1), Size2, Root2)
     end.
 
--spec is_disjoint(t(_), non_neg_integer(), t(_), non_neg_integer()) -> boolean().
-is_disjoint(Root1, Size1, Root2, Size2) ->
+-spec is_disjoint(non_neg_integer(), t(_), non_neg_integer(), t(_)) -> boolean().
+is_disjoint(Size1, Root1, Size2, Root2) ->
     if
         Size1 =:= 0 orelse Size2 =:= 0 ->
             true;
