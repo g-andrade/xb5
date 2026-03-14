@@ -69,7 +69,12 @@ API for operating over `m:xb5_sets` internal nodes directly.
     take_largest/1,
     take_smallest/1,
     to_list/1,
+    to_rev_list/1,
     union/4
+]).
+
+-ignore_xref([
+    to_rev_list/1
 ]).
 
 %% ------------------------------------------------------------------
@@ -762,6 +767,18 @@ to_list(?LEAF0) ->
     [];
 to_list(Root) ->
     to_list_recur(Root, []).
+
+-spec to_rev_list(t(Elem)) -> [Elem].
+to_rev_list(?INTERNAL1_MATCH_ALL) ->
+    Acc2 = to_rev_list_recur(C1, []),
+    Acc3 = [E1 | Acc2],
+    to_rev_list_recur(C2, Acc3);
+to_rev_list(?LEAF1_MATCH_ALL) ->
+    [E1];
+to_rev_list(?LEAF0) ->
+    [];
+to_rev_list(Root) ->
+    to_rev_list_recur(Root, []).
 
 -spec union(Size1, t(Elem1), Size2, t(Elem2)) ->
     nonempty_improper_list(NewSize, t(Elem1 | Elem2))
@@ -3312,18 +3329,6 @@ to_list_recur(Node, Acc) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: to_rev_list/1
 %% ------------------------------------------------------------------
-
--spec to_rev_list(t(Elem)) -> [Elem].
-to_rev_list(?INTERNAL1_MATCH_ALL) ->
-    Acc2 = to_rev_list_recur(C1, []),
-    Acc3 = [E1 | Acc2],
-    to_rev_list_recur(C2, Acc3);
-to_rev_list(?LEAF1_MATCH_ALL) ->
-    [E1];
-to_rev_list(?LEAF0) ->
-    [];
-to_rev_list(Root) ->
-    to_rev_list_recur(Root, []).
 
 to_rev_list_recur(Node, Acc) ->
     case Node of
