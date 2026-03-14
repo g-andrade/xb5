@@ -58,8 +58,7 @@ This is primarily intended for debugging and testing.
     | leaf4
     | leaf3
     | leaf2
-    | leaf1
-    | leaf0).
+    | leaf1).
 -export_type([node_type/0]).
 
 -type acc() :: #{
@@ -85,8 +84,7 @@ new() ->
             leaf4 => 0,
             leaf3 => 0,
             leaf2 => 0,
-            leaf1 => 0,
-            leaf0 => 0
+            leaf1 => 0
         },
         height => 0
     }.
@@ -111,11 +109,6 @@ inc_count(NodeType, #{node_counters := NodeCounters} = Acc) ->
 -doc false.
 -spec return(acc()) -> t().
 return(#{node_counters := NodeCounters, height := Height}) ->
-    % Only root or leaves at either extreme can be leaf0 or leaf1
-    CountLeaf0 = maps:get(leaf0, NodeCounters, 0),
-    CountLeaf1 = maps:get(leaf1, NodeCounters, 0),
-    true = (CountLeaf0 + CountLeaf1) =< 2,
-
     NodeCounts = node_counts(NodeCounters),
     NodePercentages = node_percentages(NodeCounts),
     TotalKeys = total_keys(NodeCounts),
@@ -199,7 +192,7 @@ total_keys(NodeCounts) ->
 
 key_percentages(NodeCounts, 0 = _TotalKeys) ->
     lists:map(
-        fun({NodeType, _Count}) ->
+        fun({NodeType, 0}) ->
             {NodeType, 0.0}
         end,
         NodeCounts
@@ -270,7 +263,7 @@ is_node_type_internal(NodeType) ->
             false
     end.
 
--spec total_keys_in_node_type(node_type()) -> 0..4.
+-spec total_keys_in_node_type(node_type()) -> 1..4.
 total_keys_in_node_type(internal4) -> 4;
 total_keys_in_node_type(internal3) -> 3;
 total_keys_in_node_type(internal2) -> 2;
@@ -278,5 +271,4 @@ total_keys_in_node_type(internal1) -> 1;
 total_keys_in_node_type(leaf4) -> 4;
 total_keys_in_node_type(leaf3) -> 3;
 total_keys_in_node_type(leaf2) -> 2;
-total_keys_in_node_type(leaf1) -> 1;
-total_keys_in_node_type(leaf0) -> 0.
+total_keys_in_node_type(leaf1) -> 1.
