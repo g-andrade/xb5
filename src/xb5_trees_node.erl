@@ -64,8 +64,13 @@ API for operating over `m:xb5_trees` internal nodes directly.
     take_largest/1,
     take_smallest/1,
     to_list/1,
+    to_rev_list/1,
     update_att/4,
     values/1
+]).
+
+-ignore_xref([
+    to_rev_list/1
 ]).
 
 %% ------------------------------------------------------------------
@@ -747,6 +752,18 @@ to_list(?LEAF0) ->
     [];
 to_list(Root) ->
     to_list_recur(Root, []).
+
+-spec to_rev_list(t(Key, Value)) -> [{Key, Value}].
+to_rev_list(?INTERNAL1_MATCH_ALL) ->
+    Acc2 = to_rev_list_recur(C1, []),
+    Acc3 = [{K1, V1} | Acc2],
+    to_rev_list_recur(C2, Acc3);
+to_rev_list(?LEAF1_MATCH_ALL) ->
+    [{K1, V1}];
+to_rev_list(?LEAF0) ->
+    [];
+to_rev_list(Root) ->
+    to_rev_list_recur(Root, []).
 
 -spec update_att
     (Key, eager, Value, t(Key, _)) -> badkey | t(Key, Value);
@@ -3778,6 +3795,41 @@ to_list_recur(Node, Acc) ->
             Acc4 = to_list_recur(C3, [{K3, V3} | Acc3]),
             Acc5 = to_list_recur(C2, [{K2, V2} | Acc4]),
             _Acc6 = to_list_recur(C1, [{K1, V1} | Acc5])
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: to_rev_list/1
+%% ------------------------------------------------------------------
+
+to_rev_list_recur(Node, Acc) ->
+    % TODO test
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            [{K2, V2}, {K1, V1} | Acc];
+        %
+        ?LEAF3_MATCH_ALL ->
+            [{K3, V3}, {K2, V2}, {K1, V1} | Acc];
+        %
+        ?LEAF4_MATCH_ALL ->
+            [{K4, V4}, {K3, V3}, {K2, V2}, {K1, V1} | Acc];
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            Acc2 = to_rev_list_recur(C1, Acc),
+            Acc3 = to_rev_list_recur(C2, [{K1, V1} | Acc2]),
+            _Acc4 = to_rev_list_recur(C3, [{K2, V2} | Acc3]);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            Acc2 = to_rev_list_recur(C1, Acc),
+            Acc3 = to_rev_list_recur(C2, [{K1, V1} | Acc2]),
+            Acc4 = to_rev_list_recur(C3, [{K2, V2} | Acc3]),
+            _Acc5 = to_rev_list_recur(C4, [{K3, V3} | Acc4]);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            Acc2 = to_rev_list_recur(C1, Acc),
+            Acc3 = to_rev_list_recur(C2, [{K1, V1} | Acc2]),
+            Acc4 = to_rev_list_recur(C3, [{K2, V2} | Acc3]),
+            Acc5 = to_rev_list_recur(C4, [{K3, V3} | Acc4]),
+            _Acc6 = to_rev_list_recur(C5, [{K4, V4} | Acc5])
     end.
 
 %% ------------------------------------------------------------------
