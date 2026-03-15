@@ -408,7 +408,12 @@ b
     Tree :: tree(Key, Value).
 
 get(Key, #xb5_tree{root = Root}) ->
-    xb5_trees_node:get(Key, Root).
+    xb5_trees_node:get_att(
+        Key,
+        Root,
+        fun get_found/2,
+        fun get_not_found/1
+    ).
 
 %%
 
@@ -500,7 +505,12 @@ false
     Tree :: tree(Key, Value :: term()).
 
 is_defined(Key, #xb5_tree{root = Root}) ->
-    xb5_trees_node:is_defined(Key, Root).
+    xb5_trees_node:get_att(
+        Key,
+        Root,
+        fun is_defined_found/2,
+        fun is_defined_not_found/1
+    ).
 
 %%
 
@@ -712,7 +722,12 @@ none
     Tree :: tree(Key, Value).
 
 lookup(Key, #xb5_tree{root = Root}) ->
-    xb5_trees_node:lookup(Key, Root).
+    xb5_trees_node:get_att(
+        Key,
+        Root,
+        fun lookup_found/2,
+        fun lookup_not_found/1
+    ).
 
 %%
 
@@ -1214,3 +1229,21 @@ error_empty_tree() ->
 -spec error_key_exists(term()) -> no_return().
 error_key_exists(Key) ->
     error({key_exists, Key}).
+
+%%
+
+is_defined_found(_Key, _Value) -> true.
+
+is_defined_not_found(_Key) -> false.
+
+%%
+
+get_found(_Key, Value) -> Value.
+
+get_not_found(Key) -> error_badkey(Key).
+
+%%
+
+lookup_found(_Key, Value) -> {value, Value}.
+
+lookup_not_found(_Key) -> none.

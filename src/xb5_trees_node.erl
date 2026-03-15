@@ -47,15 +47,13 @@ API for operating over `m:xb5_trees` internal nodes directly.
     foldl/3,
     foldr/3,
     from_orddict/2,
-    get/2,
+    get_att/4,
     insert_att/4,
-    is_defined/2,
     iterator/2,
     iterator_from/3,
     keys/1,
     larger/2,
     largest/1,
-    lookup/2,
     map/2,
     new/0,
     next/1,
@@ -566,15 +564,16 @@ from_orddict(L, S) ->
     [Root | []] = from_orddict_recur(L, S, BatchOffset, BatchSize, AtRoot),
     Root.
 
--spec get(Key, t(Key, Value)) -> Value | no_return().
-get(Key, ?INTERNAL1_MATCH_ALL) ->
-    get_INTERNAL1(Key, ?INTERNAL1_ARGS);
-get(Key, ?LEAF1_MATCH_ALL) ->
-    get_LEAF1(Key, ?LEAF1_ARGS);
-get(Key, ?LEAF0) ->
-    error_badkey(Key);
-get(Key, Root) ->
-    get_recur(Key, Root).
+-spec get_att(Key, t(Key, Value), fun((Key, Value) -> Found), fun((Key) -> NotFound)) ->
+    Found | NotFound.
+get_att(Key, ?INTERNAL1_MATCH_ALL, Found, NotFound) ->
+    get_att_INTERNAL1(Key, ?INTERNAL1_ARGS, Found, NotFound);
+get_att(Key, ?LEAF1_MATCH_ALL, Found, NotFound) ->
+    get_att_LEAF1(Key, ?LEAF1_ARGS, Found, NotFound);
+get_att(Key, ?LEAF0, _Found, NotFound) ->
+    NotFound(Key);
+get_att(Key, Root, Found, NotFound) ->
+    get_att_recur(Key, Root, Found, NotFound).
 
 -spec insert_att
     (Key, eager, Value, t(Key, Value)) -> key_exists | t(Key, Value);
@@ -594,16 +593,6 @@ insert_att(Key, ValueEval, ValueWrap, Root) ->
         UpdatedRoot ->
             UpdatedRoot
     end.
-
--spec is_defined(Key, t(Key, _)) -> boolean().
-is_defined(Key, ?INTERNAL1_MATCH(K1, _, C1, C2)) ->
-    is_defined_INTERNAL1(Key, K1, C1, C2);
-is_defined(Key, ?LEAF1_MATCH(K1, _)) ->
-    is_defined_LEAF1(Key, K1);
-is_defined(_Key, ?LEAF0) ->
-    false;
-is_defined(Key, Root) ->
-    is_defined_recur(Key, Root).
 
 -spec iterator(t(Key, Value), ordered | reversed) -> iter(Key, Value).
 iterator(Root, ordered) ->
@@ -646,16 +635,6 @@ largest(?LEAF1_MATCH(K1, V1)) ->
     {K1, V1};
 largest(Root) ->
     largest_recur(Root).
-
--spec lookup(Key, t(Key, Value)) -> {value, Value} | none.
-lookup(Key, ?INTERNAL1_MATCH_ALL) ->
-    lookup_INTERNAL1(Key, ?INTERNAL1_ARGS);
-lookup(Key, ?LEAF1_MATCH_ALL) ->
-    lookup_LEAF1(Key, ?LEAF1_ARGS);
-lookup(_Key, ?LEAF0) ->
-    none;
-lookup(Key, Root) ->
-    lookup_recur(Key, Root).
 
 -spec map(fun((Key, Value) -> MappedValue), t(Key, Value)) -> t(Key, MappedValue).
 map(Fun, ?INTERNAL1_MATCH_ALL) ->
@@ -1452,33 +1431,33 @@ from_orddict_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatch
 %% Internal Function Definitions: get/2
 %% ------------------------------------------------------------------
 
-get_recur(Key, Node) ->
+get_att_recur(Key, Node, Found, NotFound) ->
     case Node of
         ?INTERNAL2_MATCH_ALL ->
-            get_INTERNAL2(Key, ?INTERNAL2_ARGS);
+            get_att_INTERNAL2(Key, ?INTERNAL2_ARGS, Found, NotFound);
         %
         ?INTERNAL3_MATCH_ALL ->
-            get_INTERNAL3(Key, ?INTERNAL3_ARGS);
+            get_att_INTERNAL3(Key, ?INTERNAL3_ARGS, Found, NotFound);
         %
         ?INTERNAL4_MATCH_ALL ->
-            get_INTERNAL4(Key, ?INTERNAL4_ARGS);
+            get_att_INTERNAL4(Key, ?INTERNAL4_ARGS, Found, NotFound);
         %
         ?LEAF2_MATCH_ALL ->
-            get_LEAF2(Key, ?LEAF2_ARGS);
+            get_att_LEAF2(Key, ?LEAF2_ARGS, Found, NotFound);
         %
         ?LEAF3_MATCH_ALL ->
-            get_LEAF3(Key, ?LEAF3_ARGS);
+            get_att_LEAF3(Key, ?LEAF3_ARGS, Found, NotFound);
         %
         ?LEAF4_MATCH_ALL ->
-            get_LEAF4(Key, ?LEAF4_ARGS)
+            get_att_LEAF4(Key, ?LEAF4_ARGS, Found, NotFound)
     end.
 
 %%
 %% ?INTERNAL4
 %%
 
--compile({inline, get_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-get_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
+-compile({inline, get_att_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
+get_att_INTERNAL4(Key, ?INTERNAL4_ARGS, Found, NotFound) ->
     ?GAP_SEARCH4(
         Key,
         K1,
@@ -1486,81 +1465,81 @@ get_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
         K3,
         K4,
         %
-        V1,
-        V2,
-        V3,
-        V4,
+        Found(K1, V1),
+        Found(K2, V2),
+        Found(K3, V3),
+        Found(K4, V4),
         %
-        get_recur(Key, C1),
-        get_recur(Key, C2),
-        get_recur(Key, C3),
-        get_recur(Key, C4),
-        get_recur(Key, C5)
+        get_att_recur(Key, C1, Found, NotFound),
+        get_att_recur(Key, C2, Found, NotFound),
+        get_att_recur(Key, C3, Found, NotFound),
+        get_att_recur(Key, C4, Found, NotFound),
+        get_att_recur(Key, C5, Found, NotFound)
     ).
 
 %%
 %% ?INTERNAL3
 %%
 
--compile({inline, get_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-get_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
+-compile({inline, get_att_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
+get_att_INTERNAL3(Key, ?INTERNAL3_ARGS, Found, NotFound) ->
     ?GAP_SEARCH3(
         Key,
         K1,
         K2,
         K3,
         %
-        V1,
-        V2,
-        V3,
+        Found(K1, V1),
+        Found(K2, V2),
+        Found(K3, V3),
         %
-        get_recur(Key, C1),
-        get_recur(Key, C2),
-        get_recur(Key, C3),
-        get_recur(Key, C4)
+        get_att_recur(Key, C1, Found, NotFound),
+        get_att_recur(Key, C2, Found, NotFound),
+        get_att_recur(Key, C3, Found, NotFound),
+        get_att_recur(Key, C4, Found, NotFound)
     ).
 
 %%
 %% ?INTERNAL2
 %%
 
--compile({inline, get_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-get_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
+-compile({inline, get_att_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
+get_att_INTERNAL2(Key, ?INTERNAL2_ARGS, Found, NotFound) ->
     ?GAP_SEARCH2(
         Key,
         K1,
         K2,
         %
-        V1,
-        V2,
+        Found(K1, V1),
+        Found(K2, V2),
         %
-        get_recur(Key, C1),
-        get_recur(Key, C2),
-        get_recur(Key, C3)
+        get_att_recur(Key, C1, Found, NotFound),
+        get_att_recur(Key, C2, Found, NotFound),
+        get_att_recur(Key, C3, Found, NotFound)
     ).
 
 %%
 %% ?INTERNAL1
 %%
 
--compile({inline, get_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-get_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
+-compile({inline, get_att_INTERNAL1 / ?INTERNAL1_ARITY_PLUS3}).
+get_att_INTERNAL1(Key, ?INTERNAL1_ARGS, Found, NotFound) ->
     ?GAP_SEARCH1(
         Key,
         K1,
         %
-        V1,
+        Found(K1, V1),
         %
-        get_recur(Key, C1),
-        get_recur(Key, C2)
+        get_att_recur(Key, C1, Found, NotFound),
+        get_att_recur(Key, C2, Found, NotFound)
     ).
 
 %%
 %% Leaves
 %%
 
--compile({inline, get_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-get_LEAF4(Key, ?LEAF4_ARGS) ->
+-compile({inline, get_att_LEAF4 / ?LEAF4_ARITY_PLUS3}).
+get_att_LEAF4(Key, ?LEAF4_ARGS, Found, NotFound) ->
     ?EXACT_SEARCH4(
         Key,
         K1,
@@ -1568,59 +1547,52 @@ get_LEAF4(Key, ?LEAF4_ARGS) ->
         K3,
         K4,
         %
-        V1,
-        V2,
-        V3,
-        V4,
-        error_badkey(Key)
+        Found(K1, V1),
+        Found(K2, V2),
+        Found(K3, V3),
+        Found(K4, V4),
+        NotFound(Key)
     ).
 
--compile({inline, get_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-get_LEAF3(Key, ?LEAF3_ARGS) ->
+-compile({inline, get_att_LEAF3 / ?LEAF3_ARITY_PLUS3}).
+get_att_LEAF3(Key, ?LEAF3_ARGS, Found, NotFound) ->
     ?EXACT_SEARCH3(
         Key,
         K1,
         K2,
         K3,
         %
-        V1,
-        V2,
-        V3,
-        error_badkey(Key)
+        Found(K1, V1),
+        Found(K2, V2),
+        Found(K3, V3),
+        NotFound(Key)
     ).
 
--compile({inline, get_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-get_LEAF2(Key, ?LEAF2_ARGS) ->
+-compile({inline, get_att_LEAF2 / ?LEAF2_ARITY_PLUS3}).
+get_att_LEAF2(Key, ?LEAF2_ARGS, Found, NotFound) ->
     ?EXACT_SEARCH2(
         Key,
         K1,
         K2,
         %
-        V1,
-        V2,
-        error_badkey(Key)
+        Found(K1, V1),
+        Found(K2, V2),
+        NotFound(Key)
     ).
 
 %%
 %% ?LEAF1
 %%
 
--compile({inline, get_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-get_LEAF1(Key, ?LEAF1_ARGS) ->
+-compile({inline, get_att_LEAF1 / ?LEAF1_ARITY_PLUS3}).
+get_att_LEAF1(Key, ?LEAF1_ARGS, Found, NotFound) ->
     ?EXACT_SEARCH1(
         Key,
         K1,
         %
-        V1,
-        error_badkey(Key)
+        Found(K1, V1),
+        NotFound(Key)
     ).
-
-%%
-
--compile({inline, error_badkey/1}).
--spec error_badkey(term()) -> no_return().
-error_badkey(Key) ->
-    error({badkey, Key}).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: insert_att/2
@@ -2043,138 +2015,6 @@ split_leaf(
     SplitR = ?new_LEAF2(K4, K5, V4, V5),
 
     {split, SplitK, SplitV, SplitL, SplitR}.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: is_defined/2
-%% ------------------------------------------------------------------
-
-is_defined_recur(Key, Node) ->
-    case Node of
-        ?INTERNAL2_MATCH(K1, K2, _, _, C1, C2, C3) ->
-            is_defined_INTERNAL2(Key, K1, K2, C1, C2, C3);
-        %
-        ?INTERNAL3_MATCH(K1, K2, K3, _, _, _, C1, C2, C3, C4) ->
-            is_defined_INTERNAL3(Key, K1, K2, K3, C1, C2, C3, C4);
-        %
-        ?INTERNAL4_MATCH(K1, K2, K3, K4, _, _, _, _, C1, C2, C3, C4, C5) ->
-            is_defined_INTERNAL4(Key, K1, K2, K3, K4, C1, C2, C3, C4, C5);
-        %
-        ?LEAF2_MATCH(K1, K2, _, _) ->
-            is_defined_LEAF2(Key, K1, K2);
-        %
-        ?LEAF3_MATCH(K1, K2, K3, _, _, _) ->
-            is_defined_LEAF3(Key, K1, K2, K3);
-        %
-        ?LEAF4_MATCH(K1, K2, K3, K4, _, _, _, _) ->
-            is_defined_LEAF4(Key, K1, K2, K3, K4)
-    end.
-
-%%
-%% ?INTERNAL4
-%%
-
--compile({inline, is_defined_INTERNAL4/10}).
-is_defined_INTERNAL4(Key, K1, K2, K3, K4, C1, C2, C3, C4, C5) ->
-    ?GAP_SEARCH4(
-        Key,
-        K1,
-        K2,
-        K3,
-        K4,
-        %
-        true,
-        true,
-        true,
-        true,
-        %
-        is_defined_recur(Key, C1),
-        is_defined_recur(Key, C2),
-        is_defined_recur(Key, C3),
-        is_defined_recur(Key, C4),
-        is_defined_recur(Key, C5)
-    ).
-
-%%
-%% ?INTERNAL3
-%%
-
--compile({inline, is_defined_INTERNAL3/8}).
-is_defined_INTERNAL3(Key, K1, K2, K3, C1, C2, C3, C4) ->
-    ?GAP_SEARCH3(
-        Key,
-        K1,
-        K2,
-        K3,
-        %
-        true,
-        true,
-        true,
-        %
-        is_defined_recur(Key, C1),
-        is_defined_recur(Key, C2),
-        is_defined_recur(Key, C3),
-        is_defined_recur(Key, C4)
-    ).
-
-%%
-%% ?INTERNAL2
-%%
-
--compile({inline, is_defined_INTERNAL2/6}).
-is_defined_INTERNAL2(Key, K1, K2, C1, C2, C3) ->
-    ?GAP_SEARCH2(
-        Key,
-        K1,
-        K2,
-        %
-        true,
-        true,
-        %
-        is_defined_recur(Key, C1),
-        is_defined_recur(Key, C2),
-        is_defined_recur(Key, C3)
-    ).
-
-%%
-%% ?INTERNAL1
-%%
-
--compile({inline, is_defined_INTERNAL1/4}).
-is_defined_INTERNAL1(Key, K1, C1, C2) ->
-    ?GAP_SEARCH1(
-        Key,
-        K1,
-        %
-        true,
-        %
-        is_defined_recur(Key, C1),
-        is_defined_recur(Key, C2)
-    ).
-
-%%
-%% Leaves
-%%
-
--compile({inline, is_defined_LEAF4/5}).
-is_defined_LEAF4(Key, K1, K2, K3, K4) ->
-    (Key == K1 orelse
-        Key == K2 orelse
-        Key == K3 orelse
-        Key == K4).
-
--compile({inline, is_defined_LEAF3/4}).
-is_defined_LEAF3(Key, K1, K2, K3) ->
-    (Key == K1 orelse
-        Key == K2 orelse
-        Key == K3).
-
--compile({inline, is_defined_LEAF2/3}).
-is_defined_LEAF2(Key, K1, K2) ->
-    Key == K1 orelse Key == K2.
-
--compile({inline, is_defined_LEAF1/2}).
-is_defined_LEAF1(Key, K1) ->
-    Key == K1.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - forward
@@ -3079,181 +2919,6 @@ largest_recur(Node) ->
         ?LEAF4_MATCH(_, _, _, K4, _, _, _, V4) ->
             {K4, V4}
     end.
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: lookup/2
-%% ------------------------------------------------------------------
-
-lookup_recur(Key, Node) ->
-    case Node of
-        ?INTERNAL2_MATCH_ALL ->
-            lookup_INTERNAL2(Key, ?INTERNAL2_ARGS);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            lookup_INTERNAL3(Key, ?INTERNAL3_ARGS);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            lookup_INTERNAL4(Key, ?INTERNAL4_ARGS);
-        %
-        ?LEAF2_MATCH_ALL ->
-            lookup_LEAF2(Key, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            lookup_LEAF3(Key, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            lookup_LEAF4(Key, ?LEAF4_ARGS)
-    end.
-
-%%
-%% ?INTERNAL4
-%%
-
--compile({inline, lookup_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-lookup_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
-    ?GAP_SEARCH4(
-        Key,
-        K1,
-        K2,
-        K3,
-        K4,
-        %
-        {value, V1},
-        {value, V2},
-        {value, V3},
-        {value, V4},
-        %
-        lookup_recur(Key, C1),
-        lookup_recur(Key, C2),
-        lookup_recur(Key, C3),
-        lookup_recur(Key, C4),
-        lookup_recur(Key, C5)
-    ).
-
-%%
-%% ?INTERNAL3
-%%
-
--compile({inline, lookup_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-lookup_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
-    ?GAP_SEARCH3(
-        Key,
-        K1,
-        K2,
-        K3,
-        %
-        {value, V1},
-        {value, V2},
-        {value, V3},
-        %
-        lookup_recur(Key, C1),
-        lookup_recur(Key, C2),
-        lookup_recur(Key, C3),
-        lookup_recur(Key, C4)
-    ).
-
-%%
-%% ?INTERNAL2
-%%
-
--compile({inline, lookup_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-lookup_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
-    ?GAP_SEARCH2(
-        Key,
-        K1,
-        K2,
-        %
-        {value, V1},
-        {value, V2},
-        %
-        lookup_recur(Key, C1),
-        lookup_recur(Key, C2),
-        lookup_recur(Key, C3)
-    ).
-
-%%
-%% ?INTERNAL1
-%%
-
--compile({inline, lookup_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-lookup_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
-    ?GAP_SEARCH1(
-        Key,
-        K1,
-        %
-        {value, V1},
-        %
-        lookup_recur(Key, C1),
-        lookup_recur(Key, C2)
-    ).
-
-%%
-%% Leaves
-%%
-
--compile({inline, lookup_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-lookup_LEAF4(Key, ?LEAF4_ARGS) ->
-    ?EXACT_SEARCH4(
-        Key,
-        K1,
-        K2,
-        K3,
-        K4,
-        %
-        {value, V1},
-        {value, V2},
-        {value, V3},
-        {value, V4},
-        none
-    ).
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, lookup_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-lookup_LEAF3(Key, ?LEAF3_ARGS) ->
-    ?EXACT_SEARCH3(
-        Key,
-        K1,
-        K2,
-        K3,
-        %
-        {value, V1},
-        {value, V2},
-        {value, V3},
-        none
-    ).
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, lookup_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-lookup_LEAF2(Key, ?LEAF2_ARGS) ->
-    ?EXACT_SEARCH2(
-        Key,
-        K1,
-        K2,
-        %
-        {value, V1},
-        {value, V2},
-        none
-    ).
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, lookup_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-lookup_LEAF1(Key, ?LEAF1_ARGS) ->
-    ?EXACT_SEARCH1(
-        Key,
-        K1,
-        %
-        {value, V1},
-        none
-    ).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: map/2
