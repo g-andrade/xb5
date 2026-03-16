@@ -49,6 +49,8 @@ rank, percentiles).
     largest/1,
     lookup/2,
     map/2,
+    merge/2,
+    merge/3,
     new/0,
     next/1,
     size/1,
@@ -93,6 +95,8 @@ rank, percentiles).
     largest/1,
     lookup/2,
     map/2,
+    merge/2,
+    merge/3,
     new/0,
     next/1,
     size/1,
@@ -780,6 +784,47 @@ the new value `Value2`.
 
 map(Fun, #xb5_tree{root = Root} = Tree) ->
     Tree#xb5_tree{root = xb5_trees_node:map(Fun, Root)}.
+
+%%
+
+-doc """
+Merges `Tree1` and `Tree2` into a single tree. Repeated keys will keep the
+values from Tree2.
+# TODO better docs
+
+## Examples
+# TODO
+```
+""".
+-spec merge(Tree1, Tree2) -> Tree3 when
+    Tree1 :: tree(KeyA, ValueA),
+    Tree2 :: tree(KeyB, ValueB),
+    Tree3 :: tree(KeyA | KeyB, ValueA | ValueB).
+
+merge(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root2}) ->
+    [NewSize | NewRoot] = xb5_trees_node:merge(Size1, Root1, Size2, Root2),
+    #xb5_tree{size = NewSize, root = NewRoot}.
+
+%%
+
+-doc """
+Merges `Tree1` and `Tree2` into a single tree using `Fun` to handle repeated
+keys.
+# TODO better docs
+
+## Examples
+# TODO
+```
+""".
+-spec merge(Fun, Tree1, Tree2) -> Tree3 when
+    Fun :: fun((KeyA | KeyB, ValueA, ValueB) -> MergeValue),
+    Tree1 :: tree(KeyA, ValueA),
+    Tree2 :: tree(KeyB, ValueB),
+    Tree3 :: tree(KeyA | KeyB, ValueA | ValueB | MergeValue).
+
+merge(Fun, #xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root2}) ->
+    [NewSize | NewRoot] = xb5_trees_node:merge(Fun, Size1, Root1, Size2, Root2),
+    #xb5_tree{size = NewSize, root = NewRoot}.
 
 %%
 

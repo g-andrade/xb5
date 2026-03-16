@@ -56,6 +56,8 @@ API for operating over `m:xb5_trees` internal nodes directly.
     larger/2,
     largest/1,
     map/2,
+    merge/4,
+    merge/5,
     new/0,
     next/1,
     smaller/2,
@@ -71,6 +73,8 @@ API for operating over `m:xb5_trees` internal nodes directly.
 ]).
 
 -ignore_xref([
+    merge/4,
+    merge/5,
     to_rev_list/1
 ]).
 
@@ -669,6 +673,25 @@ map(_Fun, ?LEAF0) ->
     ?LEAF0;
 map(Fun, Root) ->
     map_recur(Fun, Root).
+
+-spec merge(non_neg_integer(), t(KA, VA), non_neg_integer(), t(KB, VB)) ->
+    nonempty_improper_list(NewSize, t(KA | KB, VA | VB))
+when
+    NewSize :: non_neg_integer().
+merge(Size1, Root1, Size2, Root2) ->
+    Fun1 = fun merge_pick_second/3,
+    Fun2 = fun merge_pick_first/3,
+    merge(Fun1, Size1, Root1, Fun2, Size2, Root2).
+
+-spec merge(non_neg_integer(), t(KA, VA), non_neg_integer(), t(KB, VB), MergeFun) ->
+    nonempty_improper_list(NewSize, t(KA | KB, MergedV))
+when
+    MergeFun :: fun((KA | KB, VA, VB) -> MergedV),
+    NewSize :: non_neg_integer().
+merge(Fun, Size1, Root1, Size2, Root2) ->
+    Fun1 = Fun,
+    Fun2 = fun(Key, Value2, Value1) -> Fun(Key, Value1, Value2) end,
+    merge(Fun1, Size1, Root1, Fun2, Size2, Root2).
 
 -spec new() -> t(term(), term()).
 new() ->
@@ -3158,6 +3181,118 @@ map_recur(Fun, Node) ->
                 map_recur(Fun, C5)
             )
     end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: merge/2
+%% ------------------------------------------------------------------
+
+merge_pick_first(_Key, ValueA, _ValueB) -> ValueA.
+
+merge_pick_second(_Key, _ValueA, ValueB) -> ValueB.
+
+%%
+
+merge(Fun1, Size1, Root1, Fun2, Size2, Root2) when Size2 < Size1 ->
+    merge_root(Fun2, Size2, Root2, Fun1, Size1, Root1);
+merge(Fun1, Size1, Root1, Fun2, Size2, Root2) ->
+    merge_root(Fun1, Size1, Root1, Fun2, Size2, Root2).
+
+merge_root(_, 0, _, _, Size2, Root2) ->
+    [Size2 | Root2];
+merge_root(Fun1, Size1, Root1, Fun2, Size2, Root2) when Size2 < 10 ->
+    List1 = to_rev_list(Root1),
+    List2 = to_rev_list(Root2),
+    merge_2(Fun1, List1, Fun2, List2, Size1 + Size2);
+merge_root(Fun1, Size1, Root1, Fun2, Size2, Root2) ->
+    ThresholdSize = Size1 * round(math:log2(Size2)),
+
+    if
+        Size2 < ThresholdSize ->
+            List1 = to_rev_list(Root1),
+            List2 = to_rev_list(Root2),
+            merge_2(Fun1, List1, Fun2, List2, Size1 + Size2);
+        %
+        true ->
+            case Fun1 =:= fun merge_pick_second/3 of
+                true ->
+                    List1 = to_rev_list(Root1),
+                    merge_1_a(List1, Size2, Root2);
+                %
+                _ ->
+                    List1 = to_rev_list(Root1),
+                    merge_1_b(Fun1, List1, Size2, Root2)
+            end
+    end.
+
+%%
+
+merge_1_a([{Key, Value} | Next], Size2, Root2) ->
+    case insert_att(Key, eager, Value, Root2) of
+        key_exists ->
+            % We want to keep the second value, which is the one already in Root
+            merge_1_a(Next, Size2, Root2);
+        %
+        UpdatedRoot2 ->
+            merge_1_a(Next, Size2 + 1, UpdatedRoot2)
+    end;
+merge_1_a([], Size2, Root2) ->
+    [Size2 | Root2].
+
+%%
+
+merge_1_b(Fun1, [{Key, ValueA} | Next], Size2, Root2) ->
+    case insert_att(Key, eager, ValueA, Root2) of
+        key_exists ->
+            ValueB = get(Key, Root2),
+            MergeValue = Fun1(Key, ValueA, ValueB),
+            UpdatedRoot2 = update_att(Key, eager, MergeValue, Root2),
+            merge_1_b(Fun1, Next, Size2, UpdatedRoot2);
+        %
+        UpdatedRoot2 ->
+            merge_1_b(Fun1, Next, Size2 + 1, UpdatedRoot2)
+    end;
+merge_1_b(_Fun1, [], Size2, Root2) ->
+    [Size2 | Root2].
+
+get(Key, Root2) ->
+    get_att(Key, Root2, fun get_found/2, fun get_not_found/1).
+
+get_found(_Key, Value) ->
+    Value.
+
+get_not_found(_Key) ->
+    error('This path is supposed to be unreachable').
+
+%%
+
+merge_2(Fun1, List1, Fun2, List2, AccSize) ->
+    merge_2(Fun1, List1, Fun2, List2, AccSize, []).
+
+merge_2(
+    Fun1,
+    [{Key1, Value1} = Pair1 | Next1] = List1,
+    Fun2,
+    [{Key2, Value2} = Pair2 | Next2] = List2,
+    AccSize,
+    Acc
+) ->
+    if
+        Key1 > Key2 ->
+            merge_2(Fun1, Next1, Fun2, List2, AccSize, [Pair1 | Acc]);
+        %
+        Key1 < Key2 ->
+            merge_2(Fun2, Next2, Fun1, List1, AccSize, [Pair2 | Acc]);
+        %
+        true ->
+            MergeValue = Fun1(Key1, Value1, Value2),
+            merge_2(Fun1, Next1, Fun2, Next2, AccSize - 1, [{Key1, MergeValue} | Acc])
+    end;
+merge_2(_Fun1, [], _Fun2, List2, AccSize, Acc) ->
+    FinalAcc = lists:reverse(List2, Acc),
+    [AccSize | from_orddict(FinalAcc, AccSize)];
+merge_2(_Fun1, List1, _Fun2, [], AccSize, Acc) ->
+    FinalAcc = lists:reverse(List1, Acc),
+    [AccSize | from_orddict(FinalAcc, AccSize)].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: next/1

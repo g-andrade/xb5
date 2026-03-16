@@ -54,6 +54,7 @@
     test_foldr/1,
     test_is_equal/1,
     test_map/1,
+    test_merge/1,
     test_rewrap/1
 ]).
 
@@ -158,6 +159,7 @@ groups() ->
             test_foldr,
             test_is_equal,
             test_map,
+            test_merge,
             test_rewrap
         ]},
         {structure, [parallel], [
@@ -743,6 +745,9 @@ test_map(_Config) ->
             run_map(RefKvs, Tree)
         end
     ).
+
+test_merge(_Config) ->
+    foreach_test_tree(fun run_merge_test/3).
 
 test_rewrap(_Config) ->
     ?assertMatch({error, _}, xb5_trees:unwrap(xb5_sets:new())),
@@ -1607,9 +1612,21 @@ run_is_equal_test(Size, RefKvs, Tree) ->
         RefKvs
     ).
 
-%%%
-
 foreach_second_tree(Fun, Size, RefKvs) ->
+    foreach_second_tree(Fun, Size, RefKvs, _Opts = []).
+
+foreach_second_tree(Fun, Size, RefKvs, Opts) ->
+    foreach_second_tree_variants1(Fun, Size, RefKvs, Opts),
+
+    _ =
+        proplists:get_value(test_variants2, Opts, false) andalso
+            foreach_second_tree_variants2(Fun, Size, RefKvs),
+
+    ok.
+
+%%
+
+foreach_second_tree_variants1(Fun, Size, RefKvs, Opts) ->
     Amounts2 = lists:usort([
         0,
         1,
@@ -1626,8 +1643,7 @@ foreach_second_tree(Fun, Size, RefKvs) ->
         PercentageInCommon <- PercentagesInCommon
     ],
 
-    % MaxCombos = proplists:get_value(max_combos, Opts, length(ParamCombos)),
-    MaxCombos = length(ParamCombos),
+    MaxCombos = proplists:get_value(max_combos, Opts, length(ParamCombos)),
 
     lists:foreach(
         fun({Amount2, PercentageInCommon}) ->
@@ -1635,7 +1651,7 @@ foreach_second_tree(Fun, Size, RefKvs) ->
             NewAmount = Amount2 - RepeatedAmount,
 
             RepeatedKvs = lists:sublist(list_shuffle(RefKvs), RepeatedAmount),
-            NewKvs = [{new_key(), make_ref()} || _ <- lists:seq(1, NewAmount)],
+            NewKvs = [{new_key(), value2} || _ <- lists:seq(1, NewAmount)],
 
             RefKvs2 = lists:ukeysort(
                 1,
@@ -1651,6 +1667,48 @@ foreach_second_tree(Fun, Size, RefKvs) ->
         end,
         lists:sublist(list_shuffle(ParamCombos), MaxCombos)
     ).
+
+%%
+
+foreach_second_tree_variants2(Fun, Size, RefKvs) ->
+    % sequential
+
+    Amounts2 = [S || S <- lists:usort([0, 1, Size - 1, Size + 1]), S >= 0],
+
+    List2 = [
+        sequential_ref_kvs(Placement, S, RefKvs)
+     || Placement <- [before, after_],
+        S <- Amounts2
+    ],
+
+    lists:foreach(
+        fun(RefKvs2) ->
+            Tree2 = xb5_trees:from_list(RefKvs2),
+            Fun(RefKvs2, Tree2)
+        end,
+        List2
+    ).
+
+sequential_ref_kvs(_, Size, RefKvs) when Size =:= 0 orelse RefKvs =:= [] ->
+    [];
+sequential_ref_kvs(before, Size, RefKvs) ->
+    sequential_ref_kvs_before(Size, hd(RefKvs), []);
+sequential_ref_kvs(after_, Size, RefKvs) ->
+    sequential_ref_kvs_after(Size, lists:last(RefKvs)).
+
+sequential_ref_kvs_before(Size, {NextKey, _}, Acc) when Size > 0 ->
+    SmallerKey = key_smaller(NextKey),
+    ?assertMatch(_ when SmallerKey < NextKey, {SmallerKey, NextKey}),
+    sequential_ref_kvs_before(Size - 1, {SmallerKey, '_'}, [{SmallerKey, value2} | Acc]);
+sequential_ref_kvs_before(0, _, Acc) ->
+    Acc.
+
+sequential_ref_kvs_after(Size, {PrevKey, _}) when Size > 0 ->
+    LargerKey = key_larger(PrevKey),
+    ?assertMatch(_ when LargerKey > PrevKey, {LargerKey, PrevKey}),
+    [{LargerKey, value2} | sequential_ref_kvs_after(Size - 1, {LargerKey, '_'})];
+sequential_ref_kvs_after(0, _) ->
+    [].
 
 %% ------------------------------------------------------------------
 %% Helper Functions: map
@@ -1700,6 +1758,141 @@ run_map(RefKvs, Tree) ->
         end,
         PercentagesMapped
     ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Merge
+%% ------------------------------------------------------------------
+
+run_merge_test(Size, RefElements, Tree) ->
+    SelfMerge = xb5_trees:merge(Tree, Tree),
+
+    ?assertEqual(Size, xb5_trees:size(SelfMerge)),
+
+    ?assertKvListsCanonEqual(RefElements, xb5_trees:to_list(SelfMerge)),
+
+    %%%%%%%%%%%%%%
+
+    foreach_second_tree(
+        fun(RefElements2, Tree2) ->
+            ExpectedMergeElements1 = lists:ukeysort(1, RefElements2 ++ RefElements),
+
+            Merge = xb5_trees:merge(Tree, Tree2),
+
+            ?assertEqual(
+                length(ExpectedMergeElements1),
+                xb5_trees:size(Merge)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedMergeElements1,
+                xb5_trees:to_list(Merge)
+            ),
+
+            %%%%%%%
+
+            ExpectedMergeElements2 = lists:ukeysort(1, RefElements ++ RefElements2),
+
+            Merge2 = xb5_trees:merge(Tree2, Tree),
+
+            ?assertEqual(
+                length(ExpectedMergeElements2),
+                xb5_trees:size(Merge2)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedMergeElements2,
+                xb5_trees:to_list(Merge2)
+            ),
+
+            %%%%%%%%
+
+            MergeFun3 = fun(_K, _V1, V2) -> {pick_second, V2} end,
+            ExpectedMergeElements3 = merge_lists(MergeFun3, RefElements, RefElements2),
+
+            Merge3 = xb5_trees:merge(MergeFun3, Tree, Tree2),
+
+            ?assertEqual(
+                length(ExpectedMergeElements3),
+                xb5_trees:size(Merge3)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedMergeElements3,
+                xb5_trees:to_list(Merge3)
+            ),
+
+            %%%%%%%%
+
+            MergeFun4 = MergeFun3,
+            ExpectedMergeElements4 = merge_lists(MergeFun4, RefElements2, RefElements),
+
+            Merge4 = xb5_trees:merge(MergeFun4, Tree2, Tree),
+
+            ?assertEqual(
+                length(ExpectedMergeElements4),
+                xb5_trees:size(Merge4)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedMergeElements4,
+                xb5_trees:to_list(Merge4)
+            ),
+
+            %%%%%%%%
+
+            MergeFun5 = fun(_K, V1, _V2) -> {pick_first, V1} end,
+            ExpectedMergeElements5 = merge_lists(MergeFun5, RefElements, RefElements2),
+
+            Merge5 = xb5_trees:merge(MergeFun5, Tree, Tree2),
+
+            ?assertEqual(
+                length(ExpectedMergeElements5),
+                xb5_trees:size(Merge5)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedMergeElements5,
+                xb5_trees:to_list(Merge5)
+            ),
+
+            %%%%%%%%
+
+            MergeFun6 = MergeFun5,
+            ExpectedMergeElements6 = merge_lists(MergeFun6, RefElements2, RefElements),
+
+            Merge6 = xb5_trees:merge(MergeFun6, Tree2, Tree),
+
+            ?assertEqual(
+                length(ExpectedMergeElements6),
+                xb5_trees:size(Merge6)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedMergeElements6,
+                xb5_trees:to_list(Merge6)
+            )
+        end,
+        Size,
+        RefElements,
+        [test_variants2]
+    ).
+
+merge_lists(Fun, [{K1, V1} = Pair1 | Next1] = L1, [{K2, V2} = Pair2 | Next2] = L2) ->
+    if
+        K1 < K2 ->
+            [Pair1 | merge_lists(Fun, Next1, L2)];
+        %
+        K2 < K1 ->
+            [Pair2 | merge_lists(Fun, L1, Next2)];
+        %
+        true ->
+            MergedV = Fun(K1, V1, V2),
+            [{K1, MergedV} | merge_lists(Fun, Next1, Next2)]
+    end;
+merge_lists(_Fun, [], L2) ->
+    L2;
+merge_lists(_Fun, L1, []) ->
+    L1.
 
 %% ------------------------------------------------------------------
 %% Helpers: Structural Tests
@@ -1894,7 +2087,7 @@ key_smaller(Key) ->
 key_larger(Key) ->
     case key_type(Key) of
         binary ->
-            <<Key/bytes, Key/bytes>>;
+            <<Key/bytes, "_">>;
         %
         _ ->
             <<"ensured to be larger">>
