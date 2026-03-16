@@ -51,6 +51,7 @@ API for operating over `m:xb5_trees` internal nodes directly.
     insert_att/4,
     iterator/2,
     iterator_from/3,
+    is_equal/4,
     keys/1,
     larger/2,
     largest/1,
@@ -612,6 +613,17 @@ iterator_from(Key, Root, ordered) ->
 iterator_from(Key, Root, reversed) ->
     Acc = bound_rev_iterator(Key, Root),
     [?REV_ITER_TAG | Acc].
+
+-spec is_equal(non_neg_integer(), t(_, _), non_neg_integer(), t(_, _)) -> boolean().
+is_equal(Size1, Root1, Size2, Root2) ->
+    case Size1 =:= Size2 of
+        true ->
+            Iter2 = fwd_iterator(Root2),
+            is_equal_root(Root1, Iter2) =:= [];
+        %
+        _ ->
+            false
+    end.
 
 -spec keys(t(Key, _)) -> [Key].
 keys(?INTERNAL1_MATCH(K1, _, C1, C2)) ->
@@ -2664,6 +2676,123 @@ bound_rev_iterator_LEAF1(Key, ?LEAF1_ARGS) ->
         % Key >= K1
         [?ITER_PAIR(K1, V1)]
     ).
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: is_equal/2
+%% ------------------------------------------------------------------
+
+is_equal_root(?INTERNAL1_MATCH_ALL, Iter) ->
+    case is_equal_internal_pair(K1, V1, C1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            is_equal_recur(C2, Iter2)
+    end;
+is_equal_root(?LEAF1_MATCH_ALL, Iter) ->
+    next_pair_is_equal(K1, V1, Iter);
+is_equal_root(?LEAF0, []) ->
+    [];
+is_equal_root(Root, Iter) ->
+    is_equal_recur(Root, Iter).
+
+is_equal_recur(?LEAF2_MATCH_ALL, Iter) ->
+    is_equal_leaf_batch2(?LEAF2_ARGS, Iter);
+is_equal_recur(?LEAF3_MATCH_ALL, Iter) ->
+    is_equal_leaf_batch3(?LEAF3_ARGS, Iter);
+is_equal_recur(?LEAF4_MATCH_ALL, Iter) ->
+    case next_pair_is_equal(K1, V1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            is_equal_leaf_batch3(K2, K3, K4, V2, V3, V4, Iter2)
+    end;
+is_equal_recur(?INTERNAL2_MATCH_ALL, Iter) ->
+    is_equal_internal_batch2(K1, K2, V1, V2, C1, C2, C3, Iter);
+is_equal_recur(?INTERNAL3_MATCH_ALL, Iter) ->
+    is_equal_internal_batch3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4, Iter);
+is_equal_recur(?INTERNAL4_MATCH_ALL, Iter) ->
+    case is_equal_internal_pair(K1, V1, C1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            is_equal_internal_batch3(K2, K3, K4, V2, V3, V4, C2, C3, C4, C5, Iter2)
+    end.
+
+%%%%%
+
+-compile({inline, is_equal_internal_batch3 / ?INTERNAL3_ARITY_PLUS1}).
+is_equal_internal_batch3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4, Iter) ->
+    case is_equal_internal_pair(K1, V1, C1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            is_equal_internal_batch2(K2, K3, V2, V3, C2, C3, C4, Iter2)
+    end.
+
+-compile({inline, is_equal_internal_batch2 / ?INTERNAL2_ARITY_PLUS1}).
+is_equal_internal_batch2(K1, K2, V1, V2, C1, C2, C3, Iter) ->
+    case is_equal_internal_pair(K1, V1, C1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            case is_equal_internal_pair(K2, V2, C2, Iter2) of
+                false ->
+                    false;
+                %
+                Iter3 ->
+                    is_equal_recur(C3, Iter3)
+            end
+    end.
+
+-compile({inline, is_equal_internal_pair/4}).
+is_equal_internal_pair(K1, V1, C1, Iter) ->
+    case is_equal_recur(C1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            next_pair_is_equal(K1, V1, Iter2)
+    end.
+
+%%%%%
+
+-compile({inline, is_equal_leaf_batch3 / ?LEAF3_ARITY_PLUS1}).
+is_equal_leaf_batch3(K1, K2, K3, V1, V2, V3, Iter) ->
+    case next_pair_is_equal(K1, V1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            is_equal_leaf_batch2(K2, K3, V2, V3, Iter2)
+    end.
+
+-compile({inline, is_equal_leaf_batch2 / ?LEAF2_ARITY_PLUS1}).
+is_equal_leaf_batch2(K1, K2, V1, V2, Iter) ->
+    case next_pair_is_equal(K1, V1, Iter) of
+        false ->
+            false;
+        %
+        Iter2 ->
+            next_pair_is_equal(K2, V2, Iter2)
+    end.
+
+%%%%%%
+
+next_pair_is_equal(KeyA, ValueA, [Head | Tail]) ->
+    case Head of
+        ?ITER_PAIR(KeyB, ValueB) ->
+            % FIXME should it be a relaxed comparison?
+            KeyA == KeyB andalso ValueA =:= ValueB andalso Tail;
+        %
+        Node ->
+            [?ITER_PAIR(KeyB, ValueB) | NewTail] = fwd_iterator_recur(Node, Tail),
+            KeyA == KeyB andalso ValueA =:= ValueB andalso NewTail
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: keys/1

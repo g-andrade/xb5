@@ -52,6 +52,7 @@
     test_balance/1,
     test_foldl/1,
     test_foldr/1,
+    test_is_equal/1,
     test_map/1,
     test_rewrap/1
 ]).
@@ -76,8 +77,8 @@
 
 -define(assertKvListsCanonEqual(ExpectedL, TestedL),
     (?assertEqual(
-        lists:keymap(fun canon_key/1, 1, (ExpectedL)),
-        lists:keymap(fun canon_key/1, 1, (TestedL))
+        canon_kvs(ExpectedL),
+        canon_kvs(TestedL)
     ))
 ).
 
@@ -155,6 +156,7 @@ groups() ->
             test_balance,
             test_foldl,
             test_foldr,
+            test_is_equal,
             test_map,
             test_rewrap
         ]},
@@ -719,6 +721,9 @@ test_foldr(_Config) ->
             run_foldr(RefKvs, Tree)
         end
     ).
+
+test_is_equal(_Config) ->
+    foreach_test_tree(fun run_is_equal_test/3).
 
 test_map(_Config) ->
     foreach_test_tree(
@@ -1566,6 +1571,73 @@ run_foldr(RefKvs, Tree) ->
     ).
 
 %% ------------------------------------------------------------------
+%% Helpers: Is Equal
+%% ------------------------------------------------------------------
+
+run_is_equal_test(Size, RefKvs, Tree) ->
+    ?assertEqual(true, xb5_trees:is_equal(Tree, Tree)),
+
+    %%%%%%%
+
+    foreach_second_tree(
+        fun(RefKvs2, Tree2) ->
+            IsEqual = xb5_trees:is_equal(Tree, Tree2),
+
+            ExpectedIsEqual = (canon_kvs(RefKvs) =:= canon_kvs(RefKvs2)),
+
+            ?assertEqual(ExpectedIsEqual, IsEqual),
+
+            %%
+
+            ?assertEqual(ExpectedIsEqual, xb5_trees:is_equal(Tree2, Tree))
+        end,
+        Size,
+        RefKvs
+    ).
+
+%%%
+
+foreach_second_tree(Fun, Size, RefKvs) ->
+    Amounts2 = lists:usort([
+        0,
+        1,
+        Size,
+        rand:uniform(max(1, Size)),
+        rand:uniform(Size + 100)
+    ]),
+
+    PercentagesInCommon = [0.0, 0.5, 0.8, 1.0],
+
+    ParamCombos = [
+        {Amount2, PercentageInCommon}
+     || Amount2 <- Amounts2,
+        PercentageInCommon <- PercentagesInCommon
+    ],
+
+    % MaxCombos = proplists:get_value(max_combos, Opts, length(ParamCombos)),
+    MaxCombos = length(ParamCombos),
+
+    lists:foreach(
+        fun({Amount2, PercentageInCommon}) ->
+            RepeatedAmount = floor(PercentageInCommon * min(Amount2, Size)),
+            NewAmount = Amount2 - RepeatedAmount,
+
+            RepeatedKvs = lists:sublist(list_shuffle(RefKvs), RepeatedAmount),
+            NewKvs = [{new_key(), make_ref()} || _ <- lists:seq(1, NewAmount)],
+
+            RefKvs2 = lists:ukeysort(1, lists:map(
+                fun randomly_switch_number_type/1,
+                lists:usort(RepeatedKvs ++ NewKvs)
+            )),
+
+            Tree2 = new_tree_from_each_inserted(maybe_shuffle_list_for_new_tree(RefKvs2)),
+
+            Fun(RefKvs2, Tree2)
+        end,
+        lists:sublist(list_shuffle(ParamCombos), MaxCombos)
+    ).
+
+%% ------------------------------------------------------------------
 %% Helper Functions: map
 %% ------------------------------------------------------------------
 
@@ -1825,3 +1897,6 @@ key_type(Key) when is_map(Key) ->
     map;
 key_type(Key) when is_reference(Key) ->
     reference.
+
+canon_kvs(Kvs) ->
+    lists:keymap(fun canon_key/1, 1, Kvs).

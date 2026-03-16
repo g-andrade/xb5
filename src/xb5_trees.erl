@@ -39,6 +39,7 @@ rank, percentiles).
     insert_with/3,
     is_defined/2,
     is_empty/1,
+    is_equal/2,
     iterator/1,
     iterator/2,
     iterator_from/2,
@@ -82,6 +83,7 @@ rank, percentiles).
     insert_with/3,
     is_defined/2,
     is_empty/1,
+    is_equal/1,
     iterator/1,
     iterator/2,
     iterator_from/2,
@@ -531,6 +533,33 @@ false
 
 is_empty(#xb5_tree{size = Size}) ->
     Size =:= 0.
+
+%%
+
+-doc """
+Returns `true` if `Tree1` and `Tree2` contain the same keys and values, otherwise
+`false`.
+
+Keys are compared with `==`, values with `=:=`.
+
+## Examples
+
+```erlang
+> S1 = xb5_trees:from_list([{1, a} {2, b} {3, c}]).
+> S2 = xb5_trees:from_list([{3, c}, {1.0, a} {2, b}]).
+> xb5_trees:is_equal(S1, S2).
+true
+> S3 = xb5_trees:from_list([{1, x}, {2, y}]).
+> xb5_trees:is_equal(S1, S3).
+false
+```
+""".
+-spec is_equal(Tree1, Tree2) -> boolean() when
+    Tree1 :: tree(),
+    Tree2 :: tree().
+
+is_equal(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root2}) ->
+    xb5_trees_node:is_equal(Size1, Root1, Size2, Root2).
 
 %%
 
