@@ -4509,8 +4509,8 @@ to_rev_list(?INTERNAL1_MATCH_IGN_OFFSETS) ->
     to_rev_list_recur(C2, Acc3);
 to_rev_list(?LEAF1_MATCH_ALL) ->
     [E1];
-to_rev_list(?LEAF0) ->
-    [];
+%to_rev_list(?LEAF0) ->
+%    [];
 to_rev_list(Root) ->
     to_rev_list_recur(Root, []).
 

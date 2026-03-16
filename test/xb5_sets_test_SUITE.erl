@@ -1220,7 +1220,7 @@ foreach_second_set_variants1(Fun, Size, RefElements, Opts) ->
         rand:uniform(Size + 100)
     ]),
 
-    PercentagesInCommon = [0.0, 0.5, 1.0],
+    PercentagesInCommon = [0.0, 0.5, 0.8, 1.0],
 
     ParamCombos = [
         {Amount2, PercentageInCommon}
@@ -1238,11 +1238,11 @@ foreach_second_set_variants1(Fun, Size, RefElements, Opts) ->
             RepeatedElements = lists:sublist(list_shuffle(RefElements), RepeatedAmount),
             NewElements = [new_element() || _ <- lists:seq(1, NewAmount)],
 
-            RefElements2 = lists:map(
+            RefElements2 = lists:usort(lists:map(
                 fun randomly_switch_number_type/1, lists:usort(RepeatedElements ++ NewElements)
-            ),
+            )),
 
-            Set2 = xb5_sets:from_list(maybe_shuffle_elements_for_new_set(RefElements2)),
+            Set2 = new_set_from_each_inserted(maybe_shuffle_elements_for_new_set(RefElements2)),
 
             Fun(RefElements2, Set2)
         end,
