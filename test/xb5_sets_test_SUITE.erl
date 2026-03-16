@@ -1238,9 +1238,11 @@ foreach_second_set_variants1(Fun, Size, RefElements, Opts) ->
             RepeatedElements = lists:sublist(list_shuffle(RefElements), RepeatedAmount),
             NewElements = [new_element() || _ <- lists:seq(1, NewAmount)],
 
-            RefElements2 = lists:usort(lists:map(
-                fun randomly_switch_number_type/1, lists:usort(RepeatedElements ++ NewElements)
-            )),
+            RefElements2 = lists:usort(
+                lists:map(
+                    fun randomly_switch_number_type/1, lists:usort(RepeatedElements ++ NewElements)
+                )
+            ),
 
             Set2 = new_set_from_each_inserted(maybe_shuffle_elements_for_new_set(RefElements2)),
 

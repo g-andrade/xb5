@@ -193,13 +193,15 @@ test_construction(_Config) ->
             ?assertEqual(Size, xb5_trees:size(Tree)),
             ?assertEqual(Size =:= 0, xb5_trees:is_empty(Tree)),
 
-            ?assertKvListsCanonEqual(
-                RefKvs, xb5_trees:to_list(new_tree_from_each_inserted(RefKvs))
-            ),
+            TreeFromInserts = new_tree_from_each_inserted(maybe_shuffle_list_for_new_tree(RefKvs)),
+            ?assertKvListsCanonEqual(RefKvs, xb5_trees:to_list(TreeFromInserts)),
 
-            ?assertKvListsCanonEqual(RefKvs, xb5_trees:to_list(xb5_trees:from_orddict(RefKvs))),
+            TreeFromOrddict = xb5_trees:from_orddict(RefKvs),
+            ?assertKvListsCanonEqual(RefKvs, xb5_trees:to_list(TreeFromOrddict)),
 
-            _ = (Size =:= 0 andalso ?assertEqual(Tree, xb5_trees:empty()))
+            _ = (Size =:= 0 andalso ?assertEqual(Tree, xb5_trees:empty())),
+
+            test_internal_to_rev_list(RefKvs, TreeFromInserts)
         end
     ).
 
@@ -208,6 +210,16 @@ test_construction_repeated(_Config) ->
 
 test_extensive_construction_from_orddict(_Config) ->
     test_extensive_construction_from_orddict_recur(10000, []).
+
+test_internal_to_rev_list(RefKvs, Tree) ->
+    {ok, #{root := RootNode}} = xb5_trees:unwrap(Tree),
+
+    ?assertKvListsCanonEqual(
+        lists:reverse(RefKvs),
+        xb5_trees_node:to_rev_list(RootNode)
+    ).
+
+%%
 
 test_lookup(_Config) ->
     foreach_test_tree(
@@ -1625,10 +1637,13 @@ foreach_second_tree(Fun, Size, RefKvs) ->
             RepeatedKvs = lists:sublist(list_shuffle(RefKvs), RepeatedAmount),
             NewKvs = [{new_key(), make_ref()} || _ <- lists:seq(1, NewAmount)],
 
-            RefKvs2 = lists:ukeysort(1, lists:map(
-                fun randomly_switch_number_type/1,
-                lists:usort(RepeatedKvs ++ NewKvs)
-            )),
+            RefKvs2 = lists:ukeysort(
+                1,
+                lists:map(
+                    fun randomly_switch_number_type/1,
+                    lists:usort(RepeatedKvs ++ NewKvs)
+                )
+            ),
 
             Tree2 = new_tree_from_each_inserted(maybe_shuffle_list_for_new_tree(RefKvs2)),
 
