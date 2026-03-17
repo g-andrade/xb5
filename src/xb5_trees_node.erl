@@ -49,6 +49,8 @@ API for operating over `m:xb5_trees` internal nodes directly.
     from_orddict/2,
     get_att/4,
     insert_att/4,
+    intersection/4,
+    intersection_with/5,
     iterator/2,
     iterator_from/3,
     is_equal/4,
@@ -603,6 +605,25 @@ insert_att(Key, ValueEval, ValueWrap, Root) ->
         UpdatedRoot ->
             UpdatedRoot
     end.
+
+-spec intersection(non_neg_integer(), t(KA, VA), non_neg_integer(), t(KB, VB)) ->
+    nonempty_improper_list(NewSize, t(KA | KB, VA | VB))
+when
+    NewSize :: non_neg_integer().
+intersection(Size1, Root1, Size2, Root2) ->
+    Fun1 = fun merge_pick_second/3,
+    Fun2 = fun merge_pick_first/3,
+    intersection_with2(Fun1, Size1, Root1, Fun2, Size2, Root2).
+
+-spec intersection_with(IntersectFun, non_neg_integer(), t(KA, VA), non_neg_integer(), t(KB, VB)) ->
+    nonempty_improper_list(NewSize, t(KA | KB, IntersectedV))
+when
+    IntersectFun :: fun((KA | KB, VA, VB) -> IntersectedV),
+    NewSize :: non_neg_integer().
+intersection_with(Fun, Size1, Root1, Size2, Root2) ->
+    Fun1 = Fun,
+    Fun2 = fun(Key, Value2, Value1) -> Fun(Key, Value1, Value2) end,
+    intersection_with2(Fun1, Size1, Root1, Fun2, Size2, Root2).
 
 -spec iterator(t(Key, Value), ordered | reversed) -> iter(Key, Value).
 iterator(Root, ordered) ->
@@ -2067,6 +2088,102 @@ split_leaf(
     SplitR = ?new_LEAF2(K4, K5, V4, V5),
 
     {split, SplitK, SplitV, SplitL, SplitR}.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: intersection/4
+%% ------------------------------------------------------------------
+
+intersection_with2(Fun1, Size1, Root1, Fun2, Size2, Root2) when Size2 < Size1 ->
+    intersection_root(Fun2, Size2, Root2, Fun1, Size1, Root1);
+intersection_with2(Fun1, Size1, Root1, Fun2, Size2, Root2) ->
+    intersection_root(Fun1, Size1, Root1, Fun2, Size2, Root2).
+
+intersection_root(_, 0, _, _, _, _) ->
+    [0 | ?LEAF0];
+intersection_root(Fun1, _Size1, Root1, Fun2, Size2, Root2) when Size2 < 10 ->
+    List1 = to_rev_list(Root1),
+    List2 = to_rev_list(Root2),
+    intersection_2(Fun1, List1, Fun2, List2);
+intersection_root(Fun1, Size1, Root1, Fun2, Size2, Root2) ->
+    ThresholdSize = Size1 * round(math:log2(Size2)),
+
+    if
+        Size2 < ThresholdSize ->
+            List1 = to_rev_list(Root1),
+            List2 = to_rev_list(Root2),
+            intersection_2(Fun1, List1, Fun2, List2);
+        %
+        true ->
+            case Fun1 =:= fun merge_pick_second/3 of
+                true ->
+                    Keys1 = lists:reverse(keys(Root1)),
+                    intersection_1_a(Keys1, Root2, 0, []);
+                %
+                _ ->
+                    List1 = to_rev_list(Root1),
+                    intersection_1_b(Fun1, List1, Root2, 0, [])
+            end
+    end.
+
+%%
+
+intersection_1_a([Key | Next], Root2, AccSize, Acc) ->
+    case get_att(Key, Root2, fun intersection_get_found/2, fun intersection_get_not_found/1) of
+        {_, _} = Pair ->
+            % We want to keep the second value, which is the one already in Root
+            intersection_1_a(Next, Root2, AccSize + 1, [Pair | Acc]);
+        %
+        nil ->
+            intersection_1_a(Next, Root2, AccSize, Acc)
+    end;
+intersection_1_a([], _Root2, AccSize, Acc) ->
+    [AccSize | from_orddict(Acc, AccSize)].
+
+intersection_get_found(Key, Value) -> {Key, Value}.
+intersection_get_not_found(_Key) -> nil.
+
+%%
+
+intersection_1_b(Fun1, [{Key, ValueA} | Next], Root2, AccSize, Acc) ->
+    case get_att(Key, Root2, fun intersection_get_found/2, fun intersection_get_not_found/1) of
+        {_, ValueB} ->
+            IntersectedValue = Fun1(Key, ValueA, ValueB),
+            intersection_1_b(Fun1, Next, Root2, AccSize + 1, [{Key, IntersectedValue} | Acc]);
+        %
+        nil ->
+            intersection_1_b(Fun1, Next, Root2, AccSize, Acc)
+    end;
+intersection_1_b(_Fun1, [], _Root2, AccSize, Acc) ->
+    [AccSize | from_orddict(Acc, AccSize)].
+
+%%
+
+intersection_2(Fun1, List1, Fun2, List2) ->
+    intersection_2(Fun1, List1, Fun2, List2, 0, []).
+
+intersection_2(
+    Fun1,
+    [{Key1, Value1} | Next1] = List1,
+    Fun2,
+    [{Key2, Value2} | Next2] = List2,
+    AccSize,
+    Acc
+) ->
+    if
+        Key1 > Key2 ->
+            intersection_2(Fun1, Next1, Fun2, List2, AccSize, Acc);
+        %
+        Key1 < Key2 ->
+            intersection_2(Fun2, Next2, Fun1, List1, AccSize, Acc);
+        %
+        true ->
+            IntersectedValue = Fun1(Key1, Value1, Value2),
+            intersection_2(Fun1, Next1, Fun2, Next2, AccSize + 1, [{Key1, IntersectedValue} | Acc])
+    end;
+intersection_2(_Fun1, [], _Fun2, _, AccSize, Acc) ->
+    [AccSize | from_orddict(Acc, AccSize)];
+intersection_2(_Fun1, _, _Fun2, [], AccSize, Acc) ->
+    [AccSize | from_orddict(Acc, AccSize)].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - forward

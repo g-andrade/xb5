@@ -52,6 +52,7 @@
     test_balance/1,
     test_foldl/1,
     test_foldr/1,
+    test_intersection/1,
     test_is_equal/1,
     test_map/1,
     test_merge/1,
@@ -157,6 +158,7 @@ groups() ->
             test_balance,
             test_foldl,
             test_foldr,
+            test_intersection,
             test_is_equal,
             test_map,
             test_merge,
@@ -735,6 +737,9 @@ test_foldr(_Config) ->
             run_foldr(RefKvs, Tree)
         end
     ).
+
+test_intersection(_Config) ->
+    foreach_test_tree(fun run_intersection_test/3).
 
 test_is_equal(_Config) ->
     foreach_test_tree(fun run_is_equal_test/3).
@@ -1586,6 +1591,156 @@ run_foldr(RefKvs, Tree) ->
         %
         xb5_trees:foldr(Fun, [], Tree)
     ).
+
+%% ------------------------------------------------------------------
+%% Helpers: Intersection
+%% ------------------------------------------------------------------
+
+run_intersection_test(Size, RefElements, Tree) ->
+    SelfIntersection = xb5_trees:intersection(Tree, Tree),
+
+    ?assertEqual(Size, xb5_trees:size(SelfIntersection)),
+
+    ?assertKvListsCanonEqual(RefElements, xb5_trees:to_list(SelfIntersection)),
+
+    %%%%%%%%%%%%%%
+
+    foreach_second_tree(
+        fun(RefElements2, Tree2) ->
+            ExpectedIntersectionElements1 = intersection_lists(
+                fun intersection_pick_second/3, RefElements, RefElements2
+            ),
+
+            Intersection = xb5_trees:intersection(Tree, Tree2),
+
+            ?assertEqual(
+                length(ExpectedIntersectionElements1),
+                xb5_trees:size(Intersection)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedIntersectionElements1,
+                xb5_trees:to_list(Intersection)
+            ),
+
+            %%%%%%%
+
+            ExpectedIntersectionElements2 = intersection_lists(
+                fun intersection_pick_second/3, RefElements2, RefElements
+            ),
+
+            Intersection2 = xb5_trees:intersection(Tree2, Tree),
+
+            ?assertEqual(
+                length(ExpectedIntersectionElements2),
+                xb5_trees:size(Intersection2)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedIntersectionElements2,
+                xb5_trees:to_list(Intersection2)
+            ),
+
+            %%%%%%%%
+
+            IntersectionFun3 = fun(_K, _V1, V2) -> {pick_second, V2} end,
+            ExpectedIntersectionElements3 = intersection_lists(
+                IntersectionFun3, RefElements, RefElements2
+            ),
+
+            Intersection3 = xb5_trees:intersection_with(IntersectionFun3, Tree, Tree2),
+
+            ?assertEqual(
+                length(ExpectedIntersectionElements3),
+                xb5_trees:size(Intersection3)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedIntersectionElements3,
+                xb5_trees:to_list(Intersection3)
+            ),
+
+            %%%%%%%%
+
+            IntersectionFun4 = IntersectionFun3,
+            ExpectedIntersectionElements4 = intersection_lists(
+                IntersectionFun4, RefElements2, RefElements
+            ),
+
+            Intersection4 = xb5_trees:intersection_with(IntersectionFun4, Tree2, Tree),
+
+            ?assertEqual(
+                length(ExpectedIntersectionElements4),
+                xb5_trees:size(Intersection4)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedIntersectionElements4,
+                xb5_trees:to_list(Intersection4)
+            ),
+
+            %%%%%%%%
+
+            IntersectionFun5 = fun(_K, V1, _V2) -> {pick_first, V1} end,
+            ExpectedIntersectionElements5 = intersection_lists(
+                IntersectionFun5, RefElements, RefElements2
+            ),
+
+            Intersection5 = xb5_trees:intersection_with(IntersectionFun5, Tree, Tree2),
+
+            ?assertEqual(
+                length(ExpectedIntersectionElements5),
+                xb5_trees:size(Intersection5)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedIntersectionElements5,
+                xb5_trees:to_list(Intersection5)
+            ),
+
+            %%%%%%%%
+
+            IntersectionFun6 = IntersectionFun5,
+            ExpectedIntersectionElements6 = intersection_lists(
+                IntersectionFun6, RefElements2, RefElements
+            ),
+
+            Intersection6 = xb5_trees:intersection_with(IntersectionFun6, Tree2, Tree),
+
+            ?assertEqual(
+                length(ExpectedIntersectionElements6),
+                xb5_trees:size(Intersection6)
+            ),
+
+            ?assertKvListsCanonEqual(
+                ExpectedIntersectionElements6,
+                xb5_trees:to_list(Intersection6)
+            )
+        end,
+        Size,
+        RefElements,
+        [test_variants2]
+    ).
+
+intersection_pick_second(_Key, _ValueA, ValueB) ->
+    ValueB.
+
+intersection_lists(Fun, [{K1, V1} | Next1] = L1, [{K2, V2} | Next2] = L2) ->
+    if
+        K1 < K2 ->
+            intersection_lists(Fun, Next1, L2);
+        %
+        K2 < K1 ->
+            intersection_lists(Fun, L1, Next2);
+        %
+        true ->
+            IntersectedV = Fun(K1, V1, V2),
+            [{K1, IntersectedV} | intersection_lists(Fun, Next1, Next2)]
+    end;
+intersection_lists(_Fun, [], _L2) ->
+    [];
+intersection_lists(_Fun, _L1, []) ->
+    [].
 
 %% ------------------------------------------------------------------
 %% Helpers: Is Equal
