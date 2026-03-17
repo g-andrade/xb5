@@ -36,7 +36,8 @@
     test_iterator/1,
     test_iterator_reversed/1,
     test_iterator_from/1,
-    test_iterator_from_reversed/1
+    test_iterator_from_reversed/1,
+    test_iterator_from_nth/1
 ]).
 
 %% Test exports - order statistics
@@ -179,7 +180,8 @@ groups() ->
             test_iterator,
             test_iterator_reversed,
             test_iterator_from,
-            test_iterator_from_reversed
+            test_iterator_from_reversed,
+            test_iterator_from_nth
         ]},
         {order_statistics, [parallel], [
             test_nth,
@@ -517,6 +519,13 @@ test_iterator_from_reversed(_Config) ->
     foreach_test_bag(
         fun(_Size, RefElements, Bag) ->
             run_iterator_from_reversed(RefElements, Bag)
+        end
+    ).
+
+test_iterator_from_nth(_Config) ->
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            run_iterator_from_nth(RefElements, Bag)
         end
     ).
 
@@ -1811,6 +1820,28 @@ run_iterator_from_reversed_first_elements([Elem | _] = FirstElements, Bag) ->
     SmallerElement = element_smaller(Elem),
     Iter2 = xb5_bag:iterator_from(SmallerElement, Bag, reversed),
     ?assertEqual([], iterate(Iter2)).
+
+%%%%%%%%%%%%%%%%%
+
+run_iterator_from_nth(RefElements, Bag) ->
+    ?assertError({badarg, 0}, new_iterator_from_nth(0, Bag)),
+
+    SizePlus1 = xb5_bag:size(Bag) + 1,
+    ?assertError({badarg, SizePlus1}, new_iterator_from_nth(SizePlus1, Bag)),
+
+    run_iterator_from_nth_recur(RefElements, 1, Bag).
+
+run_iterator_from_nth_recur([_ | Tail] = Elements, Rank, Bag) ->
+    Iter = new_iterator_from_nth(Rank, Bag),
+    ?assertListsCanonEqual(Elements, iterate(Iter)),
+    run_iterator_from_nth_recur(Tail, Rank + 1, Bag);
+run_iterator_from_nth_recur([], InvalidRank, Bag) ->
+    ?assertEqual(xb5_bag:size(Bag) + 1, InvalidRank).
+
+new_iterator_from_nth(Rank, Bag) ->
+    Iter = xb5_bag:iterator_from_nth(Rank, Bag),
+    % ?assertEqual(Iter, xb5_bag:iterator_from_nth(Rank, Bag, ordered)),
+    Iter.
 
 %%%%%%%%%%%%%%%%%
 

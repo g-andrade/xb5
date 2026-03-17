@@ -52,6 +52,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
     is_member/2,
     iterator/2,
     iterator_from/3,
+    iterator_from_nth/4,
     larger/2,
     largest/1,
     map_to_list/2,
@@ -166,6 +167,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL4_ARITY, 13).
 -define(INTERNAL4_ARITY_PLUS1, 14).
 -define(INTERNAL4_ARITY_PLUS2, 15).
+-define(INTERNAL4_ARITY_PLUS3, 16).
 
 -define(INTERNAL4_ARGS_EXCEPT_OFFSETS, E1, E2, E3, E4, C1, C2, C3, C4, C5).
 -define(INTERNAL4_ARITY_EXCEPT_OFFSETS_PLUS1, 10).
@@ -202,6 +204,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL3_ARITY, 10).
 -define(INTERNAL3_ARITY_PLUS1, 11).
 -define(INTERNAL3_ARITY_PLUS2, 12).
+-define(INTERNAL3_ARITY_PLUS3, 13).
 
 -define(INTERNAL3_ARGS_EXCEPT_OFFSETS, E1, E2, E3, C1, C2, C3, C4).
 -define(INTERNAL3_ARITY_EXCEPT_OFFSETS_PLUS1, 8).
@@ -232,6 +235,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(INTERNAL2_ARITY, 7).
 -define(INTERNAL2_ARITY_PLUS1, 8).
 -define(INTERNAL2_ARITY_PLUS2, 9).
+-define(INTERNAL2_ARITY_PLUS3, 10).
 
 -define(INTERNAL2_ARGS_EXCEPT_OFFSETS, E1, E2, C1, C2, C3).
 -define(INTERNAL2_ARITY_EXCEPT_OFFSETS_PLUS1, 6).
@@ -278,18 +282,21 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -define(LEAF4_ARGS, E1, E2, E3, E4).
 -define(LEAF4_ARITY_PLUS1, 5).
 -define(LEAF4_ARITY_PLUS2, 6).
+-define(LEAF4_ARITY_PLUS3, 7).
 
 %% ?LEAF3
 
 -define(LEAF3_ARGS, E1, E2, E3).
 -define(LEAF3_ARITY_PLUS1, 4).
 -define(LEAF3_ARITY_PLUS2, 5).
+-define(LEAF3_ARITY_PLUS3, 6).
 
 %% ?LEAF2
 
 -define(LEAF2_ARGS, E1, E2).
 -define(LEAF2_ARITY_PLUS1, 3).
 -define(LEAF2_ARITY_PLUS2, 4).
+-define(LEAF2_ARITY_PLUS3, 5).
 
 %% ?LEAF1
 
@@ -592,6 +599,10 @@ iterator_from(Elem, Root, ordered) ->
 iterator_from(Elem, Root, reversed) ->
     Acc = bound_rev_iterator(Elem, Root),
     [?REV_ITER_TAG | Acc].
+
+-spec iterator_from_nth(pos_integer(), non_neg_integer(), t(Elem), ordered) -> iter(Elem).
+iterator_from_nth(Rank, Size, Root, ordered) ->
+    bound_nth_fwd_iterator(Rank, Size, Root).
 
 -spec larger(_, t(Elem)) -> {found, Elem} | none.
 larger(Elem, ?INTERNAL1_MATCH_IGN_OFFSETS) ->
@@ -2540,7 +2551,7 @@ bound_fwd_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
     ).
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: iterator_from/3 - forward
+%% Internal Function Definitions: iterator_from/3 - reversed
 %% ------------------------------------------------------------------
 
 bound_rev_iterator(Elem, Root) ->
@@ -2761,6 +2772,230 @@ bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
         % Elem >= E1
         [?ITER_ELEM(E1)]
     ).
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: iterator_from_nth/3 - forward
+%% ------------------------------------------------------------------
+
+bound_nth_fwd_iterator(Rank, Size, Root) ->
+    case Root of
+        ?INTERNAL1_MATCH_ALL ->
+            bound_nth_fwd_iterator_INTERNAL1(Rank, ?INTERNAL1_ARGS, Size + 1);
+        %
+        % ?LEAF1_MATCH_ALL ->
+        %   % Unreachable due to optimization in caller
+        %   bound_nth_fwd_iterator_LEAF1(Rank, ?LEAF1_ARGS);
+        %
+        _ ->
+            Acc = [],
+            bound_nth_fwd_iterator_recur(Rank, Root, Size + 1, Acc)
+    end.
+
+bound_nth_fwd_iterator_recur(Rank, Node, ParentOffset, Acc) ->
+    case Node of
+        ?LEAF2_MATCH_ALL ->
+            bound_nth_fwd_iterator_LEAF2(Rank, ?LEAF2_ARGS, ParentOffset, Acc);
+        %
+        ?LEAF3_MATCH_ALL ->
+            bound_nth_fwd_iterator_LEAF3(Rank, ?LEAF3_ARGS, ParentOffset, Acc);
+        %
+        ?LEAF4_MATCH_ALL ->
+            bound_nth_fwd_iterator_LEAF4(Rank, ?LEAF4_ARGS, ParentOffset, Acc);
+        %
+        ?INTERNAL2_MATCH_ALL ->
+            bound_nth_fwd_iterator_INTERNAL2(Rank, ?INTERNAL2_ARGS, ParentOffset, Acc);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            bound_nth_fwd_iterator_INTERNAL3(Rank, ?INTERNAL3_ARGS, ParentOffset, Acc);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            bound_nth_fwd_iterator_INTERNAL4(Rank, ?INTERNAL4_ARGS, ParentOffset, Acc)
+    end.
+
+%% INTERNAL4
+
+-compile({inline, bound_nth_fwd_iterator_INTERNAL4 / ?INTERNAL4_ARITY_PLUS3}).
+bound_nth_fwd_iterator_INTERNAL4(Rank, ?INTERNAL4_ARGS, ParentOffset, Acc) ->
+    if
+        Rank =< O3 ->
+            if
+                Rank > O1 ->
+                    if
+                        Rank =< O2 ->
+                            Acc2 = [
+                                ?ITER_ELEM(E2),
+                                C3,
+                                ?ITER_ELEM(E3),
+                                C4,
+                                ?ITER_ELEM(E4),
+                                C5
+                                | Acc
+                            ],
+                            bound_nth_fwd_iterator_recur(Rank - O1, C2, O2 - O1, Acc2);
+                        %
+                        true ->
+                            Acc2 = [
+                                ?ITER_ELEM(E3),
+                                C4,
+                                ?ITER_ELEM(E4),
+                                C5
+                                | Acc
+                            ],
+                            bound_nth_fwd_iterator_recur(Rank - O2, C3, O3 - O2, Acc2)
+                    end;
+                %
+                true ->
+                    Acc2 = [
+                        ?ITER_ELEM(E1),
+                        C2,
+                        ?ITER_ELEM(E2),
+                        C3,
+                        ?ITER_ELEM(E3),
+                        C4,
+                        ?ITER_ELEM(E4),
+                        C5
+                        | Acc
+                    ],
+                    bound_nth_fwd_iterator_recur(Rank, C1, O1, Acc2)
+            end;
+        %
+        Rank =< O4 ->
+            Acc2 = [
+                ?ITER_ELEM(E4),
+                C5
+                | Acc
+            ],
+            bound_nth_fwd_iterator_recur(Rank - O3, C4, O4 - O3, Acc2);
+        %
+        Rank < ParentOffset ->
+            bound_nth_fwd_iterator_recur(Rank - O4, C5, ParentOffset - O4, Acc);
+        %
+        Rank =:= ParentOffset ->
+            Acc
+    end.
+
+-compile({inline, bound_nth_fwd_iterator_INTERNAL3 / ?INTERNAL3_ARITY_PLUS3}).
+bound_nth_fwd_iterator_INTERNAL3(Rank, ?INTERNAL3_ARGS, ParentOffset, Acc) ->
+    if
+        Rank =< O2 ->
+            if
+                Rank =< O1 ->
+                    Acc2 = [
+                        ?ITER_ELEM(E1),
+                        C2,
+                        ?ITER_ELEM(E2),
+                        C3,
+                        ?ITER_ELEM(E3),
+                        C4
+                        | Acc
+                    ],
+                    bound_nth_fwd_iterator_recur(Rank, C1, O1, Acc2);
+                %
+                true ->
+                    Acc2 = [
+                        ?ITER_ELEM(E2),
+                        C3,
+                        ?ITER_ELEM(E3),
+                        C4
+                        | Acc
+                    ],
+                    bound_nth_fwd_iterator_recur(Rank - O1, C2, O2 - O1, Acc2)
+            end;
+        %
+        Rank =< O3 ->
+            Acc2 = [
+                ?ITER_ELEM(E3),
+                C4
+                | Acc
+            ],
+            bound_nth_fwd_iterator_recur(Rank - O2, C3, O3 - O2, Acc2);
+        %
+        Rank < ParentOffset ->
+            bound_nth_fwd_iterator_recur(Rank - O3, C4, ParentOffset - O3, Acc);
+        %
+        Rank =:= ParentOffset ->
+            Acc
+    end.
+
+%% INTERNAL2
+
+-compile({inline, bound_nth_fwd_iterator_INTERNAL2 / ?INTERNAL2_ARITY_PLUS3}).
+bound_nth_fwd_iterator_INTERNAL2(Rank, ?INTERNAL2_ARGS, ParentOffset, Acc) ->
+    if
+        Rank =< O1 ->
+            Acc2 = [
+                ?ITER_ELEM(E1),
+                C2,
+                ?ITER_ELEM(E2),
+                C3
+                | Acc
+            ],
+            bound_nth_fwd_iterator_recur(Rank, C1, O1, Acc2);
+        %
+        Rank =< O2 ->
+            Acc2 = [
+                ?ITER_ELEM(E2),
+                C3
+                | Acc
+            ],
+            bound_nth_fwd_iterator_recur(Rank - O1, C2, O2 - O1, Acc2);
+        %
+        Rank < ParentOffset ->
+            bound_nth_fwd_iterator_recur(Rank - O2, C3, ParentOffset - O2, Acc);
+        %
+        Rank =:= ParentOffset ->
+            Acc
+    end.
+
+%% INTERNAL1
+
+-compile({inline, bound_nth_fwd_iterator_INTERNAL1 / ?INTERNAL1_ARITY_PLUS2}).
+bound_nth_fwd_iterator_INTERNAL1(Rank, ?INTERNAL1_ARGS, ParentOffset) ->
+    if
+        Rank =< O1 ->
+            Acc = [
+                ?ITER_ELEM(E1),
+                C2
+            ],
+            bound_nth_fwd_iterator_recur(Rank, C1, O1, Acc);
+        %
+        true ->
+            Acc = [],
+            bound_nth_fwd_iterator_recur(Rank - O1, C2, ParentOffset - O1, Acc)
+    end.
+
+%% LEAF4
+
+-compile({inline, bound_nth_fwd_iterator_LEAF4 / ?LEAF4_ARITY_PLUS3}).
+bound_nth_fwd_iterator_LEAF4(Rank, ?LEAF4_ARGS, 5, Acc) ->
+    case Rank of
+        1 -> [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc];
+        2 -> [?ITER_ELEM(E2), ?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc];
+        3 -> [?ITER_ELEM(E3), ?ITER_ELEM(E4) | Acc];
+        4 -> [?ITER_ELEM(E4) | Acc];
+        5 -> Acc
+    end.
+
+%% LEAF3
+
+-compile({inline, bound_nth_fwd_iterator_LEAF3 / ?LEAF3_ARITY_PLUS3}).
+bound_nth_fwd_iterator_LEAF3(Rank, ?LEAF3_ARGS, 4, Acc) ->
+    case Rank of
+        1 -> [?ITER_ELEM(E1), ?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc];
+        2 -> [?ITER_ELEM(E2), ?ITER_ELEM(E3) | Acc];
+        3 -> [?ITER_ELEM(E3) | Acc];
+        4 -> Acc
+    end.
+
+%% LEAF2
+
+-compile({inline, bound_nth_fwd_iterator_LEAF2 / ?LEAF2_ARITY_PLUS3}).
+bound_nth_fwd_iterator_LEAF2(Rank, ?LEAF2_ARGS, 3, Acc) ->
+    case Rank of
+        1 -> [?ITER_ELEM(E1), ?ITER_ELEM(E2) | Acc];
+        2 -> [?ITER_ELEM(E2) | Acc];
+        3 -> Acc
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: larger/2

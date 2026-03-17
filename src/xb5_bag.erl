@@ -49,6 +49,7 @@ See also:
     iterator/2,
     iterator_from/2,
     iterator_from/3,
+    iterator_from_nth/2,
     larger/2,
     largest/1,
     map/2,
@@ -94,6 +95,7 @@ See also:
     iterator/2,
     iterator_from/2,
     iterator_from/3,
+    iterator_from_nth/2,
     larger/2,
     largest/1,
     map/2,
@@ -643,6 +645,41 @@ none
 
 iterator_from(Element, #xb5_bag{root = Root}, Order) ->
     xb5_bag_node:iterator_from(Element, Root, Order).
+
+%%
+
+-doc """
+Returns an iterator that can be used for traversing the elements of
+`Bag` starting from element at `Rank`; see `next/1`.
+
+## Examples
+
+```erlang
+> B = xb5_bag:from_list([1, 2, 3, 4, 5]).
+> I = xb5_bag:iterator_from_nth(4, B).
+> {4, I2} = xb5_bag:next(I).
+> {5, I3} = xb5_bag:next(I2).
+> xb5_bag:next(I3).
+none
+```
+""".
+-spec iterator_from_nth(Rank, Bag) -> Iter when
+    Rank :: pos_integer(),
+    Bag :: bag(Element),
+    Iter :: iter(Element).
+
+iterator_from_nth(Rank, #xb5_bag{size = Size, root = Root}) when
+    is_integer(Rank), Rank >= 1, Rank =< Size
+->
+    if
+        Rank =:= 1 ->
+            xb5_bag_node:iterator(Root, ordered);
+        %
+        true ->
+            xb5_bag_node:iterator_from_nth(Rank, Size, Root, ordered)
+    end;
+iterator_from_nth(Rank, #xb5_bag{}) ->
+    error({badarg, Rank}).
 
 %%
 
