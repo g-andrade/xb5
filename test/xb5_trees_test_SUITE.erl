@@ -1809,7 +1809,7 @@ run_merge_test(Size, RefElements, Tree) ->
             MergeFun3 = fun(_K, _V1, V2) -> {pick_second, V2} end,
             ExpectedMergeElements3 = merge_lists(MergeFun3, RefElements, RefElements2),
 
-            Merge3 = xb5_trees:merge(MergeFun3, Tree, Tree2),
+            Merge3 = xb5_trees:merge_with(MergeFun3, Tree, Tree2),
 
             ?assertEqual(
                 length(ExpectedMergeElements3),
@@ -1826,7 +1826,7 @@ run_merge_test(Size, RefElements, Tree) ->
             MergeFun4 = MergeFun3,
             ExpectedMergeElements4 = merge_lists(MergeFun4, RefElements2, RefElements),
 
-            Merge4 = xb5_trees:merge(MergeFun4, Tree2, Tree),
+            Merge4 = xb5_trees:merge_with(MergeFun4, Tree2, Tree),
 
             ?assertEqual(
                 length(ExpectedMergeElements4),
@@ -1843,7 +1843,7 @@ run_merge_test(Size, RefElements, Tree) ->
             MergeFun5 = fun(_K, V1, _V2) -> {pick_first, V1} end,
             ExpectedMergeElements5 = merge_lists(MergeFun5, RefElements, RefElements2),
 
-            Merge5 = xb5_trees:merge(MergeFun5, Tree, Tree2),
+            Merge5 = xb5_trees:merge_with(MergeFun5, Tree, Tree2),
 
             ?assertEqual(
                 length(ExpectedMergeElements5),
@@ -1860,7 +1860,7 @@ run_merge_test(Size, RefElements, Tree) ->
             MergeFun6 = MergeFun5,
             ExpectedMergeElements6 = merge_lists(MergeFun6, RefElements2, RefElements),
 
-            Merge6 = xb5_trees:merge(MergeFun6, Tree2, Tree),
+            Merge6 = xb5_trees:merge_with(MergeFun6, Tree2, Tree),
 
             ?assertEqual(
                 length(ExpectedMergeElements6),

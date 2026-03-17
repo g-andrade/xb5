@@ -57,7 +57,7 @@ API for operating over `m:xb5_trees` internal nodes directly.
     largest/1,
     map/2,
     merge/4,
-    merge/5,
+    merge_with/5,
     new/0,
     next/1,
     smaller/2,
@@ -681,17 +681,17 @@ when
 merge(Size1, Root1, Size2, Root2) ->
     Fun1 = fun merge_pick_second/3,
     Fun2 = fun merge_pick_first/3,
-    merge(Fun1, Size1, Root1, Fun2, Size2, Root2).
+    merge_with2(Fun1, Size1, Root1, Fun2, Size2, Root2).
 
--spec merge(non_neg_integer(), t(KA, VA), non_neg_integer(), t(KB, VB), MergeFun) ->
+-spec merge_with(MergeFun, non_neg_integer(), t(KA, VA), non_neg_integer(), t(KB, VB)) ->
     nonempty_improper_list(NewSize, t(KA | KB, MergedV))
 when
     MergeFun :: fun((KA | KB, VA, VB) -> MergedV),
     NewSize :: non_neg_integer().
-merge(Fun, Size1, Root1, Size2, Root2) ->
+merge_with(Fun, Size1, Root1, Size2, Root2) ->
     Fun1 = Fun,
     Fun2 = fun(Key, Value2, Value1) -> Fun(Key, Value1, Value2) end,
-    merge(Fun1, Size1, Root1, Fun2, Size2, Root2).
+    merge_with2(Fun1, Size1, Root1, Fun2, Size2, Root2).
 
 -spec new() -> t(term(), term()).
 new() ->
@@ -3192,9 +3192,9 @@ merge_pick_second(_Key, _ValueA, ValueB) -> ValueB.
 
 %%
 
-merge(Fun1, Size1, Root1, Fun2, Size2, Root2) when Size2 < Size1 ->
+merge_with2(Fun1, Size1, Root1, Fun2, Size2, Root2) when Size2 < Size1 ->
     merge_root(Fun2, Size2, Root2, Fun1, Size1, Root1);
-merge(Fun1, Size1, Root1, Fun2, Size2, Root2) ->
+merge_with2(Fun1, Size1, Root1, Fun2, Size2, Root2) ->
     merge_root(Fun1, Size1, Root1, Fun2, Size2, Root2).
 
 merge_root(_, 0, _, _, Size2, Root2) ->

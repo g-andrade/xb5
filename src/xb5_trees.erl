@@ -50,7 +50,7 @@ rank, percentiles).
     lookup/2,
     map/2,
     merge/2,
-    merge/3,
+    merge_with/3,
     new/0,
     next/1,
     size/1,
@@ -816,14 +816,14 @@ keys.
 # TODO
 ```
 """.
--spec merge(Fun, Tree1, Tree2) -> Tree3 when
+-spec merge_with(Fun, Tree1, Tree2) -> Tree3 when
     Fun :: fun((KeyA | KeyB, ValueA, ValueB) -> MergeValue),
     Tree1 :: tree(KeyA, ValueA),
     Tree2 :: tree(KeyB, ValueB),
     Tree3 :: tree(KeyA | KeyB, ValueA | ValueB | MergeValue).
 
-merge(Fun, #xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root2}) ->
-    [NewSize | NewRoot] = xb5_trees_node:merge(Fun, Size1, Root1, Size2, Root2),
+merge_with(Fun, #xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root2}) ->
+    [NewSize | NewRoot] = xb5_trees_node:merge_with(Fun, Size1, Root1, Size2, Root2),
     #xb5_tree{size = NewSize, root = NewRoot}.
 
 %%
