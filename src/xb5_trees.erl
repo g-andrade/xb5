@@ -37,8 +37,8 @@ rank, percentiles).
     get/2,
     insert/3,
     insert_with/3,
-    intersection/2,
-    intersection_with/3,
+    intersect/2,
+    intersect_with/3,
     is_defined/2,
     is_empty/1,
     is_equal/2,
@@ -501,13 +501,13 @@ insert_with(Key, Fun, #xb5_tree{size = Size, root = Root} = Tree) ->
 -doc """
 TODO
 """.
--spec intersection(Tree1, Tree2) -> Tree3 when
+-spec intersect(Tree1, Tree2) -> Tree3 when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value),
     Tree3 :: tree(Key, Value).
 
-intersection(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root2}) ->
-    [NewSize | NewRoot] = xb5_trees_node:intersection(Size1, Root1, Size2, Root2),
+intersect(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root2}) ->
+    [NewSize | NewRoot] = xb5_trees_node:intersect(Size1, Root1, Size2, Root2),
     #xb5_tree{size = NewSize, root = NewRoot}.
 
 %%
@@ -515,14 +515,14 @@ intersection(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root
 -doc """
 TODO
 """.
--spec intersection_with(Fun, Tree1, Tree2) -> Tree3 when
+-spec intersect_with(Fun, Tree1, Tree2) -> Tree3 when
     Fun :: fun((Key1 | Key2, Value1, Value2) -> Value3),
     Tree1 :: tree(Key1, Value1),
     Tree2 :: tree(Key2, Value2),
     Tree3 :: tree(Key1 | Key2, Value3).
 
-intersection_with(Fun, #xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root2}) ->
-    [NewSize | NewRoot] = xb5_trees_node:intersection_with(Fun, Size1, Root1, Size2, Root2),
+intersect_with(Fun, #xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root2}) ->
+    [NewSize | NewRoot] = xb5_trees_node:intersect_with(Fun, Size1, Root1, Size2, Root2),
     #xb5_tree{size = NewSize, root = NewRoot}.
 
 %%

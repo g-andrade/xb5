@@ -52,7 +52,7 @@
     test_balance/1,
     test_foldl/1,
     test_foldr/1,
-    test_intersection/1,
+    test_intersect/1,
     test_is_equal/1,
     test_map/1,
     test_merge/1,
@@ -158,7 +158,7 @@ groups() ->
             test_balance,
             test_foldl,
             test_foldr,
-            test_intersection,
+            test_intersect,
             test_is_equal,
             test_map,
             test_merge,
@@ -738,8 +738,8 @@ test_foldr(_Config) ->
         end
     ).
 
-test_intersection(_Config) ->
-    foreach_test_tree(fun run_intersection_test/3).
+test_intersect(_Config) ->
+    foreach_test_tree(fun run_intersect_test/3).
 
 test_is_equal(_Config) ->
     foreach_test_tree(fun run_is_equal_test/3).
@@ -1593,128 +1593,128 @@ run_foldr(RefKvs, Tree) ->
     ).
 
 %% ------------------------------------------------------------------
-%% Helpers: Intersection
+%% Helpers: Intersect
 %% ------------------------------------------------------------------
 
-run_intersection_test(Size, RefElements, Tree) ->
-    SelfIntersection = xb5_trees:intersection(Tree, Tree),
+run_intersect_test(Size, RefElements, Tree) ->
+    SelfIntersect = xb5_trees:intersect(Tree, Tree),
 
-    ?assertEqual(Size, xb5_trees:size(SelfIntersection)),
+    ?assertEqual(Size, xb5_trees:size(SelfIntersect)),
 
-    ?assertKvListsCanonEqual(RefElements, xb5_trees:to_list(SelfIntersection)),
+    ?assertKvListsCanonEqual(RefElements, xb5_trees:to_list(SelfIntersect)),
 
     %%%%%%%%%%%%%%
 
     foreach_second_tree(
         fun(RefElements2, Tree2) ->
-            ExpectedIntersectionElements1 = intersection_lists(
-                fun intersection_pick_second/3, RefElements, RefElements2
+            ExpectedIntersectElements1 = intersect_lists(
+                fun intersect_pick_second/3, RefElements, RefElements2
             ),
 
-            Intersection = xb5_trees:intersection(Tree, Tree2),
+            Intersect = xb5_trees:intersect(Tree, Tree2),
 
             ?assertEqual(
-                length(ExpectedIntersectionElements1),
-                xb5_trees:size(Intersection)
+                length(ExpectedIntersectElements1),
+                xb5_trees:size(Intersect)
             ),
 
             ?assertKvListsCanonEqual(
-                ExpectedIntersectionElements1,
-                xb5_trees:to_list(Intersection)
+                ExpectedIntersectElements1,
+                xb5_trees:to_list(Intersect)
             ),
 
             %%%%%%%
 
-            ExpectedIntersectionElements2 = intersection_lists(
-                fun intersection_pick_second/3, RefElements2, RefElements
+            ExpectedIntersectElements2 = intersect_lists(
+                fun intersect_pick_second/3, RefElements2, RefElements
             ),
 
-            Intersection2 = xb5_trees:intersection(Tree2, Tree),
+            Intersect2 = xb5_trees:intersect(Tree2, Tree),
 
             ?assertEqual(
-                length(ExpectedIntersectionElements2),
-                xb5_trees:size(Intersection2)
+                length(ExpectedIntersectElements2),
+                xb5_trees:size(Intersect2)
             ),
 
             ?assertKvListsCanonEqual(
-                ExpectedIntersectionElements2,
-                xb5_trees:to_list(Intersection2)
+                ExpectedIntersectElements2,
+                xb5_trees:to_list(Intersect2)
             ),
 
             %%%%%%%%
 
-            IntersectionFun3 = fun(_K, _V1, V2) -> {pick_second, V2} end,
-            ExpectedIntersectionElements3 = intersection_lists(
-                IntersectionFun3, RefElements, RefElements2
+            IntersectFun3 = fun(_K, _V1, V2) -> {pick_second, V2} end,
+            ExpectedIntersectElements3 = intersect_lists(
+                IntersectFun3, RefElements, RefElements2
             ),
 
-            Intersection3 = xb5_trees:intersection_with(IntersectionFun3, Tree, Tree2),
+            Intersect3 = xb5_trees:intersect_with(IntersectFun3, Tree, Tree2),
 
             ?assertEqual(
-                length(ExpectedIntersectionElements3),
-                xb5_trees:size(Intersection3)
+                length(ExpectedIntersectElements3),
+                xb5_trees:size(Intersect3)
             ),
 
             ?assertKvListsCanonEqual(
-                ExpectedIntersectionElements3,
-                xb5_trees:to_list(Intersection3)
+                ExpectedIntersectElements3,
+                xb5_trees:to_list(Intersect3)
             ),
 
             %%%%%%%%
 
-            IntersectionFun4 = IntersectionFun3,
-            ExpectedIntersectionElements4 = intersection_lists(
-                IntersectionFun4, RefElements2, RefElements
+            IntersectFun4 = IntersectFun3,
+            ExpectedIntersectElements4 = intersect_lists(
+                IntersectFun4, RefElements2, RefElements
             ),
 
-            Intersection4 = xb5_trees:intersection_with(IntersectionFun4, Tree2, Tree),
+            Intersect4 = xb5_trees:intersect_with(IntersectFun4, Tree2, Tree),
 
             ?assertEqual(
-                length(ExpectedIntersectionElements4),
-                xb5_trees:size(Intersection4)
+                length(ExpectedIntersectElements4),
+                xb5_trees:size(Intersect4)
             ),
 
             ?assertKvListsCanonEqual(
-                ExpectedIntersectionElements4,
-                xb5_trees:to_list(Intersection4)
+                ExpectedIntersectElements4,
+                xb5_trees:to_list(Intersect4)
             ),
 
             %%%%%%%%
 
-            IntersectionFun5 = fun(_K, V1, _V2) -> {pick_first, V1} end,
-            ExpectedIntersectionElements5 = intersection_lists(
-                IntersectionFun5, RefElements, RefElements2
+            IntersectFun5 = fun(_K, V1, _V2) -> {pick_first, V1} end,
+            ExpectedIntersectElements5 = intersect_lists(
+                IntersectFun5, RefElements, RefElements2
             ),
 
-            Intersection5 = xb5_trees:intersection_with(IntersectionFun5, Tree, Tree2),
+            Intersect5 = xb5_trees:intersect_with(IntersectFun5, Tree, Tree2),
 
             ?assertEqual(
-                length(ExpectedIntersectionElements5),
-                xb5_trees:size(Intersection5)
+                length(ExpectedIntersectElements5),
+                xb5_trees:size(Intersect5)
             ),
 
             ?assertKvListsCanonEqual(
-                ExpectedIntersectionElements5,
-                xb5_trees:to_list(Intersection5)
+                ExpectedIntersectElements5,
+                xb5_trees:to_list(Intersect5)
             ),
 
             %%%%%%%%
 
-            IntersectionFun6 = IntersectionFun5,
-            ExpectedIntersectionElements6 = intersection_lists(
-                IntersectionFun6, RefElements2, RefElements
+            IntersectFun6 = IntersectFun5,
+            ExpectedIntersectElements6 = intersect_lists(
+                IntersectFun6, RefElements2, RefElements
             ),
 
-            Intersection6 = xb5_trees:intersection_with(IntersectionFun6, Tree2, Tree),
+            Intersect6 = xb5_trees:intersect_with(IntersectFun6, Tree2, Tree),
 
             ?assertEqual(
-                length(ExpectedIntersectionElements6),
-                xb5_trees:size(Intersection6)
+                length(ExpectedIntersectElements6),
+                xb5_trees:size(Intersect6)
             ),
 
             ?assertKvListsCanonEqual(
-                ExpectedIntersectionElements6,
-                xb5_trees:to_list(Intersection6)
+                ExpectedIntersectElements6,
+                xb5_trees:to_list(Intersect6)
             )
         end,
         Size,
@@ -1722,24 +1722,24 @@ run_intersection_test(Size, RefElements, Tree) ->
         [test_variants2]
     ).
 
-intersection_pick_second(_Key, _ValueA, ValueB) ->
+intersect_pick_second(_Key, _ValueA, ValueB) ->
     ValueB.
 
-intersection_lists(Fun, [{K1, V1} | Next1] = L1, [{K2, V2} | Next2] = L2) ->
+intersect_lists(Fun, [{K1, V1} | Next1] = L1, [{K2, V2} | Next2] = L2) ->
     if
         K1 < K2 ->
-            intersection_lists(Fun, Next1, L2);
+            intersect_lists(Fun, Next1, L2);
         %
         K2 < K1 ->
-            intersection_lists(Fun, L1, Next2);
+            intersect_lists(Fun, L1, Next2);
         %
         true ->
             IntersectedV = Fun(K1, V1, V2),
-            [{K1, IntersectedV} | intersection_lists(Fun, Next1, Next2)]
+            [{K1, IntersectedV} | intersect_lists(Fun, Next1, Next2)]
     end;
-intersection_lists(_Fun, [], _L2) ->
+intersect_lists(_Fun, [], _L2) ->
     [];
-intersection_lists(_Fun, _L1, []) ->
+intersect_lists(_Fun, _L1, []) ->
     [].
 
 %% ------------------------------------------------------------------
