@@ -1,0 +1,264 @@
+-module(xb5_bag_utils).
+
+% TODO docs?
+
+%% ------------------------------------------------------------------
+%% API Function Exports
+%% ------------------------------------------------------------------
+
+-export([
+    percentile/4,
+    percentile_bracket/4,
+    percentile_rank/3
+]).
+
+%% ------------------------------------------------------------------
+%% Linter Tweaks
+%% ------------------------------------------------------------------
+
+-elvis([
+    % Large URLs below require this
+    {elvis_text_style, line_length, #{limit => 131}}
+]).
+
+%% ------------------------------------------------------------------
+%% Type Definitions
+%% ------------------------------------------------------------------
+
+-doc "A percentile value between 0.0 (0th) and 1.0 (100th).".
+-type percentile() :: 0 | 1 | float().
+-export_type([percentile/0]).
+
+-doc "An option for percentile functions. Currently only `{method, Method}` is supported; see `t:percentile_bracket_method/0`.".
+-type percentile_bracket_opt() ::
+    ({method, percentile_bracket_method()}).
+-export_type([percentile_bracket_opt/0]).
+
+-doc """
+The method used to calculate a percentile bracket.
+
+- `inclusive` (default) -- Pos = 1 + (N - 1) * P. Equivalent to Excel
+  [PERCENTILE.INC](https://support.microsoft.com/en-us/office/percentile-inc-function-680f9539-45eb-410b-9a5e-c1355e5fe2ed)
+  (Hyndman-Fan Type 7). Covers the full `[0.0, 1.0]` range.
+
+- `exclusive` -- Pos = (N + 1) * P. Equivalent to Excel
+  [PERCENTILE.EXC](https://support.microsoft.com/en-us/office/percentile-exc-function-bbaa7204-e9e1-4010-85bf-c31dc5dce4ba)
+  (Hyndman-Fan Type 6). Returns `none` for percentiles outside the
+  representable range.
+
+- `nearest_rank` -- Pos = ceil(P * N). As described in
+  [Wikipedia](https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method).
+  Always returns an exact element (no interpolation). Returns `none` for
+  percentile `0`.
+""".
+-type percentile_bracket_method() ::
+    (inclusive
+    | exclusive
+    | nearest_rank).
+
+-export_type([percentile_bracket_method/0]).
+
+-doc """
+The result of a percentile bracket calculation.
+
+- `{exact, Element}` -- the percentile falls exactly on an element.
+- `{between, Low, High}` -- the percentile falls between two elements.
+  `Low` and `High` are `t:percentile_bracket_bound/1` maps with
+  interpolation weights.
+- `none` -- the percentile cannot be calculated (empty bag, or out of
+  range for the chosen method).
+""".
+-type percentile_bracket(Element) ::
+    ({exact, Element}
+    | {between, percentile_bracket_bound(Element), percentile_bracket_bound(Element)}
+    | none).
+-export_type([percentile_bracket/1]).
+
+-doc "A map with keys `percentile` (the element's percentile), `weight` (interpolation weight), and `value` (the element itself).".
+-type percentile_bracket_bound(Element) :: #{
+    percentile := float(),
+    weight := float(),
+    value := Element
+}.
+-export_type([percentile_bracket_bound/1]).
+
+%% ------------------------------------------------------------------
+%% API Function Definitions
+%% ------------------------------------------------------------------
+
+-doc """
+Calculates a percentile value in O(log n) time, using linear interpolation if
+the method is either `inclusive` or `exclusive` (default is `inclusive`, see
+`t:percentile_bracket_method/0`) and the bracket doesn't fall on one exact
+element. Returns `{value, Result}` or `none`.
+
+Raises a `{bracket_value_not_a_number, Bound}` error if linear interpolation is
+required but the bracketing elements are not numbers.
+""".
+-spec percentile(Percentile, Size, Root, Opts) -> {value, Element | InterpolationResult} | none when
+    Percentile :: percentile(),
+    Size :: non_neg_integer(),
+    Root :: xb5_bag_node:t(Element),
+    InterpolationResult :: number(),
+    Opts :: [percentile_bracket_opt()].
+
+percentile(Percentile, Size, Root, Opts) ->
+    Bracket = percentile_bracket(Percentile, Size, Root, Opts),
+    linear_interpolated_percentile(Bracket).
+
+%%
+
+-doc """
+Returns the percentile bracket for `Percentile` in `Root` node in O(log n)
+time, using the method selected (default is `inclusive`; see
+`t:percentile_bracket_method/0`).
+
+Returns `{exact, Element}` when the percentile falls exactly on an element,
+`{between, Low, High}` when it falls between two elements, or `none` if the bag
+is empty.
+""".
+-spec percentile_bracket(Percentile, Size, Root, Opts) -> Bracket when
+    Percentile :: percentile(),
+    Size :: non_neg_integer(),
+    Root :: xb5_bag_node:t(Element),
+    Opts :: [percentile_bracket_opt()],
+    Bracket :: percentile_bracket(Element).
+
+percentile_bracket(Percentile, Size, Root, Opts) when
+    is_number(Percentile), Percentile >= 0.0, Percentile =< 1.0
+->
+    case Size of
+        0 ->
+            none;
+        %
+        _ ->
+            Method = proplists:get_value(method, Opts, inclusive),
+            Pos = percentile_bracket_pos(Percentile, Size, Method),
+            percentile_bracket_for_pos(Percentile, Pos, Size, Root, Method)
+    end;
+percentile_bracket(Percentile, _Size, _Root, _Opts) ->
+    error({badarg, Percentile}).
+
+-doc """
+Returns the [percentile rank](https://en.wikipedia.org/wiki/Percentile_rank)
+of `Element` in non-empty `Root` as a float in `[0.0, 1.0]`, in O(log n) time.
+
+`Element` does not have to be in the bag.
+```
+""".
+-spec percentile_rank(Element, Size, Root) -> Rank when
+    Size :: pos_integer(),
+    Root :: xb5_bag_node:t(Element),
+    Rank :: float().
+
+percentile_rank(Elem, Size, Root) ->
+    % As described in Wikipedia:
+    % https://en.wikipedia.org/wiki/Percentile_rank
+    SmallerPair = xb5_bag_node:rank_smaller(Elem, Root),
+    LargerPair = xb5_bag_node:rank_larger(Elem, Root),
+
+    [CF | F] = percentile_rank_params(SmallerPair, LargerPair, Size),
+
+    (CF - 0.5 * F) / Size.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions
+%% ------------------------------------------------------------------
+
+percentile_bracket_pos(Percentile, Size, inclusive) ->
+    1 + (Size - 1) * Percentile;
+percentile_bracket_pos(Percentile, Size, exclusive) ->
+    (Size + 1) * Percentile;
+percentile_bracket_pos(Percentile, Size, nearest_rank) ->
+    ceil(Percentile * Size).
+
+percentile_bracket_for_pos(Percentile, Pos, Size, Root, Method) ->
+    LowRank = floor(Pos),
+    HighRank = ceil(Pos),
+
+    if
+        LowRank < 1 orelse HighRank > Size ->
+            none;
+        %
+        LowRank == HighRank ->
+            ExactRank = LowRank,
+            ExactElem = xb5_bag_node:nth(ExactRank, Root),
+            {exact, ExactElem};
+        %
+        true ->
+            [LowElem | HighElem] = xb5_bag_node:nth_and_nthp1(LowRank, Root),
+
+            case HighElem == LowElem of
+                true ->
+                    {exact, LowElem};
+                %
+                _ ->
+                    LowPerc = percentile_bracket_perc(LowRank, Size, Method),
+                    HighPerc = percentile_bracket_perc(HighRank, Size, Method),
+
+                    PercRange = HighPerc - LowPerc,
+                    HighWeight = (Percentile - LowPerc) / PercRange,
+                    LowWeight = 1.0 - HighWeight,
+
+                    {between, percentile_bracket_bound(LowWeight, LowPerc, LowElem),
+                        percentile_bracket_bound(HighWeight, HighPerc, HighElem)}
+            end
+    end.
+
+percentile_bracket_perc(Rank, Size, inclusive) ->
+    (Rank - 1) / (Size - 1);
+percentile_bracket_perc(Rank, Size, exclusive) ->
+    Rank / (Size + 1).
+
+percentile_bracket_bound(Weight, Perc, Elem) ->
+    #{
+        percentile => Perc,
+        weight => Weight,
+        value => Elem
+    }.
+
+linear_interpolated_percentile({exact, ExactElem}) ->
+    {value, ExactElem};
+linear_interpolated_percentile({between, LowBound, HighBound}) ->
+    #{
+        weight := LowWeight,
+        value := LowElem
+    } = LowBound,
+
+    #{
+        weight := HighWeight,
+        value := HighElem
+    } = HighBound,
+
+    if
+        not is_number(LowElem) ->
+            error({bracket_value_not_a_number, LowBound});
+        %
+        not is_number(HighElem) ->
+            error({bracket_value_not_a_number, HighBound});
+        %
+        true ->
+            % TODO avoid truncation when interpolating large enough integers (> 2**52)
+            {value, (LowWeight * LowElem) + (HighWeight * HighElem)}
+    end;
+linear_interpolated_percentile(none) ->
+    none.
+
+%%%%%%%%
+
+percentile_rank_params(none, none, Size) ->
+    CF = Size,
+    F = Size,
+    [CF | F];
+percentile_rank_params(none, [LargerRank | _], _) ->
+    F = LargerRank - 1,
+    CF = F,
+    [CF | F];
+percentile_rank_params([SmallerRank | _], none, Size) ->
+    F = Size - SmallerRank,
+    CF = Size,
+    [CF | F];
+percentile_rank_params([SmallerRank | _], [LargerRank | _], _) ->
+    CF = LargerRank - 1,
+    F = LargerRank - SmallerRank - 1,
+    [CF | F].
