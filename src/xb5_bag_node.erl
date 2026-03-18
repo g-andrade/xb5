@@ -557,7 +557,7 @@ elixir_reduce(Fun, Acc, Root) ->
     StartIndex :: non_neg_integer(),
     Length :: pos_integer(),
     Step :: pos_integer().
-elixir_slice(StartIndex, Length, Step, RootSize, Root) when Length >= 1 ->
+elixir_slice(StartIndex, Length, Step, RootSize, Root) when Length >= 1, Step >= 1 ->
     Iter = bound_nth_fwd_iterator(StartIndex + 1, RootSize, Root),
     elixir_slice_recur(Length, Step, 0, Iter).
 
