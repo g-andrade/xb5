@@ -1592,7 +1592,7 @@ elixir_slice_step(Length, Step, SubStep, Elem, Next) ->
     NextSubStep = (SubStep + 1) rem Step,
 
     if
-        Step =:= 0 ->
+        SubStep =:= 0 ->
             %
             if
                 NextSubStep =:= 0 ->
