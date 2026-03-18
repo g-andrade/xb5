@@ -1,6 +1,8 @@
 -module(xb5_bag_utils).
 
-% TODO docs?
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -221,7 +223,6 @@ linear_interpolated_percentile({exact, ExactElem}) ->
     {value, ExactElem};
 linear_interpolated_percentile({between, LowBound, HighBound}) ->
     #{
-        weight := LowWeight,
         value := LowElem
     } = LowBound,
 
@@ -238,11 +239,31 @@ linear_interpolated_percentile({between, LowBound, HighBound}) ->
             error({bracket_value_not_a_number, HighBound});
         %
         true ->
-            % TODO avoid truncation when interpolating large enough integers (> 2**52)
-            {value, (LowWeight * LowElem) + (HighWeight * HighElem)}
+            {value, linear_interpolation(LowElem, HighElem, HighWeight)}
     end;
 linear_interpolated_percentile(none) ->
     none.
+
+linear_interpolation(A, B, T) when is_integer(A), is_integer(B) ->
+    Diff = B - A,
+
+    FloatA = float(A),
+    FloatDiff = float(Diff),
+
+    if
+        FloatA /= A orelse FloatDiff /= Diff ->
+            % Lost of precision, fallback to all integer math
+            Magnitude = 1024,
+            IntT = round(T * Magnitude),
+            A + (IntT * Diff div Magnitude);
+        %
+        true ->
+            FloatA + (T * FloatDiff)
+    end;
+linear_interpolation(A, B, T) ->
+    % If B is a very large integer and A a small float we may lose precision,
+    % no way I could think around it.
+    A + (T * (B - A)).
 
 %%%%%%%%
 
@@ -262,3 +283,73 @@ percentile_rank_params([SmallerRank | _], [LargerRank | _], _) ->
     CF = LargerRank - 1,
     F = LargerRank - SmallerRank - 1,
     [CF | F].
+
+%% ------------------------------------------------------------------
+%% Unit Tests
+%% ------------------------------------------------------------------
+
+-ifdef(TEST).
+
+linear_interpolation_test() ->
+    %
+    % Avoid loss of precision when converting both A and Diff to float
+    %
+    L1A = (1 bsl 70) - 100,
+    L1B = (1 bsl 70),
+    ?assertEqual((1 bsl 70) - 96, linear_interpolation(L1A, L1B, 0.05)),
+    ?assertEqual((1 bsl 70) - 50, linear_interpolation(L1A, L1B, 0.50)),
+    ?assertEqual((1 bsl 70) - 5, linear_interpolation(L1A, L1B, 0.95)),
+
+    %
+    % Avoid loss of precision when converting Diff to float
+    %
+    L2A = (1 bsl 40),
+    L2B = (1 bsl 100),
+    ?assertEqual((1 bsl 98) + (1 bsl 39) + (1 bsl 38), linear_interpolation(L2A, L2B, 0.25)),
+    ?assertEqual((1 bsl 99) + (1 bsl 39), linear_interpolation(L2A, L2B, 0.50)),
+    ?assertEqual((1 bsl 99) + (1 bsl 98) + (1 bsl 38), linear_interpolation(L2A, L2B, 0.75)),
+
+    %
+    % No loss of precision to avoid, both large integers represent as floats
+    %
+    L3A = (1 bsl 69),
+    L3B = (1 bsl 70),
+    ?assertEqual(precise_float((1 bsl 69) + (1 bsl 67)), linear_interpolation(L3A, L3B, 0.25)),
+    ?assertEqual(precise_float((1 bsl 69) + (1 bsl 68)), linear_interpolation(L3A, L3B, 0.50)),
+    ?assertEqual(precise_float((1 bsl 69) + 3 * (1 bsl 67)), linear_interpolation(L3A, L3B, 0.75)),
+
+    %
+    % Floats
+    %
+    L4A = 1.3235e2,
+    L4B = 9.332343e300,
+    ?assertEqual(9.332343e100, linear_interpolation(L4A, L4B, 1.0e-200)),
+    ?assertEqual(2.33308575e300, linear_interpolation(L4A, L4B, 0.25)),
+    ?assertEqual(4.6661715e300, linear_interpolation(L4A, L4B, 0.50)),
+    ?assertEqual(6.99925725e300, linear_interpolation(L4A, L4B, 0.75)),
+    ?assertEqual(9.332342999999999e300, linear_interpolation(L4A, L4B, 0.9999999999999999)),
+
+    %
+    % Mixed float / very large integer that loses precision
+    %
+    L5A = math:pow(10, 20),
+    L5B = int_pow(10, 30),
+    ?assert(L5B /= float(L5B)),
+
+    ?assertEqual(2.50000000075e29, linear_interpolation(L5A, L5B, 0.25)),
+    ?assertEqual(5.0000000004999996e29, linear_interpolation(L5A, L5B, 0.50)),
+    ?assertEqual(7.50000000025e29, linear_interpolation(L5A, L5B, 0.75)),
+
+    todo.
+
+precise_float(Integer) when is_integer(Integer) ->
+    Float = float(Integer),
+    ?assert(Float == Integer),
+    Float.
+
+int_pow(_Base, 0) ->
+    1;
+int_pow(Base, Exponent) when Exponent > 0 ->
+    Base * int_pow(Base, Exponent - 1).
+
+-endif.

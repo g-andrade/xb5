@@ -2130,7 +2130,7 @@ test_valid_percentile_inclusive(Size, RefElements, Bag) ->
                             %
                             true ->
                                 ?assertCanonEqual(
-                                    {value, (LowWeight * LowElem) + (HighWeight * HighElem)},
+                                    {value, linear_interpolation(LowElem, HighElem, HighWeight)},
                                     new_percentile_inclusive(Percentile, Bag)
                                 )
                         end
@@ -2321,7 +2321,7 @@ test_valid_percentile_exclusive(Size, RefElements, Bag) ->
                             %
                             true ->
                                 ?assertCanonEqual(
-                                    {value, (LowWeight * LowElem) + (HighWeight * HighElem)},
+                                    {value, linear_interpolation(LowElem, HighElem, HighWeight)},
                                     new_percentile_exclusive(Percentile, Bag)
                                 )
                         end
@@ -2330,6 +2330,9 @@ test_valid_percentile_exclusive(Size, RefElements, Bag) ->
         Size,
         exclusive
     ).
+
+linear_interpolation(A, B, T) ->
+    A + (T * (B - A)).
 
 exclusive_percentile_bracket_perc(Rank, Size) ->
     Rank / (Size + 1).
