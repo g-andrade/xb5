@@ -698,7 +698,7 @@ nth(Rank, ?LEAF1_MATCH_ALL) ->
 nth(Rank, Root) ->
     nth_recur(Rank, Root).
 
--spec nth_and_nthp1(pos_integer(), t(E)) -> E.
+-spec nth_and_nthp1(pos_integer(), t(E)) -> nonempty_improper_list(E, E).
 nth_and_nthp1(Rank, ?INTERNAL1_MATCH_ALL) ->
     nth_and_nthp1_INTERNAL1(Rank, ?INTERNAL1_ARGS);
 nth_and_nthp1(Rank, Root) ->
