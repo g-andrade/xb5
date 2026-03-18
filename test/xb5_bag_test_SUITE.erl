@@ -2071,66 +2071,53 @@ test_valid_percentile_inclusive(0 = Size, _, Bag) ->
 test_valid_percentile_inclusive(Size, RefElements, Bag) ->
     foreach_percentile(
         fun
-            (Percentile, LowRank, HighRank) when LowRank == HighRank ->
-                ExactElem = lists:nth(LowRank, RefElements),
+            (Percentile, RankA, RankB) when RankA == RankB ->
+                ExactElem = lists:nth(RankA, RefElements),
                 ?assertCanonEqual(
                     {exact, ExactElem}, new_percentile_bracket_inclusive(Percentile, Bag)
                 ),
                 ?assertCanonEqual({value, ExactElem}, new_percentile_inclusive(Percentile, Bag));
             %
-            (Percentile, LowRank, HighRank) ->
-                case lists:sublist(RefElements, LowRank, 2) of
-                    [LowElem, HighElem] when LowElem == HighElem ->
+            (Percentile, RankA, RankB) ->
+                case lists:sublist(RefElements, RankA, 2) of
+                    [A, B] when A == B ->
                         ?assertCanonEqual(
-                            {exact, LowElem}, new_percentile_bracket_inclusive(Percentile, Bag)
+                            {exact, A}, new_percentile_bracket_inclusive(Percentile, Bag)
                         ),
                         ?assertCanonEqual(
-                            {value, LowElem}, new_percentile_inclusive(Percentile, Bag)
+                            {value, A}, new_percentile_inclusive(Percentile, Bag)
                         );
                     %
-                    [LowElem, HighElem] ->
-                        LowPerc = inclusive_percentile_bracket_perc(LowRank, Size),
-                        HighPerc = inclusive_percentile_bracket_perc(HighRank, Size),
+                    [A, B] ->
+                        PercA = inclusive_percentile_bracket_perc(RankA, Size),
+                        PercB = inclusive_percentile_bracket_perc(RankB, Size),
 
-                        PercRange = HighPerc - LowPerc,
-                        HighWeight = (Percentile - LowPerc) / PercRange,
-                        LowWeight = 1.0 - HighWeight,
+                        PercRange = PercB - PercA,
+                        T = (Percentile - PercA) / PercRange,
 
-                        LowBound = #{
-                            percentile => LowPerc,
-                            weight => LowWeight,
-                            value => LowElem
-                        },
+                        OtherInfo = #{percentile_A => PercA, percentile_B => PercB},
 
-                        HighBound = #{
-                            percentile => HighPerc,
-                            weight => HighWeight,
-                            value => HighElem
-                        },
-
-                        ?assertCanonEqual(
-                            {between, LowBound, HighBound},
-                            new_percentile_bracket_inclusive(Percentile, Bag)
-                        ),
+                        Bracket = new_percentile_bracket_inclusive(Percentile, Bag),
+                        ?assertCanonEqual({between, A, B, T, OtherInfo}, Bracket),
 
                         %%
 
                         if
-                            not is_number(LowElem) ->
+                            not is_number(A) ->
                                 ?assertCanonError(
-                                    {bracket_value_not_a_number, LowBound},
+                                    {bracket_value_not_a_number, A, in, Bracket},
                                     new_percentile_inclusive(Percentile, Bag)
                                 );
                             %
-                            not is_number(HighElem) ->
+                            not is_number(B) ->
                                 ?assertCanonError(
-                                    {bracket_value_not_a_number, HighBound},
+                                    {bracket_value_not_a_number, B, in, Bracket},
                                     new_percentile_inclusive(Percentile, Bag)
                                 );
                             %
                             true ->
                                 ?assertCanonEqual(
-                                    {value, linear_interpolation(LowElem, HighElem, HighWeight)},
+                                    {value, linear_interpolation(A, B, T)},
                                     new_percentile_inclusive(Percentile, Bag)
                                 )
                         end
@@ -2258,70 +2245,60 @@ test_valid_percentile_exclusive(0 = Size, _, Bag) ->
 test_valid_percentile_exclusive(Size, RefElements, Bag) ->
     foreach_percentile(
         fun
-            (Percentile, LowRank, HighRank) when LowRank < 1 orelse HighRank > Size ->
+            (Percentile, RankA, RankB) when RankA < 1 orelse RankB > Size ->
                 ?assertCanonEqual(none, new_percentile_bracket_exclusive(Percentile, Bag)),
                 ?assertCanonEqual(none, new_percentile_exclusive(Percentile, Bag));
             %
-            (Percentile, LowRank, HighRank) when LowRank == HighRank ->
-                ExactElem = lists:nth(LowRank, RefElements),
+            (Percentile, RankA, RankB) when RankA == RankB ->
+                ExactElem = lists:nth(RankA, RefElements),
                 ?assertCanonEqual(
                     {exact, ExactElem}, new_percentile_bracket_exclusive(Percentile, Bag)
                 ),
                 ?assertCanonEqual({value, ExactElem}, new_percentile_exclusive(Percentile, Bag));
             %
-            (Percentile, LowRank, HighRank) ->
-                case lists:sublist(RefElements, LowRank, 2) of
-                    [LowElem, HighElem] when LowElem == HighElem ->
+            (Percentile, RankA, RankB) ->
+                case lists:sublist(RefElements, RankA, 2) of
+                    [A, B] when A == B ->
                         ?assertCanonEqual(
-                            {exact, LowElem}, new_percentile_bracket_exclusive(Percentile, Bag)
+                            {exact, A}, new_percentile_bracket_exclusive(Percentile, Bag)
                         ),
                         ?assertCanonEqual(
-                            {value, LowElem}, new_percentile_exclusive(Percentile, Bag)
+                            {value, A}, new_percentile_exclusive(Percentile, Bag)
                         );
                     %
-                    [LowElem, HighElem] ->
-                        LowPerc = exclusive_percentile_bracket_perc(LowRank, Size),
-                        HighPerc = exclusive_percentile_bracket_perc(HighRank, Size),
+                    [A, B] ->
+                        PercA = exclusive_percentile_bracket_perc(RankA, Size),
+                        PercB = exclusive_percentile_bracket_perc(RankB, Size),
 
-                        PercRange = HighPerc - LowPerc,
-                        HighWeight = (Percentile - LowPerc) / PercRange,
-                        LowWeight = 1.0 - HighWeight,
+                        PercRange = PercB - PercA,
+                        T = (Percentile - PercA) / PercRange,
 
-                        LowBound = #{
-                            percentile => LowPerc,
-                            weight => LowWeight,
-                            value => LowElem
+                        OtherInfo = #{
+                            percentile_A => PercA,
+                            percentile_B => PercB
                         },
 
-                        HighBound = #{
-                            percentile => HighPerc,
-                            weight => HighWeight,
-                            value => HighElem
-                        },
-
-                        ?assertCanonEqual(
-                            {between, LowBound, HighBound},
-                            new_percentile_bracket_exclusive(Percentile, Bag)
-                        ),
+                        Bracket = new_percentile_bracket_exclusive(Percentile, Bag),
+                        ?assertCanonEqual({between, A, B, T, OtherInfo}, Bracket),
 
                         %%
 
                         if
-                            not is_number(LowElem) ->
+                            not is_number(A) ->
                                 ?assertCanonError(
-                                    {bracket_value_not_a_number, LowBound},
+                                    {bracket_value_not_a_number, A, in, Bracket},
                                     new_percentile_exclusive(Percentile, Bag)
                                 );
                             %
-                            not is_number(HighElem) ->
+                            not is_number(B) ->
                                 ?assertCanonError(
-                                    {bracket_value_not_a_number, HighBound},
+                                    {bracket_value_not_a_number, B, in, Bracket},
                                     new_percentile_exclusive(Percentile, Bag)
                                 );
                             %
                             true ->
                                 ?assertCanonEqual(
-                                    {value, linear_interpolation(LowElem, HighElem, HighWeight)},
+                                    {value, linear_interpolation(A, B, T)},
                                     new_percentile_exclusive(Percentile, Bag)
                                 )
                         end
@@ -2558,9 +2535,9 @@ foreach_percentile(Fun, Size, Method) ->
     lists:foreach(
         fun(Percentile) ->
             Pos = percentile_bracket_pos(Percentile, Size, Method),
-            LowRank = floor(Pos),
-            HighRank = ceil(Pos),
-            Fun(Percentile, LowRank, HighRank)
+            RankA = floor(Pos),
+            RankB = ceil(Pos),
+            Fun(Percentile, RankA, RankB)
         end,
         Percentiles
     ).

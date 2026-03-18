@@ -31,10 +31,14 @@
 -type percentile() :: 0 | 1 | float().
 -export_type([percentile/0]).
 
+%%
+
 -doc "An option for percentile functions. Currently only `{method, Method}` is supported; see `t:percentile_bracket_method/0`.".
 -type percentile_bracket_opt() ::
     ({method, percentile_bracket_method()}).
 -export_type([percentile_bracket_opt/0]).
+
+%%
 
 -doc """
 The method used to calculate a percentile bracket.
@@ -60,11 +64,13 @@ The method used to calculate a percentile bracket.
 
 -export_type([percentile_bracket_method/0]).
 
+%%
+
 -doc """
 The result of a percentile bracket calculation.
 
 - `{exact, Element}` -- the percentile falls exactly on an element.
-- `{between, Low, High}` -- the percentile falls between two elements.
+- `{between, A, B, T, _}` -- the percentile falls between two elements.
   `Low` and `High` are `t:percentile_bracket_bound/1` maps with
   interpolation weights.
 - `none` -- the percentile cannot be calculated (empty bag, or out of
@@ -72,17 +78,9 @@ The result of a percentile bracket calculation.
 """.
 -type percentile_bracket(Element) ::
     ({exact, Element}
-    | {between, percentile_bracket_bound(Element), percentile_bracket_bound(Element)}
+    | {between, Element, Element, T :: float(), OtherInfo :: term()}
     | none).
 -export_type([percentile_bracket/1]).
-
--doc "A map with keys `percentile` (the element's percentile), `weight` (interpolation weight), and `value` (the element itself).".
--type percentile_bracket_bound(Element) :: #{
-    percentile := float(),
-    weight := float(),
-    value := Element
-}.
--export_type([percentile_bracket_bound/1]).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -116,7 +114,7 @@ time, using the method selected (default is `inclusive`; see
 `t:percentile_bracket_method/0`).
 
 Returns `{exact, Element}` when the percentile falls exactly on an element,
-`{between, Low, High}` when it falls between two elements, or `none` if the bag
+`{between, A, B, T, _}` when it falls between two elements, or `none` if the bag
 is empty.
 """.
 -spec percentile_bracket(Percentile, Size, Root, Opts) -> Bracket when
@@ -175,35 +173,37 @@ percentile_bracket_pos(Percentile, Size, nearest_rank) ->
     ceil(Percentile * Size).
 
 percentile_bracket_for_pos(Percentile, Pos, Size, Root, Method) ->
-    LowRank = floor(Pos),
-    HighRank = ceil(Pos),
+    RankA = floor(Pos),
+    RankB = ceil(Pos),
 
     if
-        LowRank < 1 orelse HighRank > Size ->
+        RankA < 1 orelse RankB > Size ->
             none;
         %
-        LowRank == HighRank ->
-            ExactRank = LowRank,
-            ExactElem = xb5_bag_node:nth(ExactRank, Root),
-            {exact, ExactElem};
+        RankA =:= RankB ->
+            Elem = xb5_bag_node:nth(RankA, Root),
+            {exact, Elem};
         %
         true ->
-            [LowElem | HighElem] = xb5_bag_node:nth_and_nthp1(LowRank, Root),
+            [A | B] = xb5_bag_node:nth_and_nthp1(RankA, Root),
 
-            case HighElem == LowElem of
+            case A == B of
                 true ->
-                    {exact, LowElem};
+                    {exact, A};
                 %
                 _ ->
-                    LowPerc = percentile_bracket_perc(LowRank, Size, Method),
-                    HighPerc = percentile_bracket_perc(HighRank, Size, Method),
+                    PercA = percentile_bracket_perc(RankA, Size, Method),
+                    PercB = percentile_bracket_perc(RankB, Size, Method),
 
-                    PercRange = HighPerc - LowPerc,
-                    HighWeight = (Percentile - LowPerc) / PercRange,
-                    LowWeight = 1.0 - HighWeight,
+                    PercRange = PercB - PercA,
+                    T = (Percentile - PercA) / PercRange,
 
-                    {between, percentile_bracket_bound(LowWeight, LowPerc, LowElem),
-                        percentile_bracket_bound(HighWeight, HighPerc, HighElem)}
+                    OtherInfo = #{
+                        percentile_A => PercA,
+                        percentile_B => PercB
+                    },
+
+                    {between, A, B, T, OtherInfo}
             end
     end.
 
@@ -212,34 +212,18 @@ percentile_bracket_perc(Rank, Size, inclusive) ->
 percentile_bracket_perc(Rank, Size, exclusive) ->
     Rank / (Size + 1).
 
-percentile_bracket_bound(Weight, Perc, Elem) ->
-    #{
-        percentile => Perc,
-        weight => Weight,
-        value => Elem
-    }.
-
 linear_interpolated_percentile({exact, ExactElem}) ->
     {value, ExactElem};
-linear_interpolated_percentile({between, LowBound, HighBound}) ->
-    #{
-        value := LowElem
-    } = LowBound,
-
-    #{
-        weight := HighWeight,
-        value := HighElem
-    } = HighBound,
-
+linear_interpolated_percentile({between, A, B, T, _} = Bracket) ->
     if
-        not is_number(LowElem) ->
-            error({bracket_value_not_a_number, LowBound});
+        not is_number(A) ->
+            error({bracket_value_not_a_number, A, in, Bracket});
         %
-        not is_number(HighElem) ->
-            error({bracket_value_not_a_number, HighBound});
+        not is_number(B) ->
+            error({bracket_value_not_a_number, B, in, Bracket});
         %
         true ->
-            {value, linear_interpolation(LowElem, HighElem, HighWeight)}
+            {value, linear_interpolation(A, B, T)}
     end;
 linear_interpolated_percentile(none) ->
     none.
