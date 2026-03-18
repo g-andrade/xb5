@@ -671,13 +671,7 @@ none
 iterator_from_nth(Rank, #xb5_bag{size = Size, root = Root}) when
     is_integer(Rank), Rank >= 1, Rank =< Size
 ->
-    if
-        Rank =:= 1 ->
-            xb5_bag_node:iterator(Root, ordered);
-        %
-        true ->
-            xb5_bag_node:iterator_from_nth(Rank, Size, Root, ordered)
-    end;
+    xb5_bag_node:iterator_from_nth(Rank, Size, Root, ordered);
 iterator_from_nth(Rank, #xb5_bag{}) ->
     error({badarg, Rank}).
 

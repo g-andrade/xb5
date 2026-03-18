@@ -46,6 +46,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
     add/2,
     delete_att/2,
     elixir_reduce/3,
+    elixir_slice/5,
     filtermap_to_list/2,
     fold/3,
     from_ordered_list/2,
@@ -74,7 +75,8 @@ API for operating over `m:xb5_bag` internal nodes directly.
 ]).
 
 -ignore_xref([
-    elixir_reduce/3
+    elixir_reduce/3,
+    elixir_slice/5
 ]).
 
 %% ------------------------------------------------------------------
@@ -550,6 +552,14 @@ delete_att(Elem, Root) ->
 elixir_reduce(Fun, Acc, Root) ->
     Iter = fwd_iterator(Root),
     elixir_reduce_recur(Fun, Acc, Iter).
+
+-spec elixir_slice(StartIndex, Length, Step, non_neg_integer(), t(Elem)) -> [Elem] when
+    StartIndex :: non_neg_integer(),
+    Length :: pos_integer(),
+    Step :: pos_integer().
+elixir_slice(StartIndex, Length, Step, RootSize, Root) when Length >= 1 ->
+    Iter = bound_nth_fwd_iterator(StartIndex + 1, RootSize, Root),
+    elixir_slice_recur(Length, Step, 0, Iter).
 
 -spec filtermap_to_list(fun((Elem) -> {true, MappedElem} | boolean()), t(Elem)) ->
     [MappedElem].
@@ -1560,6 +1570,44 @@ elixir_reduce_recur(_Fun, {halt, ElemAcc}, _) ->
     {halted, ElemAcc};
 elixir_reduce_recur(Fun, {suspend, ElemAcc}, Iter) ->
     {suspended, ElemAcc, fun(Acc) -> elixir_reduce_recur(Fun, Acc, Iter) end}.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: elixir_slice/5
+%% ------------------------------------------------------------------
+
+elixir_slice_recur(0, _Step, _SubStep, _Iter) ->
+    [];
+elixir_slice_recur(Length, Step, SubStep, [Head | Tail]) ->
+    case Head of
+        ?ITER_ELEM(Elem) ->
+            elixir_slice_step(Length, Step, SubStep, Elem, Tail);
+        %
+        Node ->
+            [?ITER_ELEM(Elem) | Next] = fwd_iterator_recur(Node, Tail),
+            elixir_slice_step(Length, Step, SubStep, Elem, Next)
+    end.
+
+-compile({inline, elixir_slice_step/5}).
+elixir_slice_step(Length, Step, SubStep, Elem, Next) ->
+    NextSubStep = (SubStep + 1) rem Step,
+
+    if
+        Step =:= 0 ->
+            %
+            if
+                NextSubStep =:= 0 ->
+                    [Elem | elixir_slice_recur(Length - 1, Step, NextSubStep, Next)];
+                %
+                true ->
+                    [Elem | elixir_slice_recur(Length, Step, NextSubStep, Next)]
+            end;
+        %
+        NextSubStep =:= 0 ->
+            elixir_slice_recur(Length - 1, Step, NextSubStep, Next);
+        %
+        true ->
+            elixir_slice_recur(Length, Step, NextSubStep, Next)
+    end.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: filtermap_to_list/2
@@ -2831,6 +2879,9 @@ bound_rev_iterator_LEAF1(Elem, ?LEAF1_ARGS) ->
 %% Internal Function Definitions: iterator_from_nth/3 - forward
 %% ------------------------------------------------------------------
 
+bound_nth_fwd_iterator(1, _Size, Root) ->
+    % Optimization
+    fwd_iterator(Root);
 bound_nth_fwd_iterator(Rank, Size, Root) ->
     case Root of
         ?INTERNAL1_MATCH_ALL ->
