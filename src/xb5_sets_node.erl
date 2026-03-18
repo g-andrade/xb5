@@ -75,6 +75,7 @@ API for operating over `m:xb5_sets` internal nodes directly.
 ]).
 
 -ignore_xref([
+    elixir_reduce/3,
     to_rev_list/1
 ]).
 
@@ -1263,7 +1264,6 @@ difference_2(List1, [], AccSize, Acc) ->
 %% Internal Function Definitions: elixir_reduce/3
 %% ------------------------------------------------------------------
 
-% TODO test
 elixir_reduce_recur(Fun, {cont, ElemAcc}, [Head | Tail]) ->
     case Head of
         ?ITER_ELEM(Elem) ->
@@ -1284,7 +1284,7 @@ elixir_reduce_recur(Fun, {suspend, ElemAcc}, Iter) ->
     {suspended, ElemAcc, fun(Acc) -> elixir_reduce_recur(Fun, Acc, Iter) end}.
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: filtermap/2
+%% Internal Function Definitions: filtermap_to_list/2
 %% ------------------------------------------------------------------
 
 filtermap_recur(Fun, Node, Acc) ->
