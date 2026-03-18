@@ -44,6 +44,7 @@ API for operating over `m:xb5_trees` internal nodes directly.
 
 -export([
     delete_att/2,
+    elixir_reduce/3,
     foldl/3,
     foldr/3,
     from_orddict/2,
@@ -75,8 +76,7 @@ API for operating over `m:xb5_trees` internal nodes directly.
 ]).
 
 -ignore_xref([
-    merge/4,
-    merge/5,
+    elixir_reduce/3,
     to_rev_list/1
 ]).
 
@@ -518,6 +518,27 @@ API for operating over `m:xb5_trees` internal nodes directly.
 
 %%%%%%%%%%%%
 
+%%%%%%%%%%%%
+
+-type elixir_reducer_acc(ElemAcc) :: {cont, ElemAcc} | {halt, ElemAcc} | {suspend, ElemAcc}.
+-export_type([elixir_reducer_acc/1]).
+
+-type elixir_reducer_result(ElemAcc) ::
+    {done, ElemAcc}
+    | {halted, ElemAcc}
+    | {suspended, ElemAcc, elixir_reducer_continuation(ElemAcc)}.
+-export_type([elixir_reducer_result/1]).
+
+-type elixir_reducer_continuation(ElemAcc) :: fun(
+    (elixir_reducer_acc(ElemAcc)) -> elixir_reducer_result(ElemAcc)
+).
+-export_type([elixir_reducer_continuation/1]).
+
+-type elixir_reducer(Key, Value, ElemAcc) :: fun(
+    ({Key, Value}, ElemAcc) -> elixir_reducer_acc(ElemAcc)
+).
+-export_type([elixir_reducer/3]).
+
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
@@ -531,6 +552,15 @@ delete_att(_Key, ?LEAF0) ->
     badkey;
 delete_att(Key, Root) ->
     delete_att_recur(Key, Root).
+
+-spec elixir_reduce(Fun, Acc, Root) -> Result when
+    Fun :: elixir_reducer(Key, Value, ElemAcc),
+    Acc :: elixir_reducer_acc(ElemAcc),
+    Root :: t(Key, Value),
+    Result :: elixir_reducer_result(ElemAcc).
+elixir_reduce(Fun, Acc, Root) ->
+    Iter = fwd_iterator(Root),
+    elixir_reduce_recur(Fun, Acc, Iter).
 
 -spec foldl(fun((Key, Value, Acc2) -> Acc1), Acc0, t(Key, Value)) -> AccN when
     Acc0 :: term(),
@@ -1272,6 +1302,29 @@ delete_att_LEAF1(Key, K1) ->
         ?LEAF0,
         badkey
     ).
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: elixir_reduce/3
+%% ------------------------------------------------------------------
+
+elixir_reduce_recur(Fun, {cont, ElemAcc}, [Head | Tail]) ->
+    case Head of
+        ?ITER_PAIR(Key, Value) ->
+            Next = Tail,
+            Acc2 = Fun({Key, Value}, ElemAcc),
+            elixir_reduce_recur(Fun, Acc2, Next);
+        %
+        Node ->
+            [?ITER_PAIR(Key, Value) | Next] = fwd_iterator_recur(Node, Tail),
+            Acc2 = Fun({Key, Value}, ElemAcc),
+            elixir_reduce_recur(Fun, Acc2, Next)
+    end;
+elixir_reduce_recur(_Fun, {cont, ElemAcc}, []) ->
+    {done, ElemAcc};
+elixir_reduce_recur(_Fun, {halt, ElemAcc}, _) ->
+    {halted, ElemAcc};
+elixir_reduce_recur(Fun, {suspend, ElemAcc}, Iter) ->
+    {suspended, ElemAcc, fun(Acc) -> elixir_reduce_recur(Fun, Acc, Iter) end}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: foldl/3

@@ -45,6 +45,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
 -export([
     add/2,
     delete_att/2,
+    elixir_reduce/3,
     filtermap_to_list/2,
     fold/3,
     from_ordered_list/2,
@@ -70,6 +71,10 @@ API for operating over `m:xb5_bag` internal nodes directly.
     take_largest/1,
     take_smallest/1,
     to_list/1
+]).
+
+-ignore_xref([
+    elixir_reduce/3
 ]).
 
 %% ------------------------------------------------------------------
@@ -490,6 +495,23 @@ API for operating over `m:xb5_bag` internal nodes directly.
 
 %%%%%%%%%%%%
 
+-type elixir_reducer_acc(ElemAcc) :: {cont, ElemAcc} | {halt, ElemAcc} | {suspend, ElemAcc}.
+-export_type([elixir_reducer_acc/1]).
+
+-type elixir_reducer_result(ElemAcc) ::
+    {done, ElemAcc}
+    | {halted, ElemAcc}
+    | {suspended, ElemAcc, elixir_reducer_continuation(ElemAcc)}.
+-export_type([elixir_reducer_result/1]).
+
+-type elixir_reducer_continuation(ElemAcc) :: fun(
+    (elixir_reducer_acc(ElemAcc)) -> elixir_reducer_result(ElemAcc)
+).
+-export_type([elixir_reducer_continuation/1]).
+
+-type elixir_reducer(Elem, ElemAcc) :: fun((Elem, ElemAcc) -> elixir_reducer_acc(ElemAcc)).
+-export_type([elixir_reducer/2]).
+
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
@@ -519,6 +541,15 @@ delete_att(_Elem, ?LEAF0) ->
     badkey;
 delete_att(Elem, Root) ->
     delete_att_recur(Elem, Root).
+
+-spec elixir_reduce(Fun, Acc, Root) -> Result when
+    Fun :: elixir_reducer(Elem, ElemAcc),
+    Acc :: elixir_reducer_acc(ElemAcc),
+    Root :: t(Elem),
+    Result :: elixir_reducer_result(ElemAcc).
+elixir_reduce(Fun, Acc, Root) ->
+    Iter = fwd_iterator(Root),
+    elixir_reduce_recur(Fun, Acc, Iter).
 
 -spec filtermap_to_list(fun((Elem) -> {true, MappedElem} | boolean()), t(Elem)) ->
     [MappedElem].
@@ -1508,7 +1539,30 @@ delete_att_LEAF1(Elem, ?LEAF1_ARGS) ->
     ).
 
 %% ------------------------------------------------------------------
-%% Internal Function Definitions: filtermap/2
+%% Internal Function Definitions: elixir_reduce/3
+%% ------------------------------------------------------------------
+
+elixir_reduce_recur(Fun, {cont, ElemAcc}, [Head | Tail]) ->
+    case Head of
+        ?ITER_ELEM(Elem) ->
+            Next = Tail,
+            Acc2 = Fun(Elem, ElemAcc),
+            elixir_reduce_recur(Fun, Acc2, Next);
+        %
+        Node ->
+            [?ITER_ELEM(Elem) | Next] = fwd_iterator_recur(Node, Tail),
+            Acc2 = Fun(Elem, ElemAcc),
+            elixir_reduce_recur(Fun, Acc2, Next)
+    end;
+elixir_reduce_recur(_Fun, {cont, ElemAcc}, []) ->
+    {done, ElemAcc};
+elixir_reduce_recur(_Fun, {halt, ElemAcc}, _) ->
+    {halted, ElemAcc};
+elixir_reduce_recur(Fun, {suspend, ElemAcc}, Iter) ->
+    {suspended, ElemAcc, fun(Acc) -> elixir_reduce_recur(Fun, Acc, Iter) end}.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: filtermap_to_list/2
 %% ------------------------------------------------------------------
 
 filtermap_recur(Fun, Node, Acc) ->
