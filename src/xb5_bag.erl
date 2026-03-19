@@ -919,7 +919,8 @@ interpolation is required but the bracketing elements are not numbers.
     Opts :: [xb5_bag_utils:percentile_bracket_opt()].
 
 percentile(Percentile, #xb5_bag{size = Size, root = Root}, Opts) ->
-    xb5_bag_utils:percentile(Percentile, Size, Root, Opts).
+    ValueFun = fun(Value) -> {value, Value} end,
+    xb5_bag_utils:percentile(Percentile, Size, Root, ValueFun, Opts).
 
 %%
 

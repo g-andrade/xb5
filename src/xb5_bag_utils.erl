@@ -9,7 +9,7 @@
 %% ------------------------------------------------------------------
 
 -export([
-    percentile/4,
+    percentile/5,
     percentile_bracket/4,
     percentile_rank/3
 ]).
@@ -70,7 +70,7 @@ The method used to calculate a percentile bracket.
 The result of a percentile bracket calculation.
 
 - `{exact, Element}` -- the percentile falls exactly on an element.
-- `{between, A, B, T, _}` -- the percentile falls between two elements.
+- `{between, A, B, T}` -- the percentile falls between elements A and B.
   `Low` and `High` are `t:percentile_bracket_bound/1` maps with
   interpolation weights.
 - `none` -- the percentile cannot be calculated (empty bag, or out of
@@ -78,7 +78,7 @@ The result of a percentile bracket calculation.
 """.
 -type percentile_bracket(Element) ::
     ({exact, Element}
-    | {between, Element, Element, T :: float(), OtherInfo :: term()}
+    | {between, Element, Element, T :: float()}
     | none).
 -export_type([percentile_bracket/1]).
 
@@ -95,16 +95,17 @@ element. Returns `{value, Result}` or `none`.
 Raises a `{bracket_value_not_a_number, Bound}` error if linear interpolation is
 required but the bracketing elements are not numbers.
 """.
--spec percentile(Percentile, Size, Root, Opts) -> {value, Element | InterpolationResult} | none when
+-spec percentile(Percentile, Size, Root, ValueFun, Opts) -> ValueWrap | none when
     Percentile :: percentile(),
     Size :: non_neg_integer(),
     Root :: xb5_bag_node:t(Element),
+    ValueFun :: fun((Element | InterpolationResult) -> ValueWrap),
     InterpolationResult :: number(),
     Opts :: [percentile_bracket_opt()].
 
-percentile(Percentile, Size, Root, Opts) ->
+percentile(Percentile, Size, Root, ValueFun, Opts) ->
     Bracket = percentile_bracket(Percentile, Size, Root, Opts),
-    linear_interpolated_percentile(Bracket).
+    linear_interpolated_percentile(Bracket, ValueFun).
 
 %%
 
@@ -114,7 +115,7 @@ time, using the method selected (default is `inclusive`; see
 `t:percentile_bracket_method/0`).
 
 Returns `{exact, Element}` when the percentile falls exactly on an element,
-`{between, A, B, T, _}` when it falls between two elements, or `none` if the bag
+`{between, A, B, T}` when it falls between two elements, or `none` if the bag
 is empty.
 """.
 -spec percentile_bracket(Percentile, Size, Root, Opts) -> Bracket when
@@ -198,12 +199,7 @@ percentile_bracket_for_pos(Percentile, Pos, Size, Root, Method) ->
                     PercRange = PercB - PercA,
                     T = (Percentile - PercA) / PercRange,
 
-                    OtherInfo = #{
-                        percentile_A => PercA,
-                        percentile_B => PercB
-                    },
-
-                    {between, A, B, T, OtherInfo}
+                    {between, A, B, T}
             end
     end.
 
@@ -212,9 +208,9 @@ percentile_bracket_perc(Rank, Size, inclusive) ->
 percentile_bracket_perc(Rank, Size, exclusive) ->
     Rank / (Size + 1).
 
-linear_interpolated_percentile({exact, ExactElem}) ->
-    {value, ExactElem};
-linear_interpolated_percentile({between, A, B, T, _} = Bracket) ->
+linear_interpolated_percentile({exact, ExactElem}, ValueFun) ->
+    ValueFun(ExactElem);
+linear_interpolated_percentile({between, A, B, T} = Bracket, ValueFun) ->
     if
         not is_number(A) ->
             error({bracket_value_not_a_number, A, in, Bracket});
@@ -223,9 +219,9 @@ linear_interpolated_percentile({between, A, B, T, _} = Bracket) ->
             error({bracket_value_not_a_number, B, in, Bracket});
         %
         true ->
-            {value, linear_interpolation(A, B, T)}
+            ValueFun(linear_interpolation(A, B, T))
     end;
-linear_interpolated_percentile(none) ->
+linear_interpolated_percentile(none, _ValueFun) ->
     none.
 
 linear_interpolation(A, B, T) when is_integer(A), is_integer(B) ->

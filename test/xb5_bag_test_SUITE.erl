@@ -2095,10 +2095,8 @@ test_valid_percentile_inclusive(Size, RefElements, Bag) ->
                         PercRange = PercB - PercA,
                         T = (Percentile - PercA) / PercRange,
 
-                        OtherInfo = #{percentile_A => PercA, percentile_B => PercB},
-
                         Bracket = new_percentile_bracket_inclusive(Percentile, Bag),
-                        ?assertCanonEqual({between, A, B, T, OtherInfo}, Bracket),
+                        ?assertCanonEqual({between, A, B, T}, Bracket),
 
                         %%
 
@@ -2273,13 +2271,8 @@ test_valid_percentile_exclusive(Size, RefElements, Bag) ->
                         PercRange = PercB - PercA,
                         T = (Percentile - PercA) / PercRange,
 
-                        OtherInfo = #{
-                            percentile_A => PercA,
-                            percentile_B => PercB
-                        },
-
                         Bracket = new_percentile_bracket_exclusive(Percentile, Bag),
-                        ?assertCanonEqual({between, A, B, T, OtherInfo}, Bracket),
+                        ?assertCanonEqual({between, A, B, T}, Bracket),
 
                         %%
 
