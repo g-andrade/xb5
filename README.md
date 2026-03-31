@@ -84,7 +84,7 @@ sweet spot.
 
 Measured key densities for 1000-element sets:
 
-| How built | Key density |
+| Build type | Key density |
 |:---|:---:|
 | Bulk construction or sequential ops | ~3.0 |
 | Random insertions | ~2.9 |
