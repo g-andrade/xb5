@@ -25,6 +25,8 @@ refer to the [API documentation](https://hexdocs.pm/xb5/) for details.
 
 ## Benchmarks
 
+![](https://www.gandrade.net/xb5_benchmark/docs/Screenshot_20260331_205015.png)
+
 Benchmarks compare all three modules against `gb_sets`/`gb_trees` across 50+
 operations and collection sizes up to 15,000 elements, measuring both runtime
 and heap allocation. Each module is tested under three build scenarios: bulk
