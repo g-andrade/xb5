@@ -25,7 +25,39 @@ refer to the [API documentation](https://hexdocs.pm/xb5/) for details.
 
 ## Benchmarks
 
-TODO
+Benchmarks compare all three modules against `gb_sets`/`gb_trees` across 50+
+operations and collection sizes up to 15,000 elements, measuring both runtime
+and heap allocation. Each module is tested under three build scenarios: bulk
+construction from a sorted input, sequential single-key insertion, and random
+insertion order. Tests ran on OTP 28 with JIT enabled on two machines:
+[AMD Ryzen 7 5700G](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html)
+and
+[Intel i5-3550](https://www.gandrade.net/xb5_benchmark/report_intel_i5_3550.html).
+The [benchmark source](https://github.com/g-andrade/xb5_benchmark) is also
+available.
+
+**`xb5_sets` vs `gb_sets`:**
+
+* Mutations, membership tests, set-algebraic operations (difference, union,
+  intersection, `is_disjoint`, `is_subset`): **1.2–2.2× as fast**, with similar heap use
+* Filter, filtermap, map: **~1.5–2.5× as fast**, with up to ~40% less heap
+* Bulk construction: similar or faster speed, **~15–65% less heap**
+* Alternating take-smallest/insert-largest: **~2–4× as fast** depending on build scenario
+* `is_equal` with no key overlap: **40–126× as fast** — `gb_sets` converts both
+  sets to lists for the comparison; with identical keys the results are roughly equal
+* Iteration: **~25% slower** on the AMD machine; near-equal on the i5
+
+**`xb5_trees` vs `gb_trees`:**
+
+* Lookups: **1.6–1.9× as fast**, with equal heap
+* Mutations (insert, update, delete, take): **1.2–1.7× as fast**
+* map, keys, values: **1.9–2.5× as fast**; map uses ~47% less heap
+* Alternating take-smallest/insert-largest: **1.7–3.3× as fast**
+* `take_smallest` and `take_largest`: **14–27% slower** in most build scenarios
+
+**`xb5_bag`:** runtime profile broadly matches `xb5_sets`; heap use is up to
+~40% lower for filter/map operations and ~15–62% lower for bulk construction,
+but ~20–25% higher for mutations.
 
 ## Technical Details
 
