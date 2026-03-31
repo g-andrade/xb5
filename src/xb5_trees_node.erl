@@ -3446,6 +3446,7 @@ get(Key, Root2) ->
 get_found(_Key, Value) ->
     Value.
 
+-spec get_not_found(_) -> no_return().
 get_not_found(_Key) ->
     error('This path is supposed to be unreachable').
 

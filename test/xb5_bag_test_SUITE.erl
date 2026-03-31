@@ -1824,7 +1824,7 @@ run_iterator_from_reversed_first_elements([Elem | _] = FirstElements, Bag) ->
 %%%%%%%%%%%%%%%%%
 
 run_iterator_from_nth(RefElements, Bag) ->
-    ?assertError({badarg, 0}, new_iterator_from_nth(0, Bag)),
+    ?assertError({badarg, 0}, new_iterator_from_nth(xb5_utils:dialyzer_opaque_term(0), Bag)),
 
     SizePlus1 = xb5_bag:size(Bag) + 1,
     ?assertError({badarg, SizePlus1}, new_iterator_from_nth(SizePlus1, Bag)),

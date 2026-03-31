@@ -1362,6 +1362,7 @@ is_defined_not_found(_Key) -> false.
 
 get_found(_Key, Value) -> Value.
 
+-spec get_not_found(_) -> no_return().
 get_not_found(Key) -> error_badkey(Key).
 
 %%
