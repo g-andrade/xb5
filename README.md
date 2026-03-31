@@ -25,7 +25,7 @@ refer to the [API documentation](https://hexdocs.pm/xb5/) for details.
 
 ## Benchmarks
 
-[![](https://www.gandrade.net/xb5_benchmark/Screenshot_20260331_205015.png)](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html#bag/overview/from_ordset_or_orddict/memory)
+[![](https://www.gandrade.net/xb5_benchmark/Screenshot_20260331_205015.png)](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html)
 
 Benchmarks compare all three modules against `gb_sets`/`gb_trees` across 50+
 operations and collection sizes up to 15,000 elements, measuring both runtime
