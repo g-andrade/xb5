@@ -81,6 +81,22 @@ API for operating over `m:xb5_trees` internal nodes directly.
 ]).
 
 %% ------------------------------------------------------------------
+%% Static Check Tweaks
+%% ------------------------------------------------------------------
+
+-hank([
+    {unnecessary_function_arguments, [
+        {get_found, 2, 1},
+        {get_not_found, 1, 1},
+        {intersect_get_not_found, 1, 1},
+        {merge_pick_first, 3, 1},
+        {merge_pick_first, 3, 3},
+        {merge_pick_second, 3, 1},
+        {merge_pick_second, 3, 2}
+    ]}
+]).
+
+%% ------------------------------------------------------------------
 %% Macro Definitions: Nodes
 %% ------------------------------------------------------------------
 
