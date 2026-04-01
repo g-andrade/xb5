@@ -514,7 +514,18 @@ insert_with(Key, Fun, #xb5_tree{size = Size, root = Root} = Tree) ->
 %%
 
 -doc """
-TODO
+Returns the intersection of `Tree1` and `Tree2`, i.e., a tree containing only
+the keys present in both trees. For keys present in both, the value from
+`Tree2` is kept.
+
+## Examples
+
+```erlang
+> T1 = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
+> T2 = xb5_trees:from_list([{2, x}, {3, y}, {4, z}]).
+> xb5_trees:to_list(xb5_trees:intersect(T1, T2)).
+[{2, x}, {3, y}]
+```
 """.
 -spec intersect(Tree1, Tree2) -> Tree3 when
     Tree1 :: tree(Key, Value),
@@ -528,7 +539,20 @@ intersect(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = 
 %%
 
 -doc """
-TODO
+Returns the intersection of `Tree1` and `Tree2`, using `Fun` to compute the
+value for each key present in both trees. `Fun` is called as
+`Fun(Key, Value1, Value2)` where `Value1` is from `Tree1` and `Value2` is
+from `Tree2`.
+
+## Examples
+
+```erlang
+> T1 = xb5_trees:from_list([{1, 10}, {2, 20}, {3, 30}]).
+> T2 = xb5_trees:from_list([{2, 2}, {3, 3}, {4, 4}]).
+> F = fun(_K, V1, V2) -> V1 * V2 end.
+> xb5_trees:to_list(xb5_trees:intersect_with(F, T1, T2)).
+[{2, 40}, {3, 90}]
+```
 """.
 -spec intersect_with(Fun, Tree1, Tree2) -> Tree3 when
     Fun :: fun((Key1 | Key2, Value1, Value2) -> Value3),
@@ -836,12 +860,16 @@ map(Fun, #xb5_tree{root = Root} = Tree) ->
 %%
 
 -doc """
-Merges `Tree1` and `Tree2` into a single tree. Repeated keys will keep the
-values from Tree2.
-# TODO better docs
+Merges `Tree1` and `Tree2` into a single tree. For keys present in both trees,
+the value from `Tree2` is kept.
 
 ## Examples
-# TODO
+
+```erlang
+> T1 = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
+> T2 = xb5_trees:from_list([{2, x}, {4, y}]).
+> xb5_trees:to_list(xb5_trees:merge(T1, T2)).
+[{1, a}, {2, x}, {3, c}, {4, y}]
 ```
 """.
 -spec merge(Tree1, Tree2) -> Tree3 when
@@ -856,12 +884,19 @@ merge(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root
 %%
 
 -doc """
-Merges `Tree1` and `Tree2` into a single tree using `Fun` to handle repeated
-keys.
-# TODO better docs
+Merges `Tree1` and `Tree2` into a single tree, using `Fun` to compute the
+value for each key present in both trees. `Fun` is called as
+`Fun(Key, Value1, Value2)` where `Value1` is from `Tree1` and `Value2` is
+from `Tree2`.
 
 ## Examples
-# TODO
+
+```erlang
+> T1 = xb5_trees:from_list([{1, 10}, {2, 20}, {3, 30}]).
+> T2 = xb5_trees:from_list([{2, 2}, {4, 40}]).
+> F = fun(_K, V1, V2) -> V1 + V2 end.
+> xb5_trees:to_list(xb5_trees:merge_with(F, T1, T2)).
+[{1, 10}, {2, 22}, {3, 30}, {4, 40}]
 ```
 """.
 -spec merge_with(Fun, Tree1, Tree2) -> Tree3 when
