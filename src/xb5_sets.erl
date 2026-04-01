@@ -1,5 +1,6 @@
 -module(xb5_sets).
 
+-ifdef(E48).
 -moduledoc """
 An ordered set implementation using a
 [B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5.
@@ -18,6 +19,7 @@ See also:
 statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations (get nth,
 rank, percentiles).
 """.
+-endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -138,24 +140,33 @@ rank, percentiles).
 
 -record(xb5_set, {size, root}).
 
+-ifdef(E48).
 -doc "An ordered set containing elements of type `Element`.".
+-endif.
 -opaque set(Element) :: #xb5_set{size :: non_neg_integer(), root :: xb5_sets_node:t(Element)}.
 -export_type([set/1]).
 
+-ifdef(E48).
 -doc "Shorthand for `set(_)`.".
+-endif.
 -type set() :: set(_).
 -export_type([set/0]).
 
+-ifdef(E48).
 -doc "An iterator over elements of type `Element`. See `iterator/1` and `next/1`.".
+-endif.
 -opaque iter(Element) :: xb5_sets_node:iter(Element).
 -export_type([iter/1]).
 
+-ifdef(E48).
 -doc "Shorthand for `iter(_)`.".
+-endif.
 -type iter() :: iter(_).
 -export_type([iter/0]).
 
 %%
 
+-ifdef(E48).
 -doc """
 A plain-map representation of a set, suitable for cross-language
 serialization (for example, converting to or from an Elixir struct that
@@ -163,6 +174,7 @@ uses the same underlying node structures).
 
 See `unwrap/1` and `wrap/1`.
 """.
+-endif.
 -type unwrapped_set(Element) :: #{
     size := non_neg_integer(),
     root := xb5_sets_node:t(Element)
@@ -173,6 +185,7 @@ See `unwrap/1` and `wrap/1`.
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-ifdef(E48).
 -doc """
 Adds element `Element` to set `Set1`, returning a new set `Set2`.
 If `Element` is already a member of `Set1`, `Set1` is returned unchanged.
@@ -190,6 +203,7 @@ If `Element` is already a member of `Set1`, `Set1` is returned unchanged.
 [1, 2, 3, 4]
 ```
 """.
+-endif.
 -spec add(Element, Set1) -> Set2 when
     Set1 :: set(Element),
     Set2 :: set(Element).
@@ -205,7 +219,9 @@ add(Element, #xb5_set{size = Size, root = Root} = Set) ->
 
 %%
 
+-ifdef(E48).
 -doc #{equiv => add / 2}.
+-endif.
 -spec add_element(Element, Set1) -> Set2 when
     Set1 :: set(Element),
     Set2 :: set(Element).
@@ -215,6 +231,7 @@ add_element(Element, Set) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `Set` unchanged.
 
@@ -229,6 +246,7 @@ B-trees are always balanced, calling this function is never necessary.
 [1, 2, 3]
 ```
 """.
+-endif.
 -spec balance(Set1) -> Set2 when
     Set1 :: set(Element),
     Set2 :: set(Element).
@@ -240,7 +258,9 @@ balance(#xb5_set{} = Set) ->
 
 %%
 
+-ifdef(E48).
 -doc #{equiv => delete_any / 2}.
+-endif.
 -spec del_element(Element, Set1) -> Set2 when
     Element :: term(),
     Set1 :: set(Element),
@@ -251,6 +271,7 @@ del_element(Element, Set) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Removes element `Element` from set `Set1`, returning a new set `Set2`.
 
@@ -264,6 +285,7 @@ Raises a `{badkey, Element}` error if `Element` is not a member of `Set1`.
 [1, 3]
 ```
 """.
+-endif.
 -spec delete(Element, Set1) -> Set2 | no_return() when
     Element :: term(),
     Set1 :: set(Element),
@@ -280,6 +302,7 @@ delete(Element, #xb5_set{size = Size, root = Root} = Set) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Removes element `Element` from set `Set1` if present, returning a new set
 `Set2`. If `Element` is not a member, `Set1` is returned unchanged.
@@ -294,6 +317,7 @@ Removes element `Element` from set `Set1` if present, returning a new set
 [1, 2, 3]
 ```
 """.
+-endif.
 -spec delete_any(Element, Set1) -> Set2 when
     Element :: term(),
     Set1 :: set(Element),
@@ -310,6 +334,7 @@ delete_any(Element, #xb5_set{size = Size, root = Root} = Set) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the elements of `Set1` that are not in `Set2`.
 
@@ -322,6 +347,7 @@ Returns the elements of `Set1` that are not in `Set2`.
 [1, 3]
 ```
 """.
+-endif.
 -spec difference(Set1, Set2) -> Set3 when
     Set1 :: set(Element),
     Set2 :: set(Element),
@@ -333,7 +359,9 @@ difference(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = R
 
 %%
 
+-ifdef(E48).
 -doc #{equiv => new / 0}.
+-endif.
 -spec empty() -> set(_).
 
 empty() ->
@@ -341,6 +369,7 @@ empty() ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Filters elements of `Set1` using predicate function `Pred`, returning a
 new set `Set2` containing only the elements for which `Pred` returns `true`.
@@ -353,6 +382,7 @@ new set `Set2` containing only the elements for which `Pred` returns `true`.
 [4, 5]
 ```
 """.
+-endif.
 -spec filter(Pred, Set1) -> Set2 when
     Pred :: fun((Element) -> boolean()),
     Set1 :: set(Element),
@@ -363,6 +393,7 @@ filter(Fun, Set) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Filters and maps elements of `Set1` using `Fun`, returning a new set `Set2`.
 
@@ -377,6 +408,7 @@ For each element, `Fun` must return either `true` (keep the element),
 [20, 40]
 ```
 """.
+-endif.
 -spec filtermap(Fun, Set1) -> Set2 when
     Fun :: fun((Element1) -> boolean() | {true, Element2}),
     Set1 :: set(Element1),
@@ -388,6 +420,7 @@ filtermap(Fun, #xb5_set{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Folds `Function` over every element in `Set`, returning the final
 accumulator value. Elements are visited in Erlang term order.
@@ -400,6 +433,7 @@ accumulator value. Elements are visited in Erlang term order.
 6
 ```
 """.
+-endif.
 -spec fold(Function, Acc0, Set) -> Acc1 when
     Function :: fun((Element, AccIn) -> AccOut),
     Acc0 :: Acc,
@@ -413,6 +447,7 @@ fold(Fun, Acc, #xb5_set{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a set of the elements in `List`. Duplicate elements are removed.
 
@@ -428,6 +463,7 @@ for performance characteristics.
 []
 ```
 """.
+-endif.
 -spec from_list(List) -> Set when
     List :: [Element],
     Set :: set(Element).
@@ -437,6 +473,7 @@ from_list(List) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a set built from the ordered set `Ordset`.
 
@@ -451,6 +488,7 @@ allocations or element comparisons. This is analogous to `gb_sets:from_ordset/1`
 [1, 2, 3]
 ```
 """.
+-endif.
 -spec from_ordset(List) -> Set when
     List :: ordsets:ordset(Element),
     Set :: set(Element).
@@ -462,6 +500,7 @@ from_ordset(Ordset) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Inserts element `Element` into set `Set1`, returning a new set `Set2`.
 
@@ -477,6 +516,7 @@ of `Set1`.
 [1]
 ```
 """.
+-endif.
 -spec insert(Element, Set1) -> Set2 when
     Set1 :: set(Element),
     Set2 :: set(Element).
@@ -492,6 +532,7 @@ insert(Element, #xb5_set{size = Size, root = Root} = Set) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the intersection of `Set1` and `Set2`.
 
@@ -504,6 +545,7 @@ Returns the intersection of `Set1` and `Set2`.
 [2, 4]
 ```
 """.
+-endif.
 -spec intersection(Set1, Set2) -> Set3 when
     Set1 :: set(Element),
     Set2 :: set(Element),
@@ -515,6 +557,7 @@ intersection(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root =
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the intersection of the non-empty list of sets.
 
@@ -528,6 +571,7 @@ Returns the intersection of the non-empty list of sets.
 [3]
 ```
 """.
+-endif.
 -spec intersection(SetList) -> Set when
     SetList :: [set(Element), ...],
     Set :: set(Element).
@@ -537,6 +581,7 @@ intersection([#xb5_set{size = Size1, root = Root1} | Others]) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Set1` and `Set2` are disjoint (have no elements in
 common), otherwise `false`.
@@ -553,6 +598,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_disjoint(Set1, Set2) -> boolean() when
     Set1 :: set(Element),
     Set2 :: set(Element).
@@ -562,7 +608,9 @@ is_disjoint(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = 
 
 %%
 
+-ifdef(E48).
 -doc #{equiv => is_member / 2}.
+-endif.
 -spec is_element(Element, Set) -> boolean() when
     Set :: set(Element).
 
@@ -571,6 +619,7 @@ is_element(Element, Set) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Set` is empty, otherwise `false`.
 
@@ -583,6 +632,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_empty(Set) -> boolean() when
     Set :: set().
 
@@ -591,6 +641,7 @@ is_empty(#xb5_set{size = Size}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Set1` and `Set2` contain the same elements, otherwise
 `false`.
@@ -607,6 +658,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_equal(Set1, Set2) -> boolean() when
     Set1 :: set(),
     Set2 :: set().
@@ -616,6 +668,7 @@ is_equal(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = Roo
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Element` is a member of `Set`, otherwise `false`.
 
@@ -629,6 +682,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_member(Element, Set) -> boolean() when
     Set :: set(Element).
 
@@ -637,6 +691,7 @@ is_member(Element, #xb5_set{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Term` appears to be a set, otherwise `false`.
 
@@ -651,6 +706,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_set(Term) -> boolean() when
     Term :: term().
 
@@ -661,6 +717,7 @@ is_set(_) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if every element of `Set1` is also a member of `Set2`,
 otherwise `false`.
@@ -676,6 +733,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_subset(Set1, Set2) -> boolean() when
     Set1 :: set(Element),
     Set2 :: set(Element).
@@ -685,6 +743,7 @@ is_subset(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = Ro
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the entries of `Set`;
 see `next/1`. Equivalent to `iterator(Set, ordered)`.
@@ -701,6 +760,7 @@ see `next/1`. Equivalent to `iterator(Set, ordered)`.
 none
 ```
 """.
+-endif.
 -spec iterator(Set) -> Iter when
     Set :: set(Element),
     Iter :: iter(Element).
@@ -710,6 +770,7 @@ iterator(Set) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the entries of `Set`
 in the given `Order`; see `next/1`.
@@ -728,6 +789,7 @@ in the given `Order`; see `next/1`.
 none
 ```
 """.
+-endif.
 -spec iterator(Set, Order) -> Iter when
     Set :: set(Element),
     Iter :: iter(Element),
@@ -738,6 +800,7 @@ iterator(#xb5_set{root = Root}, Order) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the entries of `Set`
 starting from element `Element`; see `next/1`. Equivalent to
@@ -755,6 +818,7 @@ starting from element `Element`; see `next/1`. Equivalent to
 none
 ```
 """.
+-endif.
 -spec iterator_from(Element, Set) -> Iter when
     Set :: set(Element),
     Iter :: iter(Element).
@@ -764,6 +828,7 @@ iterator_from(Element, Set) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the entries of `Set`
 starting from element `Element` in the given `Order`; see `next/1`.
@@ -780,6 +845,7 @@ starting from element `Element` in the given `Order`; see `next/1`.
 none
 ```
 """.
+-endif.
 -spec iterator_from(Element, Set, Order) -> Iter when
     Set :: set(Element),
     Iter :: iter(Element),
@@ -790,6 +856,7 @@ iterator_from(Element, #xb5_set{root = Root}, Order) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{found, Element2}` where `Element2` is the smallest element
 in `Set` that is strictly greater than `Element1`, or `none` if no such
@@ -805,6 +872,7 @@ element exists.
 none
 ```
 """.
+-endif.
 -spec larger(Element1, Set) -> none | {found, Element2} when
     Element1 :: Element,
     Element2 :: Element,
@@ -815,6 +883,7 @@ larger(Element, #xb5_set{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the largest element in `Set`. Raises an `empty_set` error if the
 set is empty.
@@ -826,6 +895,7 @@ set is empty.
 3
 ```
 """.
+-endif.
 -spec largest(Set) -> Element when
     Set :: set(Element).
 
@@ -836,6 +906,7 @@ largest(#xb5_set{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Maps `Fun` over all elements of `Set1`, returning a new set `Set2`.
 Duplicates arising from the mapping are removed.
@@ -848,6 +919,7 @@ Duplicates arising from the mapping are removed.
 [10, 20, 30]
 ```
 """.
+-endif.
 -spec map(Fun, Set1) -> Set2 when
     Fun :: fun((Element1) -> Element2),
     Set1 :: set(Element1),
@@ -859,6 +931,7 @@ map(Fun, #xb5_set{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a new empty set.
 
@@ -871,6 +944,7 @@ true
 0
 ```
 """.
+-endif.
 -spec new() -> Set when
     Set :: set(_).
 
@@ -879,6 +953,7 @@ new() ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Element, Iter2}` where `Element` is the next element referred
 to by iterator `Iter1` and `Iter2` is the updated iterator, or `none`
@@ -895,6 +970,7 @@ if no more elements remain.
 none
 ```
 """.
+-endif.
 -spec next(Iter1) -> {Element, Iter2} | none when
     Iter1 :: iter(Element),
     Iter2 :: iter(Element).
@@ -904,6 +980,7 @@ next(Iter) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a set containing only element `Element`.
 
@@ -916,6 +993,7 @@ Returns a set containing only element `Element`.
 1
 ```
 """.
+-endif.
 -spec singleton(Element) -> set(Element).
 
 singleton(Element) ->
@@ -923,6 +1001,7 @@ singleton(Element) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the number of elements in `Set`.
 
@@ -935,6 +1014,7 @@ Returns the number of elements in `Set`.
 3
 ```
 """.
+-endif.
 -spec size(Set) -> non_neg_integer() when
     Set :: set().
 
@@ -943,6 +1023,7 @@ size(#xb5_set{size = Size}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{found, Element2}` where `Element2` is the largest element
 in `Set` that is strictly less than `Element1`, or `none` if no such
@@ -958,6 +1039,7 @@ element exists.
 none
 ```
 """.
+-endif.
 -spec smaller(Element1, Set) -> none | {found, Element2} when
     Element1 :: Element,
     Element2 :: Element,
@@ -968,6 +1050,7 @@ smaller(Element, #xb5_set{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the smallest element in `Set`. Raises an `empty_set` error if the
 set is empty.
@@ -979,6 +1062,7 @@ set is empty.
 1
 ```
 """.
+-endif.
 -spec smallest(Set) -> Element when
     Set :: set(Element).
 
@@ -989,6 +1073,7 @@ smallest(#xb5_set{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns structural statistics about the B-tree backing `Set`.
 
@@ -1005,6 +1090,7 @@ is a proplist with keys such as `height`, `total_keys`,
 > {total_keys, 3} = lists:keyfind(total_keys, 1, Stats).
 ```
 """.
+-endif.
 -spec structural_stats(Set) -> Stats when
     Set :: set(),
     Stats :: xb5_structural_stats:t().
@@ -1014,7 +1100,9 @@ structural_stats(#xb5_set{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc #{equiv => difference / 2}.
+-endif.
 -spec subtract(Set1, Set2) -> Set3 when
     Set1 :: set(Element),
     Set2 :: set(Element),
@@ -1025,6 +1113,7 @@ subtract(Set1, Set2) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Element, Set2}`, where `Element` is the largest element in
 `Set1` and `Set2` is the remaining set. Raises an `empty_set` error
@@ -1039,6 +1128,7 @@ if the set is empty.
 [1, 2]
 ```
 """.
+-endif.
 -spec take_largest(Set1) -> {Element, Set2} when
     Set1 :: set(Element),
     Set2 :: set(Element).
@@ -1051,6 +1141,7 @@ take_largest(#xb5_set{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Element, Set2}`, where `Element` is the smallest element in
 `Set1` and `Set2` is the remaining set. Raises an `empty_set` error
@@ -1065,6 +1156,7 @@ if the set is empty.
 [2, 3]
 ```
 """.
+-endif.
 -spec take_smallest(Set1) -> {Element, Set2} when
     Set1 :: set(Element),
     Set2 :: set(Element).
@@ -1077,6 +1169,7 @@ take_smallest(#xb5_set{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the elements of `Set` as an ordered list.
 
@@ -1089,6 +1182,7 @@ Returns the elements of `Set` as an ordered list.
 []
 ```
 """.
+-endif.
 -spec to_list(Set) -> List when
     Set :: set(Element),
     List :: [Element].
@@ -1098,6 +1192,7 @@ to_list(#xb5_set{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the union of a list of sets.
 
@@ -1113,6 +1208,7 @@ Returns the union of a list of sets.
 []
 ```
 """.
+-endif.
 -spec union(SetList) -> Set when
     SetList :: [set(Element)],
     Set :: set(Element).
@@ -1124,6 +1220,7 @@ union([]) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the union of `Set1` and `Set2`.
 
@@ -1136,6 +1233,7 @@ Returns the union of `Set1` and `Set2`.
 [1, 2, 3, 4, 5]
 ```
 """.
+-endif.
 -spec union(Set1, Set2) -> Set3 when
     Set1 :: set(Element),
     Set2 :: set(Element),
@@ -1147,6 +1245,7 @@ union(#xb5_set{size = Size1, root = Root1}, #xb5_set{size = Size2, root = Root2}
 
 %%
 
+-ifdef(E48).
 -doc """
 Unwraps an opaque set into a plain map representation suitable for
 cross-language interop (for example, converting to an Elixir struct
@@ -1163,6 +1262,7 @@ on success or `{error, Reason}` if `Term` is not a valid set.
 > {error, _} = xb5_sets:unwrap(not_a_set).
 ```
 """.
+-endif.
 -spec unwrap(Term) -> {ok, Unwrapped} | {error, Reason} when
     Term :: set(Element) | term(),
     Unwrapped :: unwrapped_set(Element),
@@ -1187,6 +1287,7 @@ unwrap(Term) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Wraps a plain map representation back into an opaque set.
 
@@ -1204,6 +1305,7 @@ same underlying node module).
 [1, 2, 3]
 ```
 """.
+-endif.
 -spec wrap(unwrapped_set(Element)) -> set(Element).
 
 wrap(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->

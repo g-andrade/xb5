@@ -1,5 +1,6 @@
 -module(xb5_trees_node).
 
+-ifdef(E48).
 -moduledoc """
 API for operating over `m:xb5_trees` internal nodes directly.
 
@@ -35,6 +36,7 @@ API for operating over `m:xb5_trees` internal nodes directly.
 <br/>
 <br/>
 """.
+-endif.
 
 -include("src/xb5_search_helpers.hrl").
 

@@ -34,19 +34,24 @@
 %% Type Definitions
 %% ------------------------------------------------------------------
 
+-ifdef(E48).
 -doc "A percentile value between 0.0 (0th) and 1.0 (100th).".
+-endif.
 -type percentile() :: 0 | 1 | float().
 -export_type([percentile/0]).
 
 %%
 
+-ifdef(E48).
 -doc "An option for percentile functions. Currently only `{method, Method}` is supported; see `t:percentile_bracket_method/0`.".
+-endif.
 -type percentile_bracket_opt() ::
     ({method, percentile_bracket_method()}).
 -export_type([percentile_bracket_opt/0]).
 
 %%
 
+-ifdef(E48).
 -doc """
 The method used to calculate a percentile bracket.
 
@@ -64,6 +69,7 @@ The method used to calculate a percentile bracket.
   Always returns an exact element (no interpolation). Returns `none` for
   percentile `0`.
 """.
+-endif.
 -type percentile_bracket_method() ::
     (inclusive
     | exclusive
@@ -73,6 +79,7 @@ The method used to calculate a percentile bracket.
 
 %%
 
+-ifdef(E48).
 -doc """
 The result of a percentile bracket calculation.
 
@@ -83,6 +90,7 @@ The result of a percentile bracket calculation.
 - `none` -- the percentile cannot be calculated (empty bag, or out of
   range for the chosen method).
 """.
+-endif.
 -type percentile_bracket(Element) ::
     ({exact, Element}
     | {between, Element, Element, T :: float()}
@@ -93,6 +101,7 @@ The result of a percentile bracket calculation.
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-ifdef(E48).
 -doc """
 Calculates a percentile value in O(log n) time, using linear interpolation if
 the method is either `inclusive` or `exclusive` (default is `inclusive`, see
@@ -102,6 +111,7 @@ element. Returns `{value, Result}` or `none`.
 Raises a `{bracket_value_not_a_number, Bound}` error if linear interpolation is
 required but the bracketing elements are not numbers.
 """.
+-endif.
 -spec percentile(Percentile, Size, Root, ValueFun, Opts) -> ValueWrap | none when
     Percentile :: percentile(),
     Size :: non_neg_integer(),
@@ -116,6 +126,7 @@ percentile(Percentile, Size, Root, ValueFun, Opts) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the percentile bracket for `Percentile` in `Root` node in O(log n)
 time, using the method selected (default is `inclusive`; see
@@ -125,6 +136,7 @@ Returns `{exact, Element}` when the percentile falls exactly on an element,
 `{between, A, B, T}` when it falls between two elements, or `none` if the bag
 is empty.
 """.
+-endif.
 -spec percentile_bracket(Percentile, Size, Root, Opts) -> Bracket when
     Percentile :: percentile(),
     Size :: non_neg_integer(),
@@ -147,6 +159,7 @@ percentile_bracket(Percentile, Size, Root, Opts) when
 percentile_bracket(Percentile, _Size, _Root, _Opts) ->
     error({badarg, Percentile}).
 
+-ifdef(E48).
 -doc """
 Returns the [percentile rank](https://en.wikipedia.org/wiki/Percentile_rank)
 of `Element` in non-empty `Root` as a float in `[0.0, 1.0]`, in O(log n) time.
@@ -154,6 +167,7 @@ of `Element` in non-empty `Root` as a float in `[0.0, 1.0]`, in O(log n) time.
 `Element` does not have to be in the bag.
 ```
 """.
+-endif.
 -spec percentile_rank(Element, Size, Root) -> Rank when
     Size :: pos_integer(),
     Root :: xb5_bag_node:t(Element),

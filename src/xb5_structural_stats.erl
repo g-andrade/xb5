@@ -1,10 +1,12 @@
 -module(xb5_structural_stats).
 
+-ifdef(E48).
 -moduledoc """
 Structural statistics about a B-tree.
 
 This is primarily intended for debugging and testing.
 """.
+-endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -72,7 +74,9 @@ This is primarily intended for debugging and testing.
 
 -dialyzer({no_underspecs, new/0}).
 
+-ifdef(E48).
 -doc false.
+-endif.
 -spec new() -> acc().
 new() ->
     #{
@@ -89,7 +93,9 @@ new() ->
         height => 0
     }.
 
+-ifdef(E48).
 -doc false.
+-endif.
 -spec set_height(pos_integer(), acc()) -> acc().
 set_height(Height, #{height := RecordHeight} = Acc) ->
     case RecordHeight of
@@ -100,13 +106,17 @@ set_height(Height, #{height := RecordHeight} = Acc) ->
             Acc
     end.
 
+-ifdef(E48).
 -doc false.
+-endif.
 -spec inc_count(node_type(), acc()) -> acc().
 inc_count(NodeType, #{node_counters := NodeCounters} = Acc) ->
     Count = map_get(NodeType, NodeCounters),
     Acc#{node_counters := NodeCounters#{NodeType := Count + 1}}.
 
+-ifdef(E48).
 -doc false.
+-endif.
 -spec return(acc()) -> t().
 return(#{node_counters := NodeCounters, height := Height}) ->
     NodeCounts = node_counts(NodeCounters),

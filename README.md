@@ -2,7 +2,7 @@
 
 [![](https://img.shields.io/hexpm/v/xb5.svg?style=flat)](https://hex.pm/packages/xb5)
 [![CI](https://github.com/g-andrade/xb5/actions/workflows/ci.yml/badge.svg)](https://github.com/g-andrade/xb5/actions/workflows/ci.yml)
-[![Erlang Versions](https://img.shields.io/badge/Supported%20Erlang%2FOTP-27%20to%2028-blue)](https://www.erlang.org)
+[![Erlang Versions](https://img.shields.io/badge/Supported%20Erlang%2FOTP-24%20to%2028-blue)](https://www.erlang.org)
 
 `xb5` is an Erlang library that implements
 [B-tree](https://en.wikipedia.org/wiki/B-tree)-based (order 5) sorted

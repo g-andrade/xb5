@@ -1,5 +1,6 @@
 -module(xb5_bag).
 
+-ifdef(E48).
 -moduledoc """
 An ordered [multiset](https://en.wikipedia.org/wiki/Multiset) (bag)
 implementation using a [B-tree](https://en.wikipedia.org/wiki/B-tree) of order
@@ -25,6 +26,7 @@ See also:
 - `m:xb5_sets` for the unique-element counterpart, supporting set operations (union, intersection, difference)
 - `m:xb5_trees` for the key-value counterpart
 """.
+-endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -123,6 +125,10 @@ See also:
 ]).
 
 %% ------------------------------------------------------------------
+%% Macros
+%% ------------------------------------------------------------------
+
+%% ------------------------------------------------------------------
 %% Linter Tweaks
 %% ------------------------------------------------------------------
 
@@ -137,21 +143,29 @@ See also:
 
 -record(xb5_bag, {size, root}).
 
+-ifdef(E48).
 -doc "An ordered multiset (bag) containing elements of type `Element`.".
+-endif.
 -opaque bag(E) :: #xb5_bag{
     size :: non_neg_integer(), root :: xb5_bag_node:t(E)
 }.
 -export_type([bag/1]).
 
+-ifdef(E48).
 -doc "Shorthand for `bag(_)`.".
+-endif.
 -type bag() :: bag(_).
 -export_type([bag/0]).
 
+-ifdef(E48).
 -doc "An iterator over elements of type `Element`. See `iterator/1` and `next/1`.".
+-endif.
 -opaque iter(Element) :: xb5_bag_node:iter(Element).
 -export_type([iter/1]).
 
+-ifdef(E48).
 -doc "Shorthand for `iter(_)`.".
+-endif.
 -type iter() :: iter(_).
 -export_type([iter/0]).
 
@@ -159,6 +173,7 @@ See also:
 
 %%
 
+-ifdef(E48).
 -doc """
 A plain-map representation of a bag, suitable for cross-language
 serialization (for example, converting to or from an Elixir struct that
@@ -166,6 +181,7 @@ uses the same underlying node structures).
 
 See `unwrap/1` and `wrap/1`.
 """.
+-endif.
 -type unwrapped_bag(Element) :: #{
     size := non_neg_integer(),
     root := xb5_bag_node:t(Element)
@@ -176,6 +192,7 @@ See `unwrap/1` and `wrap/1`.
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-ifdef(E48).
 -doc """
 Adds element `Element` to `Bag1`, returning a new bag `Bag2`.
 If `Element` is already present, a duplicate is added.
@@ -190,6 +207,7 @@ If `Element` is already present, a duplicate is added.
 4
 ```
 """.
+-endif.
 -spec add(Element, Bag1) -> Bag2 when
     Bag1 :: bag(Element),
     Bag2 :: bag(Element).
@@ -200,6 +218,7 @@ add(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the number of occurrences of `Element` in `Bag`. Runs in O(log n) time.
 
@@ -213,6 +232,7 @@ Returns the number of occurrences of `Element` in `Bag`. Runs in O(log n) time.
 0
 ```
 """.
+-endif.
 -spec count(Element, Bag) -> Count when
     Bag :: bag(Element),
     Count :: non_neg_integer().
@@ -234,6 +254,7 @@ count(Element, #xb5_bag{root = Root, size = Size}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Removes one occurrence of `Element` from `Bag1`, returning a new bag
 `Bag2`.
@@ -248,6 +269,7 @@ Raises a `{badkey, Element}` error if `Element` is not present.
 [1, 2, 3]
 ```
 """.
+-endif.
 -spec delete(Element, Bag1) -> Bag2 | no_return() when
     Element :: term(),
     Bag1 :: bag(Element),
@@ -264,6 +286,7 @@ delete(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Removes one occurrence of `Element` from `Bag1` if present, otherwise
 returns `Bag1` unchanged.
@@ -278,6 +301,7 @@ returns `Bag1` unchanged.
 [1, 2, 2, 3]
 ```
 """.
+-endif.
 -spec delete_any(Element, Bag1) -> Bag2 when
     Element :: term(),
     Bag1 :: bag(Element),
@@ -294,6 +318,7 @@ delete_any(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Adds element `Element` to `Bag1` only if it is not already present.
 If `Element` is already a member, `Bag1` is returned unchanged.
@@ -308,6 +333,7 @@ If `Element` is already a member, `Bag1` is returned unchanged.
 [1, 2, 3]
 ```
 """.
+-endif.
 -spec enter(Element, Bag1) -> Bag2 when
     Element :: term(),
     Bag1 :: bag(Element),
@@ -324,6 +350,7 @@ enter(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Filters elements of `Bag1` using predicate function `Pred`, returning a
 new bag `Bag2` containing only the elements for which `Pred` returns `true`.
@@ -336,6 +363,7 @@ new bag `Bag2` containing only the elements for which `Pred` returns `true`.
 [4, 5]
 ```
 """.
+-endif.
 -spec filter(Pred, Bag1) -> Bag2 when
     Pred :: fun((Element) -> boolean()),
     Bag1 :: bag(Element),
@@ -346,6 +374,7 @@ filter(Fun, Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Filters and maps elements of `Bag1` using `Fun`, returning a new bag
 `Bag2`.
@@ -361,6 +390,7 @@ For each element, `Fun` must return either `true` (keep the element),
 [20, 40]
 ```
 """.
+-endif.
 -spec filtermap(Fun, Bag1) -> Bag2 when
     Fun :: fun((Element1) -> boolean() | {true, Element2}),
     Bag1 :: bag(Element1),
@@ -372,6 +402,7 @@ filtermap(Fun, #xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Folds `Function` over every element in `Bag`, returning the final
 accumulator value. Elements are visited in Erlang term order.
@@ -384,6 +415,7 @@ accumulator value. Elements are visited in Erlang term order.
 6
 ```
 """.
+-endif.
 -spec fold(Function, Acc0, Bag) -> Acc1 when
     Function :: fun((Element, AccIn) -> AccOut),
     Acc0 :: Acc,
@@ -397,6 +429,7 @@ fold(Fun, Acc, #xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a bag of the elements in `List`. Unlike `xb5_sets:from_list/1`,
 duplicate elements are preserved.
@@ -413,6 +446,7 @@ function for performance characteristics.
 []
 ```
 """.
+-endif.
 -spec from_list(List) -> Bag when
     List :: [Element],
     Bag :: bag(Element).
@@ -422,6 +456,7 @@ from_list(List) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a bag built from the ordered list `OrderedList`.
 
@@ -439,6 +474,7 @@ and `gb_trees:from_orddict/1`.
 [1, 2, 3, 3]
 ```
 """.
+-endif.
 -spec from_ordered_list(OrderedList) -> Bag when
     OrderedList :: [Element],
     Bag :: bag(Element).
@@ -450,6 +486,7 @@ from_ordered_list(OrderedList) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a bag built from the ordered set `Ordset`.
 
@@ -463,6 +500,7 @@ to `from_ordered_list/1` — see that function for performance characteristics.
 [1, 2, 3]
 ```
 """.
+-endif.
 -spec from_ordset(List) -> Bag when
     List :: ordsets:ordset(Element),
     Bag :: bag(Element).
@@ -473,6 +511,7 @@ from_ordset(Ordset) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Inserts element `Element` into `Bag1`, returning a new bag `Bag2`.
 
@@ -487,6 +526,7 @@ Raises a `{key_exists, Element}` error if `Element` is already present.
 [1]
 ```
 """.
+-endif.
 -spec insert(Element, Bag1) -> Bag2 when
     Bag1 :: bag(Element),
     Bag2 :: bag(Element).
@@ -502,6 +542,7 @@ insert(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Bag` is empty, otherwise `false`.
 
@@ -514,6 +555,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_empty(Bag) -> boolean() when
     Bag :: bag().
 
@@ -522,6 +564,7 @@ is_empty(#xb5_bag{size = Size}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Element` is a member of `Bag`, otherwise `false`.
 
@@ -535,6 +578,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_member(Element, Bag) -> boolean() when
     Bag :: bag(Element).
 
@@ -543,6 +587,7 @@ is_member(Element, #xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the elements of
 `Bag`; see `next/1`. Equivalent to `iterator(Bag, ordered)`.
@@ -559,6 +604,7 @@ Returns an iterator that can be used for traversing the elements of
 none
 ```
 """.
+-endif.
 -spec iterator(Bag) -> Iter when
     Bag :: bag(Element),
     Iter :: iter(Element).
@@ -568,6 +614,7 @@ iterator(Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the elements of
 `Bag` in the given `Order`; see `next/1`.
@@ -586,6 +633,7 @@ Returns an iterator that can be used for traversing the elements of
 none
 ```
 """.
+-endif.
 -spec iterator(Bag, Order) -> Iter when
     Bag :: bag(Element),
     Iter :: iter(Element),
@@ -596,6 +644,7 @@ iterator(#xb5_bag{root = Root}, Order) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the elements of
 `Bag` starting from element `Element`; see `next/1`. Equivalent to
@@ -613,6 +662,7 @@ Returns an iterator that can be used for traversing the elements of
 none
 ```
 """.
+-endif.
 -spec iterator_from(Element, Bag) -> Iter when
     Bag :: bag(Element),
     Iter :: iter(Element).
@@ -622,6 +672,7 @@ iterator_from(Element, Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the elements of
 `Bag` starting from element `Element` in the given `Order`; see `next/1`.
@@ -638,6 +689,7 @@ Returns an iterator that can be used for traversing the elements of
 none
 ```
 """.
+-endif.
 -spec iterator_from(Element, Bag, Order) -> Iter when
     Bag :: bag(Element),
     Iter :: iter(Element),
@@ -648,6 +700,7 @@ iterator_from(Element, #xb5_bag{root = Root}, Order) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the elements of
 `Bag` starting from element at `Rank`; see `next/1`.
@@ -663,6 +716,7 @@ Returns an iterator that can be used for traversing the elements of
 none
 ```
 """.
+-endif.
 -spec iterator_from_nth(Rank, Bag) -> Iter when
     Rank :: pos_integer(),
     Bag :: bag(Element),
@@ -677,6 +731,7 @@ iterator_from_nth(Rank, #xb5_bag{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{found, Element2}` where `Element2` is the least element
 strictly greater than `Element1` in `Bag`, or `none` if no such
@@ -692,6 +747,7 @@ element exists.
 none
 ```
 """.
+-endif.
 -spec larger(Element1, Bag) -> none | {found, Element2} when
     Element1 :: Element,
     Element2 :: Element,
@@ -702,6 +758,7 @@ larger(Element, #xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the largest element in `Bag`.
 
@@ -714,6 +771,7 @@ Raises an `empty_bag` error if the bag is empty.
 3
 ```
 """.
+-endif.
 -spec largest(Bag) -> Element when
     Bag :: bag(Element).
 
@@ -724,6 +782,7 @@ largest(#xb5_bag{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Maps `Fun` over all elements of `Bag1`, returning a new bag `Bag2`.
 
@@ -735,6 +794,7 @@ Maps `Fun` over all elements of `Bag1`, returning a new bag `Bag2`.
 [10, 20, 30]
 ```
 """.
+-endif.
 -spec map(Fun, Bag1) -> Bag2 when
     Fun :: fun((Element1) -> Element2),
     Bag1 :: bag(Element1),
@@ -748,6 +808,7 @@ map(Fun, #xb5_bag{size = Size, root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Merges two bags into one. All elements from both bags are kept, so
 counts are combined.
@@ -761,6 +822,7 @@ counts are combined.
 [1, 2, 2, 3, 3, 4]
 ```
 """.
+-endif.
 -spec merge(Bag1, Bag2) -> Bag3 when
     Bag1 :: bag(Element),
     Bag2 :: bag(Element),
@@ -785,6 +847,7 @@ merge(
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a new empty bag.
 
@@ -797,6 +860,7 @@ true
 0
 ```
 """.
+-endif.
 -spec new() -> Bag when
     Bag :: bag(_).
 
@@ -805,6 +869,7 @@ new() ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Element, Iter2}` where `Element` is the next element referred
 to by iterator `Iter1` and `Iter2` is the updated iterator, or `none`
@@ -821,6 +886,7 @@ if no more elements remain.
 none
 ```
 """.
+-endif.
 -spec next(Iter1) -> {Element, Iter2} | none when
     Iter1 :: iter(Element),
     Iter2 :: iter(Element).
@@ -830,6 +896,7 @@ next(Iter) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the element at 1-based rank `Rank` in `Bag` in O(log n)
 time.
@@ -847,6 +914,7 @@ Raises a `{badarg, Rank}` error if `Rank` is not a valid position
 30
 ```
 """.
+-endif.
 -spec nth(Rank, Bag) -> Element when Rank :: pos_integer(), Bag :: bag(Element).
 
 nth(Rank, #xb5_bag{size = Size, root = Root}) when is_integer(Rank), Rank >= 1, Rank =< Size ->
@@ -865,6 +933,7 @@ nth(Rank, #xb5_bag{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Calculates a percentile value in O(log n) time, using linear
 interpolation of the `inclusive` percentile bracket. Returns
@@ -886,6 +955,7 @@ interpolation is required but the bracketing elements are not numbers.
 {value, 4}
 ```
 """.
+-endif.
 -spec percentile(Percentile, Bag) -> {value, Element | InterpolationResult} | none when
     Percentile :: xb5_bag_utils:percentile(),
     Bag :: bag(Element),
@@ -896,6 +966,7 @@ percentile(Percentile, Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Like `percentile/2`, but accepts a list of options. Runs in O(log n)
 time. The only supported option is `{method, Method}`; see
@@ -912,6 +983,7 @@ interpolation is required but the bracketing elements are not numbers.
 {value, 2}
 ```
 """.
+-endif.
 -spec percentile(Percentile, Bag, Opts) -> {value, Element | InterpolationResult} | none when
     Percentile :: xb5_bag_utils:percentile(),
     Bag :: bag(Element),
@@ -924,6 +996,7 @@ percentile(Percentile, #xb5_bag{size = Size, root = Root}, Opts) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the percentile bracket for `Percentile` in `Bag` in O(log n)
 time, using the `inclusive` method. Returns `{exact, Element}` when the
@@ -943,6 +1016,7 @@ in `[0.0, 1.0]`. See `percentile_bracket/3` for other methods.
 {exact, 4}
 ```
 """.
+-endif.
 -spec percentile_bracket(Percentile, Bag) -> Bracket when
     Percentile :: xb5_bag_utils:percentile(),
     Bag :: bag(Element),
@@ -953,6 +1027,7 @@ percentile_bracket(Percentile, Bag) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Like `percentile_bracket/2`, but accepts a list of options. Runs in
 O(log n) time. The only supported option is `{method, Method}`; see
@@ -966,6 +1041,7 @@ O(log n) time. The only supported option is `{method, Method}`; see
 {exact, 2}
 ```
 """.
+-endif.
 -spec percentile_bracket(Percentile, Bag, Opts) -> Bracket when
     Percentile :: xb5_bag_utils:percentile(),
     Bag :: bag(Element),
@@ -977,6 +1053,7 @@ percentile_bracket(Percentile, #xb5_bag{size = Size, root = Root}, Opts) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the [percentile rank](https://en.wikipedia.org/wiki/Percentile_rank)
 of `Element` in `Bag` as a float in `[0.0, 1.0]`, in O(log n) time.
@@ -993,6 +1070,7 @@ Raises an `empty_bag` error if the bag is empty.
 0.375
 ```
 """.
+-endif.
 -spec percentile_rank(Element, Bag) -> Rank when
     Bag :: bag(Element),
     Rank :: float().
@@ -1004,6 +1082,7 @@ percentile_rank(_, #xb5_bag{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{rank, Rank}` where `Rank` is the 1-based position of `Element`
 in `Bag`, or `none` if `Element` is not present. When duplicates exist,
@@ -1027,6 +1106,7 @@ With duplicates, the lowest rank is returned:
 {rank, 2}
 ```
 """.
+-endif.
 -spec rank(Element, Bag) -> {rank, Rank} | none when
     Bag :: bag(Element),
     Rank :: pos_integer().
@@ -1042,6 +1122,7 @@ rank(Elem, #xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Rank, Element2}` where `Element2` is the least element
 strictly greater than `Element1` and `Rank` is its 1-based position, or
@@ -1066,6 +1147,7 @@ With duplicates, the lowest rank (first occurrence) is returned:
 {2, g}
 ```
 """.
+-endif.
 -spec rank_larger(Element1, Bag) -> {Rank, Element2} | none when
     Element1 :: Element,
     Element2 :: Element,
@@ -1083,6 +1165,7 @@ rank_larger(Elem, #xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Rank, Element2}` where `Element2` is the greatest element
 strictly less than `Element1` and `Rank` is its 1-based position, or
@@ -1107,6 +1190,7 @@ With duplicates, the highest rank (last occurrence) is returned:
 {4, g}
 ```
 """.
+-endif.
 -spec rank_smaller(Element1, Bag) -> {Rank, Element2} | none when
     Element1 :: Element,
     Element2 :: Element,
@@ -1124,6 +1208,7 @@ rank_smaller(Elem, #xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the number of elements in `Bag`, including duplicates.
 
@@ -1136,6 +1221,7 @@ Returns the number of elements in `Bag`, including duplicates.
 4
 ```
 """.
+-endif.
 -spec size(Bag) -> non_neg_integer() when
     Bag :: bag().
 
@@ -1144,6 +1230,7 @@ size(#xb5_bag{size = Size}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{found, Element2}` where `Element2` is the greatest element
 in `Bag` that is strictly less than `Element1`, or `none` if no such
@@ -1159,6 +1246,7 @@ element exists.
 none
 ```
 """.
+-endif.
 -spec smaller(Element1, Bag) -> none | {found, Element2} when
     Element1 :: Element,
     Element2 :: Element,
@@ -1169,6 +1257,7 @@ smaller(Element, #xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the smallest element in `Bag`.
 
@@ -1181,6 +1270,7 @@ Raises an `empty_bag` error if the bag is empty.
 1
 ```
 """.
+-endif.
 -spec smallest(Bag) -> Element when
     Bag :: bag(Element).
 
@@ -1191,6 +1281,7 @@ smallest(#xb5_bag{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns structural statistics about the B-tree backing `Bag`.
 
@@ -1207,6 +1298,7 @@ is a proplist with keys such as `height`, `total_keys`,
 > {total_keys, 3} = lists:keyfind(total_keys, 1, Stats).
 ```
 """.
+-endif.
 -spec structural_stats(Bag) -> Stats when
     Bag :: bag(),
     Stats :: xb5_structural_stats:t().
@@ -1216,6 +1308,7 @@ structural_stats(#xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Element, Bag2}`, where `Element` is the largest element in
 `Bag1` and `Bag2` is the remaining bag.
@@ -1231,6 +1324,7 @@ Raises an `empty_bag` error if the bag is empty.
 [1, 2]
 ```
 """.
+-endif.
 -spec take_largest(Bag1) -> {Element, Bag2} when
     Bag1 :: bag(Element),
     Bag2 :: bag(Element).
@@ -1243,6 +1337,7 @@ take_largest(#xb5_bag{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Element, Bag2}`, where `Element` is the smallest element in
 `Bag1` and `Bag2` is the remaining bag.
@@ -1258,6 +1353,7 @@ Raises an `empty_bag` error if the bag is empty.
 [2, 3]
 ```
 """.
+-endif.
 -spec take_smallest(Bag1) -> {Element, Bag2} when
     Bag1 :: bag(Element),
     Bag2 :: bag(Element).
@@ -1270,6 +1366,7 @@ take_smallest(#xb5_bag{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the elements of `Bag` as an ordered list, including duplicates.
 
@@ -1282,6 +1379,7 @@ Returns the elements of `Bag` as an ordered list, including duplicates.
 []
 ```
 """.
+-endif.
 -spec to_list(Bag) -> List when
     Bag :: bag(Element),
     List :: [Element].
@@ -1291,6 +1389,7 @@ to_list(#xb5_bag{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Unwraps an opaque bag into a plain map representation suitable for
 cross-language interop (for example, converting to an Elixir struct
@@ -1307,6 +1406,7 @@ on success or `{error, Reason}` if `Term` is not a valid bag.
 > {error, _} = xb5_bag:unwrap(not_a_bag).
 ```
 """.
+-endif.
 -spec unwrap(Term) -> {ok, Unwrapped} | {error, Reason} when
     Term :: bag(Element) | term(),
     Unwrapped :: unwrapped_bag(Element),
@@ -1331,6 +1431,7 @@ unwrap(Term) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Wraps a plain map representation back into an opaque bag.
 
@@ -1348,6 +1449,7 @@ same underlying node module).
 [1, 2, 3]
 ```
 """.
+-endif.
 -spec wrap(unwrapped_bag(Element)) -> bag(Element).
 
 wrap(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->

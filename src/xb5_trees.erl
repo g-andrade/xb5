@@ -1,5 +1,6 @@
 -module(xb5_trees).
 
+-ifdef(E48).
 -moduledoc """
 An ordered key-value store (dictionary) using a
 [B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5.
@@ -19,6 +20,7 @@ See also:
 statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations (get nth,
 rank, percentiles).
 """.
+-endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -141,27 +143,36 @@ rank, percentiles).
 
 -record(xb5_tree, {size, root}).
 
+-ifdef(E48).
 -doc "An ordered key-value tree containing entries of type `{Key, Value}`.".
+-endif.
 -opaque tree(Key, Value) :: #xb5_tree{
     size :: non_neg_integer(),
     root :: xb5_trees_node:t(Key, Value)
 }.
 -export_type([tree/2]).
 
+-ifdef(E48).
 -doc "Shorthand for `tree(_, _)`.".
+-endif.
 -type tree() :: tree(_, _).
 -export_type([tree/0]).
 
+-ifdef(E48).
 -doc "An iterator over entries of type `{Key, Value}`. See `iterator/1` and `next/1`.".
+-endif.
 -opaque iter(Key, Value) :: xb5_trees_node:iter(Key, Value).
 -export_type([iter/2]).
 
+-ifdef(E48).
 -doc "Shorthand for `iter(_, _)`.".
+-endif.
 -type iter() :: iter(_, _).
 -export_type([iter/0]).
 
 %%
 
+-ifdef(E48).
 -doc """
 A plain-map representation of a tree, suitable for cross-language
 serialization (for example, converting to or from an Elixir struct that
@@ -169,6 +180,7 @@ uses the same underlying node structures).
 
 See `unwrap/1` and `wrap/1`.
 """.
+-endif.
 -type unwrapped_tree(Key, Value) :: #{
     size := non_neg_integer(),
     root := xb5_trees_node:t(Key, Value)
@@ -179,6 +191,7 @@ See `unwrap/1` and `wrap/1`.
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-ifdef(E48).
 -doc """
 Returns `Tree` unchanged.
 
@@ -193,6 +206,7 @@ B-trees are always balanced, calling this function is never necessary.
 [{1, a}, {2, b}, {3, c}]
 ```
 """.
+-endif.
 -spec balance(Tree1) -> Tree2 when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
@@ -204,6 +218,7 @@ balance(#xb5_tree{} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Removes key `Key` from `Tree1`, returning a new tree `Tree2`.
 
@@ -217,6 +232,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 [{1, a}, {3, c}]
 ```
 """.
+-endif.
 -spec delete(Key, Tree1) -> Tree2 when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
@@ -235,6 +251,7 @@ delete(Key, #xb5_tree{root = Root, size = Size} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Removes key `Key` from `Tree1` if present, returning a new tree `Tree2`.
 If `Key` is not present, `Tree1` is returned unchanged.
@@ -249,6 +266,7 @@ If `Key` is not present, `Tree1` is returned unchanged.
 [{1, a}, {2, b}, {3, c}]
 ```
 """.
+-endif.
 -spec delete_any(Key, Tree1) -> Tree2 when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
@@ -267,13 +285,16 @@ delete_any(Key, #xb5_tree{root = Root, size = Size} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc #{equiv => new / 0}.
+-endif.
 -spec empty() -> tree().
 
 empty() -> new().
 
 %%
 
+-ifdef(E48).
 -doc """
 Inserts `Key` with value `Value` into `Tree1` if the key is not present,
 otherwise updates `Key` to value `Value` in `Tree1`.
@@ -293,6 +314,7 @@ otherwise updates `Key` to value `Value` in `Tree1`.
 [{1, z}, {2, b}]
 ```
 """.
+-endif.
 -spec enter(Key, Value, Tree1) -> Tree2 when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
@@ -312,6 +334,7 @@ enter(Key, Value, #xb5_tree{size = Size, root = Root} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Folds `Function` over all entries of `Tree` in ascending key order,
 calling `Function(Key, Value, AccIn)` for each entry. Returns the final
@@ -325,6 +348,7 @@ accumulator value.
 [{3, c}, {2, b}, {1, a}]
 ```
 """.
+-endif.
 -spec foldl(Function, Acc0, Tree) -> Acc1 when
     Function :: fun((Key, Value, AccIn) -> AccOut),
     Acc0 :: Acc,
@@ -338,6 +362,7 @@ foldl(Fun, Acc0, #xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Folds `Function` over all entries of `Tree` in descending key order,
 calling `Function(Key, Value, AccIn)` for each entry. Returns the final
@@ -351,6 +376,7 @@ accumulator value.
 [{1, a}, {2, b}, {3, c}]
 ```
 """.
+-endif.
 -spec foldr(Function, Acc0, Tree) -> Acc1 when
     Function :: fun((Key, Value, AccIn) -> AccOut),
     Acc0 :: Acc,
@@ -364,6 +390,7 @@ foldr(Fun, Acc0, #xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a tree of the key-value pairs in `List`. Duplicate keys are
 resolved by keeping the last occurrence.
@@ -382,6 +409,7 @@ function for performance characteristics.
 []
 ```
 """.
+-endif.
 -spec from_list(List) -> Tree when
     List :: [{Key, Value}],
     Tree :: tree(Key, Value).
@@ -391,6 +419,7 @@ from_list(List) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a tree built from the ordered dictionary `Orddict`.
 
@@ -405,6 +434,7 @@ allocations or element comparisons. This is analogous to `gb_trees:from_orddict/
 [{1, a}, {2, b}]
 ```
 """.
+-endif.
 -spec from_orddict(Orddict) -> Tree when
     Orddict :: orddict:orddict(Key, Value),
     Tree :: tree(Key, Value).
@@ -416,6 +446,7 @@ from_orddict(Orddict) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Retrieves the value stored with `Key` in `Tree`.
 
@@ -429,6 +460,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 b
 ```
 """.
+-endif.
 -spec get(Key, Tree) -> Value when
     Tree :: tree(Key, Value).
 
@@ -442,6 +474,7 @@ get(Key, #xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Inserts `Key` with value `Value` into `Tree1`, returning a new tree
 `Tree2`.
@@ -460,6 +493,7 @@ Raises a `{key_exists, Key}` error if the key is already present.
 [{1, a}, {2, b}]
 ```
 """.
+-endif.
 -spec insert(Key, Value, Tree1) -> Tree2 when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
@@ -478,6 +512,7 @@ insert(Key, Value, #xb5_tree{size = Size, root = Root} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Like `insert/3`, but takes a zero-arity fun that is only evaluated when
 the key is not yet present. Returns a new tree `Tree2` with the key
@@ -494,6 +529,7 @@ Raises a `{key_exists, Key}` error if the key already exists.
 [{1, a}]
 ```
 """.
+-endif.
 -spec insert_with(Key, Fun, Tree1) -> Tree2 when
     Fun :: fun(() -> Value),
     Tree1 :: tree(Key, Value),
@@ -513,6 +549,7 @@ insert_with(Key, Fun, #xb5_tree{size = Size, root = Root} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the intersection of `Tree1` and `Tree2`, i.e., a tree containing only
 the keys present in both trees. For keys present in both, the value from
@@ -527,6 +564,7 @@ the keys present in both trees. For keys present in both, the value from
 [{2, x}, {3, y}]
 ```
 """.
+-endif.
 -spec intersect(Tree1, Tree2) -> Tree3 when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value),
@@ -538,6 +576,7 @@ intersect(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = 
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the intersection of `Tree1` and `Tree2`, using `Fun` to compute the
 value for each key present in both trees. `Fun` is called as
@@ -554,6 +593,7 @@ from `Tree2`.
 [{2, 40}, {3, 90}]
 ```
 """.
+-endif.
 -spec intersect_with(Fun, Tree1, Tree2) -> Tree3 when
     Fun :: fun((Key1 | Key2, Value1, Value2) -> Value3),
     Tree1 :: tree(Key1, Value1),
@@ -566,6 +606,7 @@ intersect_with(Fun, #xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Key` is present in `Tree`, otherwise `false`.
 
@@ -579,6 +620,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_defined(Key, Tree) -> boolean() when
     Tree :: tree(Key, Value :: term()).
 
@@ -592,6 +634,7 @@ is_defined(Key, #xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Tree` is empty, otherwise `false`.
 
@@ -604,6 +647,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_empty(Tree) -> boolean() when
     Tree :: tree().
 
@@ -612,6 +656,7 @@ is_empty(#xb5_tree{size = Size}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `true` if `Tree1` and `Tree2` contain the same keys and values, otherwise
 `false`.
@@ -630,6 +675,7 @@ true
 false
 ```
 """.
+-endif.
 -spec is_equal(Tree1, Tree2) -> boolean() when
     Tree1 :: tree(),
     Tree2 :: tree().
@@ -639,6 +685,7 @@ is_equal(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = R
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the entries of `Tree`;
 see `next/1`. Equivalent to `iterator(Tree, ordered)`.
@@ -655,6 +702,7 @@ see `next/1`. Equivalent to `iterator(Tree, ordered)`.
 none
 ```
 """.
+-endif.
 -spec iterator(Tree) -> Iter when
     Tree :: tree(Key, Value),
     Iter :: iter(Key, Value).
@@ -664,6 +712,7 @@ iterator(Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the entries of `Tree`
 in the given `Order`; see `next/1`.
@@ -682,6 +731,7 @@ in the given `Order`; see `next/1`.
 none
 ```
 """.
+-endif.
 -spec iterator(Tree, Order) -> Iter when
     Tree :: tree(Key, Value),
     Iter :: iter(Key, Value),
@@ -692,6 +742,7 @@ iterator(#xb5_tree{root = Root}, Order) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the entries of `Tree`
 starting from the first key greater than or equal to `Key`; see `next/1`.
@@ -709,6 +760,7 @@ Equivalent to `iterator_from(Key, Tree, ordered)`.
 none
 ```
 """.
+-endif.
 -spec iterator_from(Key, Tree) -> Iter when
     Tree :: tree(Key, Value),
     Iter :: iter(Key, Value).
@@ -718,6 +770,7 @@ iterator_from(Key, Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns an iterator that can be used for traversing the entries of `Tree`
 starting from the key nearest to `Key` in the given `Order`; see `next/1`.
@@ -734,6 +787,7 @@ starting from the key nearest to `Key` in the given `Order`; see `next/1`.
 none
 ```
 """.
+-endif.
 -spec iterator_from(Key, Tree, Order) -> Iter when
     Tree :: tree(Key, Value),
     Iter :: iter(Key, Value),
@@ -744,6 +798,7 @@ iterator_from(Key, #xb5_tree{root = Root}, Order) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the keys in `Tree` as an ordered list.
 
@@ -755,6 +810,7 @@ Returns the keys in `Tree` as an ordered list.
 [1, 2, 3]
 ```
 """.
+-endif.
 -spec keys(Tree) -> [Key] when
     Tree :: tree(Key, _).
 
@@ -763,6 +819,7 @@ keys(#xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Key2, Value}` where `Key2` is the least key strictly greater
 than `Key1` in `Tree`, or `none` if no such key exists.
@@ -777,6 +834,7 @@ than `Key1` in `Tree`, or `none` if no such key exists.
 none
 ```
 """.
+-endif.
 -spec larger(Key1, Tree) -> none | {Key2, Value} when
     Key1 :: Key,
     Key2 :: Key,
@@ -787,6 +845,7 @@ larger(Key, #xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Key, Value}` where `Key` is the largest key in `Tree`.
 
@@ -799,6 +858,7 @@ Raises an `empty_tree` error if the tree is empty.
 {3, c}
 ```
 """.
+-endif.
 -spec largest(Tree) -> {Key, Value} when
     Tree :: tree(Key, Value).
 
@@ -809,6 +869,7 @@ largest(#xb5_tree{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Looks up `Key` in `Tree`. Returns `{value, Value}` if `Key` is present,
 or `none` if `Key` is not present.
@@ -823,6 +884,7 @@ or `none` if `Key` is not present.
 none
 ```
 """.
+-endif.
 -spec lookup(Key, Tree) -> none | {value, Value} when
     Tree :: tree(Key, Value).
 
@@ -836,6 +898,7 @@ lookup(Key, #xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Maps `Function` over all values in `Tree1`, returning a new tree `Tree2`
 with the same keys. For each entry, `Function(Key, Value1)` must return
@@ -849,6 +912,7 @@ the new value `Value2`.
 [{1, 20}, {2, 40}, {3, 60}]
 ```
 """.
+-endif.
 -spec map(Function, Tree1) -> Tree2 when
     Function :: fun((K :: Key, V1 :: Value1) -> V2 :: Value2),
     Tree1 :: tree(Key, Value1),
@@ -859,6 +923,7 @@ map(Fun, #xb5_tree{root = Root} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Merges `Tree1` and `Tree2` into a single tree. For keys present in both trees,
 the value from `Tree2` is kept.
@@ -872,6 +937,7 @@ the value from `Tree2` is kept.
 [{1, a}, {2, x}, {3, c}, {4, y}]
 ```
 """.
+-endif.
 -spec merge(Tree1, Tree2) -> Tree3 when
     Tree1 :: tree(KeyA, ValueA),
     Tree2 :: tree(KeyB, ValueB),
@@ -883,6 +949,7 @@ merge(#xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, root = Root
 
 %%
 
+-ifdef(E48).
 -doc """
 Merges `Tree1` and `Tree2` into a single tree, using `Fun` to compute the
 value for each key present in both trees. `Fun` is called as
@@ -899,6 +966,7 @@ from `Tree2`.
 [{1, 10}, {2, 22}, {3, 30}, {4, 40}]
 ```
 """.
+-endif.
 -spec merge_with(Fun, Tree1, Tree2) -> Tree3 when
     Fun :: fun((KeyA | KeyB, ValueA, ValueB) -> MergeValue),
     Tree1 :: tree(KeyA, ValueA),
@@ -911,6 +979,7 @@ merge_with(Fun, #xb5_tree{size = Size1, root = Root1}, #xb5_tree{size = Size2, r
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns a new empty tree.
 
@@ -923,12 +992,14 @@ true
 0
 ```
 """.
+-endif.
 -spec new() -> tree().
 
 new() -> #xb5_tree{root = xb5_trees_node:new(), size = 0}.
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Key, Value, Iter2}` where `Key` and `Value` are the next entry
 referred to by iterator `Iter1` and `Iter2` is the updated iterator, or
@@ -945,6 +1016,7 @@ referred to by iterator `Iter1` and `Iter2` is the updated iterator, or
 none
 ```
 """.
+-endif.
 -spec next(Iter1) -> none | {Key, Value, Iter2} when
     Iter1 :: iter(Key, Value),
     Iter2 :: iter(Key, Value).
@@ -954,6 +1026,7 @@ next(Iter) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the number of entries in `Tree`.
 
@@ -966,6 +1039,7 @@ Returns the number of entries in `Tree`.
 3
 ```
 """.
+-endif.
 -spec size(Tree) -> non_neg_integer() when
     Tree :: tree().
 
@@ -973,6 +1047,7 @@ size(#xb5_tree{size = Size}) -> Size.
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Key2, Value}` where `Key2` is the greatest key strictly less
 than `Key1` in `Tree`, or `none` if no such key exists.
@@ -987,6 +1062,7 @@ than `Key1` in `Tree`, or `none` if no such key exists.
 none
 ```
 """.
+-endif.
 -spec smaller(Key1, Tree) -> none | {Key2, Value} when
     Key1 :: Key,
     Key2 :: Key,
@@ -997,6 +1073,7 @@ smaller(Key, #xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Key, Value}` where `Key` is the smallest key in `Tree`.
 
@@ -1009,6 +1086,7 @@ Raises an `empty_tree` error if the tree is empty.
 {1, a}
 ```
 """.
+-endif.
 -spec smallest(Tree) -> {Key, Value} when
     Tree :: tree(Key, Value).
 
@@ -1019,6 +1097,7 @@ smallest(#xb5_tree{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns structural statistics about the B-tree backing `Tree`.
 
@@ -1035,6 +1114,7 @@ is a proplist with keys such as `height`, `total_keys`,
 > {total_keys, 3} = lists:keyfind(total_keys, 1, Stats).
 ```
 """.
+-endif.
 -spec structural_stats(Tree) -> Stats when
     Tree :: tree(),
     Stats :: xb5_structural_stats:t().
@@ -1044,6 +1124,7 @@ structural_stats(#xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Value, Tree2}` where `Value` is the value associated with `Key`
 and `Tree2` is `Tree1` with `Key` removed.
@@ -1059,6 +1140,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 [{1, a}, {3, c}]
 ```
 """.
+-endif.
 -spec take(Key, Tree1) -> {Value, Tree2} when
     Tree1 :: tree(Key, _),
     Tree2 :: tree(Key, _),
@@ -1079,6 +1161,7 @@ take(Key, #xb5_tree{size = Size, root = Root} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Like `take/2`, but returns `error` if the key is not present instead of
 raising an exception.
@@ -1094,6 +1177,7 @@ raising an exception.
 error
 ```
 """.
+-endif.
 -spec take_any(Key, Tree1) -> {Value, Tree2} | error when
     Tree1 :: tree(Key, _),
     Tree2 :: tree(Key, _),
@@ -1114,6 +1198,7 @@ take_any(Key, #xb5_tree{size = Size, root = Root} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Key, Value, Tree2}` where `Key` is the largest key in `Tree1`,
 `Value` is its associated value, and `Tree2` is `Tree1` with that entry
@@ -1130,6 +1215,7 @@ Raises an `empty_tree` error if the tree is empty.
 [{1, a}, {2, b}]
 ```
 """.
+-endif.
 -spec take_largest(Tree1) -> {Key, Value, Tree2} when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
@@ -1145,6 +1231,7 @@ take_largest(#xb5_tree{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns `{Key, Value, Tree2}` where `Key` is the smallest key in `Tree1`,
 `Value` is its associated value, and `Tree2` is `Tree1` with that entry
@@ -1161,6 +1248,7 @@ Raises an `empty_tree` error if the tree is empty.
 [{2, b}, {3, c}]
 ```
 """.
+-endif.
 -spec take_smallest(Tree1) -> {Key, Value, Tree2} when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
@@ -1176,6 +1264,7 @@ take_smallest(#xb5_tree{}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Converts `Tree` into an ordered list of `{Key, Value}` tuples.
 
@@ -1188,6 +1277,7 @@ Converts `Tree` into an ordered list of `{Key, Value}` tuples.
 []
 ```
 """.
+-endif.
 -spec to_list(Tree) -> [{Key, Value}] when
     Tree :: tree(Key, Value).
 
@@ -1196,6 +1286,7 @@ to_list(#xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Unwraps an opaque tree into a plain map representation suitable for
 cross-language interop (for example, converting to an Elixir struct
@@ -1212,6 +1303,7 @@ on success or `{error, Reason}` if `Term` is not a valid tree.
 > {error, _} = xb5_trees:unwrap(not_a_tree).
 ```
 """.
+-endif.
 -spec unwrap(Term :: _) -> {ok, unwrapped_tree(_, _)} | {error, Reason :: _}.
 
 unwrap(#xb5_tree{size = Size, root = Root} = Term) when is_integer(Size), Size >= 0 ->
@@ -1233,6 +1325,7 @@ unwrap(Term) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Updates `Key` to value `Value` in `Tree1`, returning a new tree `Tree2`.
 
@@ -1246,6 +1339,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 [{1, a}, {2, z}, {3, c}]
 ```
 """.
+-endif.
 -spec update(Key, Value, Tree1) -> Tree2 when
     Tree1 :: tree(Key, Value),
     Tree2 :: tree(Key, Value).
@@ -1261,6 +1355,7 @@ update(Key, Value, #xb5_tree{root = Root} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Applies `Fun` to the current value of `Key` in `Tree1`, storing the
 result as the new value and returning the updated tree `Tree2`.
@@ -1275,6 +1370,7 @@ Raises a `{badkey, Key}` error if the key is not present.
 [{1, 10}, {2, 21}, {3, 30}]
 ```
 """.
+-endif.
 -spec update_with(Key, Fun, Tree1) -> Tree2 when
     Fun :: fun((Value1) -> Value2),
     Tree1 :: tree(Key, Value | Value1),
@@ -1291,6 +1387,7 @@ update_with(Key, Fun, #xb5_tree{root = Root} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Like `update_with/3`, but inserts `Init` as the value if `Key` is not
 present in `Tree1`.
@@ -1307,6 +1404,7 @@ present in `Tree1`.
 [{1, 10}, {2, 20}, {3, 0}]
 ```
 """.
+-endif.
 -spec update_with(Key, Fun, Init, Tree1) -> Tree2 when
     Fun :: fun((Value1) -> Value2),
     Tree1 :: tree(Key, Value | Value1),
@@ -1326,6 +1424,7 @@ update_with(Key, Fun, Init, #xb5_tree{root = Root} = Tree) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Returns the values in `Tree` as a list, ordered by their corresponding
 keys.
@@ -1338,6 +1437,7 @@ keys.
 [a, b, c]
 ```
 """.
+-endif.
 -spec values(Tree) -> [Value] when
     Tree :: tree(_, Value).
 
@@ -1346,6 +1446,7 @@ values(#xb5_tree{root = Root}) ->
 
 %%
 
+-ifdef(E48).
 -doc """
 Wraps a plain map representation back into an opaque tree.
 
@@ -1363,6 +1464,7 @@ same underlying node module).
 [{1, a}, {2, b}, {3, c}]
 ```
 """.
+-endif.
 -spec wrap(unwrapped_tree(Key, Value)) -> tree(Key, Value).
 
 wrap(#{root := Root, size := Size}) when is_integer(Size), Size >= 0 ->

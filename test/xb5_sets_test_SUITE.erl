@@ -121,7 +121,7 @@
 %% ------------------------------------------------------------------
 
 all() ->
-    [{group, GroupName} || {GroupName, _Options, _TestCases} <- groups()].
+    [{group, GroupName} || {GroupName, _Options, TestCases} <- groups(), TestCases =/= []].
 
 groups() ->
     [
