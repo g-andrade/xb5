@@ -968,7 +968,7 @@ test_structure_build_adversarial_deletion(_Config) ->
                             ((Index rem 5 =:= 0) andalso
                                 {true, K})
                         end,
-                        lists:enumerate(RefKvs)
+                        xb5_test_utils:list_enumerate(RefKvs)
                     ),
 
                 lists:foldl(fun xb5_trees:delete/2, Tree1, KeysToDelete)

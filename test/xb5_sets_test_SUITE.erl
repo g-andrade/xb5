@@ -764,7 +764,7 @@ test_structure_build_adversarial_deletion(_Config) ->
                             ((Index rem 5 =:= 0) andalso
                                 {true, E})
                         end,
-                        lists:enumerate(RefElements)
+                        xb5_test_utils:list_enumerate(RefElements)
                     ),
 
                 lists:foldl(fun xb5_sets:delete/2, Set1, ItemsToDelete)

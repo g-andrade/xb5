@@ -4,7 +4,10 @@
 
 %%%%%
 
--export([foreach_tested_size/1]).
+-export([
+    foreach_tested_size/1,
+    list_enumerate/1
+]).
 
 %%%%%
 
@@ -29,6 +32,8 @@ foreach_tested_size(Fun) ->
         TestedSizes
     ).
 
+list_enumerate(L) -> list_enumerate(1, 1, L).
+
 %%%%%
 
 prefix_random_sizes(Amount, Acc) when Amount > 0 ->
@@ -50,3 +55,18 @@ new_random_size() ->
         true ->
             500 + rand:uniform(500)
     end.
+
+%%%%%%
+
+-if(OTP_RELEASE >= 26).
+
+list_enumerate(Index, Step, L) -> lists:enumerate(Index, Step, L).
+
+-else.
+
+list_enumerate(Index, Step, [H | T]) ->
+    [{Index, H} | list_enumerate(Index + Step, Step, T)];
+list_enumerate(_, _, []) ->
+    [].
+
+-endif.
