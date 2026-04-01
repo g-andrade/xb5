@@ -1,5 +1,5 @@
 {application, xb5, [
-    {description, "FIXME"},
+    {description, "B-trees of order 5 (tree, set, multiset) for Erlang/OTP"},
     {vsn, git},
     {registered, []},
     {applications, [
@@ -14,7 +14,6 @@
 
     {licenses, ["MIT"]},
     {links, [
-        {"GitHub", "https://github.com/g-andrade/xb5"},
-        {"GitLab", "https://gitlab.com/g-andrade/xb5"}
+        {"GitHub", "https://github.com/g-andrade/xb5"}
     ]}
 ]}.
