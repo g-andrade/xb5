@@ -12,7 +12,7 @@ make compile          # compile
 make test             # eunit → ct → cover
 make check            # erlfmt + xref + hank + lint + dialyzer
 make format           # auto-format with erlfmt
-make doc              # generate docs (ex_doc via rebar3_ex_doc)
+make doc              # build hex package (docs via rebar3_ex_doc)
 ```
 
 Individual targets: `make eunit`, `make ct`, `make cover`, `make check-formatted`,
@@ -28,6 +28,8 @@ src/
   xb5_sets_node.erl     Internal node ops for sets
   xb5_trees_node.erl    Internal node ops for trees
   xb5_bag_node.erl      Internal node ops for bags
+  xb5_bag_utils.erl     Percentile math helpers for the bag module
+  xb5_search_helpers.hrl  Internal header: gap-search macros shared by node modules
   xb5_structural_stats.erl  Debugging/testing stats
   xb5_utils.erl         Dialyzer utility
 test/
@@ -54,7 +56,7 @@ test/
   (god_modules, dont_repeat_yourself, nesting_level, etc.) because B-tree node
   operations inherently involve large, repetitive pattern matching.
 - **Unused code:** Hank via `make find-unused-code`.
-- **Dialyzer:** `make dialyzer`. `xb5_utils:dialyzer_opaque/1` exists solely to
+- **Dialyzer:** `make dialyzer`. `xb5_utils:dialyzer_opaque_term/1` exists solely to
   help Dialyzer with opaque types.
 
 ## Documentation conventions
@@ -72,7 +74,7 @@ All public functions use `-doc` and `-moduledoc` attributes (OTP 27+).
 ## Testing
 
 - Common Test suites with groups: `basic_api`, `smaller_and_larger`, `set_operations`,
-  `iterators`, `additional_functions`, `structure`.
+  `iterators`, `order_statistics` (bag only), `additional_functions`, `structure`.
 - Structure tests run 1000+ randomized iterations with statistical assertions
   (Z-score confidence intervals).
 - `xb5_test_utils:foreach_tested_size/1` runs tests across diverse dataset sizes
@@ -86,6 +88,5 @@ runs `make check` then `make test`.
 ## Pre-release status
 
 - CHANGELOG.md has only an `[Unreleased]` section.
-- `xb5.app.src` description is still `"FIXME"`.
 - `wrap/unwrap` functions exist for cross-language interop (e.g., converting
   to/from an Elixir struct that shares the same underlying node module).
