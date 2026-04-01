@@ -29,6 +29,7 @@ test: eunit ct cover
 
 format:
 	@rebar3 fmt
+.NOTPARALLEL: format
 .PHONY: format
 
 ## Tests
