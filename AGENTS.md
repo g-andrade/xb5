@@ -3,7 +3,9 @@
 Erlang library providing B-tree (order 5) replacements for `gb_trees` and `gb_sets`,
 plus a multiset (`xb5_bag`) with order-statistic operations. MIT licensed, by Guilherme Andrade.
 
-Requires OTP 27+ (for `-moduledoc` and `-doc` attributes).
+Requires OTP 24+. `-moduledoc` and `-doc` attributes (EEP-48) are conditionally
+compiled via `-ifdef(E48)`, where `E48` is defined for OTP 27+ via `platform_define`
+in `rebar.config`.
 
 ## Build and test
 
@@ -61,7 +63,8 @@ test/
 
 ## Documentation conventions
 
-All public functions use `-doc` and `-moduledoc` attributes (OTP 27+).
+All public functions use `-doc` and `-moduledoc` attributes, wrapped in
+`-ifdef(E48)/-endif` for OTP 24–26 compatibility.
 
 - `-doc` comes before `-spec`.
 - Two styles:
@@ -82,8 +85,8 @@ All public functions use `-doc` and `-moduledoc` attributes (OTP 27+).
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`): tests on OTP 27.3 and 28.3,
-runs `make check` then `make test`.
+GitHub Actions (`.github/workflows/ci.yml`): tests on OTP 24.3, 25.3, 26.2, 27.3,
+and 28.4, runs `make check` then `make test`.
 
 ## Pre-release status
 
