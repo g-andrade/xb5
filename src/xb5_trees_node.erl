@@ -2995,7 +2995,6 @@ is_equal_leaf_batch2(K1, K2, V1, V2, Iter) ->
 next_pair_is_equal(KeyA, ValueA, [Head | Tail]) ->
     case Head of
         ?ITER_PAIR(KeyB, ValueB) ->
-            % FIXME should it be a relaxed comparison?
             KeyA == KeyB andalso ValueA =:= ValueB andalso Tail;
         %
         Node ->
