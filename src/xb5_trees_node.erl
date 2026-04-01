@@ -4252,7 +4252,6 @@ to_list_recur(Node, Acc) ->
 %% ------------------------------------------------------------------
 
 to_rev_list_recur(Node, Acc) ->
-    % TODO test
     case Node of
         ?LEAF2_MATCH_ALL ->
             [{K2, V2}, {K1, V1} | Acc];
