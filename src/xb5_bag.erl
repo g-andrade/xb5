@@ -1060,8 +1060,8 @@ percentile_rank(_, #xb5_bag{}) ->
 
 -ifdef(E48).
 -doc """
-Adds element `Element` to `Bag1`, returning a new bag `Bag2`.
-If `Element` is already present, a duplicate is added.
+Pushes element `Element` into `Bag1`, returning a new bag `Bag2`. If `Element`
+is already present, a duplicate is added.
 
 ## Examples
 
