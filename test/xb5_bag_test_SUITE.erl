@@ -14,8 +14,8 @@
     test_construction/1,
     test_extensive_construction_from_ordset/1,
     test_lookup/1,
+    test_push/1,
     test_add/1,
-    test_enter/1,
     test_insert/1,
     test_delete_sequential/1,
     test_delete_shuffled/1
@@ -162,8 +162,8 @@ groups() ->
             test_construction,
             test_extensive_construction_from_ordset,
             test_lookup,
+            test_push,
             test_add,
-            test_enter,
             test_insert,
             test_delete_sequential,
             test_delete_shuffled
@@ -279,15 +279,15 @@ test_lookup(_Config) ->
         end
     ).
 
-test_add(_Config) ->
+test_push(_Config) ->
     foreach_test_bag(
         fun(Size, RefElements, Bag) ->
             foreach_existing_element(
                 fun(Element) ->
-                    Bag2 = xb5_bag:add(Element, Bag),
+                    Bag2 = xb5_bag:push(Element, Bag),
                     ?assertEqual(Size + 1, xb5_bag:size(Bag2)),
                     ?assertListsCanonEqual(
-                        add_to_sorted_list(Element, RefElements),
+                        push_to_sorted_list(Element, RefElements),
                         xb5_bag:to_list(Bag2)
                     )
                 end,
@@ -299,10 +299,10 @@ test_add(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    Bag2 = xb5_bag:add(Element, Bag),
+                    Bag2 = xb5_bag:push(Element, Bag),
                     ?assertEqual(Size + 1, xb5_bag:size(Bag2)),
                     ?assertListsCanonEqual(
-                        add_to_sorted_list(Element, RefElements),
+                        push_to_sorted_list(Element, RefElements),
                         xb5_bag:to_list(Bag2)
                     )
                 end,
@@ -312,12 +312,12 @@ test_add(_Config) ->
         end
     ).
 
-test_enter(_Config) ->
+test_add(_Config) ->
     foreach_test_bag(
         fun(Size, RefElements, Bag) ->
             foreach_existing_element(
                 fun(Element) ->
-                    Bag2 = xb5_bag:enter(Element, Bag),
+                    Bag2 = xb5_bag:add(Element, Bag),
                     ?assertEqual(Size, xb5_bag:size(Bag2)),
                     ?assertEqual(Bag2, Bag)
                 end,
@@ -329,10 +329,10 @@ test_enter(_Config) ->
 
             foreach_non_existent_element(
                 fun(Element) ->
-                    Bag2 = xb5_bag:enter(Element, Bag),
+                    Bag2 = xb5_bag:add(Element, Bag),
                     ?assertEqual(Size + 1, xb5_bag:size(Bag2)),
                     ?assertListsCanonEqual(
-                        add_to_sorted_list(Element, RefElements),
+                        push_to_sorted_list(Element, RefElements),
                         xb5_bag:to_list(Bag2)
                     )
                 end,
@@ -360,7 +360,7 @@ test_insert(_Config) ->
                     Bag2 = xb5_bag:insert(Element, Bag),
                     ?assertEqual(Size + 1, xb5_bag:size(Bag2)),
                     ?assertListsCanonEqual(
-                        add_to_sorted_list(Element, RefElements),
+                        push_to_sorted_list(Element, RefElements),
                         xb5_bag:to_list(Bag2)
                     )
                 end,
@@ -1461,7 +1461,7 @@ new_bag_from_each_added(List) ->
     new_bag_from_each_added_recur(List, Bag).
 
 new_bag_from_each_added_recur([Element | Next], Bag) ->
-    UpdatedBag = xb5_bag:add(Element, Bag),
+    UpdatedBag = xb5_bag:push(Element, Bag),
     new_bag_from_each_added_recur(Next, UpdatedBag);
 new_bag_from_each_added_recur([], Bag) ->
     Bag.
@@ -1497,15 +1497,15 @@ list_shuffle(List) ->
     Shuffled = lists:sort(WithWeights),
     lists:map(fun([_ | V]) -> V end, Shuffled).
 
-add_to_sorted_list(Elem, [H | T]) ->
+push_to_sorted_list(Elem, [H | T]) ->
     case Elem > H of
         true ->
-            [H | add_to_sorted_list(Elem, T)];
+            [H | push_to_sorted_list(Elem, T)];
         %
         false ->
             [Elem, H | T]
     end;
-add_to_sorted_list(Elem, []) ->
+push_to_sorted_list(Elem, []) ->
     [Elem].
 
 remove_from_sorted_list(Elem, [H | T]) ->

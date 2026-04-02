@@ -45,7 +45,6 @@ API for operating over `m:xb5_bag` internal nodes directly.
 %% ------------------------------------------------------------------
 
 -export([
-    add/2,
     delete_att/2,
     elixir_reduce/3,
     elixir_slice/5,
@@ -65,6 +64,7 @@ API for operating over `m:xb5_bag` internal nodes directly.
     next/1,
     nth/2,
     nth_and_nthp1/2,
+    push/2,
     rank/2,
     rank_larger/2,
     rank_smaller/2,
@@ -520,22 +520,6 @@ API for operating over `m:xb5_bag` internal nodes directly.
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
--spec add(NewElem, t(PrevElem)) -> t(NewElem | PrevElem).
-add(Elem, ?INTERNAL1_MATCH_ALL) ->
-    add_INTERNAL1(Elem, ?INTERNAL1_ARGS);
-add(Elem, ?LEAF1_MATCH_ALL) ->
-    add_LEAF1(Elem, ?LEAF1_ARGS);
-add(Elem, ?LEAF0) ->
-    ?new_LEAF1(Elem);
-add(Elem, Root) ->
-    case add_recur(Elem, Root) of
-        ?SPLIT_MATCH(Pos, Args) ->
-            insert_split_root(Elem, Pos, Args, Root);
-        %
-        UpdatedRoot ->
-            UpdatedRoot
-    end.
-
 -spec delete_att(_, t(Elem)) -> badkey | t(Elem).
 delete_att(Elem, ?INTERNAL1_MATCH_ALL) ->
     delete_att_INTERNAL1(Elem, ?INTERNAL1_ARGS);
@@ -716,6 +700,22 @@ nth_and_nthp1(Rank, ?INTERNAL1_MATCH_ALL) ->
 nth_and_nthp1(Rank, Root) ->
     nth_and_nthp1_recur(Rank, Root, nil).
 
+-spec push(NewElem, t(PrevElem)) -> t(NewElem | PrevElem).
+push(Elem, ?INTERNAL1_MATCH_ALL) ->
+    push_INTERNAL1(Elem, ?INTERNAL1_ARGS);
+push(Elem, ?LEAF1_MATCH_ALL) ->
+    push_LEAF1(Elem, ?LEAF1_ARGS);
+push(Elem, ?LEAF0) ->
+    ?new_LEAF1(Elem);
+push(Elem, Root) ->
+    case push_recur(Elem, Root) of
+        ?SPLIT_MATCH(Pos, Args) ->
+            insert_split_root(Elem, Pos, Args, Root);
+        %
+        UpdatedRoot ->
+            UpdatedRoot
+    end.
+
 -spec rank(_, t(_)) -> pos_integer() | none.
 rank(Elem, ?INTERNAL1_MATCH_ALL) ->
     rank_INTERNAL1(Elem, ?INTERNAL1_ARGS);
@@ -820,317 +820,6 @@ to_list(?LEAF0) ->
     [];
 to_list(Root) ->
     to_list_recur(Root, []).
-
-%% ------------------------------------------------------------------
-%% Internal Function Definitions: add/2
-%% ------------------------------------------------------------------
-
-add_recur(Elem, Node) ->
-    case Node of
-        ?INTERNAL2_MATCH_ALL ->
-            add_INTERNAL2(Elem, ?INTERNAL2_ARGS);
-        %
-        ?INTERNAL3_MATCH_ALL ->
-            add_INTERNAL3(Elem, ?INTERNAL3_ARGS);
-        %
-        ?INTERNAL4_MATCH_ALL ->
-            add_INTERNAL4(Elem, ?INTERNAL4_ARGS);
-        %
-        ?LEAF2_MATCH_ALL ->
-            add_LEAF2(Elem, ?LEAF2_ARGS);
-        %
-        ?LEAF3_MATCH_ALL ->
-            add_LEAF3(Elem, ?LEAF3_ARGS);
-        %
-        ?LEAF4_MATCH_ALL ->
-            add_LEAF4(Elem, ?LEAF4_ARGS)
-    end.
-
-%%
-%% ?INTERNAL4
-%%
-
--compile({inline, add_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
-add_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
-    if
-        Elem > E2 ->
-            %
-            if
-                Elem =< E4 ->
-                    %
-                    if
-                        Elem > E3 ->
-                            add_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS);
-                        %
-                        true ->
-                            add_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS)
-                    end;
-                %
-                true ->
-                    add_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS)
-            end;
-        %
-        Elem =< E1 ->
-            add_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS);
-        %
-        true ->
-            add_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS)
-    end.
-
--compile({inline, add_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
-add_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
-    Result = add_recur(Elem, C1),
-    ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS).
-
--compile({inline, add_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
-add_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
-    Result = add_recur(Elem, C2),
-    ins_rebalance_INTERNAL4_C2(Result, Elem, ?INTERNAL4_ARGS).
-
--compile({inline, add_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
-add_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
-    Result = add_recur(Elem, C3),
-    ins_rebalance_INTERNAL4_C3(Result, Elem, ?INTERNAL4_ARGS).
-
--compile({inline, add_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
-add_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
-    Result = add_recur(Elem, C4),
-    ins_rebalance_INTERNAL4_C4(Result, Elem, ?INTERNAL4_ARGS).
-
--compile({inline, add_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
-add_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
-    Result = add_recur(Elem, C5),
-    ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS).
-
-%%
-%% ?INTERNAL3
-%%
-
--compile({inline, add_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
-add_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
-    if
-        Elem =< E2 ->
-            %
-            if
-                Elem =< E1 ->
-                    add_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS);
-                %
-                true ->
-                    add_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS)
-            end;
-        %
-        Elem =< E3 ->
-            add_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS);
-        %
-        true ->
-            add_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS)
-    end.
-
--compile({inline, add_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
-add_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
-    Result = add_recur(Elem, C1),
-    ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS).
-
--compile({inline, add_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
-add_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
-    Result = add_recur(Elem, C2),
-    ins_rebalance_INTERNAL3_C2(Result, Elem, ?INTERNAL3_ARGS).
-
--compile({inline, add_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
-add_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
-    Result = add_recur(Elem, C3),
-    ins_rebalance_INTERNAL3_C3(Result, Elem, ?INTERNAL3_ARGS).
-
--compile({inline, add_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
-add_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
-    Result = add_recur(Elem, C4),
-    ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS).
-
-%%
-%% ?INTERNAL2
-%%
-
--compile({inline, add_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
-add_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
-    if
-        Elem > E1 ->
-            %
-            if
-                Elem =< E2 ->
-                    add_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS);
-                %
-                true ->
-                    add_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS)
-            end;
-        %
-        true ->
-            add_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS)
-    end.
-
--compile({inline, add_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
-add_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
-    Result = add_recur(Elem, C1),
-    ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS).
-
--compile({inline, add_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
-add_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
-    Result = add_recur(Elem, C2),
-    ins_rebalance_INTERNAL2_C2(Result, Elem, ?INTERNAL2_ARGS).
-
--compile({inline, add_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
-add_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
-    Result = add_recur(Elem, C3),
-    ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS).
-
-%%
-%% ?INTERNAL1
-%%
-
--compile({inline, add_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
-add_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
-    if
-        Elem =< E1 ->
-            add_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS);
-        %
-        true ->
-            add_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS)
-    end.
-
--compile({inline, add_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
-add_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
-    Result = add_recur(Elem, C1),
-    ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS).
-
--compile({inline, add_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
-add_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
-    Result = add_recur(Elem, C2),
-    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS).
-
-%%
-%% ?LEAF4
-%%
-
--compile({inline, add_LEAF4 / ?LEAF4_ARITY_PLUS1}).
-add_LEAF4(Elem, ?LEAF4_ARGS) ->
-    if
-        Elem > E2 ->
-            %
-            if
-                Elem =< E4 ->
-                    %
-                    if
-                        Elem > E3 ->
-                            ?SPLIT(4, []);
-                        %
-                        true ->
-                            ?SPLIT(3, [])
-                    end;
-                %
-                true ->
-                    ?SPLIT(5, [])
-            end;
-        %
-        Elem =< E1 ->
-            ?SPLIT(1, []);
-        %
-        true ->
-            ?SPLIT(2, [])
-    end.
-
-%%
-%% ?LEAF3
-%%
-
--compile({inline, add_LEAF3 / ?LEAF3_ARITY_PLUS1}).
-add_LEAF3(Elem, ?LEAF3_ARGS) ->
-    if
-        Elem =< E2 ->
-            %
-            if
-                Elem =< E1 ->
-                    put_LEAF3_POS1(Elem, ?LEAF3_ARGS);
-                %
-                true ->
-                    put_LEAF3_POS2(Elem, ?LEAF3_ARGS)
-            end;
-        %
-        Elem =< E3 ->
-            put_LEAF3_POS3(Elem, ?LEAF3_ARGS);
-        %
-        true ->
-            put_LEAF3_POS4(Elem, ?LEAF3_ARGS)
-    end.
-
--compile({inline, put_LEAF3_POS1 / ?LEAF3_ARITY_PLUS1}).
-put_LEAF3_POS1(Elem, ?LEAF3_ARGS) ->
-    ?new_LEAF4(Elem, E1, E2, E3).
-
--compile({inline, put_LEAF3_POS2 / ?LEAF3_ARITY_PLUS1}).
-put_LEAF3_POS2(Elem, ?LEAF3_ARGS) ->
-    ?new_LEAF4(E1, Elem, E2, E3).
-
--compile({inline, put_LEAF3_POS3 / ?LEAF3_ARITY_PLUS1}).
-put_LEAF3_POS3(Elem, ?LEAF3_ARGS) ->
-    ?new_LEAF4(E1, E2, Elem, E3).
-
--compile({inline, put_LEAF3_POS4 / ?LEAF3_ARITY_PLUS1}).
-put_LEAF3_POS4(Elem, ?LEAF3_ARGS) ->
-    ?new_LEAF4(E1, E2, E3, Elem).
-
-%%
-%% ?LEAF2
-%%
-
--compile({inline, add_LEAF2 / ?LEAF2_ARITY_PLUS1}).
-add_LEAF2(Elem, ?LEAF2_ARGS) ->
-    if
-        Elem > E1 ->
-            %
-            if
-                Elem =< E2 ->
-                    put_LEAF2_POS2(Elem, ?LEAF2_ARGS);
-                %
-                true ->
-                    put_LEAF2_POS3(Elem, ?LEAF2_ARGS)
-            end;
-        %
-        true ->
-            put_LEAF2_POS1(Elem, ?LEAF2_ARGS)
-    end.
-
--compile({inline, put_LEAF2_POS1 / ?LEAF2_ARITY_PLUS1}).
-put_LEAF2_POS1(Elem, ?LEAF2_ARGS) ->
-    ?new_LEAF3(Elem, E1, E2).
-
--compile({inline, put_LEAF2_POS2 / ?LEAF2_ARITY_PLUS1}).
-put_LEAF2_POS2(Elem, ?LEAF2_ARGS) ->
-    ?new_LEAF3(E1, Elem, E2).
-
--compile({inline, put_LEAF2_POS3 / ?LEAF2_ARITY_PLUS1}).
-put_LEAF2_POS3(Elem, ?LEAF2_ARGS) ->
-    ?new_LEAF3(E1, E2, Elem).
-
-%%
-%% ?LEAF1
-%%
-
--compile({inline, add_LEAF1 / ?LEAF1_ARITY_PLUS1}).
-add_LEAF1(Elem, ?LEAF1_ARGS) ->
-    if
-        Elem =< E1 ->
-            put_LEAF1_POS1(Elem, ?LEAF1_ARGS);
-        %
-        true ->
-            put_LEAF1_POS2(Elem, ?LEAF1_ARGS)
-    end.
-
--compile({inline, put_LEAF1_POS1 / ?LEAF1_ARITY_PLUS1}).
-put_LEAF1_POS1(Elem, ?LEAF1_ARGS) ->
-    ?new_LEAF2(Elem, E1).
-
--compile({inline, put_LEAF1_POS2 / ?LEAF1_ARITY_PLUS1}).
-put_LEAF1_POS2(Elem, ?LEAF1_ARGS) ->
-    ?new_LEAF2(E1, Elem).
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: delete_att/2
@@ -3411,7 +3100,7 @@ merge_root(Size1, Root1, Size2, Root2) ->
         %
         true ->
             List1 = to_rev_list(Root1),
-            add_all(List1, Root2)
+            push_all(List1, Root2)
     end.
 
 merge_2(List1, List2) ->
@@ -3435,9 +3124,9 @@ merge_2(List1, [], Acc) ->
 
 %%
 
-add_all([Elem | Next], Root) ->
-    add_all(Next, add(Elem, Root));
-add_all([], Root) ->
+push_all([Elem | Next], Root) ->
+    push_all(Next, push(Elem, Root));
+push_all([], Root) ->
     Root.
 
 %% ------------------------------------------------------------------
@@ -3830,6 +3519,281 @@ nth_and_nthp1_LEAF2(Rank, ?LEAF2_ARGS, Plus1) ->
     case Rank of
         1 -> [E1 | E2];
         2 -> [E2 | Plus1]
+    end.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions: push/2
+%% ------------------------------------------------------------------
+
+push_recur(Elem, Node) ->
+    case Node of
+        ?INTERNAL2_MATCH_ALL ->
+            push_INTERNAL2(Elem, ?INTERNAL2_ARGS);
+        %
+        ?INTERNAL3_MATCH_ALL ->
+            push_INTERNAL3(Elem, ?INTERNAL3_ARGS);
+        %
+        ?INTERNAL4_MATCH_ALL ->
+            push_INTERNAL4(Elem, ?INTERNAL4_ARGS);
+        %
+        ?LEAF2_MATCH_ALL ->
+            push_LEAF2(Elem, ?LEAF2_ARGS);
+        %
+        ?LEAF3_MATCH_ALL ->
+            push_LEAF3(Elem, ?LEAF3_ARGS);
+        %
+        ?LEAF4_MATCH_ALL ->
+            push_LEAF4(Elem, ?LEAF4_ARGS)
+    end.
+
+%%
+%% ?INTERNAL4
+%%
+
+-compile({inline, push_INTERNAL4 / ?INTERNAL4_ARITY_PLUS1}).
+push_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
+    if
+        Elem > E2 ->
+            %
+            if
+                Elem =< E4 ->
+                    %
+                    if
+                        Elem > E3 ->
+                            push_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS);
+                        %
+                        true ->
+                            push_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS)
+                    end;
+                %
+                true ->
+                    push_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS)
+            end;
+        %
+        Elem =< E1 ->
+            push_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS);
+        %
+        true ->
+            push_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS)
+    end.
+
+-compile({inline, push_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
+push_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
+    Result = push_recur(Elem, C1),
+    ins_rebalance_INTERNAL4_C1(Result, Elem, ?INTERNAL4_ARGS).
+
+-compile({inline, push_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
+push_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
+    Result = push_recur(Elem, C2),
+    ins_rebalance_INTERNAL4_C2(Result, Elem, ?INTERNAL4_ARGS).
+
+-compile({inline, push_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
+push_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
+    Result = push_recur(Elem, C3),
+    ins_rebalance_INTERNAL4_C3(Result, Elem, ?INTERNAL4_ARGS).
+
+-compile({inline, push_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
+push_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
+    Result = push_recur(Elem, C4),
+    ins_rebalance_INTERNAL4_C4(Result, Elem, ?INTERNAL4_ARGS).
+
+-compile({inline, push_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
+push_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
+    Result = push_recur(Elem, C5),
+    ins_rebalance_INTERNAL4_C5(Result, Elem, ?INTERNAL4_ARGS).
+
+%%
+%% ?INTERNAL3
+%%
+
+-compile({inline, push_INTERNAL3 / ?INTERNAL3_ARITY_PLUS1}).
+push_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
+    if
+        Elem =< E2 ->
+            %
+            if
+                Elem =< E1 ->
+                    push_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS);
+                %
+                true ->
+                    push_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS)
+            end;
+        %
+        Elem =< E3 ->
+            push_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS);
+        %
+        true ->
+            push_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS)
+    end.
+
+-compile({inline, push_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
+push_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
+    Result = push_recur(Elem, C1),
+    ins_rebalance_INTERNAL3_C1(Result, Elem, ?INTERNAL3_ARGS).
+
+-compile({inline, push_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
+push_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
+    Result = push_recur(Elem, C2),
+    ins_rebalance_INTERNAL3_C2(Result, Elem, ?INTERNAL3_ARGS).
+
+-compile({inline, push_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
+push_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
+    Result = push_recur(Elem, C3),
+    ins_rebalance_INTERNAL3_C3(Result, Elem, ?INTERNAL3_ARGS).
+
+-compile({inline, push_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
+push_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
+    Result = push_recur(Elem, C4),
+    ins_rebalance_INTERNAL3_C4(Result, Elem, ?INTERNAL3_ARGS).
+
+%%
+%% ?INTERNAL2
+%%
+
+-compile({inline, push_INTERNAL2 / ?INTERNAL2_ARITY_PLUS1}).
+push_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
+    if
+        Elem > E1 ->
+            %
+            if
+                Elem =< E2 ->
+                    push_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS);
+                %
+                true ->
+                    push_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS)
+            end;
+        %
+        true ->
+            push_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS)
+    end.
+
+-compile({inline, push_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
+push_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
+    Result = push_recur(Elem, C1),
+    ins_rebalance_INTERNAL2_C1(Result, Elem, ?INTERNAL2_ARGS).
+
+-compile({inline, push_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
+push_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
+    Result = push_recur(Elem, C2),
+    ins_rebalance_INTERNAL2_C2(Result, Elem, ?INTERNAL2_ARGS).
+
+-compile({inline, push_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
+push_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
+    Result = push_recur(Elem, C3),
+    ins_rebalance_INTERNAL2_C3(Result, Elem, ?INTERNAL2_ARGS).
+
+%%
+%% ?INTERNAL1
+%%
+
+-compile({inline, push_INTERNAL1 / ?INTERNAL1_ARITY_PLUS1}).
+push_INTERNAL1(Elem, ?INTERNAL1_ARGS) ->
+    if
+        Elem =< E1 ->
+            push_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS);
+        %
+        true ->
+            push_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS)
+    end.
+
+-compile({inline, push_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
+push_INTERNAL1_C1(Elem, ?INTERNAL1_ARGS) ->
+    Result = push_recur(Elem, C1),
+    ins_rebalance_INTERNAL1_C1(Result, Elem, ?INTERNAL1_ARGS).
+
+-compile({inline, push_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
+push_INTERNAL1_C2(Elem, ?INTERNAL1_ARGS) ->
+    Result = push_recur(Elem, C2),
+    ins_rebalance_INTERNAL1_C2(Result, Elem, ?INTERNAL1_ARGS).
+
+%%
+%% ?LEAF4
+%%
+
+-compile({inline, push_LEAF4 / ?LEAF4_ARITY_PLUS1}).
+push_LEAF4(Elem, ?LEAF4_ARGS) ->
+    if
+        Elem > E2 ->
+            %
+            if
+                Elem =< E4 ->
+                    %
+                    if
+                        Elem > E3 ->
+                            ?SPLIT(4, []);
+                        %
+                        true ->
+                            ?SPLIT(3, [])
+                    end;
+                %
+                true ->
+                    ?SPLIT(5, [])
+            end;
+        %
+        Elem =< E1 ->
+            ?SPLIT(1, []);
+        %
+        true ->
+            ?SPLIT(2, [])
+    end.
+
+%%
+%% ?LEAF3
+%%
+
+-compile({inline, push_LEAF3 / ?LEAF3_ARITY_PLUS1}).
+push_LEAF3(Elem, ?LEAF3_ARGS) ->
+    if
+        Elem =< E2 ->
+            %
+            if
+                Elem =< E1 ->
+                    ?new_LEAF4(Elem, E1, E2, E3);
+                %
+                true ->
+                    ?new_LEAF4(E1, Elem, E2, E3)
+            end;
+        %
+        Elem =< E3 ->
+            ?new_LEAF4(E1, E2, Elem, E3);
+        %
+        true ->
+            ?new_LEAF4(E1, E2, E3, Elem)
+    end.
+
+%%
+%% ?LEAF2
+%%
+
+-compile({inline, push_LEAF2 / ?LEAF2_ARITY_PLUS1}).
+push_LEAF2(Elem, ?LEAF2_ARGS) ->
+    if
+        Elem > E1 ->
+            %
+            if
+                Elem =< E2 ->
+                    ?new_LEAF3(E1, Elem, E2);
+                %
+                true ->
+                    ?new_LEAF3(E1, E2, Elem)
+            end;
+        %
+        true ->
+            ?new_LEAF3(Elem, E1, E2)
+    end.
+
+%%
+%% ?LEAF1
+%%
+
+-compile({inline, push_LEAF1 / ?LEAF1_ARITY_PLUS1}).
+push_LEAF1(Elem, ?LEAF1_ARGS) ->
+    if
+        Elem =< E1 ->
+            ?new_LEAF2(Elem, E1);
+        %
+        true ->
+            ?new_LEAF2(E1, Elem)
     end.
 
 %% ------------------------------------------------------------------

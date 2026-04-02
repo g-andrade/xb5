@@ -37,7 +37,6 @@ See also:
     count/2,
     delete/2,
     delete_any/2,
-    enter/2,
     filter/2,
     filtermap/2,
     fold/3,
@@ -64,6 +63,7 @@ See also:
     percentile_bracket/2,
     percentile_bracket/3,
     percentile_rank/2,
+    push/2,
     rank/2,
     rank_larger/2,
     rank_smaller/2,
@@ -83,7 +83,6 @@ See also:
     count/2,
     delete/2,
     delete_any/2,
-    enter/2,
     filter/2,
     filtermap/2,
     fold/3,
@@ -110,6 +109,7 @@ See also:
     percentile_bracket/2,
     percentile_bracket/3,
     percentile_rank/2,
+    push/2,
     rank/2,
     rank_larger/2,
     rank_smaller/2,
@@ -194,17 +194,20 @@ See `unwrap/1` and `wrap/1`.
 
 -ifdef(E48).
 -doc """
-Adds element `Element` to `Bag1`, returning a new bag `Bag2`.
-If `Element` is already present, a duplicate is added.
+Adds element `Element` to bag `Bag1`, returning a new bag `Bag2`.
+If `Element` is already a member of `Bag1`, `Bag1` is returned unchanged.
 
 ## Examples
 
 ```erlang
-> B = xb5_bag:from_list([1, 2, 3]).
-> xb5_bag:to_list(xb5_bag:add(2, B)).
-[1, 2, 2, 3]
-> xb5_bag:size(xb5_bag:add(2, B)).
-4
+> S0 = xb5_bags:new().
+> xb5_bags:to_list(xb5_bags:add(1, S0)).
+[1]
+> S1 = xb5_bags:from_list([1, 2, 3]).
+> xb5_bags:to_list(xb5_bags:add(2, S1)).
+[1, 2, 3]
+> xb5_bags:to_list(xb5_bags:add(4, S1)).
+[1, 2, 3, 4]
 ```
 """.
 -endif.
@@ -213,8 +216,13 @@ If `Element` is already present, a duplicate is added.
     Bag2 :: bag(Element).
 
 add(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
-    UpdatedRoot = xb5_bag_node:add(Element, Root),
-    Bag#xb5_bag{size = Size + 1, root = UpdatedRoot}.
+    case xb5_bag_node:insert_att(Element, Root) of
+        key_exists ->
+            Bag;
+        %
+        UpdatedRoot ->
+            Bag#xb5_bag{size = Size + 1, root = UpdatedRoot}
+    end.
 
 %%
 
@@ -314,38 +322,6 @@ delete_any(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
         %
         UpdatedRoot ->
             Bag#xb5_bag{size = Size - 1, root = UpdatedRoot}
-    end.
-
-%%
-
--ifdef(E48).
--doc """
-Adds element `Element` to `Bag1` only if it is not already present.
-If `Element` is already a member, `Bag1` is returned unchanged.
-
-## Examples
-
-```erlang
-> B = xb5_bag:from_list([1, 2, 3]).
-> xb5_bag:to_list(xb5_bag:enter(4, B)).
-[1, 2, 3, 4]
-> xb5_bag:to_list(xb5_bag:enter(2, B)).
-[1, 2, 3]
-```
-""".
--endif.
--spec enter(Element, Bag1) -> Bag2 when
-    Element :: term(),
-    Bag1 :: bag(Element),
-    Bag2 :: bag(Element).
-
-enter(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
-    case xb5_bag_node:insert_att(Element, Root) of
-        key_exists ->
-            Bag;
-        %
-        UpdatedRoot ->
-            Bag#xb5_bag{size = Size + 1, root = UpdatedRoot}
     end.
 
 %%
@@ -1079,6 +1055,32 @@ percentile_rank(Elem, #xb5_bag{size = Size, root = Root}) when Size > 0 ->
     xb5_bag_utils:percentile_rank(Elem, Size, Root);
 percentile_rank(_, #xb5_bag{}) ->
     error_empty_bag().
+
+%%
+
+-ifdef(E48).
+-doc """
+Adds element `Element` to `Bag1`, returning a new bag `Bag2`.
+If `Element` is already present, a duplicate is added.
+
+## Examples
+
+```erlang
+> B = xb5_bag:from_list([1, 2, 3]).
+> xb5_bag:to_list(xb5_bag:push(2, B)).
+[1, 2, 2, 3]
+> xb5_bag:size(xb5_bag:push(2, B)).
+4
+```
+""".
+-endif.
+-spec push(Element, Bag1) -> Bag2 when
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
+
+push(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
+    UpdatedRoot = xb5_bag_node:push(Element, Root),
+    Bag#xb5_bag{size = Size + 1, root = UpdatedRoot}.
 
 %%
 
