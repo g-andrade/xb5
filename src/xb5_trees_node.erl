@@ -577,6 +577,7 @@ delete_att(Key, Root) ->
     Root :: t(Key, Value),
     Result :: elixir_reducer_result(ElemAcc).
 elixir_reduce(Fun, Acc, Root) ->
+    % TODO test coverage
     Iter = fwd_iterator(Root),
     elixir_reduce_recur(Fun, Acc, Iter).
 
