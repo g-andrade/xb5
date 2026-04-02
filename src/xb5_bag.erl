@@ -739,6 +739,7 @@ iterator_from_nth(Rank, #xb5_bag{size = Size, root = Root}) when
 ->
     xb5_bag_node:iterator_from_nth(Rank, Size, Root, ordered);
 iterator_from_nth(Rank, #xb5_bag{}) ->
+    % FIXME: should this just return an empty iterator instead?
     error({badarg, Rank}).
 
 %%
