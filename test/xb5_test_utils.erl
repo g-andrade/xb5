@@ -6,7 +6,8 @@
 
 -export([
     foreach_tested_size/1,
-    list_enumerate/1
+    list_enumerate/1,
+    canon_key/1
 ]).
 
 %%%%%
@@ -33,6 +34,29 @@ foreach_tested_size(Fun) ->
     ).
 
 list_enumerate(L) -> list_enumerate(1, 1, L).
+
+canon_key(Element) when is_float(Element) ->
+    case math:fmod(Element, 1.0) == 0 of
+        true ->
+            trunc(Element);
+        %
+        false ->
+            Element
+    end;
+canon_key(Integer) when is_integer(Integer) ->
+    Integer;
+canon_key([H | T]) ->
+    [canon_key(H) | canon_key(T)];
+canon_key(Tuple) when is_tuple(Tuple) ->
+    List = tuple_to_list(Tuple),
+    Mapped = lists:map(fun canon_key/1, List),
+    list_to_tuple(Mapped);
+canon_key(Map) when is_map(Map) ->
+    List = maps:to_list(Map),
+    Mapped = lists:map(fun canon_key/1, List),
+    maps:from_list(Mapped);
+canon_key(Other) ->
+    Other.
 
 %%%%%
 
