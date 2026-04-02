@@ -18,7 +18,8 @@
     test_add/1,
     test_insert/1,
     test_delete_sequential/1,
-    test_delete_shuffled/1
+    test_delete_shuffled/1,
+    test_delete_all/1
 ]).
 
 %% Test exports - smaller and larger
@@ -166,7 +167,8 @@ groups() ->
             test_add,
             test_insert,
             test_delete_sequential,
-            test_delete_shuffled
+            test_delete_shuffled,
+            test_delete_all
         ]},
         {smaller_and_larger, [parallel], [
             test_smallest,
@@ -431,6 +433,41 @@ test_delete_shuffled(_Config) ->
             ?assertEqual(true, xb5_bag:is_empty(BagN)),
 
             test_delete_non_existing_keys(BagN, [], 3)
+        end
+    ).
+
+test_delete_all(_Config) ->
+    foreach_test_bag(
+        fun(_Size, RefElements, Bag) ->
+            DeleteKeys = lists:map(
+                fun randomly_switch_number_type/1, list_shuffle(lists:usort(RefElements))
+            ),
+
+            {BagN, []} =
+                lists:foldl(
+                    fun(Element, {Bag1, RemainingElements1}) ->
+                        test_delete_all_non_existing_keys(Bag1, RemainingElements1, 3),
+
+                        Bag2 = xb5_bag:delete_all(Element, Bag1),
+                        {_Count, RemainingElements2} = remove_all_from_sorted_list(
+                            Element, RemainingElements1
+                        ),
+
+                        ?assertListsCanonEqual(RemainingElements2, xb5_bag:to_list(Bag2)),
+                        ?assertEqual(length(RemainingElements2), xb5_bag:size(Bag2)),
+                        ?assertEqual(RemainingElements2 =:= [], xb5_bag:is_empty(Bag2)),
+
+                        {Bag2, RemainingElements2}
+                    end,
+                    {Bag, RefElements},
+                    DeleteKeys
+                ),
+
+            ?assertEqual([], xb5_bag:to_list(BagN)),
+            ?assertEqual(0, xb5_bag:size(BagN)),
+            ?assertEqual(true, xb5_bag:is_empty(BagN)),
+
+            test_delete_all_non_existing_keys(BagN, [], 3)
         end
     ).
 
@@ -1517,6 +1554,34 @@ remove_from_sorted_list(Elem, [H | T]) ->
             T
     end.
 
+%%%
+
+remove_all_from_sorted_list(Elem, List) ->
+    remove_all_from_sorted_list_recur(Elem, List, []).
+
+remove_all_from_sorted_list_recur(Elem, [H | T], Prev) ->
+    if
+        Elem > H ->
+            remove_all_from_sorted_list_recur(Elem, T, [H | Prev]);
+        %
+        Elem == H ->
+            {Count, NewT} = remove_all_from_sorted_list_part2(Elem, T, 1),
+            {Count, lists:reverse(Prev, NewT)}
+    end.
+
+remove_all_from_sorted_list_part2(Elem, [H | T] = L, Count) ->
+    if
+        Elem == H ->
+            remove_all_from_sorted_list_part2(Elem, T, Count + 1);
+        %
+        Elem < H ->
+            {Count, L}
+    end;
+remove_all_from_sorted_list_part2(_Elem, [], Count) ->
+    {Count, []}.
+
+%%%
+
 rank_in_sorted_list(Elem, [H | T]) ->
     if
         Elem > H ->
@@ -1566,6 +1631,21 @@ test_delete_non_existing_keys(Bag, RemainingElements, Amount) when Amount > 0 ->
             test_delete_non_existing_keys(Bag, RemainingElements, Amount)
     end;
 test_delete_non_existing_keys(_, _, 0) ->
+    ok.
+
+test_delete_all_non_existing_keys(Bag, RemainingElements, Amount) when Amount > 0 ->
+    Element = new_element(),
+
+    case lists:any(fun(E) -> E == Element end, RemainingElements) of
+        false ->
+            ?assertEqual(Bag, xb5_bag:delete_all(Element, Bag)),
+
+            test_delete_all_non_existing_keys(Bag, RemainingElements, Amount - 1);
+        %
+        true ->
+            test_delete_all_non_existing_keys(Bag, RemainingElements, Amount)
+    end;
+test_delete_all_non_existing_keys(_, _, 0) ->
     ok.
 
 %% ------------------------------------------------------------------

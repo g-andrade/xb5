@@ -36,6 +36,7 @@ See also:
     add/2,
     count/2,
     delete/2,
+    delete_all/2,
     delete_any/2,
     filter/2,
     filtermap/2,
@@ -82,6 +83,7 @@ See also:
     add/2,
     count/2,
     delete/2,
+    delete_all/2,
     delete_any/2,
     filter/2,
     filtermap/2,
@@ -290,6 +292,40 @@ delete(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
         %
         UpdatedRoot ->
             Bag#xb5_bag{size = Size - 1, root = UpdatedRoot}
+    end.
+
+%%
+
+-ifdef(E48).
+-doc """
+Removes all occurrences of `Element` from `Bag1`, returning a new bag
+`Bag2`.
+
+Returns `Bag1` unchanged if `Element` is not present.
+
+## Examples
+
+```erlang
+> B = xb5_bag:from_list([1, 2, 2, 3]).
+> xb5_bag:to_list(xb5_bag:delete_all(2, B)).
+[1, 3]
+> xb5_bag:to_list(xb5_bag:delete_all(42, B)).
+[1, 2, 2, 3]
+```
+""".
+-endif.
+-spec delete_all(Element, Bag1) -> Bag2 when
+    Element :: term(),
+    Bag1 :: bag(Element),
+    Bag2 :: bag(Element).
+
+delete_all(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
+    case xb5_bag_node:delete_att(Element, Root) of
+        badkey ->
+            Bag;
+        %
+        UpdatedRoot ->
+            delete_all_recur(Element, Size - 1, UpdatedRoot)
     end.
 
 %%
@@ -1475,3 +1511,14 @@ error_empty_bag() ->
 -spec error_key_exists(_) -> no_return().
 error_key_exists(Elem) ->
     error({key_exists, Elem}).
+
+%%%
+
+delete_all_recur(Element, Size, Root) ->
+    case xb5_bag_node:delete_att(Element, Root) of
+        badkey ->
+            #xb5_bag{size = Size, root = Root};
+        %
+        UpdatedRoot ->
+            delete_all_recur(Element, Size - 1, UpdatedRoot)
+    end.
