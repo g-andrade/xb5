@@ -493,7 +493,7 @@ and `gb_trees:from_orddict/1`.
 
 from_ordered_list(OrderedList) ->
     S = length(OrderedList),
-    Root = xb5_bag_node:from_ordered_list(OrderedList, S),
+    Root = xb5_bag_node:from_ordered_list(S, OrderedList),
     #xb5_bag{size = S, root = Root}.
 
 %%
@@ -816,7 +816,7 @@ Maps `Fun` over all elements of `Bag1`, returning a new bag `Bag2`.
 map(Fun, #xb5_bag{size = Size, root = Root}) ->
     MappedList = xb5_bag_node:map_to_list(Fun, Root),
     OrderedList = lists:sort(MappedList),
-    MappedRoot = xb5_bag_node:from_ordered_list(OrderedList, Size),
+    MappedRoot = xb5_bag_node:from_ordered_list(Size, OrderedList),
     #xb5_bag{size = Size, root = MappedRoot}.
 
 %%

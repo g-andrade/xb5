@@ -613,16 +613,16 @@ foldr(_Fun, Acc, ?LEAF0) ->
 foldr(Fun, Acc, Root) ->
     foldr_recur(Fun, Acc, Root).
 
--spec from_orddict(orddict:orddict(Key, Value), non_neg_integer()) -> t(Key, Value).
-from_orddict([], 0) ->
+-spec from_orddict(non_neg_integer(), orddict:orddict(Key, Value)) -> t(Key, Value).
+from_orddict(0, []) ->
     ?LEAF0;
-from_orddict([{K1, V1}], 1) ->
+from_orddict(1, [{K1, V1}]) ->
     ?new_LEAF1(K1, V1);
-from_orddict(L, S) ->
+from_orddict(S, L) ->
     [BatchOffset | BatchSize] = xb5_utils:bulk_construction_params(S),
     AtRoot = true,
 
-    [Root | []] = from_orddict_recur(L, S, BatchOffset, BatchSize, AtRoot),
+    [Root | []] = from_orddict_recur(S, L, BatchOffset, BatchSize, AtRoot),
     Root.
 
 -spec get_att(Key, t(Key, Value), fun((Key, Value) -> Found), fun((Key) -> NotFound)) ->
@@ -1417,7 +1417,7 @@ foldr_recur(Fun, Acc, Node) ->
 %% Internal Function Definitions: from_orddict/2
 %% ------------------------------------------------------------------
 
-from_orddict_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
+from_orddict_recur(S, L, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
     ChildrenBatchOffset = BatchOffset - BatchSize,
     ChildrenBatchSize = BatchSize bsr 2,
 
@@ -1425,29 +1425,29 @@ from_orddict_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
         2 ->
             S1 = S2 = BatchSize - 1,
             [S3 | S4] = from_orddict_right_children_sizes(S - (BatchSize bsl 1), BatchSize),
-            from_orddict_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize);
+            from_orddict_INTERNAL3(S1, S2, S3, S4, L, ChildrenBatchOffset, ChildrenBatchSize);
         %
         3 ->
             S1 = S2 = S3 = BatchSize - 1,
             [S4 | S5] = from_orddict_right_children_sizes(S - (BatchSize * 3), BatchSize),
-            from_orddict_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize);
+            from_orddict_INTERNAL4(S1, S2, S3, S4, S5, L, ChildrenBatchOffset, ChildrenBatchSize);
         %
         Quotient when Quotient =:= 1 orelse (Quotient =:= 0 andalso not AtRoot) ->
             S1 = BatchSize - 1,
             [S2 | S3] = from_orddict_right_children_sizes(S - BatchSize, BatchSize),
-            from_orddict_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize);
+            from_orddict_INTERNAL2(S1, S2, S3, L, ChildrenBatchOffset, ChildrenBatchSize);
         %
         0 ->
             [S1 | S2] = from_orddict_right_children_sizes(S, BatchSize),
-            from_orddict_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize)
+            from_orddict_INTERNAL1(S1, S2, L, ChildrenBatchOffset, ChildrenBatchSize)
     end;
-from_orddict_recur(L, 4, _, _, _) ->
+from_orddict_recur(4, L, _, _, _) ->
     [{K1, V1}, {K2, V2}, {K3, V3}, {K4, V4} | Next] = L,
     [?new_LEAF4(K1, K2, K3, K4, V1, V2, V3, V4) | Next];
-from_orddict_recur(L, 3, _, _, _) ->
+from_orddict_recur(3, L, _, _, _) ->
     [{K1, V1}, {K2, V2}, {K3, V3} | Next] = L,
     [?new_LEAF3(K1, K2, K3, V1, V2, V3) | Next];
-from_orddict_recur(L, 2, _, _, _) ->
+from_orddict_recur(2, L, _, _, _) ->
     [{K1, V1}, {K2, V2} | Next] = L,
     [?new_LEAF2(K1, K2, V1, V2) | Next].
 
@@ -1465,104 +1465,104 @@ from_orddict_right_children_sizes(RemainingSize, BatchSize) ->
     end.
 
 -compile({inline, from_orddict_INTERNAL1/5}).
-from_orddict_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize) ->
+from_orddict_INTERNAL1(S1, S2, L, ChildrenBatchOffset, ChildrenBatchSize) ->
     [C1 | [{K1, V1} | L2]] = from_orddict_recur(
-        L,
         S1,
+        L,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
-    [C2 | []] = from_orddict_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C2 | []] = from_orddict_recur(S2, L2, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL1(K1, V1, C1, C2),
 
     [Node | []].
 
 -compile({inline, from_orddict_INTERNAL2/6}).
-from_orddict_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize) ->
+from_orddict_INTERNAL2(S1, S2, S3, L, ChildrenBatchOffset, ChildrenBatchSize) ->
     [C1 | [{K1, V1} | L2]] = from_orddict_recur(
-        L,
         S1,
+        L,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C2 | [{K2, V2} | L3]] = from_orddict_recur(
-        L2,
         S2,
+        L2,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
-    [C3 | L4] = from_orddict_recur(L3, S3, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C3 | L4] = from_orddict_recur(S3, L3, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL2(K1, K2, V1, V2, C1, C2, C3),
 
     [Node | L4].
 
 -compile({inline, from_orddict_INTERNAL3/7}).
-from_orddict_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize) ->
+from_orddict_INTERNAL3(S1, S2, S3, S4, L, ChildrenBatchOffset, ChildrenBatchSize) ->
     [C1 | [{K1, V1} | L2]] = from_orddict_recur(
-        L,
         S1,
+        L,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C2 | [{K2, V2} | L3]] = from_orddict_recur(
-        L2,
         S2,
+        L2,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C3 | [{K3, V3} | L4]] = from_orddict_recur(
-        L3,
         S3,
+        L3,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
-    [C4 | L5] = from_orddict_recur(L4, S4, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C4 | L5] = from_orddict_recur(S4, L4, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
 
     [Node | L5].
 
 -compile({inline, from_orddict_INTERNAL4/8}).
-from_orddict_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize) ->
+from_orddict_INTERNAL4(S1, S2, S3, S4, S5, L, ChildrenBatchOffset, ChildrenBatchSize) ->
     [C1 | [{K1, V1} | L2]] = from_orddict_recur(
-        L,
         S1,
+        L,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C2 | [{K2, V2} | L3]] = from_orddict_recur(
-        L2,
         S2,
+        L2,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C3 | [{K3, V3} | L4]] = from_orddict_recur(
-        L3,
         S3,
+        L3,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C4 | [{K4, V4} | L5]] = from_orddict_recur(
-        L4,
         S4,
+        L4,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C5 | L6] = from_orddict_recur(
-        L5,
         S5,
+        L5,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
@@ -2209,7 +2209,7 @@ intersect_1_a([Key | Next], Root2, AccSize, Acc) ->
             intersect_1_a(Next, Root2, AccSize, Acc)
     end;
 intersect_1_a([], _Root2, AccSize, Acc) ->
-    [AccSize | from_orddict(Acc, AccSize)].
+    [AccSize | from_orddict(AccSize, Acc)].
 
 intersect_get_found(Key, Value) -> {Key, Value}.
 intersect_get_not_found(_Key) -> nil.
@@ -2226,7 +2226,7 @@ intersect_1_b(Fun1, [{Key, ValueA} | Next], Root2, AccSize, Acc) ->
             intersect_1_b(Fun1, Next, Root2, AccSize, Acc)
     end;
 intersect_1_b(_Fun1, [], _Root2, AccSize, Acc) ->
-    [AccSize | from_orddict(Acc, AccSize)].
+    [AccSize | from_orddict(AccSize, Acc)].
 
 %%
 
@@ -2253,9 +2253,9 @@ intersect_2(
             intersect_2(Fun1, Next1, Fun2, Next2, AccSize + 1, [{Key1, IntersectedValue} | Acc])
     end;
 intersect_2(_Fun1, [], _Fun2, _, AccSize, Acc) ->
-    [AccSize | from_orddict(Acc, AccSize)];
+    [AccSize | from_orddict(AccSize, Acc)];
 intersect_2(_Fun1, _, _Fun2, [], AccSize, Acc) ->
-    [AccSize | from_orddict(Acc, AccSize)].
+    [AccSize | from_orddict(AccSize, Acc)].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: iterator/2 - forward
@@ -3478,10 +3478,10 @@ merge_2(
     end;
 merge_2(_Fun1, [], _Fun2, List2, AccSize, Acc) ->
     FinalAcc = lists:reverse(List2, Acc),
-    [AccSize | from_orddict(FinalAcc, AccSize)];
+    [AccSize | from_orddict(AccSize, FinalAcc)];
 merge_2(_Fun1, List1, _Fun2, [], AccSize, Acc) ->
     FinalAcc = lists:reverse(List1, Acc),
-    [AccSize | from_orddict(FinalAcc, AccSize)].
+    [AccSize | from_orddict(AccSize, FinalAcc)].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: next/1

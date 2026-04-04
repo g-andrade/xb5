@@ -441,7 +441,7 @@ allocations or element comparisons. This is analogous to `gb_trees:from_orddict/
 
 from_orddict(Orddict) ->
     S = length(Orddict),
-    Root = xb5_trees_node:from_orddict(Orddict, S),
+    Root = xb5_trees_node:from_orddict(S, Orddict),
     #xb5_tree{size = S, root = Root}.
 
 %%

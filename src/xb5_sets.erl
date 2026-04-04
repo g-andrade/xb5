@@ -495,7 +495,7 @@ allocations or element comparisons. This is analogous to `gb_sets:from_ordset/1`
 
 from_ordset(Ordset) ->
     S = length(Ordset),
-    Root = xb5_sets_node:from_ordset(Ordset, S),
+    Root = xb5_sets_node:from_ordset(S, Ordset),
     #xb5_set{size = S, root = Root}.
 
 %%

@@ -585,16 +585,16 @@ fold(_Fun, Acc, ?LEAF0) ->
 fold(Fun, Acc, Root) ->
     fold_recur(Fun, Acc, Root).
 
--spec from_ordered_list([Elem], non_neg_integer()) -> t(Elem).
-from_ordered_list([], 0) ->
+-spec from_ordered_list(non_neg_integer(), [Elem]) -> t(Elem).
+from_ordered_list(0, []) ->
     ?LEAF0;
-from_ordered_list([E1], 1) ->
+from_ordered_list(1, [E1]) ->
     ?new_LEAF1(E1);
-from_ordered_list(L, S) ->
+from_ordered_list(S, L) ->
     [BatchOffset | BatchSize] = xb5_utils:bulk_construction_params(S),
     AtRoot = true,
 
-    [Root | []] = from_ordered_list_recur(L, S, BatchOffset, BatchSize, AtRoot),
+    [Root | []] = from_ordered_list_recur(S, L, BatchOffset, BatchSize, AtRoot),
     Root.
 
 -spec insert_att(NewElem, t(PrevElem)) -> key_exists | t(NewElem | PrevElem).
@@ -1397,7 +1397,7 @@ fold_recur(Fun, Acc, Node) ->
 %% Internal Function Definitions: from_ordered_list/2
 %% ------------------------------------------------------------------
 
-from_ordered_list_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
+from_ordered_list_recur(S, L, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
     ChildrenBatchOffset = BatchOffset - BatchSize,
     ChildrenBatchSize = BatchSize bsr 2,
 
@@ -1405,18 +1405,18 @@ from_ordered_list_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
         2 ->
             S1 = S2 = BatchSize - 1,
             [S3 | S4] = from_ordered_list_right_children_sizes(S - (BatchSize bsl 1), BatchSize),
-            from_ordered_list_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize);
+            from_ordered_list_INTERNAL3(S1, S2, S3, S4, L, ChildrenBatchOffset, ChildrenBatchSize);
         %
         3 ->
             S1 = S2 = S3 = BatchSize - 1,
             [S4 | S5] = from_ordered_list_right_children_sizes(S - (BatchSize * 3), BatchSize),
             from_ordered_list_INTERNAL4(
-                L,
                 S1,
                 S2,
                 S3,
                 S4,
                 S5,
+                L,
                 ChildrenBatchOffset,
                 ChildrenBatchSize
             );
@@ -1424,19 +1424,19 @@ from_ordered_list_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
         Quotient when Quotient =:= 1 orelse (Quotient =:= 0 andalso not AtRoot) ->
             S1 = BatchSize - 1,
             [S2 | S3] = from_ordered_list_right_children_sizes(S - BatchSize, BatchSize),
-            from_ordered_list_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize);
+            from_ordered_list_INTERNAL2(S1, S2, S3, L, ChildrenBatchOffset, ChildrenBatchSize);
         %
         0 ->
             [S1 | S2] = from_ordered_list_right_children_sizes(S, BatchSize),
-            from_ordered_list_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize)
+            from_ordered_list_INTERNAL1(S1, S2, L, ChildrenBatchOffset, ChildrenBatchSize)
     end;
-from_ordered_list_recur(L, 4, _, _, _) ->
+from_ordered_list_recur(4, L, _, _, _) ->
     [E1, E2, E3, E4 | Next] = L,
     [?new_LEAF4(E1, E2, E3, E4) | Next];
-from_ordered_list_recur(L, 3, _, _, _) ->
+from_ordered_list_recur(3, L, _, _, _) ->
     [E1, E2, E3 | Next] = L,
     [?new_LEAF3(E1, E2, E3) | Next];
-from_ordered_list_recur(L, 2, _, _, _) ->
+from_ordered_list_recur(2, L, _, _, _) ->
     [E1, E2 | Next] = L,
     [?new_LEAF2(E1, E2) | Next].
 
@@ -1454,17 +1454,17 @@ from_ordered_list_right_children_sizes(RemainingSize, BatchSize) ->
     end.
 
 -compile({inline, from_ordered_list_INTERNAL1/5}).
-from_ordered_list_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize) ->
+from_ordered_list_INTERNAL1(S1, S2, L, ChildrenBatchOffset, ChildrenBatchSize) ->
     [C1 | [E1 | L2]] = from_ordered_list_recur(
-        L,
         S1,
+        L,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C2 | []] = from_ordered_list_recur(
-        L2,
         S2,
+        L2,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
@@ -1482,24 +1482,24 @@ from_ordered_list_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize) -
     [Node | []].
 
 -compile({inline, from_ordered_list_INTERNAL2/6}).
-from_ordered_list_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize) ->
+from_ordered_list_INTERNAL2(S1, S2, S3, L, ChildrenBatchOffset, ChildrenBatchSize) ->
     [C1 | [E1 | L2]] = from_ordered_list_recur(
-        L,
         S1,
+        L,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C2 | [E2 | L3]] = from_ordered_list_recur(
-        L2,
         S2,
+        L2,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C3 | L4] = from_ordered_list_recur(
-        L3,
         S3,
+        L3,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
@@ -1520,31 +1520,31 @@ from_ordered_list_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSiz
     [Node | L4].
 
 -compile({inline, from_ordered_list_INTERNAL3/7}).
-from_ordered_list_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize) ->
+from_ordered_list_INTERNAL3(S1, S2, S3, S4, L, ChildrenBatchOffset, ChildrenBatchSize) ->
     [C1 | [E1 | L2]] = from_ordered_list_recur(
-        L,
         S1,
+        L,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C2 | [E2 | L3]] = from_ordered_list_recur(
-        L2,
         S2,
+        L2,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C3 | [E3 | L4]] = from_ordered_list_recur(
-        L3,
         S3,
+        L3,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C4 | L5] = from_ordered_list_recur(
-        L4,
         S4,
+        L4,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
@@ -1570,38 +1570,38 @@ from_ordered_list_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatc
     [Node | L5].
 
 -compile({inline, from_ordered_list_INTERNAL4/8}).
-from_ordered_list_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize) ->
+from_ordered_list_INTERNAL4(S1, S2, S3, S4, S5, L, ChildrenBatchOffset, ChildrenBatchSize) ->
     [C1 | [E1 | L2]] = from_ordered_list_recur(
-        L,
         S1,
+        L,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C2 | [E2 | L3]] = from_ordered_list_recur(
-        L2,
         S2,
+        L2,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C3 | [E3 | L4]] = from_ordered_list_recur(
-        L3,
         S3,
+        L3,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C4 | [E4 | L5]] = from_ordered_list_recur(
-        L4,
         S4,
+        L4,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
     ),
     [C5 | L6] = from_ordered_list_recur(
-        L5,
         S5,
+        L5,
         ChildrenBatchOffset,
         ChildrenBatchSize,
         false
@@ -3086,7 +3086,7 @@ merge_root(Size1, Root1, Size2, Root2) when Size2 < 10 ->
     List2 = to_rev_list(Root2),
     FinalAcc = merge_2(List1, List2),
     NewSize = Size1 + Size2,
-    from_ordered_list(FinalAcc, NewSize);
+    from_ordered_list(NewSize, FinalAcc);
 merge_root(Size1, Root1, Size2, Root2) ->
     ThresholdSize = Size1 * round(math:log2(Size2)),
 
@@ -3096,7 +3096,7 @@ merge_root(Size1, Root1, Size2, Root2) ->
             List2 = to_rev_list(Root2),
             FinalAcc = merge_2(List1, List2),
             NewSize = Size1 + Size2,
-            from_ordered_list(FinalAcc, NewSize);
+            from_ordered_list(NewSize, FinalAcc);
         %
         true ->
             List1 = to_rev_list(Root1),

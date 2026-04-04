@@ -588,16 +588,16 @@ fold(_Fun, Acc, ?LEAF0) ->
 fold(Fun, Acc, Root) ->
     fold_recur(Fun, Acc, Root).
 
--spec from_ordset(ordsets:ordset(Elem), non_neg_integer()) -> t(Elem).
-from_ordset([], 0) ->
+-spec from_ordset(non_neg_integer(), ordsets:ordset(Elem)) -> t(Elem).
+from_ordset(0, []) ->
     ?LEAF0;
-from_ordset([E1], 1) ->
+from_ordset(1, [E1]) ->
     ?new_LEAF1(E1);
-from_ordset(L, S) ->
+from_ordset(S, L) ->
     [BatchOffset | BatchSize] = xb5_utils:bulk_construction_params(S),
     AtRoot = true,
 
-    [Root | []] = from_ordset_recur(L, S, BatchOffset, BatchSize, AtRoot),
+    [Root | []] = from_ordset_recur(S, L, BatchOffset, BatchSize, AtRoot),
     Root.
 
 -spec insert_att(NewElem, t(PrevElem)) -> key_exists | t(NewElem | PrevElem).
@@ -1241,7 +1241,7 @@ difference_1([Element | Next], Root2, AccSize, Acc) ->
             difference_1(Next, Root2, AccSize + 1, [Element | Acc])
     end;
 difference_1([], _, AccSize, Acc) ->
-    [AccSize | from_ordset(Acc, AccSize)].
+    [AccSize | from_ordset(AccSize, Acc)].
 
 difference_2(Size1, List1, List2) ->
     difference_2(List1, List2, Size1, []).
@@ -1258,10 +1258,10 @@ difference_2([Element1 | Next1] = List1, [Element2 | Next2] = List2, AccSize, Ac
             difference_2(Next1, Next2, AccSize - 1, Acc)
     end;
 difference_2([], _List2, AccSize, Acc) ->
-    [AccSize | from_ordset(Acc, AccSize)];
+    [AccSize | from_ordset(AccSize, Acc)];
 difference_2(List1, [], AccSize, Acc) ->
     FinalAcc = lists:reverse(List1, Acc),
-    [AccSize | from_ordset(FinalAcc, AccSize)].
+    [AccSize | from_ordset(AccSize, FinalAcc)].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: elixir_reduce/3
@@ -1373,7 +1373,7 @@ fold_recur(Fun, Acc, Node) ->
 %% Internal Function Definitions: from_ordset/2
 %% ------------------------------------------------------------------
 
-from_ordset_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
+from_ordset_recur(S, L, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
     ChildrenBatchOffset = BatchOffset - BatchSize,
     ChildrenBatchSize = BatchSize bsr 2,
 
@@ -1381,29 +1381,29 @@ from_ordset_recur(L, S, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
         2 ->
             S1 = S2 = BatchSize - 1,
             [S3 | S4] = from_ordset_right_children_sizes(S - (BatchSize bsl 1), BatchSize),
-            from_ordset_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize);
+            from_ordset_INTERNAL3(S1, S2, S3, S4, L, ChildrenBatchOffset, ChildrenBatchSize);
         %
         3 ->
             S1 = S2 = S3 = BatchSize - 1,
             [S4 | S5] = from_ordset_right_children_sizes(S - (BatchSize * 3), BatchSize),
-            from_ordset_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize);
+            from_ordset_INTERNAL4(S1, S2, S3, S4, S5, L, ChildrenBatchOffset, ChildrenBatchSize);
         %
         Quotient when Quotient =:= 1 orelse (Quotient =:= 0 andalso not AtRoot) ->
             S1 = BatchSize - 1,
             [S2 | S3] = from_ordset_right_children_sizes(S - BatchSize, BatchSize),
-            from_ordset_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize);
+            from_ordset_INTERNAL2(S1, S2, S3, L, ChildrenBatchOffset, ChildrenBatchSize);
         %
         0 ->
             [S1 | S2] = from_ordset_right_children_sizes(S, BatchSize),
-            from_ordset_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize)
+            from_ordset_INTERNAL1(S1, S2, L, ChildrenBatchOffset, ChildrenBatchSize)
     end;
-from_ordset_recur(L, 4, _, _, _) ->
+from_ordset_recur(4, L, _, _, _) ->
     [E1, E2, E3, E4 | Next] = L,
     [?new_LEAF4(E1, E2, E3, E4) | Next];
-from_ordset_recur(L, 3, _, _, _) ->
+from_ordset_recur(3, L, _, _, _) ->
     [E1, E2, E3 | Next] = L,
     [?new_LEAF3(E1, E2, E3) | Next];
-from_ordset_recur(L, 2, _, _, _) ->
+from_ordset_recur(2, L, _, _, _) ->
     [E1, E2 | Next] = L,
     [?new_LEAF2(E1, E2) | Next].
 
@@ -1421,42 +1421,42 @@ from_ordset_right_children_sizes(RemainingSize, BatchSize) ->
     end.
 
 -compile({inline, from_ordset_INTERNAL1/5}).
-from_ordset_INTERNAL1(L, S1, S2, ChildrenBatchOffset, ChildrenBatchSize) ->
-    [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C2 | []] = from_ordset_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
+from_ordset_INTERNAL1(S1, S2, L, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordset_recur(S1, L, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C2 | []] = from_ordset_recur(S2, L2, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL1(E1, C1, C2),
 
     [Node | []].
 
 -compile({inline, from_ordset_INTERNAL2/6}).
-from_ordset_INTERNAL2(L, S1, S2, S3, ChildrenBatchOffset, ChildrenBatchSize) ->
-    [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C3 | L4] = from_ordset_recur(L3, S3, ChildrenBatchOffset, ChildrenBatchSize, false),
+from_ordset_INTERNAL2(S1, S2, S3, L, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordset_recur(S1, L, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C2 | [E2 | L3]] = from_ordset_recur(S2, L2, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C3 | L4] = from_ordset_recur(S3, L3, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL2(E1, E2, C1, C2, C3),
 
     [Node | L4].
 
 -compile({inline, from_ordset_INTERNAL3/7}).
-from_ordset_INTERNAL3(L, S1, S2, S3, S4, ChildrenBatchOffset, ChildrenBatchSize) ->
-    [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C3 | [E3 | L4]] = from_ordset_recur(L3, S3, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C4 | L5] = from_ordset_recur(L4, S4, ChildrenBatchOffset, ChildrenBatchSize, false),
+from_ordset_INTERNAL3(S1, S2, S3, S4, L, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordset_recur(S1, L, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C2 | [E2 | L3]] = from_ordset_recur(S2, L2, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C3 | [E3 | L4]] = from_ordset_recur(S3, L3, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C4 | L5] = from_ordset_recur(S4, L4, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL3(E1, E2, E3, C1, C2, C3, C4),
 
     [Node | L5].
 
 -compile({inline, from_ordset_INTERNAL4/8}).
-from_ordset_INTERNAL4(L, S1, S2, S3, S4, S5, ChildrenBatchOffset, ChildrenBatchSize) ->
-    [C1 | [E1 | L2]] = from_ordset_recur(L, S1, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C2 | [E2 | L3]] = from_ordset_recur(L2, S2, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C3 | [E3 | L4]] = from_ordset_recur(L3, S3, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C4 | [E4 | L5]] = from_ordset_recur(L4, S4, ChildrenBatchOffset, ChildrenBatchSize, false),
-    [C5 | L6] = from_ordset_recur(L5, S5, ChildrenBatchOffset, ChildrenBatchSize, false),
+from_ordset_INTERNAL4(S1, S2, S3, S4, S5, L, ChildrenBatchOffset, ChildrenBatchSize) ->
+    [C1 | [E1 | L2]] = from_ordset_recur(S1, L, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C2 | [E2 | L3]] = from_ordset_recur(S2, L2, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C3 | [E3 | L4]] = from_ordset_recur(S3, L3, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C4 | [E4 | L5]] = from_ordset_recur(S4, L4, ChildrenBatchOffset, ChildrenBatchSize, false),
+    [C5 | L6] = from_ordset_recur(S5, L5, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL4(E1, E2, E3, E4, C1, C2, C3, C4, C5),
 
@@ -1738,7 +1738,7 @@ intersection_1([Element | Next], Root, AccSize, Acc) ->
             intersection_1(Next, Root, AccSize, Acc)
     end;
 intersection_1([], _Root, AccSize, Acc) ->
-    [AccSize | from_ordset(Acc, AccSize)].
+    [AccSize | from_ordset(AccSize, Acc)].
 
 intersection_2(List1, List2) ->
     intersection_2(List1, List2, 0, []).
@@ -1755,9 +1755,9 @@ intersection_2([Element1 | Next1] = List1, [Element2 | Next2] = List2, AccSize, 
             intersection_2(Next1, Next2, AccSize + 1, [Element1 | Acc])
     end;
 intersection_2([], _List2, AccSize, Acc) ->
-    [AccSize | from_ordset(Acc, AccSize)];
+    [AccSize | from_ordset(AccSize, Acc)];
 intersection_2(_List1, [], AccSize, Acc) ->
-    [AccSize | from_ordset(Acc, AccSize)].
+    [AccSize | from_ordset(AccSize, Acc)].
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: is_disjoint/4
@@ -3465,10 +3465,10 @@ union_2([Element1 | Next1] = List1, [Element2 | Next2] = List2, AccSize, Acc) ->
     end;
 union_2([], List2, AccSize, Acc) ->
     FinalAcc = lists:reverse(List2, Acc),
-    [AccSize | from_ordset(FinalAcc, AccSize)];
+    [AccSize | from_ordset(AccSize, FinalAcc)];
 union_2(List1, [], AccSize, Acc) ->
     FinalAcc = lists:reverse(List1, Acc),
-    [AccSize | from_ordset(FinalAcc, AccSize)].
+    [AccSize | from_ordset(AccSize, FinalAcc)].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
