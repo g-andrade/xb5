@@ -57,9 +57,7 @@
 %% Macros
 %% ------------------------------------------------------------------
 
-%% ------------------------------------------------------------------
-%% Types
-%% ------------------------------------------------------------------
+-define(COMPARE_WITH_STDLIB, (?OTP_RELEASE >= 28)).
 
 %% ------------------------------------------------------------------
 %% API Functions
@@ -133,6 +131,8 @@ is_member(Elem, States) ->
     call_all(is_member, common2(Elem), generic, States).
 
 is_set([{_, _}, {_, _}] = States) ->
+    call_all(is_set, [state], generic, States);
+is_set([{_, _}] = States) ->
     call_all(is_set, [state], generic, States);
 is_set(Other) ->
     xb5_sets:is_set(Other).
@@ -208,8 +208,19 @@ union(List) ->
 common2(Arg1) ->
     [{v, Arg1}, state].
 
+%%%
+
+-if(?COMPARE_WITH_STDLIB).
 no_states() ->
     [{gb_sets, undefined}, {xb5_sets, undefined}].
+
+-else.
+no_states() ->
+    [{xb5_sets, undefined}].
+
+-endif.
+
+%%%
 
 call_common2(Function, Arg1, States) ->
     call_all(Function, [{v, Arg1}, state], States).
@@ -229,6 +240,29 @@ call_op_many(Function, List) ->
 call_all(Function, ArgsTemplate, States) ->
     call_all(Function, ArgsTemplate, state, States).
 
+-if(not ?COMPARE_WITH_STDLIB).
+call_all(Function, ArgsTemplate, ReturnTemplate, [{ModB, StateB}]) ->
+    ArgsB = concrete_args(ArgsTemplate, ModB, StateB),
+    ReturnB = apply(ModB, Function, ArgsB),
+
+    case ReturnTemplate of
+        _ when ReturnTemplate =:= state; ReturnTemplate =:= iterator ->
+            [{ModB, ReturnB}];
+        %
+        _ when ReturnTemplate =:= set_iteration; ReturnTemplate =:= taken_key ->
+            case ReturnB of
+                {KeyB, UpdatedStateB} ->
+                    {KeyB, [{ModB, UpdatedStateB}]};
+                %
+                none ->
+                    none
+            end;
+        %
+        _ ->
+            ReturnB
+    end.
+
+-else.
 call_all(Function, ArgsTemplate, ReturnTemplate, [{ModA, StateA}, {ModB, StateB}]) ->
     ArgsA = concrete_args(ArgsTemplate, ModA, StateA),
     ArgsB = concrete_args(ArgsTemplate, ModB, StateB),
@@ -291,6 +325,7 @@ call_all(Function, ArgsTemplate, ReturnTemplate, [{ModA, StateA}, {ModB, StateB}
             assert_error_reasons_equivalent(ReasonB, ReasonA),
             erlang:raise(error, ReasonB, StacktraceB)
     end.
+-endif.
 
 concrete_args(Template, Mod, State) ->
     lists:map(
@@ -310,6 +345,10 @@ concrete_args(Template, Mod, State) ->
         end,
         Template
     ).
+
+%%%
+
+-if(?COMPARE_WITH_STDLIB).
 
 assert_states_equivalent(ModA, StateA, ModB, StateB) ->
     ?assertEqual(ModA:size(StateA), ModB:size(StateB)),
@@ -335,3 +374,5 @@ assert_error_reasons_equivalent({key_exists, _}, function_clause) ->
     ok;
 assert_error_reasons_equivalent(empty_set, function_clause) ->
     ok.
+
+-endif.
