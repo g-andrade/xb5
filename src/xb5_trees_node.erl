@@ -1478,6 +1478,7 @@ from_orddict_INTERNAL1(S1, S2, L, ChildrenBatchOffset, ChildrenBatchSize) ->
         ChildrenBatchSize,
         false
     ),
+
     [C2 | []] = from_orddict_recur(S2, L2, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL1(K1, V1, C1, C2),
@@ -1493,6 +1494,7 @@ from_orddict_INTERNAL2(S1, S2, S3, L, ChildrenBatchOffset, ChildrenBatchSize) ->
         ChildrenBatchSize,
         false
     ),
+
     [C2 | [{K2, V2} | L3]] = from_orddict_recur(
         S2,
         L2,
@@ -1500,6 +1502,7 @@ from_orddict_INTERNAL2(S1, S2, S3, L, ChildrenBatchOffset, ChildrenBatchSize) ->
         ChildrenBatchSize,
         false
     ),
+
     [C3 | L4] = from_orddict_recur(S3, L3, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL2(K1, K2, V1, V2, C1, C2, C3),
@@ -1515,6 +1518,7 @@ from_orddict_INTERNAL3(S1, S2, S3, S4, L, ChildrenBatchOffset, ChildrenBatchSize
         ChildrenBatchSize,
         false
     ),
+
     [C2 | [{K2, V2} | L3]] = from_orddict_recur(
         S2,
         L2,
@@ -1522,6 +1526,7 @@ from_orddict_INTERNAL3(S1, S2, S3, S4, L, ChildrenBatchOffset, ChildrenBatchSize
         ChildrenBatchSize,
         false
     ),
+
     [C3 | [{K3, V3} | L4]] = from_orddict_recur(
         S3,
         L3,
@@ -1529,6 +1534,7 @@ from_orddict_INTERNAL3(S1, S2, S3, S4, L, ChildrenBatchOffset, ChildrenBatchSize
         ChildrenBatchSize,
         false
     ),
+
     [C4 | L5] = from_orddict_recur(S4, L4, ChildrenBatchOffset, ChildrenBatchSize, false),
 
     Node = ?new_INTERNAL3(K1, K2, K3, V1, V2, V3, C1, C2, C3, C4),
@@ -1544,6 +1550,7 @@ from_orddict_INTERNAL4(S1, S2, S3, S4, S5, L, ChildrenBatchOffset, ChildrenBatch
         ChildrenBatchSize,
         false
     ),
+
     [C2 | [{K2, V2} | L3]] = from_orddict_recur(
         S2,
         L2,
@@ -1551,6 +1558,7 @@ from_orddict_INTERNAL4(S1, S2, S3, S4, S5, L, ChildrenBatchOffset, ChildrenBatch
         ChildrenBatchSize,
         false
     ),
+
     [C3 | [{K3, V3} | L4]] = from_orddict_recur(
         S3,
         L3,
@@ -1558,6 +1566,7 @@ from_orddict_INTERNAL4(S1, S2, S3, S4, S5, L, ChildrenBatchOffset, ChildrenBatch
         ChildrenBatchSize,
         false
     ),
+
     [C4 | [{K4, V4} | L5]] = from_orddict_recur(
         S4,
         L4,
@@ -1565,6 +1574,7 @@ from_orddict_INTERNAL4(S1, S2, S3, S4, S5, L, ChildrenBatchOffset, ChildrenBatch
         ChildrenBatchSize,
         false
     ),
+
     [C5 | L6] = from_orddict_recur(
         S5,
         L5,
@@ -3854,10 +3864,10 @@ take_att_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
         K3,
         K4,
         %
-        take_att_INTERNAL4_K1(?INTERNAL4_ARGS),
-        take_att_INTERNAL4_K2(?INTERNAL4_ARGS),
-        take_att_INTERNAL4_K3(?INTERNAL4_ARGS),
-        take_att_INTERNAL4_K4(?INTERNAL4_ARGS),
+        ?TAKEN(V1, delete_att_INTERNAL4_K1(?INTERNAL4_ARGS)),
+        ?TAKEN(V2, delete_att_INTERNAL4_K2(?INTERNAL4_ARGS)),
+        ?TAKEN(V3, delete_att_INTERNAL4_K3(?INTERNAL4_ARGS)),
+        ?TAKEN(V4, delete_att_INTERNAL4_K4(?INTERNAL4_ARGS)),
         %
         take_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS),
         take_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS),
@@ -3917,24 +3927,6 @@ take_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
     end.
 
 %%
-
--compile({inline, take_att_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
-take_att_INTERNAL4_K1(?INTERNAL4_ARGS) ->
-    ?TAKEN(V1, delete_att_INTERNAL4_K1(?INTERNAL4_ARGS)).
-
--compile({inline, take_att_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
-take_att_INTERNAL4_K2(?INTERNAL4_ARGS) ->
-    ?TAKEN(V2, delete_att_INTERNAL4_K2(?INTERNAL4_ARGS)).
-
--compile({inline, take_att_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
-take_att_INTERNAL4_K3(?INTERNAL4_ARGS) ->
-    ?TAKEN(V3, delete_att_INTERNAL4_K3(?INTERNAL4_ARGS)).
-
--compile({inline, take_att_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
-take_att_INTERNAL4_K4(?INTERNAL4_ARGS) ->
-    ?TAKEN(V4, delete_att_INTERNAL4_K4(?INTERNAL4_ARGS)).
-
-%%
 %% ?INTERNAL3
 %%
 
@@ -3946,9 +3938,9 @@ take_att_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
         K2,
         K3,
         %
-        take_att_INTERNAL3_K1(?INTERNAL3_ARGS),
-        take_att_INTERNAL3_K2(?INTERNAL3_ARGS),
-        take_att_INTERNAL3_K3(?INTERNAL3_ARGS),
+        ?TAKEN(V1, delete_att_INTERNAL3_K1(?INTERNAL3_ARGS)),
+        ?TAKEN(V2, delete_att_INTERNAL3_K2(?INTERNAL3_ARGS)),
+        ?TAKEN(V3, delete_att_INTERNAL3_K3(?INTERNAL3_ARGS)),
         %
         take_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS),
         take_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS),
@@ -3997,20 +3989,6 @@ take_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
     end.
 
 %%
-
--compile({inline, take_att_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
-take_att_INTERNAL3_K1(?INTERNAL3_ARGS) ->
-    ?TAKEN(V1, delete_att_INTERNAL3_K1(?INTERNAL3_ARGS)).
-
--compile({inline, take_att_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
-take_att_INTERNAL3_K2(?INTERNAL3_ARGS) ->
-    ?TAKEN(V2, delete_att_INTERNAL3_K2(?INTERNAL3_ARGS)).
-
--compile({inline, take_att_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
-take_att_INTERNAL3_K3(?INTERNAL3_ARGS) ->
-    ?TAKEN(V3, delete_att_INTERNAL3_K3(?INTERNAL3_ARGS)).
-
-%%
 %% ?INTERNAL2
 %%
 
@@ -4021,8 +3999,8 @@ take_att_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
         K1,
         K2,
         %
-        take_att_INTERNAL2_K1(?INTERNAL2_ARGS),
-        take_att_INTERNAL2_K2(?INTERNAL2_ARGS),
+        ?TAKEN(V1, delete_att_INTERNAL2_K1(?INTERNAL2_ARGS)),
+        ?TAKEN(V2, delete_att_INTERNAL2_K2(?INTERNAL2_ARGS)),
         %
         take_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS),
         take_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS),
@@ -4060,16 +4038,6 @@ take_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
     end.
 
 %%
-
--compile({inline, take_att_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
-take_att_INTERNAL2_K1(?INTERNAL2_ARGS) ->
-    ?TAKEN(V1, delete_att_INTERNAL2_K1(?INTERNAL2_ARGS)).
-
--compile({inline, take_att_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
-take_att_INTERNAL2_K2(?INTERNAL2_ARGS) ->
-    ?TAKEN(V2, delete_att_INTERNAL2_K2(?INTERNAL2_ARGS)).
-
-%%
 %% ?INTERNAL1
 %%
 
@@ -4079,7 +4047,7 @@ take_att_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
         Key,
         K1,
         %
-        take_att_INTERNAL1_K1(?INTERNAL1_ARGS),
+        ?TAKEN(V1, delete_att_INTERNAL1_K1(?INTERNAL1_ARGS)),
         %
         take_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS),
         take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS)
@@ -4104,10 +4072,6 @@ take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
         badkey ->
             badkey
     end.
-
--compile({inline, take_att_INTERNAL1_K1 / ?INTERNAL1_ARITY}).
-take_att_INTERNAL1_K1(?INTERNAL1_ARGS) ->
-    ?TAKEN(V1, delete_att_INTERNAL1_K1(?INTERNAL1_ARGS)).
 
 %%
 %% Leaves

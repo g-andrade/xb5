@@ -164,7 +164,7 @@ significantly larger than their stdlib counterparts:
 | `gb_trees` | 22K |
 | `xb5_sets_node` | 96K |
 | `xb5_trees_node` | 136K |
-| `xb5_bag_node` | 129K |
+| `xb5_bag_node` | 128K |
 
 ## License
 
