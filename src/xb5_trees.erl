@@ -1152,10 +1152,8 @@ take(Key, #xb5_tree{size = Size, root = Root} = Tree) ->
         badkey ->
             error_badkey(Key);
         %
-        [TakenPair | UpdatedRoot] ->
+        [Value | UpdatedRoot] ->
             UpdatedTree = Tree#xb5_tree{size = Size - 1, root = UpdatedRoot},
-
-            [_ | Value] = TakenPair,
             {Value, UpdatedTree}
     end.
 
@@ -1189,10 +1187,8 @@ take_any(Key, #xb5_tree{size = Size, root = Root} = Tree) ->
         badkey ->
             error;
         %
-        [TakenPair | UpdatedRoot] ->
+        [Value | UpdatedRoot] ->
             UpdatedTree = Tree#xb5_tree{size = Size - 1, root = UpdatedRoot},
-
-            [_ | Value] = TakenPair,
             {Value, UpdatedTree}
     end.
 

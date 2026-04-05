@@ -346,7 +346,7 @@ API for operating over `m:xb5_trees` internal nodes directly.
 
 %%
 
--define(TAKEN(Pair, UpdatedNode), [Pair | UpdatedNode]).
+-define(TAKEN(Taken, UpdatedNode), [Taken | UpdatedNode]).
 
 -define(TAKEN_PAIR(K, V, UpdatedNode), ?TAKEN([K | V], UpdatedNode)).
 
@@ -517,8 +517,13 @@ API for operating over `m:xb5_trees` internal nodes directly.
 
 %%%%%%%%%%%
 
--type take_result(Key, Value) :: nonempty_improper_list(kv_pair(Key, Value), t(Key, Value)).
--export_type([take_result/2]).
+-type take_key_result(Key, Value) :: nonempty_improper_list(Value, t(Key, Value)).
+-export_type([take_key_result/2]).
+
+-type take_either_end_result(Key, Value) :: nonempty_improper_list(
+    kv_pair(Key, Value), t(Key, Value)
+).
+-export_type([take_either_end_result/2]).
 
 %%%%%%%%%%%
 
@@ -818,7 +823,7 @@ structural_stats(Root) ->
             xb5_structural_stats:return(Acc2)
     end.
 
--spec take_att(Key, t(Key, Value)) -> badkey | take_result(Key, Value) | no_return().
+-spec take_att(Key, t(Key, Value)) -> badkey | take_key_result(Key, Value).
 take_att(Key, ?INTERNAL1_MATCH_ALL) ->
     take_att_INTERNAL1(Key, ?INTERNAL1_ARGS);
 take_att(Key, ?LEAF1_MATCH_ALL) ->
@@ -828,7 +833,7 @@ take_att(_Key, ?LEAF0) ->
 take_att(Key, Root) ->
     take_att_recur(Key, Root).
 
--spec take_largest(t(Key, Value)) -> take_result(Key, Value).
+-spec take_largest(t(Key, Value)) -> take_either_end_result(Key, Value).
 take_largest(?INTERNAL1_MATCH_ALL) ->
     ?TAKEN(Taken, UpdatedC2) = take_largest_recur(C2),
     ?TAKEN(Taken, ?INTERNAL1_C2_REBALANCE(UpdatedC2));
@@ -837,7 +842,7 @@ take_largest(?LEAF1_MATCH_ALL) ->
 take_largest(Root) ->
     take_largest_recur(Root).
 
--spec take_smallest(t(Key, Value)) -> take_result(Key, Value).
+-spec take_smallest(t(Key, Value)) -> take_either_end_result(Key, Value).
 take_smallest(?INTERNAL1_MATCH_ALL) ->
     ?TAKEN(Taken, UpdatedC1) = take_smallest_recur(C1),
     ?TAKEN(Taken, ?INTERNAL1_C1_REBALANCE(UpdatedC1));
@@ -3864,8 +3869,8 @@ take_att_INTERNAL4(Key, ?INTERNAL4_ARGS) ->
 -compile({inline, take_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
 take_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS) ->
     case take_att_recur(Key, C1) of
-        ?TAKEN(Pair, UpdatedC1) ->
-            ?TAKEN(Pair, ?INTERNAL4_C1_REBALANCE(UpdatedC1));
+        ?TAKEN(Taken, UpdatedC1) ->
+            ?TAKEN(Taken, ?INTERNAL4_C1_REBALANCE(UpdatedC1));
         %
         badkey ->
             badkey
@@ -3874,8 +3879,8 @@ take_att_INTERNAL4_C1(Key, ?INTERNAL4_ARGS) ->
 -compile({inline, take_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
 take_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS) ->
     case take_att_recur(Key, C2) of
-        ?TAKEN(Pair, UpdatedC2) ->
-            ?TAKEN(Pair, ?INTERNAL4_C2_REBALANCE(UpdatedC2));
+        ?TAKEN(Taken, UpdatedC2) ->
+            ?TAKEN(Taken, ?INTERNAL4_C2_REBALANCE(UpdatedC2));
         %
         badkey ->
             badkey
@@ -3884,8 +3889,8 @@ take_att_INTERNAL4_C2(Key, ?INTERNAL4_ARGS) ->
 -compile({inline, take_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
 take_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS) ->
     case take_att_recur(Key, C3) of
-        ?TAKEN(Pair, UpdatedC3) ->
-            ?TAKEN(Pair, ?INTERNAL4_C3_REBALANCE(UpdatedC3));
+        ?TAKEN(Taken, UpdatedC3) ->
+            ?TAKEN(Taken, ?INTERNAL4_C3_REBALANCE(UpdatedC3));
         %
         badkey ->
             badkey
@@ -3894,8 +3899,8 @@ take_att_INTERNAL4_C3(Key, ?INTERNAL4_ARGS) ->
 -compile({inline, take_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
 take_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS) ->
     case take_att_recur(Key, C4) of
-        ?TAKEN(Pair, UpdatedC4) ->
-            ?TAKEN(Pair, ?INTERNAL4_C4_REBALANCE(UpdatedC4));
+        ?TAKEN(Taken, UpdatedC4) ->
+            ?TAKEN(Taken, ?INTERNAL4_C4_REBALANCE(UpdatedC4));
         %
         badkey ->
             badkey
@@ -3904,8 +3909,8 @@ take_att_INTERNAL4_C4(Key, ?INTERNAL4_ARGS) ->
 -compile({inline, take_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
 take_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
     case take_att_recur(Key, C5) of
-        ?TAKEN(Pair, UpdatedC5) ->
-            ?TAKEN(Pair, ?INTERNAL4_C5_REBALANCE(UpdatedC5));
+        ?TAKEN(Taken, UpdatedC5) ->
+            ?TAKEN(Taken, ?INTERNAL4_C5_REBALANCE(UpdatedC5));
         %
         badkey ->
             badkey
@@ -3915,19 +3920,19 @@ take_att_INTERNAL4_C5(Key, ?INTERNAL4_ARGS) ->
 
 -compile({inline, take_att_INTERNAL4_K1 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K1(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL4_K1(?INTERNAL4_ARGS)).
+    ?TAKEN(V1, delete_att_INTERNAL4_K1(?INTERNAL4_ARGS)).
 
 -compile({inline, take_att_INTERNAL4_K2 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K2(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(K2, V2, delete_att_INTERNAL4_K2(?INTERNAL4_ARGS)).
+    ?TAKEN(V2, delete_att_INTERNAL4_K2(?INTERNAL4_ARGS)).
 
 -compile({inline, take_att_INTERNAL4_K3 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K3(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(K3, V3, delete_att_INTERNAL4_K3(?INTERNAL4_ARGS)).
+    ?TAKEN(V3, delete_att_INTERNAL4_K3(?INTERNAL4_ARGS)).
 
 -compile({inline, take_att_INTERNAL4_K4 / ?INTERNAL4_ARITY}).
 take_att_INTERNAL4_K4(?INTERNAL4_ARGS) ->
-    ?TAKEN_PAIR(K4, V4, delete_att_INTERNAL4_K4(?INTERNAL4_ARGS)).
+    ?TAKEN(V4, delete_att_INTERNAL4_K4(?INTERNAL4_ARGS)).
 
 %%
 %% ?INTERNAL3
@@ -3954,8 +3959,8 @@ take_att_INTERNAL3(Key, ?INTERNAL3_ARGS) ->
 -compile({inline, take_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
 take_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS) ->
     case take_att_recur(Key, C1) of
-        ?TAKEN(Pair, UpdatedC1) ->
-            ?TAKEN(Pair, ?INTERNAL3_C1_REBALANCE(UpdatedC1));
+        ?TAKEN(Taken, UpdatedC1) ->
+            ?TAKEN(Taken, ?INTERNAL3_C1_REBALANCE(UpdatedC1));
         %
         badkey ->
             badkey
@@ -3964,8 +3969,8 @@ take_att_INTERNAL3_C1(Key, ?INTERNAL3_ARGS) ->
 -compile({inline, take_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
 take_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS) ->
     case take_att_recur(Key, C2) of
-        ?TAKEN(Pair, UpdatedC2) ->
-            ?TAKEN(Pair, ?INTERNAL3_C2_REBALANCE(UpdatedC2));
+        ?TAKEN(Taken, UpdatedC2) ->
+            ?TAKEN(Taken, ?INTERNAL3_C2_REBALANCE(UpdatedC2));
         %
         badkey ->
             badkey
@@ -3974,8 +3979,8 @@ take_att_INTERNAL3_C2(Key, ?INTERNAL3_ARGS) ->
 -compile({inline, take_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
 take_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS) ->
     case take_att_recur(Key, C3) of
-        ?TAKEN(Pair, UpdatedC3) ->
-            ?TAKEN(Pair, ?INTERNAL3_C3_REBALANCE(UpdatedC3));
+        ?TAKEN(Taken, UpdatedC3) ->
+            ?TAKEN(Taken, ?INTERNAL3_C3_REBALANCE(UpdatedC3));
         %
         badkey ->
             badkey
@@ -3984,8 +3989,8 @@ take_att_INTERNAL3_C3(Key, ?INTERNAL3_ARGS) ->
 -compile({inline, take_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
 take_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
     case take_att_recur(Key, C4) of
-        ?TAKEN(Pair, UpdatedC4) ->
-            ?TAKEN(Pair, ?INTERNAL3_C4_REBALANCE(UpdatedC4));
+        ?TAKEN(Taken, UpdatedC4) ->
+            ?TAKEN(Taken, ?INTERNAL3_C4_REBALANCE(UpdatedC4));
         %
         badkey ->
             badkey
@@ -3995,15 +4000,15 @@ take_att_INTERNAL3_C4(Key, ?INTERNAL3_ARGS) ->
 
 -compile({inline, take_att_INTERNAL3_K1 / ?INTERNAL3_ARITY}).
 take_att_INTERNAL3_K1(?INTERNAL3_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL3_K1(?INTERNAL3_ARGS)).
+    ?TAKEN(V1, delete_att_INTERNAL3_K1(?INTERNAL3_ARGS)).
 
 -compile({inline, take_att_INTERNAL3_K2 / ?INTERNAL3_ARITY}).
 take_att_INTERNAL3_K2(?INTERNAL3_ARGS) ->
-    ?TAKEN_PAIR(K2, V2, delete_att_INTERNAL3_K2(?INTERNAL3_ARGS)).
+    ?TAKEN(V2, delete_att_INTERNAL3_K2(?INTERNAL3_ARGS)).
 
 -compile({inline, take_att_INTERNAL3_K3 / ?INTERNAL3_ARITY}).
 take_att_INTERNAL3_K3(?INTERNAL3_ARGS) ->
-    ?TAKEN_PAIR(K3, V3, delete_att_INTERNAL3_K3(?INTERNAL3_ARGS)).
+    ?TAKEN(V3, delete_att_INTERNAL3_K3(?INTERNAL3_ARGS)).
 
 %%
 %% ?INTERNAL2
@@ -4027,8 +4032,8 @@ take_att_INTERNAL2(Key, ?INTERNAL2_ARGS) ->
 -compile({inline, take_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
 take_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS) ->
     case take_att_recur(Key, C1) of
-        ?TAKEN(Pair, UpdatedC1) ->
-            ?TAKEN(Pair, ?INTERNAL2_C1_REBALANCE(UpdatedC1));
+        ?TAKEN(Taken, UpdatedC1) ->
+            ?TAKEN(Taken, ?INTERNAL2_C1_REBALANCE(UpdatedC1));
         %
         badkey ->
             badkey
@@ -4037,8 +4042,8 @@ take_att_INTERNAL2_C1(Key, ?INTERNAL2_ARGS) ->
 -compile({inline, take_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
 take_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS) ->
     case take_att_recur(Key, C2) of
-        ?TAKEN(Pair, UpdatedC2) ->
-            ?TAKEN(Pair, ?INTERNAL2_C2_REBALANCE(UpdatedC2));
+        ?TAKEN(Taken, UpdatedC2) ->
+            ?TAKEN(Taken, ?INTERNAL2_C2_REBALANCE(UpdatedC2));
         %
         badkey ->
             badkey
@@ -4047,8 +4052,8 @@ take_att_INTERNAL2_C2(Key, ?INTERNAL2_ARGS) ->
 -compile({inline, take_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
 take_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
     case take_att_recur(Key, C3) of
-        ?TAKEN(Pair, UpdatedC3) ->
-            ?TAKEN(Pair, ?INTERNAL2_C3_REBALANCE(UpdatedC3));
+        ?TAKEN(Taken, UpdatedC3) ->
+            ?TAKEN(Taken, ?INTERNAL2_C3_REBALANCE(UpdatedC3));
         %
         badkey ->
             badkey
@@ -4058,11 +4063,11 @@ take_att_INTERNAL2_C3(Key, ?INTERNAL2_ARGS) ->
 
 -compile({inline, take_att_INTERNAL2_K1 / ?INTERNAL2_ARITY}).
 take_att_INTERNAL2_K1(?INTERNAL2_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL2_K1(?INTERNAL2_ARGS)).
+    ?TAKEN(V1, delete_att_INTERNAL2_K1(?INTERNAL2_ARGS)).
 
 -compile({inline, take_att_INTERNAL2_K2 / ?INTERNAL2_ARITY}).
 take_att_INTERNAL2_K2(?INTERNAL2_ARGS) ->
-    ?TAKEN_PAIR(K2, V2, delete_att_INTERNAL2_K2(?INTERNAL2_ARGS)).
+    ?TAKEN(V2, delete_att_INTERNAL2_K2(?INTERNAL2_ARGS)).
 
 %%
 %% ?INTERNAL1
@@ -4083,8 +4088,8 @@ take_att_INTERNAL1(Key, ?INTERNAL1_ARGS) ->
 -compile({inline, take_att_INTERNAL1_C1 / ?INTERNAL1_ARITY_PLUS1}).
 take_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS) ->
     case take_att_recur(Key, C1) of
-        ?TAKEN(Pair, UpdatedC1) ->
-            ?TAKEN(Pair, ?INTERNAL1_C1_REBALANCE(UpdatedC1));
+        ?TAKEN(Taken, UpdatedC1) ->
+            ?TAKEN(Taken, ?INTERNAL1_C1_REBALANCE(UpdatedC1));
         %
         badkey ->
             badkey
@@ -4093,8 +4098,8 @@ take_att_INTERNAL1_C1(Key, ?INTERNAL1_ARGS) ->
 -compile({inline, take_att_INTERNAL1_C2 / ?INTERNAL1_ARITY_PLUS1}).
 take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
     case take_att_recur(Key, C2) of
-        ?TAKEN(Pair, UpdatedC2) ->
-            ?TAKEN(Pair, ?INTERNAL1_C2_REBALANCE(UpdatedC2));
+        ?TAKEN(Taken, UpdatedC2) ->
+            ?TAKEN(Taken, ?INTERNAL1_C2_REBALANCE(UpdatedC2));
         %
         badkey ->
             badkey
@@ -4102,7 +4107,7 @@ take_att_INTERNAL1_C2(Key, ?INTERNAL1_ARGS) ->
 
 -compile({inline, take_att_INTERNAL1_K1 / ?INTERNAL1_ARITY}).
 take_att_INTERNAL1_K1(?INTERNAL1_ARGS) ->
-    ?TAKEN_PAIR(K1, V1, delete_att_INTERNAL1_K1(?INTERNAL1_ARGS)).
+    ?TAKEN(V1, delete_att_INTERNAL1_K1(?INTERNAL1_ARGS)).
 
 %%
 %% Leaves
@@ -4116,10 +4121,10 @@ take_att_LEAF4(Key, ?LEAF4_ARGS) ->
         K2,
         K3,
         K4,
-        ?TAKEN_PAIR(K1, V1, ?new_LEAF3(K2, K3, K4, V2, V3, V4)),
-        ?TAKEN_PAIR(K2, V2, ?new_LEAF3(K1, K3, K4, V1, V3, V4)),
-        ?TAKEN_PAIR(K3, V3, ?new_LEAF3(K1, K2, K4, V1, V2, V4)),
-        ?TAKEN_PAIR(K4, V4, ?new_LEAF3(K1, K2, K3, V1, V2, V3)),
+        ?TAKEN(V1, ?new_LEAF3(K2, K3, K4, V2, V3, V4)),
+        ?TAKEN(V2, ?new_LEAF3(K1, K3, K4, V1, V3, V4)),
+        ?TAKEN(V3, ?new_LEAF3(K1, K2, K4, V1, V2, V4)),
+        ?TAKEN(V4, ?new_LEAF3(K1, K2, K3, V1, V2, V3)),
         badkey
     ).
 
@@ -4134,9 +4139,9 @@ take_att_LEAF3(Key, ?LEAF3_ARGS) ->
         K1,
         K2,
         K3,
-        ?TAKEN_PAIR(K1, V1, ?new_LEAF2(K2, K3, V2, V3)),
-        ?TAKEN_PAIR(K2, V2, ?new_LEAF2(K1, K3, V1, V3)),
-        ?TAKEN_PAIR(K3, V3, ?new_LEAF2(K1, K2, V1, V2)),
+        ?TAKEN(V1, ?new_LEAF2(K2, K3, V2, V3)),
+        ?TAKEN(V2, ?new_LEAF2(K1, K3, V1, V3)),
+        ?TAKEN(V3, ?new_LEAF2(K1, K2, V1, V2)),
         badkey
     ).
 
@@ -4146,8 +4151,8 @@ take_att_LEAF2(Key, ?LEAF2_ARGS) ->
         Key,
         K1,
         K2,
-        ?TAKEN_PAIR(K1, V1, ?new_LEAF1(K2, V2)),
-        ?TAKEN_PAIR(K2, V2, ?new_LEAF1(K1, V1)),
+        ?TAKEN(V1, ?new_LEAF1(K2, V2)),
+        ?TAKEN(V2, ?new_LEAF1(K1, V1)),
         badkey
     ).
 
@@ -4156,7 +4161,7 @@ take_att_LEAF1(Key, ?LEAF1_ARGS) ->
     ?EXACT_SEARCH1(
         Key,
         K1,
-        ?TAKEN_PAIR(K1, V1, ?LEAF0),
+        ?TAKEN(V1, ?LEAF0),
         badkey
     ).
 
