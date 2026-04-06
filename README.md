@@ -11,11 +11,13 @@ containers. It aims to be a faster alternative to OTP's `gb_trees` and
 
 It provides three modules:
 
-* **`xb5_sets`** — ordered set, drop-in replacement for
+* [**`xb5_sets`**](https://hexdocs.pm/xb5/xb5_sets.html) — ordered set, drop-in
+  replacement for
   [`gb_sets`](https://www.erlang.org/doc/apps/stdlib/gb_sets.html)
-* **`xb5_trees`** — ordered key-value store, drop-in replacement for
+* [**`xb5_trees`**](https://hexdocs.pm/xb5/xb5_trees.html) — ordered key-value
+  store, drop-in replacement for
   [`gb_trees`](https://www.erlang.org/doc/apps/stdlib/gb_trees.html)
-* **`xb5_bag`** — ordered
+* [**`xb5_bag`**](https://hexdocs.pm/xb5/xb5_bag.html) — ordered
   [multiset](https://en.wikipedia.org/wiki/Set_(abstract_data_type)#Multiset)
   with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
   operations (rank, nth element, percentile)
