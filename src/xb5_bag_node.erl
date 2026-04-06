@@ -1279,6 +1279,8 @@ elixir_reduce_recur(Fun, {suspend, ElemAcc}, Iter) ->
 
 elixir_slice_recur(0, _Step, _SubStep, _Iter) ->
     [];
+elixir_slice_recur(_Length, _Step, _SubStep, []) ->
+    [];
 elixir_slice_recur(Length, Step, SubStep, [Head | Tail]) ->
     case Head of
         ?ITER_ELEM(Elem) ->

@@ -67,7 +67,8 @@
     test_map/1,
     test_merge/1,
     test_rewrap/1,
-    test_elixir_reduce/1
+    test_elixir_reduce/1,
+    test_elixir_slice/1
 ]).
 
 %% Test exports - structure
@@ -209,7 +210,8 @@ groups() ->
             test_map,
             test_merge,
             test_rewrap,
-            test_elixir_reduce
+            test_elixir_reduce,
+            test_elixir_slice
         ]},
         {structure, [parallel], [
             % Uncomment as needed, these take a long time in CI.
@@ -1203,6 +1205,49 @@ test_elixir_reduce(_Config) ->
                     ok
             end
         end
+    ).
+
+test_elixir_slice(_Config) ->
+    xb5_test_utils:foreach_tested_size(
+        fun
+            (0) ->
+                ok;
+            (Size) ->
+                List = lists:seq(1, Size),
+                Bag = xb5_bag:from_list(List),
+                {ok, #{root := Root}} = xb5_bag:unwrap(Bag),
+
+                % Step=1, full slice (exercises Length > 1 path)
+                assert_elixir_slice(List, 0, Size, 1, Size, Root),
+
+                % Step=1, single element (exercises Length =:= 1 optimisation path)
+                assert_elixir_slice(List, 0, 1, 1, Size, Root),
+
+                % Step=2 from two different start offsets
+                case Size >= 2 of
+                    true ->
+                        Half = Size div 2,
+                        assert_elixir_slice(List, 0, Half, 2, Size, Root),
+                        assert_elixir_slice(List, 1, Half, 2, Size, Root);
+                    false ->
+                        ok
+                end,
+
+                % Step=3 starting mid-bag
+                case Size >= 3 of
+                    true ->
+                        assert_elixir_slice(List, 2, Size div 3, 3, Size, Root);
+                    false ->
+                        ok
+                end
+        end
+    ).
+
+assert_elixir_slice(List, StartIndex, Length, Step, RootSize, Root) ->
+    Expected = [lists:nth(StartIndex + 1 + I * Step, List) || I <- lists:seq(0, Length - 1)],
+    ?assertEqual(
+        Expected,
+        xb5_bag_node:elixir_slice(StartIndex, Length, Step, RootSize, Root)
     ).
 
 %% ------------------------------------------------------------------
