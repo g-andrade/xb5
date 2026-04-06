@@ -38,6 +38,8 @@ test/
   xb5_sets_test_SUITE.erl   Common Test suite for sets
   xb5_trees_test_SUITE.erl  Common Test suite for trees
   xb5_bag_test_SUITE.erl    Common Test suite for bags
+  xb5_sets_ref.erl          Reference implementation helpers for sets tests
+  xb5_trees_ref.erl         Reference implementation helpers for trees tests
   xb5_test_utils.erl        Test helpers (foreach_tested_size, etc.)
 ```
 
@@ -88,8 +90,7 @@ All public functions use `-doc` and `-moduledoc` attributes, wrapped in
 GitHub Actions (`.github/workflows/ci.yml`): tests on OTP 24.3, 25.3, 26.2, 27.3,
 and 28.4, runs `make check` then `make test`.
 
-## Pre-release status
+## Cross-language interop
 
-- CHANGELOG.md has only an `[Unreleased]` section.
-- `wrap/unwrap` functions exist for cross-language interop (e.g., converting
-  to/from an Elixir struct that shares the same underlying node module).
+`wrap/unwrap` functions exist for cross-language interop (e.g., converting
+to/from an Elixir struct that shares the same underlying node module).
