@@ -717,6 +717,8 @@ iterator_from(Element, #xb5_bag{root = Root}, Order) ->
 Returns an iterator that can be used for traversing the elements of
 `Bag` starting from element at `Rank`; see `next/1`.
 
+If `Rank` is larger than the bag size, the iterator will yield no elements.
+
 ## Examples
 
 ```erlang
@@ -735,7 +737,7 @@ none
     Iter :: iter(Element).
 
 iterator_from_nth(Rank, #xb5_bag{size = Size, root = Root}) when
-    is_integer(Rank), Rank >= 1, Rank =< Size
+    is_integer(Rank), Rank >= 1
 ->
     xb5_bag_node:iterator_from_nth(Rank, Size, Root, ordered);
 iterator_from_nth(Rank, #xb5_bag{}) ->

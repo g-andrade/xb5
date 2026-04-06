@@ -637,6 +637,8 @@ iterator_from(Elem, Root, reversed) ->
     [?REV_ITER_TAG | Acc].
 
 -spec iterator_from_nth(pos_integer(), non_neg_integer(), t(Elem), ordered) -> iter(Elem).
+iterator_from_nth(Rank, Size, _, _) when Rank > Size ->
+    [];
 iterator_from_nth(Rank, Size, Root, ordered) ->
     bound_nth_fwd_iterator(Rank, Size, Root).
 

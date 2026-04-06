@@ -1948,7 +1948,7 @@ run_iterator_from_nth(RefElements, Bag) ->
     ?assertError({badarg, 0}, new_iterator_from_nth(xb5_utils:dialyzer_opaque_term(0), Bag)),
 
     SizePlus1 = xb5_bag:size(Bag) + 1,
-    ?assertError({badarg, SizePlus1}, new_iterator_from_nth(SizePlus1, Bag)),
+    ?assertEqual([], iterate(new_iterator_from_nth(SizePlus1, Bag))),
 
     run_iterator_from_nth_recur(RefElements, 1, Bag).
 
