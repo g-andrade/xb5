@@ -57,6 +57,7 @@
     test_map/1,
     test_merge/1,
     test_rewrap/1,
+    test_elixir_reduce/1,
     test_gb_trees_api_covered/1
 ]).
 
@@ -175,6 +176,7 @@ groups() ->
             test_map,
             test_merge,
             test_rewrap,
+            test_elixir_reduce,
             test_gb_trees_api_covered
         ]},
         {structure, [parallel], [
@@ -785,6 +787,43 @@ test_rewrap(_Config) ->
             Xb5 = xb5_trees_ref:extract_xb5(Col),
             {ok, Unwrapped} = xb5_trees:unwrap(Xb5),
             ?assertEqual(Xb5, xb5_trees:wrap(Unwrapped))
+        end
+    ).
+
+test_elixir_reduce(_Config) ->
+    xb5_test_utils:foreach_tested_size(
+        fun(Size) ->
+            List = [{I, I} || I <- lists:seq(1, Size)],
+            Tree = xb5_trees:from_orddict(List),
+            {ok, #{root := Root}} = xb5_trees:unwrap(Tree),
+
+            % Full reduction
+            SumFun = fun({K, V}, Acc) -> {cont, K + V + Acc} end,
+            ?assertEqual(
+                {done, 2 * lists:sum(lists:seq(1, Size))},
+                xb5_trees_node:elixir_reduce(SumFun, {cont, 0}, Root)
+            ),
+
+            % Halt early
+            HaltFun = fun({K, _}, Acc) when K < 5 -> {cont, K + Acc}; (_, Acc) -> {halt, Acc} end,
+            ExpectedHalt =
+                if
+                    Size >= 5 -> {halted, lists:sum(lists:seq(1, 4))};
+                    true -> {done, lists:sum(lists:seq(1, Size))}
+                end,
+            ?assertEqual(ExpectedHalt, xb5_trees_node:elixir_reduce(HaltFun, {cont, 0}, Root)),
+
+            % Suspend
+            SuspendFun = fun({K, _}, Acc) -> {suspend, K + Acc} end,
+            case xb5_trees_node:elixir_reduce(SuspendFun, {cont, 0}, Root) of
+                {suspended, SuspKey, Continuation} ->
+                    ?assert(lists:member(SuspKey, [I || {I, _} <- List])),
+                    ?assert(is_function(Continuation, 1)),
+                    % Resume with halt
+                    ?assertEqual({halted, 0}, Continuation({halt, 0}));
+                {done, 0} when Size =:= 0 ->
+                    ok
+            end
         end
     ).
 

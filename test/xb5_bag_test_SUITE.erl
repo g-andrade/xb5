@@ -66,7 +66,8 @@
     test_fold/1,
     test_map/1,
     test_merge/1,
-    test_rewrap/1
+    test_rewrap/1,
+    test_elixir_reduce/1
 ]).
 
 %% Test exports - structure
@@ -207,7 +208,8 @@ groups() ->
             test_fold,
             test_map,
             test_merge,
-            test_rewrap
+            test_rewrap,
+            test_elixir_reduce
         ]},
         {structure, [parallel], [
             % Uncomment as needed, these take a long time in CI.
@@ -1161,6 +1163,40 @@ test_rewrap(_Config) ->
         fun(_Size, _RefElements, Bag) ->
             {ok, Unwrapped} = xb5_bag:unwrap(Bag),
             ?assertEqual(Bag, xb5_bag:wrap(Unwrapped))
+        end
+    ).
+
+test_elixir_reduce(_Config) ->
+    xb5_test_utils:foreach_tested_size(
+        fun(Size) ->
+            List = lists:seq(1, Size),
+            Bag = xb5_bag:from_list(List),
+            {ok, #{root := Root}} = xb5_bag:unwrap(Bag),
+
+            % Full reduction
+            SumFun = fun(E, Acc) -> {cont, E + Acc} end,
+            ?assertEqual({done, lists:sum(List)}, xb5_bag_node:elixir_reduce(SumFun, {cont, 0}, Root)),
+
+            % Halt early
+            HaltFun = fun(E, Acc) when E < 5 -> {cont, E + Acc}; (_, Acc) -> {halt, Acc} end,
+            ExpectedHalt =
+                if
+                    Size >= 5 -> {halted, lists:sum(lists:seq(1, 4))};
+                    true -> {done, lists:sum(List)}
+                end,
+            ?assertEqual(ExpectedHalt, xb5_bag_node:elixir_reduce(HaltFun, {cont, 0}, Root)),
+
+            % Suspend
+            SuspendFun = fun(E, Acc) -> {suspend, E + Acc} end,
+            case xb5_bag_node:elixir_reduce(SuspendFun, {cont, 0}, Root) of
+                {suspended, SuspAcc, Continuation} ->
+                    ?assert(lists:member(SuspAcc, List)),
+                    ?assert(is_function(Continuation, 1)),
+                    % Resume with halt
+                    ?assertEqual({halted, 0}, Continuation({halt, 0}));
+                {done, 0} when Size =:= 0 ->
+                    ok
+            end
         end
     ).
 

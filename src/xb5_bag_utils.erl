@@ -84,9 +84,8 @@ The method used to calculate a percentile bracket.
 The result of a percentile bracket calculation.
 
 - `{exact, Element}` -- the percentile falls exactly on an element.
-- `{between, A, B, T}` -- the percentile falls between elements A and B.
-  `Low` and `High` are `t:percentile_bracket_bound/1` maps with
-  interpolation weights.
+- `{between, A, B, T}` -- the percentile falls between elements A and B, where `T`
+  is a float in `(0.0, 1.0)` representing the interpolation factor.
 - `none` -- the percentile cannot be calculated (empty bag, or out of
   range for the chosen method).
 """.
@@ -165,7 +164,6 @@ Returns the [percentile rank](https://en.wikipedia.org/wiki/Percentile_rank)
 of `Element` in non-empty `Root` as a float in `[0.0, 1.0]`, in O(log n) time.
 
 `Element` does not have to be in the bag.
-```
 """.
 -endif.
 -spec percentile_rank(Element, Size, Root) -> Rank when
@@ -339,9 +337,7 @@ linear_interpolation_test() ->
 
     ?assertEqual(2.50000000075e29, linear_interpolation(L5A, L5B, 0.25)),
     ?assertEqual(5.0000000004999996e29, linear_interpolation(L5A, L5B, 0.50)),
-    ?assertEqual(7.50000000025e29, linear_interpolation(L5A, L5B, 0.75)),
-
-    todo.
+    ?assertEqual(7.50000000025e29, linear_interpolation(L5A, L5B, 0.75)).
 
 precise_float(Integer) when is_integer(Integer) ->
     Float = float(Integer),
