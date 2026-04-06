@@ -23,13 +23,41 @@ It provides three modules:
 The APIs of `xb5_sets` and `xb5_trees` mirror their stdlib counterparts;
 refer to the [API documentation](https://hexdocs.pm/xb5/) for details.
 
+## Installation
+
+### Erlang
+
+`rebar.config`:
+```erlang
+{deps, [
+    % [...]
+    {xb5, "~> 0.1.0"}
+]}
+```
+
+`your_application.app.src`:
+```erlang
+{applications, [
+    kernel,
+    stdlib,
+    % [...]
+    xb5
+]}
+```
+
+### Elixir
+
+[`xb5_elixir`](https://github.com/g-andrade/xb5_elixir) provides an idiomatic
+wrapper of `xb5`.
+
 ## Benchmarks
 
 [![](https://www.gandrade.net/xb5_benchmark/Screenshot_20260406_034149.png)](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html)
 
 Benchmarks compare all three modules against `gb_sets`/`gb_trees` across 50+
 operations and collection sizes up to 15,000 elements, measuring both runtime
-and heap allocation. Each module is tested under three build scenarios: bulk
+and heap allocation. All tests used small integers (immediate values) as keys.
+Each module is tested under three build scenarios: bulk
 construction from a sorted input, sequential single-key insertion, and random
 insertion order. Tests ran on OTP 28 with JIT enabled on two machines:
 [AMD Ryzen 7 5700G](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html)
