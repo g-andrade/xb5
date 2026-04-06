@@ -111,8 +111,9 @@ the method is either `inclusive` or `exclusive` (default is `inclusive`, see
 `t:percentile_bracket_method/0`) and the bracket doesn't fall on one exact
 element. Returns `{value, Result}` or `none`.
 
-Raises a `{bracket_value_not_a_number, Bound}` error if linear interpolation is
-required but the bracketing elements are not numbers.
+Raises a `{bracket_value_not_a_number, #{value => Bound, bracket => Bracket}}`
+error if linear interpolation is required but the bracketing elements are not
+numbers.
 """.
 -endif.
 -spec percentile(Percentile, Size, Root, ValueFun, Opts) -> ValueWrap | none when
@@ -236,10 +237,10 @@ linear_interpolated_percentile({exact, ExactElem}, ValueFun) ->
 linear_interpolated_percentile({between, A, B, T} = Bracket, ValueFun) ->
     if
         not is_number(A) ->
-            error({bracket_value_not_a_number, A, in, Bracket});
+            error({bracket_value_not_a_number, #{value => A, bracket => Bracket}});
         %
         not is_number(B) ->
-            error({bracket_value_not_a_number, B, in, Bracket});
+            error({bracket_value_not_a_number, #{value => B, bracket => Bracket}});
         %
         true ->
             ValueFun(linear_interpolation(A, B, T))

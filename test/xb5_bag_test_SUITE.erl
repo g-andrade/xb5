@@ -2269,13 +2269,13 @@ test_valid_percentile_inclusive(Size, RefElements, Bag) ->
                         if
                             not is_number(A) ->
                                 ?assertCanonError(
-                                    {bracket_value_not_a_number, A, in, Bracket},
+                                    {bracket_value_not_a_number, #{value => A, bracket => Bracket}},
                                     new_percentile_inclusive(Percentile, Bag)
                                 );
                             %
                             not is_number(B) ->
                                 ?assertCanonError(
-                                    {bracket_value_not_a_number, B, in, Bracket},
+                                    {bracket_value_not_a_number, #{value => B, bracket => Bracket}},
                                     new_percentile_inclusive(Percentile, Bag)
                                 );
                             %
@@ -2445,13 +2445,13 @@ test_valid_percentile_exclusive(Size, RefElements, Bag) ->
                         if
                             not is_number(A) ->
                                 ?assertCanonError(
-                                    {bracket_value_not_a_number, A, in, Bracket},
+                                    {bracket_value_not_a_number, #{value => A, bracket => Bracket}},
                                     new_percentile_exclusive(Percentile, Bag)
                                 );
                             %
                             not is_number(B) ->
                                 ?assertCanonError(
-                                    {bracket_value_not_a_number, B, in, Bracket},
+                                    {bracket_value_not_a_number, #{value => B, bracket => Bracket}},
                                     new_percentile_exclusive(Percentile, Bag)
                                 );
                             %

@@ -961,8 +961,9 @@ interpolation of the `inclusive` percentile bracket. Returns
 `{value, Result}` or `none`. Equivalent to
 `percentile(Percentile, Bag, [])`.
 
-Raises a `{bracket_value_not_a_number, Bound}` error if linear
-interpolation is required but the bracketing elements are not numbers.
+Raises a `{bracket_value_not_a_number, #{value => Bound, bracket => Bracket}}`
+error if linear interpolation is required but the bracketing elements are not
+numbers.
 
 ## Examples
 
@@ -993,8 +994,9 @@ Like `percentile/2`, but accepts a list of options. Runs in O(log n)
 time. The only supported option is `{method, Method}`; see
 `t:xb5_bag_utils:percentile_bracket_method/0`.
 
-Raises a `{bracket_value_not_a_number, Bound}` error if linear
-interpolation is required but the bracketing elements are not numbers.
+Raises a `{bracket_value_not_a_number, #{value => Bound, bracket => Bracket}}`
+error if linear interpolation is required but the bracketing elements are not
+numbers.
 
 ## Examples
 
