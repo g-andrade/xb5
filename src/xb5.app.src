@@ -1,5 +1,5 @@
 {application, xb5, [
-    {description, "B-trees of order 5 (tree, set, multiset) for Erlang/OTP"},
+    {description, "B-trees of order 5 (tree, set, order-statistic multiset) for Erlang/OTP"},
     {vsn, git},
     {registered, []},
     {applications, [
