@@ -22,6 +22,10 @@ rank, percentiles).
 """.
 -endif.
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
@@ -666,8 +670,8 @@ Keys are compared with `==`, values with `=:=`.
 ## Examples
 
 ```erlang
-> S1 = xb5_trees:from_list([{1, a} {2, b} {3, c}]).
-> S2 = xb5_trees:from_list([{3, c}, {1.0, a} {2, b}]).
+> S1 = xb5_trees:from_list([{1, a}, {2, b}, {3, c}]).
+> S2 = xb5_trees:from_list([{3, c}, {1.0, a}, {2, b}]).
 > xb5_trees:is_equal(S1, S2).
 true
 > S3 = xb5_trees:from_list([{1, x}, {2, y}]).
@@ -1503,3 +1507,13 @@ get_not_found(Key) -> error_badkey(Key).
 lookup_found(_Key, Value) -> {value, Value}.
 
 lookup_not_found(_Key) -> none.
+
+%% ------------------------------------------------------------------
+%% Unit Tests
+%% ------------------------------------------------------------------
+-ifdef(TEST).
+
+doctest_test() ->
+    doctest:module(?MODULE).
+
+-endif.

@@ -1,5 +1,9 @@
 -module(xb5_bag_utils).
 
+-moduledoc """
+Additional utils for operating over `m:xb5_bag` contents.
+""".
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.

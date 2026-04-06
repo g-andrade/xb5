@@ -14,11 +14,15 @@ The tree is always balanced after every insertion and deletion.
 API is the same as `m:gb_sets`.
 
 See also:
-- `m:xb5_sets` for an element set supporting set operations (union, intersection, difference)
+- `m:xb5_trees` for the key-value counterpart
 - `m:xb5_bag` for a multiset supporting [order
 statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations (get nth,
 rank, percentiles).
 """.
+-endif.
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
 -endif.
 
 %% ------------------------------------------------------------------
@@ -489,8 +493,8 @@ allocations or element comparisons. This is analogous to `gb_sets:from_ordset/1`
 ```
 """.
 -endif.
--spec from_ordset(List) -> Set when
-    List :: ordsets:ordset(Element),
+-spec from_ordset(Ordset) -> Set when
+    Ordset :: ordsets:ordset(Element),
     Set :: set(Element).
 
 from_ordset(Ordset) ->
@@ -1345,3 +1349,13 @@ union_recur(Size1, Root1, [#xb5_set{size = Size2, root = Root2} | Next]) ->
     union_recur(NewSize, NewRoot, Next);
 union_recur(Size, Root, []) ->
     #xb5_set{size = Size, root = Root}.
+
+%% ------------------------------------------------------------------
+%% Unit Tests
+%% ------------------------------------------------------------------
+-ifdef(TEST).
+
+doctest_test() ->
+    doctest:module(?MODULE).
+
+-endif.

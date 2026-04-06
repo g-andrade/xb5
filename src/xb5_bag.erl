@@ -28,6 +28,10 @@ See also:
 """.
 -endif.
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
@@ -202,13 +206,13 @@ If `Element` is already a member of `Bag1`, `Bag1` is returned unchanged.
 ## Examples
 
 ```erlang
-> S0 = xb5_bags:new().
-> xb5_bags:to_list(xb5_bags:add(1, S0)).
+> S0 = xb5_bag:new().
+> xb5_bag:to_list(xb5_bag:add(1, S0)).
 [1]
-> S1 = xb5_bags:from_list([1, 2, 3]).
-> xb5_bags:to_list(xb5_bags:add(2, S1)).
+> S1 = xb5_bag:from_list([1, 2, 3]).
+> xb5_bag:to_list(xb5_bag:add(2, S1)).
 [1, 2, 3]
-> xb5_bags:to_list(xb5_bags:add(4, S1)).
+> xb5_bag:to_list(xb5_bag:add(4, S1)).
 [1, 2, 3, 4]
 ```
 """.
@@ -513,8 +517,8 @@ to `from_ordered_list/1` — see that function for performance characteristics.
 ```
 """.
 -endif.
--spec from_ordset(List) -> Bag when
-    List :: ordsets:ordset(Element),
+-spec from_ordset(Ordset) -> Bag when
+    Ordset :: ordsets:ordset(Element),
     Bag :: bag(Element).
 
 from_ordset(Ordset) ->
@@ -1524,3 +1528,13 @@ delete_all_recur(Element, Size, Root) ->
         UpdatedRoot ->
             delete_all_recur(Element, Size - 1, UpdatedRoot)
     end.
+
+%% ------------------------------------------------------------------
+%% Unit Tests
+%% ------------------------------------------------------------------
+-ifdef(TEST).
+
+doctest_test() ->
+    doctest:module(?MODULE).
+
+-endif.
