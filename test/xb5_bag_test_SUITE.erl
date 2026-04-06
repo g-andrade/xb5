@@ -1175,10 +1175,15 @@ test_elixir_reduce(_Config) ->
 
             % Full reduction
             SumFun = fun(E, Acc) -> {cont, E + Acc} end,
-            ?assertEqual({done, lists:sum(List)}, xb5_bag_node:elixir_reduce(SumFun, {cont, 0}, Root)),
+            ?assertEqual(
+                {done, lists:sum(List)}, xb5_bag_node:elixir_reduce(SumFun, {cont, 0}, Root)
+            ),
 
             % Halt early
-            HaltFun = fun(E, Acc) when E < 5 -> {cont, E + Acc}; (_, Acc) -> {halt, Acc} end,
+            HaltFun = fun
+                (E, Acc) when E < 5 -> {cont, E + Acc};
+                (_, Acc) -> {halt, Acc}
+            end,
             ExpectedHalt =
                 if
                     Size >= 5 -> {halted, lists:sum(lists:seq(1, 4))};

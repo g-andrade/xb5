@@ -805,7 +805,10 @@ test_elixir_reduce(_Config) ->
             ),
 
             % Halt early
-            HaltFun = fun({K, _}, Acc) when K < 5 -> {cont, K + Acc}; (_, Acc) -> {halt, Acc} end,
+            HaltFun = fun
+                ({K, _}, Acc) when K < 5 -> {cont, K + Acc};
+                (_, Acc) -> {halt, Acc}
+            end,
             ExpectedHalt =
                 if
                     Size >= 5 -> {halted, lists:sum(lists:seq(1, 4))};
