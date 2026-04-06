@@ -88,8 +88,7 @@ API for operating over `m:xb5_trees` internal nodes directly.
 
 -hank([
     {unnecessary_function_arguments, [
-        {get_found, 2, 1},
-        {get_not_found, 1, 1},
+        {merge_get_found, 2, 1},
         {intersect_get_not_found, 1, 1},
         {merge_pick_first, 3, 1},
         {merge_pick_first, 3, 3},
@@ -629,7 +628,12 @@ from_orddict(S, L) ->
     [Root | []] = from_orddict_recur(S, L, BatchOffset, BatchSize, AtRoot),
     Root.
 
--spec get_att(Key, t(Key, Value), fun((Key, Value) -> Found), fun((Key) -> NotFound)) ->
+-spec get_att(
+    Key,
+    t(Key, Value),
+    fun((Key, Value) -> Found),
+    fun((Key) -> NotFound) | unreachable
+) ->
     Found | NotFound.
 get_att(Key, ?INTERNAL1_MATCH_ALL, Found, NotFound) ->
     get_att_INTERNAL1(Key, ?INTERNAL1_ARGS, Found, NotFound);
@@ -3445,7 +3449,7 @@ merge_1_a([], Size2, Root2) ->
 merge_1_b(Fun1, [{Key, ValueA} | Next], Size2, Root2) ->
     case insert_att(Key, eager, ValueA, Root2) of
         key_exists ->
-            ValueB = get(Key, Root2),
+            ValueB = merge_get(Key, Root2),
             MergeValue = Fun1(Key, ValueA, ValueB),
             UpdatedRoot2 = update_att(Key, eager, MergeValue, Root2),
             merge_1_b(Fun1, Next, Size2, UpdatedRoot2);
@@ -3456,15 +3460,11 @@ merge_1_b(Fun1, [{Key, ValueA} | Next], Size2, Root2) ->
 merge_1_b(_Fun1, [], Size2, Root2) ->
     [Size2 | Root2].
 
-get(Key, Root2) ->
-    get_att(Key, Root2, fun get_found/2, fun get_not_found/1).
+merge_get(Key, Root2) ->
+    get_att(Key, Root2, fun merge_get_found/2, unreachable).
 
-get_found(_Key, Value) ->
+merge_get_found(_Key, Value) ->
     Value.
-
--spec get_not_found(_) -> no_return().
-get_not_found(_Key) ->
-    error('This path is supposed to be unreachable').
 
 %%
 
