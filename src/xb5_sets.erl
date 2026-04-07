@@ -14,7 +14,9 @@ Conversion to a list via `to_list/1` always yields elements in ascending order.
 ## See also
 
 - `m:xb5_trees` — ordered key-value store.
-- `m:xb5_bag` — ordered multiset with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations.
+- `m:xb5_bag` — ordered multiset with
+   [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
+   operations.
 
 ## Examples
 

@@ -26,7 +26,9 @@ In addition to the `m:gb_trees` API, `xb5_trees` provides:
 ## See also
 
 - `m:xb5_sets` — ordered set.
-- `m:xb5_bag` — ordered multiset with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations.
+- `m:xb5_bag` — ordered multiset with
+  [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
+  operations.
 
 ## Examples
 
