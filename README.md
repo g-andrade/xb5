@@ -167,6 +167,8 @@ two machines: [AMD Ryzen 7
 [Intel
 i5-3550](https://www.gandrade.net/xb5_benchmark/report_intel_i5_3550.html).
 
+In general, measured performance gains grew with collection size.
+
 **`xb5_sets` vs `gb_sets`:**
 
 * Mutations, membership tests, set-algebraic operations (difference, union,
@@ -180,7 +182,7 @@ i5-3550](https://www.gandrade.net/xb5_benchmark/report_intel_i5_3550.html).
 
 **`xb5_trees` vs `gb_trees`:**
 
-* Lookups: **1.6–1.9× as fast**, with equal heap
+* Lookups: **1.1–1.9× as fast**, with equal heap
 * Mutations (insert, update, delete, take): **1.2–1.7× as fast**
 * map, keys, values: **1.9–2.5× as fast**; map uses ~47% less heap
 * Alternating take-smallest/insert-largest: **1.7–3.3× as fast**
@@ -191,7 +193,7 @@ i5-3550](https://www.gandrade.net/xb5_benchmark/report_intel_i5_3550.html).
 * Runtime profile broadly matches `xb5_sets`
 * Filter/map operations: up to **~40% less heap**
 * Bulk construction: **~15–62% less heap**
-* Mutations: **~20–25% more heap**
+* Mutations: **~20–40% more heap**
 
 ## Technical Details
 
