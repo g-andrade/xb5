@@ -2,30 +2,28 @@
 
 [![CI](https://github.com/g-andrade/xb5/actions/workflows/ci.yml/badge.svg)](https://github.com/g-andrade/xb5/actions/workflows/ci.yml)
 [![Erlang Versions](https://img.shields.io/badge/Supported%20Erlang%2FOTP-24%20to%2028-blue)](https://www.erlang.org)
+[![Latest version](https://img.shields.io/hexpm/v/xb5.svg?style=flat)](https://hex.pm/packages/xb5)
+[![API reference](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/xb5/)
 [![Last commit](https://img.shields.io/github/last-commit/g-andrade/xb5.svg)](https://github.com/g-andrade/xb5/commits/main)
 
-`xb5` is an Erlang library that implements
-[B-tree](https://en.wikipedia.org/wiki/B-tree)-based (order 5) sorted
-containers. It aims to be a faster alternative to OTP's `gb_trees` and
-`gb_sets` for most workloads.
+`xb5` is an Erlang library providing [B-tree](https://en.wikipedia.org/wiki/B-tree)-based
+(order 5) replacements for OTP's `gb_trees` and `gb_sets`. Benchmarks show **[1.2–2.5×
+faster](#benchmarks)** execution and equal or lower heap usage for most operations.
 
 It provides three modules:
 
-* **`xb5_bag`** — ordered
-  [multiset](https://en.wikipedia.org/wiki/Set_(abstract_data_type)#Multiset)
-  with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
-  O(log n) operations (rank, nth element, percentile)
 * **`xb5_sets`** — ordered set, drop-in replacement for
   [`gb_sets`](https://www.erlang.org/doc/apps/stdlib/gb_sets.html)
 * **`xb5_trees`** — ordered key-value store, drop-in replacement for
   [`gb_trees`](https://www.erlang.org/doc/apps/stdlib/gb_trees.html)
+* **`xb5_bag`** — ordered
+  [multiset](https://en.wikipedia.org/wiki/Set_(abstract_data_type)#Multiset)
+  with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
+  O(log n) operations (rank, nth element, percentile)
 
 ## Getting started
 
-[![Latest version](https://img.shields.io/hexpm/v/xb5.svg?style=flat)](https://hex.pm/packages/xb5)
-[![API reference](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/xb5/)
-
-### Erlang
+Available on [Hex](https://hex.pm/packages/xb5) · [API docs](https://hexdocs.pm/xb5/)
 
 `rebar.config`:
 ```erlang
@@ -45,13 +43,106 @@ It provides three modules:
 ]}
 ```
 
-The APIs of `xb5_sets` and `xb5_trees` mirror their stdlib counterparts;
-refer to the [API documentation](https://hexdocs.pm/xb5/) for details.
+For Elixir, [`xb5_elixir`](https://hex.pm/packages/xb5_elixir) provides an
+idiomatic wrapper.
 
-### Elixir
+## Usage
 
-[`xb5_elixir`](https://github.com/g-andrade/xb5_elixir) provides an idiomatic
-wrapper of `xb5`.
+### `xb5_sets`
+
+```erlang
+> S = xb5_sets:from_list([3, 1, 2, 1]).
+> xb5_sets:to_list(S).
+[1, 2, 3]
+> xb5_sets:is_member(2, S).
+true
+> xb5_sets:smallest(S).
+1
+> xb5_sets:largest(S).
+3
+> xb5_sets:smaller(2, S).
+{found, 1}
+> xb5_sets:larger(2, S).
+{found, 3}
+```
+
+```erlang
+> A = xb5_sets:from_list([1, 2, 3, 4, 5]).
+> B = xb5_sets:from_list([3, 4, 5, 6, 7]).
+> xb5_sets:to_list(xb5_sets:union(A, B)).
+[1, 2, 3, 4, 5, 6, 7]
+> xb5_sets:to_list(xb5_sets:difference(A, B)).
+[1, 2]
+> xb5_sets:to_list(xb5_sets:intersection(A, B)).
+[3, 4, 5]
+```
+
+### `xb5_trees`
+
+```erlang
+> T = xb5_trees:from_list([{a, 1}, {b, 2}, {c, 3}]).
+> xb5_trees:get(a, T).
+1
+> xb5_trees:lookup(d, T).
+none
+> xb5_trees:smallest(T).
+{a, 1}
+> xb5_trees:largest(T).
+{c, 3}
+> xb5_trees:keys(xb5_trees:insert(d, 4, T)).
+[a, b, c, d]
+> xb5_trees:smaller(c, T).
+{b, 2}
+> xb5_trees:larger(b, T).
+{c, 3}
+```
+
+### `xb5_bag`
+
+An ordered multiset with O(log n) order-statistic operations.
+
+`push/2` always inserts a new copy; `add/2` is idempotent.
+
+```erlang
+> B0 = xb5_bag:new().
+> B1 = xb5_bag:push(x, B0).
+> B2 = xb5_bag:push(x, B1).
+> xb5_bag:size(B2).
+2
+> xb5_bag:count(x, B2).
+2
+> xb5_bag:to_list(xb5_bag:add(x, B2)).
+[x, x]
+```
+
+Order statistics on numerical data:
+
+```erlang
+> L = xb5_bag:from_list([12, 14, 14, 15, 15, 18, 20, 25, 30, 100]).
+> xb5_bag:count(15, L).
+2
+> xb5_bag:nth(1, L).
+12
+> xb5_bag:nth(5, L).
+15
+> xb5_bag:nth(10, L).
+100
+> xb5_bag:percentile_bracket(0.0, L).
+{exact, 12}
+> xb5_bag:percentile_bracket(0.5, L).
+{between, 15, 18, 0.5}
+> xb5_bag:percentile(0.5, L).
+{value, 16.5}
+> xb5_bag:percentile(0.75, L).
+{value, 23.75}
+```
+
+`percentile_bracket/2` returns `{exact, X}` when the percentile falls exactly on
+an element, or `{between, Low, High, T}` when between two — where `T` is the
+linear interpolation weight. The default method is `inclusive` (equivalent to
+Excel [`PERCENTILE.INC`](https://support.microsoft.com/en-au/office/percentile-inc-function-680f9539-45eb-410b-9a5e-c1355e5fe2ed));
+`exclusive` and `nearest_rank` are also available via `percentile_bracket/3`.
+`percentile/2` performs the interpolation and returns `{value, Result}`.
 
 ## Benchmarks
 
@@ -60,9 +151,8 @@ wrapper of `xb5`.
 Benchmarks compare all three modules against `gb_sets`/`gb_trees` across 50+
 operations and collection sizes up to 15,000 elements, measuring both runtime
 and heap allocation. All tests used small integers (immediate values) as keys.
-Each module is tested under three build scenarios: bulk
-construction from a sorted input, sequential single-key insertion, and random
-insertion order. Tests ran on OTP 28 with JIT enabled on two machines:
+Each module is tested under three build scenarios: bulk construction from a
+sorted input, sequential single-key insertion, and random insertion order. Tests ran on OTP 28 with JIT enabled on two machines:
 [AMD Ryzen 7 5700G](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html)
 and
 [Intel i5-3550](https://www.gandrade.net/xb5_benchmark/report_intel_i5_3550.html).
