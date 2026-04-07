@@ -12,16 +12,16 @@ faster](#benchmarks)** execution and equal or lower heap usage for most operatio
 
 It provides three modules:
 
-* **`xb5_sets`** — ordered set, drop-in replacement for
-  [`gb_sets`](https://www.erlang.org/doc/apps/stdlib/gb_sets.html)
-* **`xb5_trees`** — ordered key-value store, drop-in replacement for
-  [`gb_trees`](https://www.erlang.org/doc/apps/stdlib/gb_trees.html)
 * **`xb5_bag`** — ordered
   [multiset](https://en.wikipedia.org/wiki/Set_(abstract_data_type)#Multiset)
   with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
   O(log n) operations (rank, nth element, percentile)
+* **`xb5_sets`** — ordered set, drop-in replacement for
+  [`gb_sets`](https://www.erlang.org/doc/apps/stdlib/gb_sets.html)
+* **`xb5_trees`** — ordered key-value store, drop-in replacement for
+  [`gb_trees`](https://www.erlang.org/doc/apps/stdlib/gb_trees.html)
 
-## Getting started
+## Installation
 
 Available on [Hex](https://hex.pm/packages/xb5) · [API docs](https://hexdocs.pm/xb5/)
 
@@ -48,58 +48,10 @@ idiomatic wrapper.
 
 ## Usage
 
-### `xb5_sets`
+### xb5_bag
 
-```erlang
-> S = xb5_sets:from_list([3, 1, 2, 1]).
-> xb5_sets:to_list(S).
-[1, 2, 3]
-> xb5_sets:is_member(2, S).
-true
-> xb5_sets:smallest(S).
-1
-> xb5_sets:largest(S).
-3
-> xb5_sets:smaller(2, S).
-{found, 1}
-> xb5_sets:larger(2, S).
-{found, 3}
-```
-
-```erlang
-> A = xb5_sets:from_list([1, 2, 3, 4, 5]).
-> B = xb5_sets:from_list([3, 4, 5, 6, 7]).
-> xb5_sets:to_list(xb5_sets:union(A, B)).
-[1, 2, 3, 4, 5, 6, 7]
-> xb5_sets:to_list(xb5_sets:difference(A, B)).
-[1, 2]
-> xb5_sets:to_list(xb5_sets:intersection(A, B)).
-[3, 4, 5]
-```
-
-### `xb5_trees`
-
-```erlang
-> T = xb5_trees:from_list([{a, 1}, {b, 2}, {c, 3}]).
-> xb5_trees:get(a, T).
-1
-> xb5_trees:lookup(d, T).
-none
-> xb5_trees:smallest(T).
-{a, 1}
-> xb5_trees:largest(T).
-{c, 3}
-> xb5_trees:keys(xb5_trees:insert(d, 4, T)).
-[a, b, c, d]
-> xb5_trees:smaller(c, T).
-{b, 2}
-> xb5_trees:larger(b, T).
-{c, 3}
-```
-
-### `xb5_bag`
-
-An ordered multiset with O(log n) order-statistic operations.
+An ordered multiset, allowing multiple occurrences of the same value. Supports
+order-statistic operations such as `percentile/3` and `percentile_bracket/3`.
 
 `push/2` always inserts a new copy; `add/2` is idempotent.
 
@@ -143,6 +95,61 @@ linear interpolation weight. The default method is `inclusive` (equivalent to
 Excel [`PERCENTILE.INC`](https://support.microsoft.com/en-au/office/percentile-inc-function-680f9539-45eb-410b-9a5e-c1355e5fe2ed));
 `exclusive` and `nearest_rank` are also available via `percentile_bracket/3`.
 `percentile/2` performs the interpolation and returns `{value, Result}`.
+
+### xb5_sets
+
+Ordered set, drop-in replacement for
+[`gb_sets`](https://www.erlang.org/doc/apps/stdlib/gb_sets.html).
+
+```erlang
+> S = xb5_sets:from_list([3, 1, 2, 1]).
+> xb5_sets:to_list(S).
+[1, 2, 3]
+> xb5_sets:is_member(2, S).
+true
+> xb5_sets:smallest(S).
+1
+> xb5_sets:largest(S).
+3
+> xb5_sets:smaller(2, S).
+{found, 1}
+> xb5_sets:larger(2, S).
+{found, 3}
+```
+
+```erlang
+> A = xb5_sets:from_list([1, 2, 3, 4, 5]).
+> B = xb5_sets:from_list([3, 4, 5, 6, 7]).
+> xb5_sets:to_list(xb5_sets:union(A, B)).
+[1, 2, 3, 4, 5, 6, 7]
+> xb5_sets:to_list(xb5_sets:difference(A, B)).
+[1, 2]
+> xb5_sets:to_list(xb5_sets:intersection(A, B)).
+[3, 4, 5]
+```
+
+### xb5_trees
+
+Ordered key-value store, drop-in replacement for
+[`gb_trees`](https://www.erlang.org/doc/apps/stdlib/gb_trees.html).
+
+```erlang
+> T = xb5_trees:from_list([{a, 1}, {b, 2}, {c, 3}]).
+> xb5_trees:get(a, T).
+1
+> xb5_trees:lookup(d, T).
+none
+> xb5_trees:smallest(T).
+{a, 1}
+> xb5_trees:largest(T).
+{c, 3}
+> xb5_trees:keys(xb5_trees:insert(d, 4, T)).
+[a, b, c, d]
+> xb5_trees:smaller(c, T).
+{b, 2}
+> xb5_trees:larger(b, T).
+{c, 3}
+```
 
 ## Benchmarks
 

@@ -2,29 +2,48 @@
 
 -ifdef(E48).
 -moduledoc """
-An ordered [multiset](https://en.wikipedia.org/wiki/Multiset) (bag)
-implementation using a [B-tree](https://en.wikipedia.org/wiki/B-tree) of order
-5.
+An ordered [multiset](https://en.wikipedia.org/wiki/Multiset) (bag) backed by a
+[B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5.
 
-Elements are ordered using the Erlang term order, comparing with `==`
-rather than `=:=`. This means that `1` and `1.0` are considered the same
-element.
+Unlike a set, a bag allows duplicate values — the same element may appear
+multiple times. Elements are ordered using Erlang term order, comparing with
+`==` rather than `=:=` — so `1` and `1.0` are considered the same element.
 
-**Unlike `m:xb5_sets`, duplicate elements are preserved**: adding an element
-that is already present increases its count rather than being a no-op.
+## Pushing vs adding
 
-The tree is always balanced after every insertion and deletion.
+Three insert operations are provided:
 
-In addition to the standard container operations, **`xb5_bag` supports
-[order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
-queries: `nth/2`, `rank/2`, and percentile functions**
-(`percentile/2`, `percentile/3`, `percentile_bracket/2`,
-`percentile_bracket/3`, `percentile_rank/2`). These all run in
-logarithmic time.
+- `push/2` — always inserts a new copy, even if the element is already present.
+- `add/2` — inserts only if the element is not already present (idempotent).
+- `insert/2` — raises error if the element is already present.
 
-See also:
-- `m:xb5_sets` for the unique-element counterpart, supporting set operations (union, intersection, difference)
-- `m:xb5_trees` for the key-value counterpart
+## Order-statistic operations
+
+In addition to standard container operations, `xb5_bag` provides:
+
+- `nth/2` — O(log n) element access by rank (1-based).
+- `rank/2` — 1-based rank of an element.
+- `percentile/2`, `percentile/3`, `percentile_bracket/2`, `percentile_bracket/3` — percentile queries.
+- `percentile_rank/2` — the percentile rank of an element.
+- `iterator_from_nth/2` — iterator starting at a given rank.
+
+Conversion to a list via `to_list/1` always yields elements in ascending order,
+with duplicates preserved.
+
+## See also
+
+- `m:xb5_sets` — ordered set, for unique elements and set-algebraic operations.
+- `m:xb5_trees` — ordered key-value store.
+
+## Examples
+
+```erlang
+> B = xb5_bag:from_list([1, 1, 2, 3]).
+> xb5_bag:is_member(2, B).
+true
+> xb5_bag:count(1, B).
+2
+```
 """.
 -endif.
 
@@ -237,7 +256,7 @@ add(Element, #xb5_bag{size = Size, root = Root} = Bag) ->
 
 -ifdef(E48).
 -doc """
-Returns the number of occurrences of `Element` in `Bag`. Runs in O(log n) time.
+Returns the number of occurrences of `Element` in `Bag`.
 
 ## Examples
 

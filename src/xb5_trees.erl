@@ -2,23 +2,41 @@
 
 -ifdef(E48).
 -moduledoc """
-An ordered key-value store (dictionary) using a
-[B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5.
+An ordered key-value store backed by a
+[B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5, and a drop-in
+replacement for `m:gb_trees`.
 
-Keys are ordered using the Erlang term order, comparing with `==`
-rather than `=:=`. This means that `1` and `1.0` are considered the same
-key.
+Keys are kept in ascending Erlang term order. Comparisons use `==` rather than
+`=:=` — so key `1` and key `1.0` are considered the same key.
 
-The tree is always balanced after every insertion and deletion.
+Conversion to a list of `{Key, Value}` pairs via `to_list/1` always yields
+entries in ascending key order.
 
-API is the same as `m:gb_trees`.
+## Beyond `gb_trees`
 
-See also:
-- `m:xb5_sets` for the unique-element counterpart, supporting set operations
-(union, intersection, difference)
-- `m:xb5_bag` for a multiset supporting [order
-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations (get nth,
-rank, percentiles).
+In addition to the `m:gb_trees` API, `xb5_trees` provides:
+
+- `from_list/1` — construct a tree from a list of `{Key, Value}` pairs.
+- `insert_with/3`, `update_with/3`, `update_with/4` — insert or update lazily.
+- `foldl/3`, `foldr/3` — left and right folds.
+- `merge/2`, `merge_with/3` — merge two trees.
+- `intersect/2`, `intersect_with/3` — intersect two trees.
+- `is_equal/2` — test key-value equality.
+
+## See also
+
+- `m:xb5_sets` — ordered set.
+- `m:xb5_bag` — ordered multiset with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations.
+
+## Examples
+
+```erlang
+> T = xb5_trees:from_list([{b, 2}, {a, 1}]).
+> xb5_trees:get(a, T).
+1
+> xb5_trees:largest(T).
+{b, 2}
+```
 """.
 -endif.
 

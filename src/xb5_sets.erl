@@ -2,22 +2,31 @@
 
 -ifdef(E48).
 -moduledoc """
-An ordered set implementation using a
-[B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5.
+An ordered set backed by a [B-tree](https://en.wikipedia.org/wiki/B-tree) of
+order 5, and a drop-in replacement for `m:gb_sets`.
 
-Elements are ordered using the Erlang term order, comparing with `==`
-rather than `=:=`. This means that `1` and `1.0` are considered the same
-element.
+Elements are kept in ascending Erlang term order, and each value appears at most
+once. Comparisons use `==` rather than `=:=` — so `1` and `1.0` are considered
+the same element.
 
-The tree is always balanced after every insertion and deletion.
+Conversion to a list via `to_list/1` always yields elements in ascending order.
 
-API is the same as `m:gb_sets`.
+## See also
 
-See also:
-- `m:xb5_trees` for the key-value counterpart
-- `m:xb5_bag` for a multiset supporting [order
-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations (get nth,
-rank, percentiles).
+- `m:xb5_trees` — ordered key-value store.
+- `m:xb5_bag` — ordered multiset with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree) operations.
+
+## Examples
+
+```erlang
+> S = xb5_sets:from_list([3, 1, 2, 1]).
+> xb5_sets:to_list(S).
+[1, 2, 3]
+> xb5_sets:is_member(2, S).
+true
+> xb5_sets:largest(S).
+3
+```
 """.
 -endif.
 
