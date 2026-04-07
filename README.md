@@ -29,7 +29,7 @@ Available on [Hex](https://hex.pm/packages/xb5) · [API docs](https://hexdocs.pm
 ```erlang
 {deps, [
     % [...]
-    {xb5, "~> 0.1.0"}
+    {xb5, "~> 1.0"}
 ]}
 ```
 
