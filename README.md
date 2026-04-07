@@ -43,7 +43,7 @@ Available on [Hex](https://hex.pm/packages/xb5) · [API docs](https://hexdocs.pm
 ]}
 ```
 
-For Elixir, [`xb5_elixir`](https://hex.pm/packages/xb5_elixir) provides an
+For Elixir, [`xb5_elixir`](https://hexdocs.pm/xb5_elixir/) provides an
 idiomatic wrapper.
 
 ## Usage
