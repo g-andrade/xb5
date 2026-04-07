@@ -148,16 +148,17 @@ Excel [`PERCENTILE.INC`](https://support.microsoft.com/en-au/office/percentile-i
 
 [![](https://www.gandrade.net/xb5_benchmark/Screenshot_20260406_034149.png)](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html)
 
-Benchmarks compare all three modules against `gb_sets`/`gb_trees` across 50+
-operations and collection sizes up to 15,000 elements, measuring both runtime
-and heap allocation. All tests used small integers (immediate values) as keys.
-Each module is tested under three build scenarios: bulk construction from a
-sorted input, sequential single-key insertion, and random insertion order. Tests ran on OTP 28 with JIT enabled on two machines:
-[AMD Ryzen 7 5700G](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html)
-and
-[Intel i5-3550](https://www.gandrade.net/xb5_benchmark/report_intel_i5_3550.html).
-The [benchmark source](https://github.com/g-andrade/xb5_benchmark) is also
-available.
+[Benchmarks](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html)
+compare all three modules against `gb_sets`/`gb_trees` across 50+ operations
+and collection sizes up to 15,000 elements, measuring both runtime and heap
+allocation. [All tests](https://github.com/g-andrade/xb5_benchmark) used small
+integers (immediate values) as keys. Each module is tested under three build
+scenarios: bulk construction from a sorted input, sequential single-key
+insertion, and random insertion order. Tests ran on OTP 28 with JIT enabled on
+two machines: [AMD Ryzen 7
+5700G](https://www.gandrade.net/xb5_benchmark/report_amd_ryzen7_5700g.html) and
+[Intel
+i5-3550](https://www.gandrade.net/xb5_benchmark/report_intel_i5_3550.html).
 
 **`xb5_sets` vs `gb_sets`:**
 
@@ -178,9 +179,12 @@ available.
 * Alternating take-smallest/insert-largest: **1.7–3.3× as fast**
 * `take_smallest` and `take_largest`: **14–27% slower** in most build scenarios
 
-**`xb5_bag`:** runtime profile broadly matches `xb5_sets`; heap use is up to
-~40% lower for filter/map operations and ~15–62% lower for bulk construction,
-but ~20–25% higher for mutations.
+**`xb5_bag` vs `gb_sets`:**
+
+* Runtime profile broadly matches `xb5_sets`
+* Filter/map operations: up to **~40% less heap**
+* Bulk construction: **~15–62% less heap**
+* Mutations: **~20–25% more heap**
 
 ## Technical Details
 
