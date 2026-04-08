@@ -6,9 +6,12 @@
 [![API reference](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/xb5/)
 [![Last commit](https://img.shields.io/github/last-commit/g-andrade/xb5.svg)](https://github.com/g-andrade/xb5/commits/main)
 
-`xb5` is an Erlang library providing [B-tree](https://en.wikipedia.org/wiki/B-tree)-based
-(order 5) replacements for OTP's `gb_trees` and `gb_sets`. Benchmarks show **[1.2–2.5×
-faster](#benchmarks)** execution and equal or lower heap usage for most operations.
+`xb5` is an Erlang library providing
+[B-tree](https://en.wikipedia.org/wiki/B-tree) (order 5) alternatives to OTP's
+`gb_trees` and `gb_sets`.
+
+Benchmarks show **[1.2–2.5× faster](#benchmarks)** execution and equal or lower
+heap usage for most operations.
 
 It provides three modules:
 
@@ -16,9 +19,9 @@ It provides three modules:
   [multiset](https://en.wikipedia.org/wiki/Set_(abstract_data_type)#Multiset)
   with [order-statistic](https://en.wikipedia.org/wiki/Order_statistic_tree)
   O(log n) operations (rank, nth element, percentile)
-* **`xb5_sets`** — ordered set, drop-in replacement for
+* **`xb5_sets`** — ordered set, drop-in alternative to
   [`gb_sets`](https://www.erlang.org/doc/apps/stdlib/gb_sets.html)
-* **`xb5_trees`** — ordered key-value store, drop-in replacement for
+* **`xb5_trees`** — ordered key-value store, drop-in alternative to
   [`gb_trees`](https://www.erlang.org/doc/apps/stdlib/gb_trees.html)
 
 ## Installation
@@ -98,7 +101,7 @@ Excel [`PERCENTILE.INC`](https://support.microsoft.com/en-au/office/percentile-i
 
 ### xb5_sets
 
-Ordered set, drop-in replacement for
+Ordered set, drop-in alternative to
 [`gb_sets`](https://www.erlang.org/doc/apps/stdlib/gb_sets.html).
 
 ```erlang
@@ -130,7 +133,7 @@ true
 
 ### xb5_trees
 
-Ordered key-value store, drop-in replacement for
+Ordered key-value store, drop-in alternative to
 [`gb_trees`](https://www.erlang.org/doc/apps/stdlib/gb_trees.html).
 
 ```erlang

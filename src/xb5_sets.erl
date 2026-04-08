@@ -3,7 +3,7 @@
 -ifdef(E48).
 -moduledoc """
 An ordered set backed by a [B-tree](https://en.wikipedia.org/wiki/B-tree) of
-order 5, and a drop-in replacement for `m:gb_sets`.
+order 5, and a drop-in alternative to `m:gb_sets`.
 
 Elements are kept in ascending Erlang term order, and each value appears at most
 once. Comparisons use `==` rather than `=:=` — so `1` and `1.0` are considered

@@ -1,7 +1,8 @@
 # xb5
 
-Erlang library providing B-tree (order 5) replacements for `gb_trees` and `gb_sets`,
-plus a multiset (`xb5_bag`) with order-statistic operations. MIT licensed, by Guilherme Andrade.
+Erlang library providing B-tree (order 5) alternatives to `gb_trees` and
+`gb_sets`, plus a multiset (`xb5_bag`) with order-statistic operations. MIT
+licensed, by Guilherme Andrade.
 
 Requires OTP 24+. `-moduledoc` and `-doc` attributes (EEP-48) are conditionally
 compiled via `-ifdef(E48)`, where `E48` is defined for OTP 27+ via `platform_define`

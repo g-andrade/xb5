@@ -4,7 +4,7 @@
 -moduledoc """
 An ordered key-value store backed by a
 [B-tree](https://en.wikipedia.org/wiki/B-tree) of order 5, and a drop-in
-replacement for `m:gb_trees`.
+alternative to `m:gb_trees`.
 
 Keys are kept in ascending Erlang term order. Comparisons use `==` rather than
 `=:=` — so key `1` and key `1.0` are considered the same key.
