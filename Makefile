@@ -87,10 +87,28 @@ shell:
 	@rebar3 as test shell
 .PHONY: shell
 
+publish: doc
+publish:
+	@rebar3 hex publish --doc-dir=doc
+.NOTPARALLEL: publish
+
+doc: SOURCE_REF := $(shell git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD)
+doc: tmp/ex_doc
 doc:
-	@rebar3 hex build
+	rebar3 as docs edoc; \
+		./tmp/ex_doc "xb5" "${SOURCE_REF}" \
+		_build/docs/lib/xb5/ebin \
+		-c ex_doc.config \
+		--source-ref "${SOURCE_REF}";
 .PHONY: doc
 
-publish:
-	@rebar3 hex publish
-.PHONY: publish
+tmp/ex_doc: EX_DOC_VER=0.40.2
+tmp/ex_doc: OTP_VER := $(shell erl -noshell -eval 'io:fwrite("~s", [erlang:system_info(otp_release)]), init:stop().')
+tmp/ex_doc: | tmp
+tmp/ex_doc:
+	curl -fL -o tmp/ex_doc \
+		"https://github.com/elixir-lang/ex_doc/releases/download/v${EX_DOC_VER}/ex_doc_otp_${OTP_VER}"; \
+		chmod a+x tmp/ex_doc
+
+tmp:
+	mkdir tmp
