@@ -570,11 +570,19 @@ call_all(Function, ArgsTemplate, ReturnTemplate, [{ModA, StateA}, {ModB, StateB}
             end
     catch
         error:ReasonB:StacktraceB ->
-            {'EXIT', {ReasonA, _}} = catch (apply(ModA, Function, ArgsB)),
+            {'EXIT', {ReasonA, _}} = catch_error(fun() -> (apply(ModA, Function, ArgsB)) end),
             assert_error_reasons_equivalent(ReasonB, ReasonA),
             erlang:raise(error, ReasonB, StacktraceB)
     end.
 -endif.
+
+catch_error(Fun) ->
+    try
+        Fun()
+    catch
+        error:Reason:Stacktrace ->
+            {'EXIT', {Reason, Stacktrace}}
+    end.
 
 concrete_args(Template, Mod, State) ->
     lists:map(
