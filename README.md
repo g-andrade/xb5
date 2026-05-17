@@ -1,7 +1,7 @@
 # xb5
 
 [![CI](https://github.com/g-andrade/xb5/actions/workflows/ci.yml/badge.svg)](https://github.com/g-andrade/xb5/actions/workflows/ci.yml)
-[![Erlang Versions](https://img.shields.io/badge/Supported%20Erlang%2FOTP-24%20to%2028-blue)](https://www.erlang.org)
+[![Erlang Versions](https://img.shields.io/badge/Supported%20Erlang%2FOTP-24%20to%2029-blue)](https://www.erlang.org)
 [![Latest version](https://img.shields.io/hexpm/v/xb5.svg?style=flat)](https://hex.pm/packages/xb5)
 [![API reference](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/xb5/)
 [![Last commit](https://img.shields.io/github/last-commit/g-andrade/xb5.svg)](https://github.com/g-andrade/xb5/commits/main)
