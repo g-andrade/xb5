@@ -574,7 +574,6 @@ call_all(Function, ArgsTemplate, ReturnTemplate, [{ModA, StateA}, {ModB, StateB}
             assert_error_reasons_equivalent(ReasonB, ReasonA),
             erlang:raise(error, ReasonB, StacktraceB)
     end.
--endif.
 
 catch_error(Fun) ->
     try
@@ -583,6 +582,7 @@ catch_error(Fun) ->
         error:Reason:Stacktrace ->
             {'EXIT', {Reason, Stacktrace}}
     end.
+-endif.
 
 concrete_args(Template, Mod, State) ->
     lists:map(
