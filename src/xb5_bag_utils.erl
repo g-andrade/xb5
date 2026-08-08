@@ -31,7 +31,10 @@ Additional utils for operating over `m:xb5_bag` contents.
 
 -elvis([
     % Large URLs below require this
-    {elvis_text_style, line_length, #{limit => 131}}
+    {elvis_text_style, max_line_length, #{
+        limit => 140,
+        no_whitespace_after_limit => true
+    }}
 ]).
 
 %% ------------------------------------------------------------------
@@ -248,7 +251,7 @@ linear_interpolated_percentile({between, A, B, T} = Bracket, ValueFun) ->
 linear_interpolated_percentile(none, _ValueFun) ->
     none.
 
-linear_interpolation(A, B, T) when is_integer(A), is_integer(B) ->
+linear_interpolation(A, B, T) when is_integer(A) andalso is_integer(B) ->
     Diff = B - A,
 
     FloatA = float(A),

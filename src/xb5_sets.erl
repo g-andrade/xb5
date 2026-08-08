@@ -153,7 +153,7 @@ true
 
 -elvis([
     % Large URLs below require this
-    {elvis_text_style, line_length, #{limit => 105}}
+    {elvis_text_style, max_line_length, #{limit => 105}}
 ]).
 
 %% ------------------------------------------------------------------
