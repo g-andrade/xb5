@@ -874,31 +874,26 @@ delete_att_INTERNAL4(Elem, ?INTERNAL4_ARGS) ->
 -compile({inline, delete_att_INTERNAL4_C1 / ?INTERNAL4_ARITY_PLUS1}).
 delete_att_INTERNAL4_C1(Elem, ?INTERNAL4_ARGS) ->
     UpdatedC1 = delete_att_recur(Elem, C1),
-
     ?INTERNAL4_C1_REBALANCE(UpdatedC1).
 
 -compile({inline, delete_att_INTERNAL4_C2 / ?INTERNAL4_ARITY_PLUS1}).
 delete_att_INTERNAL4_C2(Elem, ?INTERNAL4_ARGS) ->
     UpdatedC2 = delete_att_recur(Elem, C2),
-
     ?INTERNAL4_C2_REBALANCE(UpdatedC2).
 
 -compile({inline, delete_att_INTERNAL4_C3 / ?INTERNAL4_ARITY_PLUS1}).
 delete_att_INTERNAL4_C3(Elem, ?INTERNAL4_ARGS) ->
     UpdatedC3 = delete_att_recur(Elem, C3),
-
     ?INTERNAL4_C3_REBALANCE(UpdatedC3).
 
 -compile({inline, delete_att_INTERNAL4_C4 / ?INTERNAL4_ARITY_PLUS1}).
 delete_att_INTERNAL4_C4(Elem, ?INTERNAL4_ARGS) ->
     UpdatedC4 = delete_att_recur(Elem, C4),
-
     ?INTERNAL4_C4_REBALANCE(UpdatedC4).
 
 -compile({inline, delete_att_INTERNAL4_C5 / ?INTERNAL4_ARITY_PLUS1}).
 delete_att_INTERNAL4_C5(Elem, ?INTERNAL4_ARGS) ->
     UpdatedC5 = delete_att_recur(Elem, C5),
-
     ?INTERNAL4_C5_REBALANCE(UpdatedC5).
 
 %%
@@ -996,25 +991,21 @@ delete_att_INTERNAL3(Elem, ?INTERNAL3_ARGS) ->
 -compile({inline, delete_att_INTERNAL3_C1 / ?INTERNAL3_ARITY_PLUS1}).
 delete_att_INTERNAL3_C1(Elem, ?INTERNAL3_ARGS) ->
     UpdatedC1 = delete_att_recur(Elem, C1),
-
     ?INTERNAL3_C1_REBALANCE(UpdatedC1).
 
 -compile({inline, delete_att_INTERNAL3_C2 / ?INTERNAL3_ARITY_PLUS1}).
 delete_att_INTERNAL3_C2(Elem, ?INTERNAL3_ARGS) ->
     UpdatedC2 = delete_att_recur(Elem, C2),
-
     ?INTERNAL3_C2_REBALANCE(UpdatedC2).
 
 -compile({inline, delete_att_INTERNAL3_C3 / ?INTERNAL3_ARITY_PLUS1}).
 delete_att_INTERNAL3_C3(Elem, ?INTERNAL3_ARGS) ->
     UpdatedC3 = delete_att_recur(Elem, C3),
-
     ?INTERNAL3_C3_REBALANCE(UpdatedC3).
 
 -compile({inline, delete_att_INTERNAL3_C4 / ?INTERNAL3_ARITY_PLUS1}).
 delete_att_INTERNAL3_C4(Elem, ?INTERNAL3_ARGS) ->
     UpdatedC4 = delete_att_recur(Elem, C4),
-
     ?INTERNAL3_C4_REBALANCE(UpdatedC4).
 
 %%
@@ -1086,19 +1077,16 @@ delete_att_INTERNAL2(Elem, ?INTERNAL2_ARGS) ->
 -compile({inline, delete_att_INTERNAL2_C1 / ?INTERNAL2_ARITY_PLUS1}).
 delete_att_INTERNAL2_C1(Elem, ?INTERNAL2_ARGS) ->
     UpdatedC1 = delete_att_recur(Elem, C1),
-
     ?INTERNAL2_C1_REBALANCE(UpdatedC1).
 
 -compile({inline, delete_att_INTERNAL2_C2 / ?INTERNAL2_ARITY_PLUS1}).
 delete_att_INTERNAL2_C2(Elem, ?INTERNAL2_ARGS) ->
     UpdatedC2 = delete_att_recur(Elem, C2),
-
     ?INTERNAL2_C2_REBALANCE(UpdatedC2).
 
 -compile({inline, delete_att_INTERNAL2_C3 / ?INTERNAL2_ARITY_PLUS1}).
 delete_att_INTERNAL2_C3(Elem, ?INTERNAL2_ARGS) ->
     UpdatedC3 = delete_att_recur(Elem, C3),
-
     ?INTERNAL2_C3_REBALANCE(UpdatedC3).
 
 %%
