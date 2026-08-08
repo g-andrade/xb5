@@ -19,9 +19,17 @@ clean:
 	@rebar3 clean -a
 .PHONY: clean
 
-check: check-formatted xref find-unused-code lint dialyzer
+check: check-fast check-slow
 .NOTPARALLEL: check
 .PHONY: check
+
+check-fast: check-formatted xref find-unused-code lint
+.NOTPARALLEL: check-fast
+.PHONY: check-fast
+
+check-slow: dialyzer
+.NOTPARALLEL: check-slow
+.PHONY: check-slow
 
 test: eunit ct cover
 .NOTPARALLEL: test

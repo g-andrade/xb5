@@ -64,11 +64,14 @@ jobs:
             ${{env.build_cache_prefix_with_hash}}-
             ${{env.build_cache_prefix}}-
 
-      - name: Run Checks
-        run: make check
+      - name: Run Fast Checks
+        run: make check-fast
 
       - name: Run Tests
         run: make test
+
+      - name: Run Slow Checks
+        run: make check-slow
 
       - name: Save build artifacts to cache
         if: always()
