@@ -1,5 +1,8 @@
-%% @private
 -module(xb5_utils).
+
+-ifdef(E48).
+-moduledoc false.
+-endif.
 
 %% ------------------------------------------------------------------
 %% API Function Exports
