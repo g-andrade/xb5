@@ -1461,6 +1461,11 @@ foldr_recur(Fun, Acc, Node) ->
 %% Internal Function Definitions: from_orddict/2
 %% ------------------------------------------------------------------
 
+%% The bulk construction scheme is documented at
+%% xb5_utils:bulk_construction_params/1 (what BatchOffset and BatchSize mean)
+%% and above xb5_sets_node:from_ordset_recur/5 (how they pick each node's
+%% arity). What follows is that same algorithm over key/value pairs.
+
 from_orddict_recur(S, L, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
     ChildrenBatchOffset = BatchOffset - BatchSize,
     ChildrenBatchSize = BatchSize bsr 2,

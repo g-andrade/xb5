@@ -1404,6 +1404,33 @@ fold_recur(Fun, Acc, Node) ->
 %% Internal Function Definitions: from_ordset/2
 %% ------------------------------------------------------------------
 
+%% Builds the tree bottom-up in one pass over an already-ordered list, taking
+%% the elements in order and never comparing them. What BatchOffset and
+%% BatchSize mean is documented at xb5_utils:bulk_construction_params/1; in
+%% short, BatchSize - 1 is the size of a perfect subtree of 3-key, 4-child
+%% nodes at this level, and BatchOffset the smallest S that reaches it.
+%%
+%% Given those, (S - BatchOffset) div BatchSize is how many children can be
+%% handed a full BatchSize - 1 elements, which settles this node's arity:
+%%
+%%     0 (at root)  INTERNAL1, 1 key    0 full children + 2 sized from the tail
+%%     0 (deeper)   INTERNAL2, 2 keys   ... treated as 1, see below
+%%     1            INTERNAL2, 2 keys   1 full child   + 2 sized from the tail
+%%     2            INTERNAL3, 3 keys   2 full         + 2
+%%     3            INTERNAL4, 4 keys   3 full         + 2
+%%
+%% A quotient of 0 only yields an INTERNAL1 at the root, which is the sole
+%% place a 1-key node may come to rest - the same invariant deletion upholds.
+%% Below the root a 0 is folded in with 1 and built as an INTERNAL2 instead,
+%% borrowing from the tail to fill it.
+%%
+%% Whatever the arity, the last two children are always sized by
+%% from_ordset_right_children_sizes/2 rather than filled: it takes the
+%% remaining elements and splits them, reserving one for the key between the
+%% two. When that remainder is long enough for both to take a full batch it
+%% gives the left one BatchSize - 1; when it is not, it caps the left at
+%% three quarters of a batch, so that what is left over does not strand the
+%% right child nearly empty. The three quarters is tuned rather than derived.
 from_ordset_recur(S, L, BatchOffset, BatchSize, AtRoot) when S >= 5 ->
     ChildrenBatchOffset = BatchOffset - BatchSize,
     ChildrenBatchSize = BatchSize bsr 2,
