@@ -1,5 +1,5 @@
 {application, xb5, [
-    {description, "btrees 5: ordered tree / set / order statistic multiset"},
+    {description, "B-trees 5: ordered tree/set + order-statistic multiset"},
     {vsn, git},
     {registered, []},
     {applications, [
