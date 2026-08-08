@@ -1,3 +1,33 @@
+%% Branch-selection macros, shared by xb5_sets_node, xb5_trees_node and
+%% xb5_bag_node.
+%%
+%% Each compares Key against the 1 to 4 keys of one node and expands to exactly
+%% one of the branch expressions handed to it. The branches are substituted,
+%% not evaluated, which is what lets a caller pass a recursive call as a branch
+%% - as the insertion and deletion paths do throughout.
+%%
+%% Four families, differing in what the caller needs to learn:
+%%
+%%   ?GAP_SEARCH<N>      Key sits on K<i> (FoundK<i>), or in the gap before
+%%                       child i (FoundC<i>). Those N+1 gap branches are what
+%%                       make this the one for descending into a child, and
+%%                       for choosing an insertion slot within a leaf.
+%%
+%%   ?EXACT_SEARCH<N>    Key is one of K1..K<n> (FoundK<i>) or absent
+%%                       (NotFound). Used when deleting from a leaf, where
+%%                       landing in a gap means the key is nowhere in the tree.
+%%
+%%   ?SMALLER_SEARCH<N>  Places Key by LTE<i> (K<i-1> < Key =< K<i>) or GT<n>
+%%                       (Key > K<n>).
+%%
+%%   ?LARGER_SEARCH<N>   The mirror image: LT<i> (Key < K<i>) or GTE<n>
+%%                       (Key >= K<n>).
+%%
+%% The last two back smaller/2 and larger/2, plus the bounded iterators.
+%%
+%% Comparisons are by Erlang term order, never `=:=`, as the public API
+%% promises.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -define(GAP_SEARCH4(

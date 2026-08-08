@@ -156,15 +156,52 @@ API for operating over `m:xb5_trees` internal nodes directly.
 
 %%%%%%%%
 
-% Cannot clash with any node type.
+%% Rebalance signals.
+%%
+%% These travel up the recursion in place of a node, so none of them may
+%% clash with a node layout defined above. Improper lists are used where a
+%% 2-tuple would do: one word cheaper, and a cons cell can never be mistaken
+%% for a node.
 
+%% Insertion overflow, handed up by insert_att_recur/4 when a node could
+%% neither absorb the new pair nor spill it into a sibling. `Pos` is the 1..5
+%% slot where the pressure landed; `Args` says of what kind:
+%%
+%%   ?SPLIT(GapPos, [Key | Value])  a ?LEAF4 overflowed. The 5-key leaf is
+%%                                  never built - the parent receives the gap
+%%                                  index, plus the new pair riding along in
+%%                                  the payload, and splits from those.
+%%
+%%   ?SPLIT(ChildPos, Split)        a deeper node split, handing up a
+%%                                  {split, SplitK, SplitV, SplitL, SplitR}
+%%                                  to be woven into slot ChildPos.
+%%
+%% Carrying the pair inside the signal is why the ins_rebalance_* handlers
+%% here take no separate key/value argument, unlike their xb5_sets_node
+%% counterparts. It also fixes when a lazy insert value gets forced: at the
+%% overflowing leaf, by eval_insert_value/2, and not again on the way up.
 -define(SPLIT(Pos, Args), [Pos | Args]).
 -define(SPLIT_MATCH(Pos, Args), [Pos | Args]).
 
 %%%%%%%%%
 
-% Any of the following cannot clash with either the largest leaf or internal
-% nodes, since those are a merged node.
+%% Deletion underflow outcomes, returned by
+%% del_rebalance_maybe_from_{left,right}_sibling/3. With `balanced` and
+%% `badkey` these are the four results every del_rebalance_* clause
+%% dispatches on, and they must be matched in this order:
+%%
+%%   balanced       the child still holds >= 2 keys; nothing to repair
+%%   badkey         the key wasn't found; short-circuits to the caller
+%%   ?ROTATED(...)  a pair moved across the parent; both siblings updated
+%%   ?MERGED(Node)  the two siblings and the parent pair became one node, so
+%%                  the parent loses a pair and a child
+%%
+%% Any of the following cannot clash with either the largest leaf or internal
+%% nodes, since those are a merged node. Concretely: ?MERGED is the bare node
+%% and so can only be matched last, as a catch-all, which is sound because a
+%% merge always yields a *full* node - ?LEAF4 (8 elements) or ?INTERNAL4 (13)
+%% - and never a ?LEAF2, the one node layout that would otherwise be
+%% indistinguishable from ?ROTATED's 4 elements.
 
 %%%
 
@@ -350,6 +387,17 @@ API for operating over `m:xb5_trees` internal nodes directly.
 -define(TAKEN_PAIR(K, V, UpdatedNode), ?TAKEN([K | V], UpdatedNode)).
 
 %%
+
+%% Every node built through the ?new_* macros below can be run past
+%% check_node/3 (see "Node Well-Formedness Checks" at the foot of this module),
+%% which asserts that the tuple is a legal layout for its position and that its
+%% keys come out sorted, reporting the ?LINE of whichever macro built it.
+%% Off by default because it makes construction dramatically more expensive;
+%% swap in the commented-out `defined(TEST)` to turn it on, which is the
+%% quickest way to validate a change to insertion or deletion rebalancing.
+%%
+%% ?CHECK_NODE accepts the root-only ?INTERNAL1/?LEAF1 layouts as well;
+%% ?CHECK_NODE_RECUR takes only the 2-to-4-key layouts legal below the root.
 
 % defined(TEST)).
 -define(NODE_CHECK_ENABLED, false).
@@ -4913,6 +4961,33 @@ values_recur(Node, Acc) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Why insertion spills into a sibling before splitting, and why the leftmost
+%% child consults its right sibling while every other child consults its left,
+%% is covered by the README under "Insertion: spilling before splitting".
+%% What follows is only the mechanics.
+%%
+%% Each ins_rebalance_<NODE>_C<N> below receives the result of having recursed
+%% into child N, and folds it back into a node for its own caller. Three cases,
+%% matched in this order:
+%%
+%%   ?SPLIT_MATCH(Pos, Args)  child N overflowed. Try to spill into the
+%%       adjacent sibling through ins_rebalance_into_{left,right}_sibling_maybe/6,
+%%       which answers either {UpKey, UpValue, UpdatedLeft, UpdatedRight} -
+%%       absorbed, so rebuild this node with one pair replaced and two children
+%%       swapped - or a {split, ...}, meaning the sibling was full too and this
+%%       node splits in turn, re-emitting ?SPLIT(N, Split) upwards.
+%%
+%%   key_exists               the key is already present. The insertion is
+%%       abandoned and the atom passes straight up, untouched, to insert_att/4.
+%%
+%%   UpdatedC<N>              the ordinary case: child N absorbed the pair by
+%%       itself, so only that one slot changes.
+%%
+%% The new pair rides inside the ?SPLIT payload rather than as an argument -
+%% see the ?SPLIT macro. The root is the only place a ?SPLIT cannot be handed
+%% further up: insert_att/4 routes it to insert_split_root/3, which grows a new
+%% level. That is the only way the tree ever gets taller.
+
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Insertion - Rebalancing INTERNAL4
 %% ------------------------------------------------------------------
@@ -6394,6 +6469,29 @@ ins_rebalance_into_right_leaf(?LEAF4_MATCH_ALL = Node, Pos, NewKey, NewValue, Up
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Why deletion rebalances reactively rather than proactively, and why only one
+%% sibling is consulted, is covered by the README under "Deletion: reactive
+%% rebalancing". What follows is only the mechanics.
+%%
+%% Underflow is signalled by shape, not by a tag. delete_att_recur/2 is allowed
+%% to hand back a node holding a single pair - ?INTERNAL1 or ?LEAF1 - and that
+%% *is* the "I underflowed" message. del_rebalance_maybe_from_{left,right}_
+%% sibling/4 recognises it by matching those two layouts, and reads anything
+%% else as `balanced`.
+%%
+%% A one-pair node is therefore legal in exactly two situations: in transit, as
+%% the return value of delete_att_recur/2 on its way up to the parent that will
+%% repair it; and permanently at the root, the only node allowed to be that
+%% small at rest. It must never be stored anywhere else in a tree.
+%%
+%% Each del_rebalance_<NODE>_C<N> dispatches on the four outcomes documented at
+%% ?ROTATED/?MERGED, rebuilding itself at the same arity for `balanced` and
+%% ?ROTATED, and one size smaller for ?MERGED. So when an ?INTERNAL2 merges it
+%% becomes an ?INTERNAL1 - itself an underflow - and the signal travels one
+%% level further up. Should it reach the root, del_rebalance_INTERNAL1_C{1,2}/4
+%% discards that root and returns the merged child in its place: the only way
+%% the tree ever gets shorter.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions: Deletion - Rebalancing INTERNAL4

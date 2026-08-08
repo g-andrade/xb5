@@ -54,6 +54,21 @@ test/
 - Elements ordered using Erlang term order (`==`, not `=:=`).
 - All public types are opaque.
 
+Before changing insertion or deletion rebalancing, read both:
+
+- **README, "Technical Details"** — why the algorithms depart from the textbook
+  B-tree (spilling into a sibling before splitting; reactive rather than proactive
+  deletion; consulting only one sibling). These are deliberate, benchmarked choices.
+- **The `*_node` modules** — block comments at the `?SPLIT`/`?ROTATED`/`?MERGED`
+  macros and above the two "Rebalance handlers" banners document the signals passed
+  up the recursion. The three modules diverge here (`xb5_bag_node` wraps `?MERGED`
+  in a list; `xb5_trees_node` carries the new pair inside the `?SPLIT` payload), so
+  a fix in one does not transcribe verbatim into the others.
+
+Flipping `?NODE_CHECK_ENABLED` to `defined(TEST)` in a `*_node` module turns on
+per-construction well-formedness assertions — the quickest way to validate such a
+change.
+
 ## Code style
 
 - **Formatter:** erlfmt (`make format` / `make check-formatted`).
